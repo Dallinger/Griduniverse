@@ -20,12 +20,6 @@ for (var i = 0; i < rows; i++) {
   }
 }
 
-function drawPlayers (players) {
-    players.forEach(function (p) {
-        data[(p.position[0]) * columns + p.position[1]] = p.color;
-    });
-}
-
 var pixels = grid(data, {
   root: document.body,
   rows: rows,
@@ -111,8 +105,6 @@ players = [
     }),
 ];
 
-drawPlayers(players);
-
 pixels.canvas.style.marginLeft = (window.innerWidth * 0.03) / 2 + 'px';
 pixels.canvas.style.marginTop = (window.innerHeight * 0.04) / 2 + 'px';
 
@@ -142,16 +134,11 @@ pixels.frame(function () {
         if(ts > p.motion.timestamp + waitTime) {
             p.move(p.motion.direction);
             p.motion.timestamp = ts;
-            console.log("got here.");
         }
-        //   console.log("locomote");
       }
+      data[(p.position[0]) * columns + p.position[1]] = p.color;
   });
-
-
-  drawPlayers(players);
   pixels.update(data);
-  //
 });
 
 self = players[0];
