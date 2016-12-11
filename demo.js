@@ -154,6 +154,7 @@ directions.forEach(function (direction){
         } else {
             self.move(direction);
         }
+        return false;
     });
 });
 
