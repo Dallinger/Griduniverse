@@ -151,4 +151,12 @@ directions.forEach(function (direction){
     });
 });
 
+Mousetrap.bind("b", function () {
+    players[0].color = BLUE;
+});
+
+Mousetrap.bind("y", function () {
+    players[0].color = YELLOW;
+});
+
 start = Date.now();
