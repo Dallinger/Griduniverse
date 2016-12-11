@@ -44,38 +44,40 @@ Player.prototype.move = function (direction) {
 
     this.motion.direction = direction;
 
-    switch (direction) {
-        case "up":
-            if (this.position[0] > 0) {
-                this.position[0] -= 1;
-            }
-            break;
+    ts = Date.now() - start;
+    waitTime = 1000 / this.motion.speed;
+    if (ts > this.motion.timestamp + waitTime) {
 
-        case "down":
-            if (this.position[0] < rows - 1) {
-                this.position[0] += 1;
-            }
-            break;
+        switch (direction) {
+            case "up":
+                if (this.position[0] > 0) {
+                    this.position[0] -= 1;
+                }
+                break;
 
-        case "left":
-            if (this.position[1] > 0) {
-                this.position[1] -= 1;
-            }
-            break;
+            case "down":
+                if (this.position[0] < rows - 1) {
+                    this.position[0] += 1;
+                }
+                break;
 
-        case "right":
-            if (this.position[1] < columns - 1) {
-                this.position[1] += 1;
-            }
-            break;
+            case "left":
+                if (this.position[1] > 0) {
+                    this.position[1] -= 1;
+                }
+                break;
 
-        default:
-            console.log("Direction not recognized.");
+            case "right":
+                if (this.position[1] < columns - 1) {
+                    this.position[1] += 1;
+                }
+                break;
+
+            default:
+                console.log("Direction not recognized.");
+        }
+        this.motion.timestamp = ts;
     }
-};
-
-Player.prototype.direct = function (direction) {
-    this.motion.direction = direction;
 };
 
 players = [
@@ -127,14 +129,9 @@ pixels.frame(function () {
 
   // Update the players.
   data = background;
-  ts = Date.now() - start;
   players.forEach(function (p) {
       if (p.motion.auto) {
-        waitTime = 1000 / p.motion.speed;
-        if(ts > p.motion.timestamp + waitTime) {
-            p.move(p.motion.direction);
-            p.motion.timestamp = ts;
-        }
+          self.move(self.motion.direction);
       }
       data[(p.position[0]) * columns + p.position[1]] = p.color;
   });
@@ -148,12 +145,8 @@ self = players[0];
 //
 directions = ["up", "down", "left", "right"];
 directions.forEach(function (direction){
-    Mousetrap.bind(direction, function() {
-        if (self.motion.auto) {
-            self.direct(direction);
-        } else {
-            self.move(direction);
-        }
+    Mousetrap.bind(direction, function () {
+        self.move(direction);
         return false;
     });
 });
