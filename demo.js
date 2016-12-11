@@ -131,7 +131,7 @@ pixels.frame(function () {
   data = background;
   players.forEach(function (p) {
       if (p.motion.auto) {
-          self.move(self.motion.direction);
+          p.move(p.motion.direction);
       }
       data[(p.position[0]) * columns + p.position[1]] = p.color;
   });
