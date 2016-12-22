@@ -5,11 +5,11 @@ var parse = require('parse-color');
 var position = require('mouse-position');
 var mousetrap = require('mousetrap');
 
-document.body.style.transition = '0.3s all';
-document.body.style.background = '#ffffff';
+BLUE = [0.50, 0.86, 1.00];
+YELLOW = [1.00, 0.86, 0.50];
 
-var rows = 20;
-var columns = 20;
+var rows = 40;
+var columns = 40;
 
 var data = [];
 var background = [];
@@ -30,8 +30,21 @@ var pixels = grid(data, {
   formatted: true
 });
 
+Food = function (settings) {
+    if (!(this instanceof Food)) {
+        return new Food();
+    }
+    this.id = settings.id;
+    this.position = settings.position;
+    this.consumable = false;
+    this.color = settings.color;
+    return this;
+};
+
 Player = function (settings) {
-    if (!(this instanceof Player)) return new Player();
+    if (!(this instanceof Player)) {
+        return new Player();
+    }
     this.id = settings.id;
     this.position = settings.position;
     this.color = settings.color;
@@ -46,7 +59,7 @@ Player.prototype.move = function (direction) {
 
     ts = Date.now() - start;
     waitTime = 1000 / this.motion.speed;
-    if (ts > this.motion.timestamp + waitTime) {
+    if (ts > this.motion._timestamp + waitTime) {
 
         switch (direction) {
             case "up":
@@ -76,32 +89,41 @@ Player.prototype.move = function (direction) {
             default:
                 console.log("Direction not recognized.");
         }
-        this.motion.timestamp = ts;
+        this.motion._timestamp = ts;
     }
 };
+
+food = [
+    new Food({
+        id: 0,
+        position: [10, 10],
+        consumable: true,
+        color: [1.00, 1.00, 1.00],
+    })
+];
 
 players = [
     new Player({
         id: 0,
         position: [0, 0],
-        color: [0.50, 0.86, 1.00],
+        color: BLUE,
         motion: {
-            auto: true,
+            auto: false,
             direction: "right",
-            speed: 4,
-            timestamp: 0,
+            speed: 8,
+            _timestamp: 0,
         },
         score: 0,
     }),
     new Player({
         id: 1,
-        position: [0, columns - 1],
-        color: [1.00, 0.86, 0.50],
+        position: [5, columns - 5],
+        color: YELLOW,
         motion: {
-            auto: true,
+            auto: false,
             direction: "left",
-            speed: 2,  // Blocks per second.
-            timestamp: 0,
+            speed: 8,  // Blocks per second.
+            _timestamp: 0,
         },
         score: 0,
     }),
@@ -109,13 +131,21 @@ players = [
 
 pixels.canvas.style.marginLeft = (window.innerWidth * 0.03) / 2 + 'px';
 pixels.canvas.style.marginTop = (window.innerHeight * 0.04) / 2 + 'px';
+document.body.style.transition = '0.3s all';
+document.body.style.background = '#ffffff';
 
 var mouse = position(pixels.canvas);
 
 var row, column, rand, color;
-var hue = 0;
 
 pixels.frame(function () {
+
+  // Digest food.
+  food.forEach(function (f) {
+      players.forEach(function (p) {
+
+      });
+  });
 
   // Update the background.
   for (var i = 0; i < data.length; i++) {
@@ -127,18 +157,35 @@ pixels.frame(function () {
     ];
   }
 
-  // Update the players.
   data = background;
+
+  // Update the food.
+  for (i = 0; i < food.length; i++) {
+
+      // Draw the food.
+      idx = (food[i].position[0]) * columns + food[i].position[1];
+      data[idx] = food[i].color;
+
+      // Players consume the food.
+      for (var j = 0; j < players.length; j++) {
+        if (arraysEqual(players[j].position, food[i].position)) {
+            food.splice(i, 1);
+            players[j].score++;
+            break;
+        }
+      }
+  }
+
+  // Update the players.
   players.forEach(function (p) {
       if (p.motion.auto) {
           p.move(p.motion.direction);
       }
       data[(p.position[0]) * columns + p.position[1]] = p.color;
   });
+
   pixels.update(data);
 });
-
-self = players[0];
 
 //
 // Key bindings
@@ -146,7 +193,7 @@ self = players[0];
 directions = ["up", "down", "left", "right"];
 directions.forEach(function (direction){
     Mousetrap.bind(direction, function () {
-        self.move(direction);
+        players[0].move(direction);
         return false;
     });
 });
@@ -160,3 +207,11 @@ Mousetrap.bind("y", function () {
 });
 
 start = Date.now();
+
+function arraysEqual(arr1, arr2) {
+    for(var i = arr1.length; i--;) {
+        if(arr1[i] !== arr2[i])
+            return false;
+    }
+    return true;
+}
