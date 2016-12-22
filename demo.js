@@ -140,13 +140,6 @@ var row, column, rand, color;
 
 pixels.frame(function () {
 
-  // Digest food.
-  food.forEach(function (f) {
-      players.forEach(function (p) {
-
-      });
-  });
-
   // Update the background.
   for (var i = 0; i < data.length; i++) {
     rand = Math.random() * 0.02;
@@ -166,11 +159,11 @@ pixels.frame(function () {
       idx = (food[i].position[0]) * columns + food[i].position[1];
       data[idx] = food[i].color;
 
-      // Players consume the food.
+      // Players digest the food.
       for (var j = 0; j < players.length; j++) {
         if (arraysEqual(players[j].position, food[i].position)) {
             food.splice(i, 1);
-            players[j].score++;
+            players[j].score += 1;
             break;
         }
       }
@@ -185,6 +178,8 @@ pixels.frame(function () {
   });
 
   pixels.update(data);
+
+  document.getElementById("score").innerHTML = players[0].score;
 });
 
 //
