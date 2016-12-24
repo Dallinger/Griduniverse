@@ -4,17 +4,25 @@ var grid = require('./index');
 var parse = require('parse-color');
 var position = require('mouse-position');
 var mousetrap = require('mousetrap');
+var colors = require('colors.css');
+
+
+// Parameters
 
 BLUE = [0.50, 0.86, 1.00];
 YELLOW = [1.00, 0.86, 0.50];
-
-var rows = 40;
-var columns = 40;
+WHITE = [1.00, 1.00, 1.00];
+GRID_BLOCK_SIZE = 15;
+GRID_PADDING = 1;
+RESPAWN_FOOD = true;
+DOLLARS_PER_POINT = 0.02;
+ROWS = 20;
+COLUMNS = 20;
 
 var data = [];
 var background = [];
-for (var i = 0; i < rows; i++) {
-  for (var j = 0; j < columns; j++) {
+for (var i = 0; i < ROWS; i++) {
+  for (var j = 0; j < COLUMNS; j++) {
     data.push([0, 0, 0]);
     background.push([0, 0, 0]);
   }
@@ -22,10 +30,10 @@ for (var i = 0; i < rows; i++) {
 
 var pixels = grid(data, {
   root: document.body,
-  rows: rows,
-  columns: columns,
-  size: 15,
-  padding: 1,
+  rows: ROWS,
+  columns: COLUMNS,
+  size: GRID_BLOCK_SIZE,
+  padding: GRID_PADDING,
   background: [0.1, 0.1, 0.1],
   formatted: true
 });
@@ -36,9 +44,16 @@ Food = function (settings) {
     }
     this.id = settings.id;
     this.position = settings.position;
-    this.consumable = false;
     this.color = settings.color;
     return this;
+};
+
+respawnFood = function () {
+    food.push(new Food({
+        id: food.length + foodConsumed.length,
+        position: [getRandomInt(0, COLUMNS), getRandomInt(0, ROWS)],
+        color: WHITE,
+    }));
 };
 
 Player = function (settings) {
@@ -69,7 +84,7 @@ Player.prototype.move = function (direction) {
                 break;
 
             case "down":
-                if (this.position[0] < rows - 1) {
+                if (this.position[0] < ROWS - 1) {
                     this.position[0] += 1;
                 }
                 break;
@@ -81,7 +96,7 @@ Player.prototype.move = function (direction) {
                 break;
 
             case "right":
-                if (this.position[1] < columns - 1) {
+                if (this.position[1] < COLUMNS - 1) {
                     this.position[1] += 1;
                 }
                 break;
@@ -97,10 +112,16 @@ food = [
     new Food({
         id: 0,
         position: [10, 10],
-        consumable: true,
-        color: [1.00, 1.00, 1.00],
+        color: WHITE,
+    }),
+    new Food({
+        id: 1,
+        position: [5, 5],
+        color: WHITE,
     })
 ];
+
+foodConsumed = [];
 
 players = [
     new Player({
@@ -108,7 +129,7 @@ players = [
         position: [0, 0],
         color: BLUE,
         motion: {
-            auto: false,
+            auto: true,
             direction: "right",
             speed: 8,
             _timestamp: 0,
@@ -117,7 +138,7 @@ players = [
     }),
     new Player({
         id: 1,
-        position: [5, columns - 5],
+        position: [5, COLUMNS - 5],
         color: YELLOW,
         motion: {
             auto: false,
@@ -142,11 +163,11 @@ pixels.frame(function () {
 
   // Update the background.
   for (var i = 0; i < data.length; i++) {
-    rand = Math.random() * 0.02;
-    background[i] = [
-      background[i][0] * 0.95 + rand,
-      background[i][1] * 0.95 + rand,
-      background[i][2] * 0.95 + rand
+      rand = Math.random() * 0.02;
+      background[i] = [
+          background[i][0] * 0.95 + rand,
+          background[i][1] * 0.95 + rand,
+          background[i][2] * 0.95 + rand,
     ];
   }
 
@@ -156,30 +177,33 @@ pixels.frame(function () {
   for (i = 0; i < food.length; i++) {
 
       // Draw the food.
-      idx = (food[i].position[0]) * columns + food[i].position[1];
+      idx = (food[i].position[0]) * COLUMNS + food[i].position[1];
       data[idx] = food[i].color;
 
       // Players digest the food.
       for (var j = 0; j < players.length; j++) {
         if (arraysEqual(players[j].position, food[i].position)) {
-            food.splice(i, 1);
+            foodConsumed.push(food.splice(i, 1));
+            respawnFood();
             players[j].score += 1;
             break;
         }
       }
   }
 
-  // Update the players.
+  // Update the players' positions.
   players.forEach(function (p) {
       if (p.motion.auto) {
           p.move(p.motion.direction);
       }
-      data[(p.position[0]) * columns + p.position[1]] = p.color;
+      data[(p.position[0]) * COLUMNS + p.position[1]] = p.color;
   });
 
   pixels.update(data);
 
   document.getElementById("score").innerHTML = players[0].score;
+  dollars = (players[0].score * DOLLARS_PER_POINT).toFixed(2);
+  document.getElementById("dollars").innerHTML = dollars;
 });
 
 //
@@ -210,3 +234,14 @@ function arraysEqual(arr1, arr2) {
     }
     return true;
 }
+
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+// function serialize() {
+//     return {
+//         food,
+//         players
+//     }
+// }
