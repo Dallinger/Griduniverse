@@ -226,6 +226,14 @@ $(document).ready(function() {
     url = location.protocol + '//' + document.domain + ':' + location.port;
     var socket = io.connect(url);
 
+    socket.on('new_data', function(msg) {
+        console.log(msg);
+    });
+
+    socket.on('connect', function(msg) {
+        console.log("connected!");
+    });
+
     //
     // Key bindings
     //
