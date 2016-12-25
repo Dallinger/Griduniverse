@@ -241,15 +241,23 @@ $(document).ready(function() {
     // Key bindings
     //
     directions = ["up", "down", "left", "right"];
+    lock = false;
     directions.forEach(function (direction){
         Mousetrap.bind(direction, function () {
-            players[0].move(direction);
-            socket.emit('move', {
-                player: players[0].id,
-                move: direction,
-            });
+            if (!lock) {
+                players[0].move(direction);
+                socket.emit('move', {
+                    player: players[0].id,
+                    move: direction,
+                });
+            }
+            lock = true;
             return false;
         });
+        Mousetrap.bind(direction, function () {
+            lock = false;
+            return false;
+        }, "keyup");
     });
 
     Mousetrap.bind("b", function () {
