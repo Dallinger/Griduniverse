@@ -227,9 +227,10 @@ $(document).ready(function() {
     var socket = io.connect(url);
 
     socket.on('state', function(msg) {
-        console.log(msg);
         state = JSON.parse(msg.state_json);
-        console.log(state);
+        for (var i = 0; i < state.players.length; i++) {
+            players[state.players[i].id].position = state.players[i].position;
+        }
     });
 
     socket.on('connect', function(msg) {
