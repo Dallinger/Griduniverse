@@ -1,4 +1,5 @@
 from flask import Flask
+from flask import request
 from flask import render_template
 from flask_socketio import emit
 from flask_socketio import send
@@ -43,6 +44,11 @@ def index(name=None):
 @socketio.on('message')
 def handle_message(message):
     print(json.dumps(message))
+
+
+@socketio.on('disconnect')
+def test_disconnect():
+    print('Client disconnected', request.sid)
 
 
 if __name__ == '__main__':
