@@ -1,15 +1,35 @@
+from grid import (
+    Gridworld,
+    Player,
+)
+
 from flask import Flask
 from flask import render_template
 from flask import request
 from flask_socketio import emit
 from flask_socketio import send
 from flask_socketio import SocketIO
-import json
 
+import json
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
+
+grid = Gridworld(
+    num_players=2,
+    columns=20,
+    rows=20,
+    grid_block_size=15,
+    grid_padding=1,
+    respawn_food=True,
+    dollars_per_point=0.02,
+)
+
+grid.players = [
+    Player(id=0, position=[0, 0]),
+    Player(id=1, position=[5, grid.columns - 5]),
+]
 
 
 def background_thread():
@@ -19,10 +39,10 @@ def background_thread():
         socketio.sleep(1.00)
         count += 1
         socketio.emit(
-            'new_data',
+            'state',
             {
-                'data': 'Server generated event',
-                'count': count
+                'state_json': grid.serialize(),
+                'count': count,
             },
             broadcast=True,
         )

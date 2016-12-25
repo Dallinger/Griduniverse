@@ -130,7 +130,7 @@ players = [
         position: [0, 0],
         color: BLUE,
         motion: {
-            auto: true,
+            auto: false,
             direction: "right",
             speed: 8,
             _timestamp: 0,
@@ -226,8 +226,10 @@ $(document).ready(function() {
     url = location.protocol + '//' + document.domain + ':' + location.port;
     var socket = io.connect(url);
 
-    socket.on('new_data', function(msg) {
+    socket.on('state', function(msg) {
         console.log(msg);
+        state = JSON.parse(msg.state_json);
+        console.log(state);
     });
 
     socket.on('connect', function(msg) {
