@@ -243,7 +243,7 @@ $(document).ready(function() {
     directions.forEach(function (direction){
         Mousetrap.bind(direction, function () {
             players[0].move(direction);
-            socket.send({
+            socket.emit('move', {
                 player: players[0].id,
                 move: direction,
             });

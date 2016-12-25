@@ -37,6 +37,25 @@ class Player(object):
         self.color = kwargs.get('color', [0.5, 0.5, 0.5])
         self.score = 0
 
+    def move(self, direction, rows=20, columns=20):
+        """Move the player."""
+
+        if direction == "up":
+            if self.position[0] > 0:
+                self.position[0] -= 1
+
+        elif direction == "down":
+            if self.position[0] < (rows - 1):
+                self.position[0] = self.position[0] + 1
+
+        elif direction == "left":
+            if self.position[1] > 0:
+                self.position[1] = self.position[1] - 1
+
+        elif direction == "right":
+            if self.position[1] < (columns - 1):
+                self.position[1] = self.position[1] + 1
+
     def serialize(self):
         return {
             "id": self.id,

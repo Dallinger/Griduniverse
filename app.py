@@ -65,6 +65,14 @@ def handle_message(message):
     print(json.dumps(message))
 
 
+@socketio.on('move')
+def handle_move(msg):
+    grid.players[msg['player']].move(
+        msg['move'],
+        rows=grid.rows,
+        columns=grid.columns)
+
+
 @socketio.on('disconnect')
 def test_disconnect():
     print('Client disconnected', request.sid)
