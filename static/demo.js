@@ -5,7 +5,8 @@ var parse = require('parse-color');
 var position = require('mouse-position');
 var mousetrap = require('mousetrap');
 var colors = require('colors.css');
-
+var io = require('socket.io-client')();
+var $ = require("jquery");
 
 // Parameters
 
@@ -206,25 +207,6 @@ pixels.frame(function () {
   document.getElementById("dollars").innerHTML = dollars;
 });
 
-//
-// Key bindings
-//
-directions = ["up", "down", "left", "right"];
-directions.forEach(function (direction){
-    Mousetrap.bind(direction, function () {
-        players[0].move(direction);
-        return false;
-    });
-});
-
-Mousetrap.bind("b", function () {
-    players[0].color = BLUE;
-});
-
-Mousetrap.bind("y", function () {
-    players[0].color = YELLOW;
-});
-
 start = Date.now();
 
 function arraysEqual(arr1, arr2) {
@@ -238,6 +220,35 @@ function arraysEqual(arr1, arr2) {
 function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
+
+$(document).ready(function() {
+
+    url = location.protocol + '//' + document.domain + ':' + location.port;
+    var socket = io.connect(url);
+
+    //
+    // Key bindings
+    //
+    directions = ["up", "down", "left", "right"];
+    directions.forEach(function (direction){
+        Mousetrap.bind(direction, function () {
+            players[0].move(direction);
+            socket.send({
+                player: players[0].id,
+                move: direction,
+            });
+            return false;
+        });
+    });
+
+    Mousetrap.bind("b", function () {
+        players[0].color = BLUE;
+    });
+
+    Mousetrap.bind("y", function () {
+        players[0].color = YELLOW;
+    });
+});
 
 // function serialize() {
 //     return {
