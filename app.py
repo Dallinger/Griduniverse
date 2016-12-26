@@ -11,6 +11,7 @@ from flask_socketio import send
 from flask_socketio import SocketIO
 
 import json
+import time
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -32,11 +33,23 @@ grid.players = [
 ]
 
 
-def background_thread():
+def update_physics_thread():
+    """Update the world state."""
+    frame = 0
+    while True:
+        socketio.sleep(0.100)
+        frame += 1
+        grid.consume()
+
+
+socketio.start_background_task(target=update_physics_thread)
+
+
+def send_state_thread():
     """Example of how to send server-generated events to clients."""
     count = 0
     while True:
-        socketio.sleep(0.100)
+        socketio.sleep(1.00)
         count += 1
         socketio.emit(
             'state',
@@ -47,7 +60,7 @@ def background_thread():
             broadcast=True,
         )
 
-socketio.start_background_task(target=background_thread)
+socketio.start_background_task(target=send_state_thread)
 
 
 @socketio.on('connect')
