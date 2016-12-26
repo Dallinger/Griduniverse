@@ -204,10 +204,6 @@ pixels.frame(function () {
   });
 
   pixels.update(data);
-
-  document.getElementById("score").innerHTML = players[0].score;
-  dollars = (players[0].score * DOLLARS_PER_POINT).toFixed(2);
-  document.getElementById("dollars").innerHTML = dollars;
 });
 
 start = Date.now();
@@ -230,10 +226,15 @@ $(document).ready(function() {
     var socket = io.connect(url);
 
     socket.on('state', function(msg) {
+
+        // Update players.
         state = JSON.parse(msg.state_json);
         for (var i = 0; i < state.players.length; i++) {
             players[state.players[i].id].position = state.players[i].position;
+            players[state.players[i].id].score = state.players[i].score;
         }
+
+        // Update food.
         food = [];
         for (var j = 0; j < state.food.length; j++) {
             food.push(new Food({
@@ -242,6 +243,11 @@ $(document).ready(function() {
                 color: WHITE,
             }));
         }
+
+        // Update displayed score.
+        $("#score").html(players[EGO].score);
+        dollars = (players[EGO].score * DOLLARS_PER_POINT).toFixed(2);
+        $("#dollars").html(dollars);
     });
 
     socket.on('connect', function(msg) {
