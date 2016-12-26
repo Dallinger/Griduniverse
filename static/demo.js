@@ -19,6 +19,7 @@ RESPAWN_FOOD = true;
 DOLLARS_PER_POINT = 0.02;
 ROWS = 20;
 COLUMNS = 20;
+EGO = 0;  // Player ID of self.
 
 var data = [];
 var background = [];
@@ -257,9 +258,9 @@ $(document).ready(function() {
     directions.forEach(function (direction){
         Mousetrap.bind(direction, function () {
             if (!lock) {
-                players[0].move(direction);
+                players[EGO].move(direction);
                 socket.emit('move', {
-                    player: players[0].id,
+                    player: players[EGO].id,
                     move: direction,
                 });
             }
@@ -273,10 +274,10 @@ $(document).ready(function() {
     });
 
     Mousetrap.bind("b", function () {
-        players[0].color = BLUE;
+        players[EGO].color = BLUE;
     });
 
     Mousetrap.bind("y", function () {
-        players[0].color = YELLOW;
+        players[EGO].color = YELLOW;
     });
 });
