@@ -280,10 +280,3 @@ $(document).ready(function() {
         players[0].color = YELLOW;
     });
 });
-
-// function serialize() {
-//     return {
-//         food,
-//         players
-//     }
-// }
