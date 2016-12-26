@@ -181,15 +181,18 @@ pixels.frame(function () {
       idx = (food[i].position[0]) * COLUMNS + food[i].position[1];
       data[idx] = food[i].color;
 
-      // Players digest the food.
-      for (var j = 0; j < players.length; j++) {
-        if (arraysEqual(players[j].position, food[i].position)) {
-            foodConsumed.push(food.splice(i, 1));
-            respawnFood();
-            players[j].score += 1;
-            break;
-        }
-      }
+    //   // Players digest the food.
+    //   for (var j = 0; j < players.length; j++) {
+    //     if (arraysEqual(players[j].position, food[i].position)) {
+    //         foodConsumed.push(food.splice(i, 1));
+    //         respawnFood();
+    //         players[j].score += 1;
+    //         break;
+    //     }
+    //   }
+
+    // Next up is having the front-end draw the food according to the state
+    // that was broadcasted from the backend.
   }
 
   // Update the players' positions.
@@ -230,6 +233,14 @@ $(document).ready(function() {
         state = JSON.parse(msg.state_json);
         for (var i = 0; i < state.players.length; i++) {
             players[state.players[i].id].position = state.players[i].position;
+        }
+        food = [];
+        for (var j = 0; j < state.food.length; j++) {
+            food.push(new Food({
+                id: state.food[j].id,
+                position: state.food[j].position,
+                color: WHITE,
+            }));
         }
     });
 

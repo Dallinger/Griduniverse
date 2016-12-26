@@ -1,6 +1,7 @@
 """Define the Griduniverse."""
 
 import json
+import random
 import uuid
 
 
@@ -11,6 +12,7 @@ class Gridworld(object):
 
         self.players = []
         self.food = []
+        self.food_consumed = []
 
         self.num_players = kwargs.get('num_players', 4)
         self.columns = kwargs.get('columns', 20)
@@ -25,6 +27,44 @@ class Gridworld(object):
             "players": [player.serialize() for player in self.players],
             "food": [food.serialize() for food in self.food],
         })
+
+    def consume(self):
+        """Players consume the food."""
+        for food in self.food:
+            for player in self.players:
+                if food.position == player.position:
+                    self.food_consumed.append(food)
+                    self.food.remove(food)
+                    self.respawn()
+                    player.score = player.score + 1
+                    break
+
+    def respawn(self):
+        """Respawn the food."""
+        self.food.append(Food(
+            id=(len(self.food) + len(self.food_consumed)),
+            position=[
+                random.randint(0, self.columns - 1),
+                random.randint(0, self.rows - 1),
+            ],
+            color=[1.00, 1.00, 1.00],
+        ))
+
+
+class Food(object):
+    """Food."""
+    def __init__(self, **kwargs):
+        super(Food, self).__init__()
+
+        self.id = kwargs.get('id', uuid.uuid4())
+        self.position = kwargs.get('position', [0, 0])
+        self.color = kwargs.get('color', [0.5, 0.5, 0.5])
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "position": self.position,
+        }
 
 
 class Player(object):

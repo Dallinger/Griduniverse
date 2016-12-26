@@ -1,4 +1,5 @@
 from grid import (
+    Food,
     Gridworld,
     Player,
 )
@@ -30,6 +31,11 @@ grid = Gridworld(
 grid.players = [
     Player(id=0, position=[0, 0]),
     Player(id=1, position=[5, grid.columns - 5]),
+]
+
+grid.food = [
+    Food(id=0, position=[10, 10]),
+    Food(id=1, position=[5, 5]),
 ]
 
 
