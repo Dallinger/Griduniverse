@@ -65,18 +65,21 @@ Player = function (settings) {
     this.id = settings.id;
     this.position = settings.position;
     this.color = settings.color;
-    this.motion = settings.motion;
+    this.motion_auto = settings.motion_auto;
+    this.motion_direction = settings.motion_direction;
+    this.motion_speed = settings.motion_speed;
+    this.motion_timestamp = settings.motion_timestamp;
     this.score = settings.score;
     return this;
 };
 
 Player.prototype.move = function (direction) {
 
-    this.motion.direction = direction;
+    this.motion_direction = direction;
 
     ts = Date.now() - start;
-    waitTime = 1000 / this.motion.speed;
-    if (ts > this.motion._timestamp + waitTime) {
+    waitTime = 1000 / this.motion_speed;
+    if (ts > this.motion_timestamp + waitTime) {
 
         switch (direction) {
             case "up":
@@ -106,7 +109,7 @@ Player.prototype.move = function (direction) {
             default:
                 console.log("Direction not recognized.");
         }
-        this.motion._timestamp = ts;
+        this.motion_timestamp = ts;
     }
 };
 
@@ -130,24 +133,20 @@ players = [
         id: 0,
         position: [0, 0],
         color: BLUE,
-        motion: {
-            auto: false,
-            direction: "right",
-            speed: 8,
-            _timestamp: 0,
-        },
+        motion_auto: false,
+        motion_direction: "right",
+        motion_speed: 8,
+        motion_timestamp: 0,
         score: 0,
     }),
     new Player({
         id: 1,
         position: [5, COLUMNS - 5],
         color: YELLOW,
-        motion: {
-            auto: false,
-            direction: "left",
-            speed: 8,  // Blocks per second.
-            _timestamp: 0,
-        },
+        motion_auto: false,
+        motion_direction: "left",
+        motion_speed: 8,  // Blocks per second.
+        motion_timestamp: 0,
         score: 0,
     }),
 ];
@@ -193,8 +192,8 @@ pixels.frame(function () {
 
   // Update the players' positions.
   players.forEach(function (p) {
-      if (p.motion.auto) {
-          p.move(p.motion.direction);
+      if (p.motion_auto) {
+          p.move(p.motion_direction);
       }
       data[(p.position[0]) * COLUMNS + p.position[1]] = p.color;
   });
@@ -226,8 +225,7 @@ $(document).ready(function() {
         // Update players.
         state = JSON.parse(msg.state_json);
         for (var i = 0; i < state.players.length; i++) {
-            players[state.players[i].id].position = state.players[i].position;
-            players[state.players[i].id].score = state.players[i].score;
+            players[state.players[i].id] = new Player(state.players[i]);
         }
 
         // Update food.

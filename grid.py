@@ -75,10 +75,17 @@ class Player(object):
         self.id = kwargs.get('id', uuid.uuid4())
         self.position = kwargs.get('position', [0, 0])
         self.color = kwargs.get('color', [0.5, 0.5, 0.5])
+        self.motion_auto = kwargs.get('motion_auto', False)
+        self.motion_direction = kwargs.get('motion_direction', 'right')
+        self.motion_speed = kwargs.get('motion_speed', 8)
+        self.motion_timestamp = 0
+
         self.score = 0
 
     def move(self, direction, rows=20, columns=20):
         """Move the player."""
+
+        self.motion_direction = direction
 
         if direction == "up":
             if self.position[0] > 0:
@@ -101,4 +108,9 @@ class Player(object):
             "id": self.id,
             "position": self.position,
             "score": self.score,
+            "color": self.color,
+            "motion_auto": self.motion_auto,
+            "motion_direction": self.motion_direction,
+            "motion_speed": self.motion_speed,
+            "motion_timestamp": self.motion_timestamp,
         }

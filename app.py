@@ -29,8 +29,21 @@ grid = Gridworld(
 )
 
 grid.players = [
-    Player(id=0, position=[0, 0]),
-    Player(id=1, position=[5, grid.columns - 5]),
+    Player(
+        id=0,
+        position=[0, 0],
+        color=[0.50, 0.86, 1.00],
+        motion_auto=False,
+        motion_direction="right",
+        motion_speed=8,
+        motion_timestamp=0
+    ),
+    Player(
+        id=1,
+        position=[5, grid.columns - 5],
+        color=[1.00, 0.86, 0.50],
+        motion_auto=False
+    ),
 ]
 
 grid.food = [
@@ -38,24 +51,37 @@ grid.food = [
     Food(id=1, position=[5, 5]),
 ]
 
+start = time.time()
 
-def update_physics_thread():
+
+def game_loop():
     """Update the world state."""
     frame = 0
     while True:
         socketio.sleep(0.100)
         frame += 1
+        for player in grid.players:
+            if player.motion_auto:
+                ts = time.time() - start
+                wait_time = 1.0 / player.motion_speed
+                if (ts > (player.motion_timestamp + wait_time)):
+                    player.move(
+                        player.motion_direction,
+                        rows=grid.rows,
+                        columns=grid.columns)
+                    player.motion_timestamp = ts
+
         grid.consume()
 
 
-socketio.start_background_task(target=update_physics_thread)
+socketio.start_background_task(target=game_loop)
 
 
 def send_state_thread():
     """Example of how to send server-generated events to clients."""
     count = 0
     while True:
-        socketio.sleep(1.00)
+        socketio.sleep(0.100)
         count += 1
         socketio.emit(
             'state',
@@ -86,7 +112,8 @@ def handle_message(message):
 
 @socketio.on('move')
 def handle_move(msg):
-    grid.players[msg['player']].move(
+    player = grid.players[msg['player']]
+    player.move(
         msg['move'],
         rows=grid.rows,
         columns=grid.columns)
