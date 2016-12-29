@@ -18,6 +18,8 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
 
+clients = []
+
 grid = Gridworld(
     num_players=2,
     columns=20,
@@ -97,7 +99,15 @@ socketio.start_background_task(target=send_state_thread)
 
 @socketio.on('connect')
 def test_connect():
-    emit('connected', {'data': 'Connected', 'count': 0})
+    print("Client {} has connected.".format(request.sid))
+    clients.append(request.sid)
+
+
+@socketio.on('disconnect')
+def test_disconnect():
+    print('Client {} has disconnected.'.format(request.sid))
+    clients[clients.index(request.sid)] = -1
+
 
 
 @app.route('/')
@@ -117,11 +127,6 @@ def handle_move(msg):
         msg['move'],
         rows=grid.rows,
         columns=grid.columns)
-
-
-@socketio.on('disconnect')
-def test_disconnect():
-    print('Client disconnected', request.sid)
 
 
 if __name__ == '__main__':
