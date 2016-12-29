@@ -111,8 +111,8 @@ def test_disconnect():
 
 
 @app.route('/')
-def index(name=None):
-    return render_template('index.html', name=name)
+def index():
+    return render_template('index.html')
 
 
 @socketio.on('message')
