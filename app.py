@@ -129,5 +129,11 @@ def handle_move(msg):
         columns=grid.columns)
 
 
+@socketio.on('change_color')
+def handle_change_color(msg):
+    player = grid.players[msg['player']]
+    player.color = msg['color']
+
+
 if __name__ == '__main__':
     socketio.run(app)
