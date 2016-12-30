@@ -113,6 +113,8 @@ Player.prototype.move = function (direction) {
     }
 };
 
+clients = [];
+
 food = [
     new Food({
         id: 0,
@@ -221,6 +223,10 @@ $(document).ready(function() {
     var socket = io.connect(url);
 
     socket.on('state', function(msg) {
+
+        clients = msg.clients;
+
+        EGO = clients.indexOf(socket.io.engine.id);
 
         // Update players.
         state = JSON.parse(msg.state_json);
