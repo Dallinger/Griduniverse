@@ -37,7 +37,7 @@ def game_loop():
     """Update the world state."""
     frame = 0
     while True:
-        socketio.sleep(0.100)
+        socketio.sleep(0.010)
         frame += 1
         for player in grid.players:
             if player.motion_auto:
@@ -60,7 +60,7 @@ def send_state_thread():
     """Example of how to send server-generated events to clients."""
     count = 0
     while True:
-        socketio.sleep(0.100)
+        socketio.sleep(0.050)
         count += 1
         socketio.emit(
             'state',
