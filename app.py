@@ -66,6 +66,7 @@ def send_state_thread():
             'state',
             {
                 'state_json': grid.serialize(),
+                'clients': clients,
                 'count': count,
             },
             broadcast=True,
