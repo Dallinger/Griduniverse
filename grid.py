@@ -4,6 +4,10 @@ import json
 import random
 import uuid
 
+blue = [0.50, 0.86, 1.00]
+yellow = [1.00, 0.86, 0.50]
+white = [1.00, 1.00, 1.00]
+
 
 class Gridworld(object):
     """A Gridworld in the Griduniverse."""
@@ -19,8 +23,12 @@ class Gridworld(object):
         self.rows = kwargs.get('rows', 20)
         self.grid_block_size = kwargs.get('grid_block_size', 15)
         self.grid_padding = kwargs.get('grid_padding', 1)
+        self.num_food = kwargs.get('num_food', self.num_players - 1)
         self.respawn_food = kwargs.get('respawn_food', True)
         self.dollars_per_point = kwargs.get('dollars_per_point', 0.02)
+
+        for i in range(self.num_food):
+            self.spawn_food()
 
     def serialize(self):
         return json.dumps({
@@ -35,11 +43,11 @@ class Gridworld(object):
                 if food.position == player.position:
                     self.food_consumed.append(food)
                     self.food.remove(food)
-                    self.respawn()
+                    self.spawn_food()
                     player.score = player.score + 1
                     break
 
-    def respawn(self):
+    def spawn_food(self):
         """Respawn the food."""
         self.food.append(Food(
             id=(len(self.food) + len(self.food_consumed)),
@@ -49,6 +57,17 @@ class Gridworld(object):
             ],
             color=[1.00, 1.00, 1.00],
         ))
+
+    def spawn_player(self, id=None):
+        """Spawn a player."""
+        player = Player(
+            id=id,
+            position=[
+                random.randint(0, self.columns),
+                random.randint(0, self.rows),
+            ],
+        )
+        self.players.append(player)
 
 
 class Food(object):
@@ -74,7 +93,7 @@ class Player(object):
 
         self.id = kwargs.get('id', uuid.uuid4())
         self.position = kwargs.get('position', [0, 0])
-        self.color = kwargs.get('color', [0.5, 0.5, 0.5])
+        self.color = kwargs.get('color', random.choice([blue, yellow]))
         self.motion_auto = kwargs.get('motion_auto', False)
         self.motion_direction = kwargs.get('motion_direction', 'right')
         self.motion_speed = kwargs.get('motion_speed', 8)

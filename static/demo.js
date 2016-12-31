@@ -114,44 +114,10 @@ Player.prototype.move = function (direction) {
 };
 
 clients = [];
-
-food = [
-    new Food({
-        id: 0,
-        position: [10, 10],
-        color: WHITE,
-    }),
-    new Food({
-        id: 1,
-        position: [5, 5],
-        color: WHITE,
-    })
-];
-
+food = [];
 foodConsumed = [];
+players = [];
 
-players = [
-    new Player({
-        id: 0,
-        position: [0, 0],
-        color: BLUE,
-        motion_auto: false,
-        motion_direction: "right",
-        motion_speed: 8,
-        motion_timestamp: 0,
-        score: 0,
-    }),
-    new Player({
-        id: 1,
-        position: [5, COLUMNS - 5],
-        color: YELLOW,
-        motion_auto: false,
-        motion_direction: "left",
-        motion_speed: 8,  // Blocks per second.
-        motion_timestamp: 0,
-        score: 0,
-    }),
-];
 
 pixels.canvas.style.marginLeft = (window.innerWidth * 0.03) / 2 + 'px';
 pixels.canvas.style.marginTop = (window.innerHeight * 0.04) / 2 + 'px';

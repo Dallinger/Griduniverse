@@ -30,29 +30,6 @@ grid = Gridworld(
     dollars_per_point=0.02,
 )
 
-grid.players = [
-    Player(
-        id=0,
-        position=[0, 0],
-        color=[0.50, 0.86, 1.00],
-        motion_auto=False,
-        motion_direction="right",
-        motion_speed=8,
-        motion_timestamp=0
-    ),
-    Player(
-        id=1,
-        position=[5, grid.columns - 5],
-        color=[1.00, 0.86, 0.50],
-        motion_auto=False
-    ),
-]
-
-grid.food = [
-    Food(id=0, position=[10, 10]),
-    Food(id=1, position=[5, 5]),
-]
-
 start = time.time()
 
 
@@ -101,6 +78,7 @@ socketio.start_background_task(target=send_state_thread)
 def test_connect():
     print("Client {} has connected.".format(request.sid))
     clients.append(request.sid)
+    grid.spawn_player(id=clients.index(request.sid))
 
 
 @socketio.on('disconnect')
