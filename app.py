@@ -21,11 +21,11 @@ socketio = SocketIO(app)
 clients = []
 
 grid = Gridworld(
-    num_players=2,
-    columns=20,
-    rows=20,
-    grid_block_size=15,
-    grid_padding=1,
+    num_players=3,
+    columns=40,
+    rows=40,
+    block_size=10,
+    padding=1,
     respawn_food=True,
     dollars_per_point=0.02,
 )
@@ -90,7 +90,7 @@ def test_disconnect():
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', grid=grid)
 
 
 @socketio.on('message')

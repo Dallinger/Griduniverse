@@ -2,6 +2,18 @@
 <html>
 <body>
 <p><span id="score">0</span> points ($<span id="dollars">0.00</span>)</p>
+<script type="text/javascript">
+    // Parameters
+    // BLUE = [0.50, 0.86, 1.00];
+    // YELLOW = [1.00, 0.86, 0.50];
+    // WHITE = [1.00, 1.00, 1.00];
+    BLOCK_SIZE = {{ grid.block_size }};
+    PADDING = {{ grid.padding }};
+    RESPAWN_FOOD = {{ grid.respawn_food }};
+    DOLLARS_PER_POINT = {{ grid.dollars_per_point }};
+    ROWS = {{ grid.rows }};
+    COLUMNS = {{ grid.columns }};
+</script>
 <script src="static/bundle.js"></script>
 <p>Instructions.</p>
 <p>You are blue. Move using the arrow keys. Press 'b' or 'y' to switch to blue or yellow.</p>

@@ -8,19 +8,6 @@ var colors = require('colors.css');
 var io = require('socket.io-client')();
 var $ = require("jquery");
 
-// Parameters
-
-BLUE = [0.50, 0.86, 1.00];
-YELLOW = [1.00, 0.86, 0.50];
-WHITE = [1.00, 1.00, 1.00];
-GRID_BLOCK_SIZE = 15;
-GRID_PADDING = 1;
-RESPAWN_FOOD = true;
-DOLLARS_PER_POINT = 0.02;
-ROWS = 20;
-COLUMNS = 20;
-EGO = 0;  // Player ID of self.
-
 var data = [];
 var background = [];
 for (var i = 0; i < ROWS; i++) {
@@ -34,8 +21,8 @@ var pixels = grid(data, {
   root: document.body,
   rows: ROWS,
   columns: COLUMNS,
-  size: GRID_BLOCK_SIZE,
-  padding: GRID_PADDING,
+  size: BLOCK_SIZE,
+  padding: PADDING,
   background: [0.1, 0.1, 0.1],
   formatted: true
 });
