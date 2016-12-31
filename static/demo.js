@@ -233,19 +233,21 @@ $(document).ready(function() {
         }, "keyup");
     });
 
-    Mousetrap.bind("b", function () {
-        players[EGO].color = BLUE;
-        socket.emit('change_color', {
-            player: players[EGO].id,
-            color: BLUE,
+    if (MUTABLE_COLORS) {
+        Mousetrap.bind("b", function () {
+            players[EGO].color = BLUE;
+            socket.emit('change_color', {
+                player: players[EGO].id,
+                color: BLUE,
+            });
         });
-    });
 
-    Mousetrap.bind("y", function () {
-        players[EGO].color = YELLOW;
-        socket.emit('change_color', {
-            player: players[EGO].id,
-            color: YELLOW,
+        Mousetrap.bind("y", function () {
+            players[EGO].color = YELLOW;
+            socket.emit('change_color', {
+                player: players[EGO].id,
+                color: YELLOW,
+            });
         });
-    });
+    }
 });

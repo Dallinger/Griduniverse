@@ -26,6 +26,7 @@ class Gridworld(object):
         self.num_food = kwargs.get('num_food', self.num_players - 1)
         self.respawn_food = kwargs.get('respawn_food', True)
         self.dollars_per_point = kwargs.get('dollars_per_point', 0.02)
+        self.mutable_colors = kwargs.get('mutable_colors', False)
 
         for i in range(self.num_food):
             self.spawn_food()

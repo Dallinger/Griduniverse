@@ -27,6 +27,7 @@ grid = Gridworld(
     block_size=10,
     padding=1,
     respawn_food=True,
+    mutable_colors=False,
     dollars_per_point=0.02,
 )
 
