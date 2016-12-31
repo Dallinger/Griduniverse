@@ -88,7 +88,6 @@ def test_disconnect():
     clients[clients.index(request.sid)] = -1
 
 
-
 @app.route('/')
 def index():
     return render_template('index.html', grid=grid)

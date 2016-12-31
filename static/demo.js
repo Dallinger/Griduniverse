@@ -105,7 +105,6 @@ food = [];
 foodConsumed = [];
 players = [];
 
-
 pixels.canvas.style.marginLeft = (window.innerWidth * 0.03) / 2 + 'px';
 pixels.canvas.style.marginTop = (window.innerHeight * 0.04) / 2 + 'px';
 document.body.style.transition = '0.3s all';
