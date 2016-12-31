@@ -17,6 +17,10 @@ for (var i = 0; i < ROWS; i++) {
   }
 }
 
+BLUE = [0.50, 0.86, 1.00];
+YELLOW = [1.00, 0.86, 0.50];
+WHITE = [1.00, 1.00, 1.00];
+
 var pixels = grid(data, {
   root: document.body,
   rows: ROWS,

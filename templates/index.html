@@ -4,12 +4,9 @@
 <p><span id="score">0</span> points ($<span id="dollars">0.00</span>)</p>
 <script type="text/javascript">
     // Parameters
-    // BLUE = [0.50, 0.86, 1.00];
-    // YELLOW = [1.00, 0.86, 0.50];
-    // WHITE = [1.00, 1.00, 1.00];
     BLOCK_SIZE = {{ grid.block_size }};
     PADDING = {{ grid.padding }};
-    RESPAWN_FOOD = {{ grid.respawn_food }};
+    RESPAWN_FOOD = "{{ grid.respawn_food }}"==="True";
     DOLLARS_PER_POINT = {{ grid.dollars_per_point }};
     ROWS = {{ grid.rows }};
     COLUMNS = {{ grid.columns }};
