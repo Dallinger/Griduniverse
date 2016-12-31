@@ -78,8 +78,10 @@ socketio.start_background_task(target=send_state_thread)
 @socketio.on('connect')
 def test_connect():
     print("Client {} has connected.".format(request.sid))
-    clients.append(request.sid)
-    grid.spawn_player(id=clients.index(request.sid))
+    client_count = len([c for c in clients if clients is not -1])
+    if client_count < grid.num_players:
+        clients.append(request.sid)
+        grid.spawn_player(id=clients.index(request.sid))
 
 
 @socketio.on('disconnect')
