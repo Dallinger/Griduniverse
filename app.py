@@ -23,6 +23,7 @@ clients = []
 grid = Gridworld(
     num_players=3,
     columns=40,
+    num_colors=2,
     rows=40,
     block_size=10,
     padding=1,

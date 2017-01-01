@@ -4,10 +4,6 @@ import json
 import random
 import uuid
 
-blue = [0.50, 0.86, 1.00]
-yellow = [1.00, 0.86, 0.50]
-white = [1.00, 1.00, 1.00]
-
 
 class Gridworld(object):
     """A Gridworld in the Griduniverse."""
@@ -26,6 +22,7 @@ class Gridworld(object):
         self.num_food = kwargs.get('num_food', self.num_players - 1)
         self.respawn_food = kwargs.get('respawn_food', True)
         self.dollars_per_point = kwargs.get('dollars_per_point', 0.02)
+        self.num_colors = kwargs.get('num_colors', 2)
         self.mutable_colors = kwargs.get('mutable_colors', False)
 
         for i in range(self.num_food):
@@ -67,6 +64,7 @@ class Gridworld(object):
                 random.randint(0, self.columns),
                 random.randint(0, self.rows),
             ],
+            num_possible_colors=self.num_colors,
         )
         self.players.append(player)
 
@@ -89,17 +87,41 @@ class Food(object):
 
 class Player(object):
     """A player."""
+    color_names = [
+        "blue",
+        "yellow",
+        "green",
+        "red",
+    ]
+    colors = [
+        [0.50, 0.86, 1.00],
+        [1.00, 0.86, 0.50],
+        [0.56, 0.60, 0.16],
+        [0.64, 0.11, 0.31],
+    ]
+
     def __init__(self, **kwargs):
         super(Player, self).__init__()
 
         self.id = kwargs.get('id', uuid.uuid4())
         self.position = kwargs.get('position', [0, 0])
-        self.color = kwargs.get('color', random.choice([blue, yellow]))
         self.motion_auto = kwargs.get('motion_auto', False)
         self.motion_direction = kwargs.get('motion_direction', 'right')
         self.motion_speed = kwargs.get('motion_speed', 8)
-        self.motion_timestamp = 0
+        self.num_possible_colors = kwargs.get('num_possible_colors', 2)
 
+        # Determine the player's color.
+        if 'color' in kwargs:
+            self.color_idx = Player.colors.index(kwargs['color'])
+        elif 'color_name' in kwargs:
+            self.color_idx = Player.color_names.index(kwargs['color_name'])
+        else:
+            self.color_idx = random.randint(0, self.num_possible_colors - 1)
+
+        self.color_name = Player.color_names[self.color_idx]
+        self.color = Player.colors[self.color_idx]
+
+        self.motion_timestamp = 0
         self.score = 0
 
     def move(self, direction, rows=20, columns=20):
