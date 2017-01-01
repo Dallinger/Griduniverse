@@ -1,14 +1,8 @@
-from grid import (
-    Food,
-    Gridworld,
-    Player,
-)
+from grid import Gridworld
 
 from flask import Flask
 from flask import render_template
 from flask import request
-from flask_socketio import emit
-from flask_socketio import send
 from flask_socketio import SocketIO
 
 import json
