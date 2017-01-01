@@ -50,8 +50,8 @@ class Gridworld(object):
         self.food.append(Food(
             id=(len(self.food) + len(self.food_consumed)),
             position=[
-                random.randint(0, self.columns - 1),
                 random.randint(0, self.rows - 1),
+                random.randint(0, self.columns - 1),
             ],
             color=[1.00, 1.00, 1.00],
         ))
@@ -61,8 +61,8 @@ class Gridworld(object):
         player = Player(
             id=id,
             position=[
-                random.randint(0, self.columns),
-                random.randint(0, self.rows),
+                random.randint(0, self.rows - 1),
+                random.randint(0, self.columns - 1),
             ],
             num_possible_colors=self.num_colors,
         )

@@ -44,7 +44,7 @@ Food = function (settings) {
 respawnFood = function () {
     food.push(new Food({
         id: food.length + foodConsumed.length,
-        position: [getRandomInt(0, COLUMNS), getRandomInt(0, ROWS)],
+        position: [getRandomInt(0, ROWS), getRandomInt(0, COLUMNS)],
         color: WHITE,
     }));
 };
