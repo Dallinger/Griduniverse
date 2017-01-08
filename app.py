@@ -24,6 +24,7 @@ grid = Gridworld(
     respawn_food=True,
     mutable_colors=False,
     dollars_per_point=0.02,
+    player_overlap=False,
 )
 
 start = time.time()

@@ -24,6 +24,7 @@ class Gridworld(object):
         self.dollars_per_point = kwargs.get('dollars_per_point', 0.02)
         self.num_colors = kwargs.get('num_colors', 2)
         self.mutable_colors = kwargs.get('mutable_colors', False)
+        self.player_overlap = kwargs.get('player_overlap', True)
 
         for i in range(self.num_food):
             self.spawn_food()
@@ -69,27 +70,29 @@ class Gridworld(object):
         """Select an empty cell at random."""
         empty_cell = False
         while (not empty_cell):
-
             position = [
                 random.randint(0, self.rows - 1),
                 random.randint(0, self.columns - 1),
             ]
-
             empty_cell = self._empty(position)
 
         return position
 
     def _empty(self, position):
         """Determine whether a particular cell is empty."""
+        return not (self._has_player(position) or self._has_food(position))
+
+    def _has_player(self, position):
         for player in self.players:
             if player.position == position:
-                return False
+                return True
+        return False
 
+    def _has_food(self, position):
         for food in self.food:
             if food.position == position:
-                return False
-
-        return True
+                return True
+        return False
 
 
 class Food(object):
@@ -152,21 +155,26 @@ class Player(object):
 
         self.motion_direction = direction
 
+        new_position = self.position[:]
+
         if direction == "up":
             if self.position[0] > 0:
-                self.position[0] -= 1
+                new_position[0] -= 1
 
         elif direction == "down":
             if self.position[0] < (grid.rows - 1):
-                self.position[0] = self.position[0] + 1
+                new_position[0] = self.position[0] + 1
 
         elif direction == "left":
             if self.position[1] > 0:
-                self.position[1] = self.position[1] - 1
+                new_position[1] = self.position[1] - 1
 
         elif direction == "right":
             if self.position[1] < (grid.columns - 1):
-                self.position[1] = self.position[1] + 1
+                new_position[1] = self.position[1] + 1
+
+        if grid.player_overlap or not grid._has_player(new_position):
+            self.position = new_position
 
     def serialize(self):
         return {
