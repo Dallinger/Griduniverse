@@ -31,10 +31,8 @@ start = time.time()
 
 def game_loop():
     """Update the world state."""
-    frame = 0
     while True:
         socketio.sleep(0.010)
-        frame += 1
         for player in grid.players:
             if player.motion_auto:
                 ts = time.time() - start
