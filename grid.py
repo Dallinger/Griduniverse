@@ -60,13 +60,36 @@ class Gridworld(object):
         """Spawn a player."""
         player = Player(
             id=id,
-            position=[
-                random.randint(0, self.rows - 1),
-                random.randint(0, self.columns - 1),
-            ],
+            position=self._random_empty_position(),
             num_possible_colors=self.num_colors,
         )
         self.players.append(player)
+
+    def _random_empty_position(self):
+        """Select an empty cell at random."""
+        empty_cell = False
+        while (not empty_cell):
+
+            position = [
+                random.randint(0, self.rows - 1),
+                random.randint(0, self.columns - 1),
+            ]
+
+            empty_cell = self._empty(position)
+
+        return position
+
+    def _empty(self, position):
+        """Determine whether a particular cell is empty."""
+        for player in self.players:
+            if player.position == position:
+                return False
+
+        for food in self.food:
+            if food.position == position:
+                return False
+
+        return True
 
 
 class Food(object):
