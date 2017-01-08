@@ -40,10 +40,7 @@ def game_loop():
                 ts = time.time() - start
                 wait_time = 1.0 / player.motion_speed
                 if (ts > (player.motion_timestamp + wait_time)):
-                    player.move(
-                        player.motion_direction,
-                        rows=grid.rows,
-                        columns=grid.columns)
+                    player.move(player.motion_direction, grid=grid)
                     player.motion_timestamp = ts
 
         grid.consume()
@@ -99,10 +96,7 @@ def handle_message(message):
 @socketio.on('move')
 def handle_move(msg):
     player = grid.players[msg['player']]
-    player.move(
-        msg['move'],
-        rows=grid.rows,
-        columns=grid.columns)
+    player.move(msg['move'], grid=grid)
 
 
 @socketio.on('change_color')
