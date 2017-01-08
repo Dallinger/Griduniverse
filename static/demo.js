@@ -72,33 +72,39 @@ Player.prototype.move = function (direction) {
     waitTime = 1000 / this.motion_speed;
     if (ts > this.motion_timestamp + waitTime) {
 
+        var newPosition = this.position.slice();
+
         switch (direction) {
             case "up":
                 if (this.position[0] > 0) {
-                    this.position[0] -= 1;
+                    newPosition[0] -= 1;
                 }
                 break;
 
             case "down":
                 if (this.position[0] < ROWS - 1) {
-                    this.position[0] += 1;
+                    newPosition[0] += 1;
                 }
                 break;
 
             case "left":
                 if (this.position[1] > 0) {
-                    this.position[1] -= 1;
+                    newPosition[1] -= 1;
                 }
                 break;
 
             case "right":
                 if (this.position[1] < COLUMNS - 1) {
-                    this.position[1] += 1;
+                    newPosition[1] += 1;
                 }
                 break;
 
             default:
                 console.log("Direction not recognized.");
+
+            if (PLAYER_OVERLAP || !hasPlayer(newPosition)) {
+                this.position = newPosition;
+            }
         }
         this.motion_timestamp = ts;
     }
@@ -108,6 +114,16 @@ clients = [];
 food = [];
 foodConsumed = [];
 players = [];
+
+// Determine whether any player occupies the given position.
+function hasPlayer(position) {
+    for (var i = 0; i < players.length; i++) {
+        if (position == players[i].position) {
+            return false;
+        }
+    }
+    return true;
+}
 
 pixels.canvas.style.marginLeft = (window.innerWidth * 0.03) / 2 + 'px';
 pixels.canvas.style.marginTop = (window.innerHeight * 0.04) / 2 + 'px';
