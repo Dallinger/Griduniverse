@@ -6,11 +6,11 @@
     // Parameters
     BLOCK_SIZE = {{ grid.block_size }};
     PADDING = {{ grid.padding }};
-    RESPAWN_FOOD = "{{ grid.respawn_food }}"==="True";
+    RESPAWN_FOOD = {% if grid.respawn_food %}true{% else %}false{% endif %};
     DOLLARS_PER_POINT = {{ grid.dollars_per_point }};
     ROWS = {{ grid.rows }};
     COLUMNS = {{ grid.columns }};
-    MUTABLE_COLORS = "{{ grid.mutable_colors }}"==="True";
+    MUTABLE_COLORS = {% if grid.mutable_colors %}true{% else %}false{% endif %};
 </script>
 <script src="static/bundle.js"></script>
 <p>Instructions.</p>
