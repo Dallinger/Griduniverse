@@ -15,12 +15,12 @@ socketio = SocketIO(app)
 clients = []
 
 grid = Gridworld(
-    num_players=3,
-    columns=40,
-    num_colors=2,
-    rows=40,
+    num_players=10,
+    columns=20,
+    rows=20,
     block_size=10,
     padding=1,
+    num_colors=2,
     respawn_food=True,
     mutable_colors=False,
     dollars_per_point=0.02,
