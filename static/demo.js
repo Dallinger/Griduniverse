@@ -138,7 +138,11 @@ pixels.frame(function () {
 
   // Update the background.
   for (var i = 0; i < data.length; i++) {
-      rand = Math.random() * 0.02;
+      if (BACKGROUND_ANIMATION) {
+          rand = Math.random() * 0.02;
+      } else {
+          rand = 0.01;
+      }
       background[i] = [
           background[i][0] * 0.95 + rand,
           background[i][1] * 0.95 + rand,
