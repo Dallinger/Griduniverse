@@ -200,9 +200,13 @@ $(document).ready(function() {
 
     socket.on('state', function(msg) {
 
+        // Update EGO.
         clients = msg.clients;
-
         EGO = clients.indexOf(socket.io.engine.id);
+
+        // Update remaining time.
+        remainingTime = Math.max(Math.round(TIME - msg.remaining_time), 0);
+        $("#time").html(remainingTime);
 
         // Update players.
         state = JSON.parse(msg.state_json);
@@ -228,6 +232,13 @@ $(document).ready(function() {
 
     socket.on('connect', function(msg) {
         console.log("connected!");
+    });
+
+    socket.on('stop', function(msg) {
+        $("#game-over").show();
+        $("#dashboard").hide();
+        $("#instructions").hide();
+        pixels.canvas.style.display = "none";
     });
 
     //

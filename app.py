@@ -26,6 +26,7 @@ grid = Gridworld(
     dollars_per_point=0.02,
     player_overlap=False,
     background_animation=True,
+    time=300,
 )
 
 start = time.time()
@@ -33,8 +34,15 @@ start = time.time()
 
 def game_loop():
     """Update the world state."""
-    while True:
+    complete = False
+    while not complete:
+
         socketio.sleep(0.010)
+
+        if (time.time() - start) > grid.time:
+            complete = True
+            socketio.emit('stop', {}, broadcast=True)
+
         for player in grid.players:
             if player.motion_auto:
                 ts = time.time() - start
@@ -61,6 +69,7 @@ def send_state_thread():
                 'state_json': grid.serialize(),
                 'clients': clients,
                 'count': count,
+                'remaining_time': time.time() - start,
             },
             broadcast=True,
         )

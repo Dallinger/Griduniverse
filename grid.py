@@ -26,6 +26,7 @@ class Gridworld(object):
         self.mutable_colors = kwargs.get('mutable_colors', False)
         self.player_overlap = kwargs.get('player_overlap', True)
         self.background_animation = kwargs.get('background_animation', True)
+        self.time = kwargs.get('time', 300)
 
         for i in range(self.num_food):
             self.spawn_food()

@@ -1,21 +1,37 @@
 <!DOCTYPE html>
 <html>
+<head>
+    <script type="text/javascript">
+        // Parameters
+        BLOCK_SIZE = {{ grid.block_size }};
+        PADDING = {{ grid.padding }};
+        RESPAWN_FOOD = {% if grid.respawn_food %}true{% else %}false{% endif %};
+        DOLLARS_PER_POINT = {{ grid.dollars_per_point }};
+        ROWS = {{ grid.rows }};
+        COLUMNS = {{ grid.columns }};
+        MUTABLE_COLORS = {% if grid.mutable_colors %}true{% else %}false{% endif %};
+        PLAYER_OVERLAP = {% if grid.player_overlap %}true{% else %}false{% endif %};
+        BACKGROUND_ANIMATION = {% if grid.background_animation %}true{% else %}false{% endif %};
+        TIME = {{ grid.time }};
+    </script>
+</head>
 <body>
-<p><span id="score">0</span> points ($<span id="dollars">0.00</span>)</p>
-<script type="text/javascript">
-    // Parameters
-    BLOCK_SIZE = {{ grid.block_size }};
-    PADDING = {{ grid.padding }};
-    RESPAWN_FOOD = {% if grid.respawn_food %}true{% else %}false{% endif %};
-    DOLLARS_PER_POINT = {{ grid.dollars_per_point }};
-    ROWS = {{ grid.rows }};
-    COLUMNS = {{ grid.columns }};
-    MUTABLE_COLORS = {% if grid.mutable_colors %}true{% else %}false{% endif %};
-    PLAYER_OVERLAP = {% if grid.player_overlap %}true{% else %}false{% endif %};
-    BACKGROUND_ANIMATION = {% if grid.background_animation %}true{% else %}false{% endif %};
-</script>
-<script src="static/bundle.js"></script>
-<p>Instructions.</p>
-<p>You are blue. Move using the arrow keys. Press 'b' or 'y' to switch to blue or yellow.</p>
+    <div id="dashboard">
+        <p>
+            <span id="score">0</span> points ($<span id="dollars">0.00</span>),
+            <span id="time">?</span> seconds remaining.
+        </p>
+    </div>
+
+    <script src="static/bundle.js"></script>
+
+    <div id="instructions">
+        <p>Instructions.</p>
+        <p>You are blue. Move using the arrow keys. Press 'b' or 'y' to switch to blue or yellow.</p>
+    </div>
+
+    <div id="game-over">
+        <p>The game is over, thank you for participating.</p>
+    </div>
 </body>
 </html>
