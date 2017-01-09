@@ -49,6 +49,15 @@ respawnFood = function () {
     }));
 };
 
+Wall = function (settings) {
+    if (!(this instanceof Wall)) {
+        return new Wall();
+    }
+    this.position = settings.position;
+    this.color = settings.color;
+    return this;
+};
+
 Player = function (settings) {
     if (!(this instanceof Player)) {
         return new Player();
@@ -102,7 +111,10 @@ Player.prototype.move = function (direction) {
             default:
                 console.log("Direction not recognized.");
 
-            if (PLAYER_OVERLAP || !hasPlayer(newPosition)) {
+            if (
+                PLAYER_OVERLAP ||
+                (!hasPlayer(newPosition) & !hasWall(newPosition))
+            ) {
                 this.position = newPosition;
             }
         }
@@ -114,11 +126,22 @@ clients = [];
 food = [];
 foodConsumed = [];
 players = [];
+walls = [];
 
 // Determine whether any player occupies the given position.
 function hasPlayer(position) {
     for (var i = 0; i < players.length; i++) {
         if (position == players[i].position) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Determine whether any wall occupies the given position.
+function hasWall(position) {
+    for (var i = 0; i < walls.length; i++) {
+        if (position == walls[i].position) {
             return false;
         }
     }
@@ -176,6 +199,11 @@ pixels.frame(function () {
       data[(p.position[0]) * COLUMNS + p.position[1]] = p.color;
   });
 
+  // Draw the walls.
+  walls.forEach(function (w) {
+      data[(w.position[0]) * COLUMNS + w.position[1]] = w.color;
+  });
+
   pixels.update(data);
 });
 
@@ -222,6 +250,16 @@ $(document).ready(function() {
                 position: state.food[j].position,
                 color: WHITE,
             }));
+        }
+
+        // Update walls if they haven't been created yet.
+        if (walls.length === 0) {
+            for (var k = 0; k < state.walls.length; k++) {
+                walls.push(new Wall({
+                    position: state.walls[k].position,
+                    color: state.walls[k].color,
+                }));
+            }
         }
 
         // Update displayed score.

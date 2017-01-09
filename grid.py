@@ -4,6 +4,8 @@ import json
 import random
 import uuid
 
+from maze import generate_maze
+
 
 class Gridworld(object):
     """A Gridworld in the Griduniverse."""
@@ -28,6 +30,9 @@ class Gridworld(object):
         self.background_animation = kwargs.get('background_animation', True)
         self.time = kwargs.get('time', 300)
         self.tax = kwargs.get('tax', 0.01)
+        self.wall_type = kwargs.get('walls', None)
+
+        self.walls = self.generate_walls(style=self.wall_type)
 
         for i in range(self.num_food):
             self.spawn_food()
@@ -36,6 +41,7 @@ class Gridworld(object):
         return json.dumps({
             "players": [player.serialize() for player in self.players],
             "food": [food.serialize() for food in self.food],
+            "walls": [wall.serialize() for wall in self.walls],
         })
 
     def consume(self):
@@ -53,10 +59,7 @@ class Gridworld(object):
         """Respawn the food."""
         self.food.append(Food(
             id=(len(self.food) + len(self.food_consumed)),
-            position=[
-                random.randint(0, self.rows - 1),
-                random.randint(0, self.columns - 1),
-            ],
+            position=self._random_empty_position(),
             color=[1.00, 1.00, 1.00],
         ))
 
@@ -68,6 +71,18 @@ class Gridworld(object):
             num_possible_colors=self.num_colors,
         )
         self.players.append(player)
+
+    def generate_walls(self, style=None):
+        """Generate the walls."""
+        if style is None:
+            walls = []
+        elif style is "maze":
+            maze = generate_maze(columns=self.columns, rows=self.rows)
+            walls = []
+            for w in maze:
+                walls.append(Wall(position=[w[0], w[1]]))
+
+        return walls
 
     def _random_empty_position(self):
         """Select an empty cell at random."""
@@ -83,7 +98,11 @@ class Gridworld(object):
 
     def _empty(self, position):
         """Determine whether a particular cell is empty."""
-        return not (self._has_player(position) or self._has_food(position))
+        return not (
+            self._has_player(position) or
+            self._has_food(position) or
+            self._has_wall(position)
+        )
 
     def _has_player(self, position):
         for player in self.players:
@@ -94,6 +113,12 @@ class Gridworld(object):
     def _has_food(self, position):
         for food in self.food:
             if food.position == position:
+                return True
+        return False
+
+    def _has_wall(self, position):
+        for wall in self.walls:
+            if wall.position == position:
                 return True
         return False
 
@@ -111,6 +136,21 @@ class Food(object):
         return {
             "id": self.id,
             "position": self.position,
+        }
+
+
+class Wall(object):
+    """Wall."""
+    def __init__(self, **kwargs):
+        super(Wall, self).__init__()
+
+        self.position = kwargs.get('position', [0, 0])
+        self.color = kwargs.get('color', [0.5, 0.5, 0.5])
+
+    def serialize(self):
+        return {
+            "position": self.position,
+            "color": self.color,
         }
 
 
@@ -176,7 +216,10 @@ class Player(object):
             if self.position[1] < (grid.columns - 1):
                 new_position[1] = self.position[1] + 1
 
-        if grid.player_overlap or not grid._has_player(new_position):
+        if (grid.player_overlap or (
+            (not grid._has_player(new_position)) and
+            (not grid._has_wall(new_position))
+        )):
             self.position = new_position
 
     def serialize(self):
