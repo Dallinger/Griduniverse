@@ -1,7 +1,7 @@
 import random
 
 
-def generate_maze(columns=20, rows=20):
+def generate_maze(columns=25, rows=25):
 
     c = (columns - 1) / 2
     r = (rows - 1) / 2

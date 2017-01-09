@@ -17,8 +17,8 @@ class Gridworld(object):
         self.food_consumed = []
 
         self.num_players = kwargs.get('num_players', 4)
-        self.columns = kwargs.get('columns', 20)
-        self.rows = kwargs.get('rows', 20)
+        self.columns = kwargs.get('columns', 25)
+        self.rows = kwargs.get('rows', 25)
         self.block_size = kwargs.get('block_size', 15)
         self.padding = kwargs.get('padding', 1)
         self.num_food = kwargs.get('num_food', self.num_players - 1)

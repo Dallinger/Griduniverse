@@ -16,8 +16,8 @@ clients = []
 
 grid = Gridworld(
     num_players=10,
-    columns=20,
-    rows=20,
+    columns=25,
+    rows=25,
     block_size=10,
     padding=1,
     num_colors=2,
