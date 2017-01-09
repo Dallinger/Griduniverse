@@ -27,6 +27,7 @@ grid = Gridworld(
     player_overlap=False,
     background_animation=True,
     time=300,
+    tax=0.1,
 )
 
 start = time.time()
@@ -34,16 +35,16 @@ start = time.time()
 
 def game_loop():
     """Update the world state."""
+    previous_tax_timestamp = start
+
     complete = False
     while not complete:
 
         socketio.sleep(0.010)
 
-        if (time.time() - start) > grid.time:
-            complete = True
-            socketio.emit('stop', {}, broadcast=True)
-
+        # Update motion.
         for player in grid.players:
+
             if player.motion_auto:
                 ts = time.time() - start
                 wait_time = 1.0 / player.motion_speed
@@ -51,7 +52,19 @@ def game_loop():
                     player.move(player.motion_direction, grid=grid)
                     player.motion_timestamp = ts
 
+        # Consume the food.
         grid.consume()
+
+        # Apply tax.
+        if (time.time() - previous_tax_timestamp) > 1.000:
+            for player in grid.players:
+                player.score = max(player.score - grid.tax, 0)
+            previous_tax_timestamp = time.time()
+
+        # Check if the game is over.
+        if (time.time() - start) > grid.time:
+            complete = True
+            socketio.emit('stop', {}, broadcast=True)
 
 
 socketio.start_background_task(target=game_loop)

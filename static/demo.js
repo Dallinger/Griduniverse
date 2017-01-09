@@ -225,7 +225,7 @@ $(document).ready(function() {
         }
 
         // Update displayed score.
-        $("#score").html(players[EGO].score);
+        $("#score").html(Math.round(players[EGO].score));
         dollars = (players[EGO].score * DOLLARS_PER_POINT).toFixed(2);
         $("#dollars").html(dollars);
     });
