@@ -2,6 +2,6 @@ body {
     font-family: sans-serif;
 }
 
-.game-over {
+#game-over {
     display: none;
 }
