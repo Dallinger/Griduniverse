@@ -15,6 +15,7 @@
         TIME = {{ grid.time }};
         TAX = {{ grid.tax }};
         WALLS = "{{ grid.wall_type }}";
+        SHOW_GRID = {% if grid.show_grid %}true{% else %}false{% endif %};
     </script>
     <link rel="stylesheet" type="text/css" href="static/styles/styles.css" />
 </head>

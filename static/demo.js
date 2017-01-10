@@ -31,6 +31,10 @@ var pixels = grid(data, {
   formatted: true
 });
 
+if (!SHOW_GRID) {
+    pixels.canvas.style.display = "none";
+}
+
 Food = function (settings) {
     if (!(this instanceof Food)) {
         return new Food();
@@ -170,7 +174,7 @@ pixels.frame(function () {
           background[i][0] * 0.95 + rand,
           background[i][1] * 0.95 + rand,
           background[i][2] * 0.95 + rand,
-    ];
+      ];
   }
 
   data = background;

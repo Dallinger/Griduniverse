@@ -31,6 +31,7 @@ class Gridworld(object):
         self.time = kwargs.get('time', 300)
         self.tax = kwargs.get('tax', 0.01)
         self.wall_type = kwargs.get('walls', None)
+        self.show_grid = kwargs.get('show_grid', None)
 
         self.walls = self.generate_walls(style=self.wall_type)
 

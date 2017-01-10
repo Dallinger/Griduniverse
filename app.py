@@ -28,7 +28,8 @@ grid = Gridworld(
     background_animation=True,
     time=300,
     tax=0.1,
-    walls=None,
+    walls="maze",
+    show_grid=True,
 )
 
 start = time.time()
