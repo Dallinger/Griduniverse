@@ -7,6 +7,7 @@ var mousetrap = require('mousetrap');
 var colors = require('colors.css');
 var io = require('socket.io-client')();
 var $ = require("jquery");
+var gaussian = require('gaussian');
 
 var data = [];
 var background = [];
@@ -208,8 +209,32 @@ pixels.frame(function () {
       data[(w.position[0]) * COLUMNS + w.position[1]] = w.color;
   });
 
+  // Add the Gaussian mask.
+  limitVisibility = VISIBILITY < Math.max(COLUMNS, ROWS);
+  if (limitVisibility && (typeof EGO !== 'undefined')) {
+      var g = gaussian(0, Math.pow(VISIBILITY, 2));
+      rescaling = 1 / g.pdf(0);
+      for (var i = 0; i < COLUMNS; i++) {
+          for (var j = 0; j < ROWS; j++) {
+              x = players[EGO].position[0];
+              y = players[EGO].position[1];
+              dimness = g.pdf(distance(x, y, i, j)) * rescaling;
+              idx = (i * COLUMNS + j);
+              data[idx] = [
+                  data[idx][0] * dimness,
+                  data[idx][1] * dimness,
+                  data[idx][2] * dimness,
+              ];
+          }
+      }
+  }
+
   pixels.update(data);
 });
+
+function distance(x, y, xx, yy) {
+    return Math.sqrt((xx-x)*(xx-x) + (yy-y)*(yy-y));
+}
 
 start = Date.now();
 

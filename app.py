@@ -30,6 +30,7 @@ grid = Gridworld(
     tax=0.1,
     walls="maze",
     show_grid=True,
+    visibility=5,
 )
 
 start = time.time()

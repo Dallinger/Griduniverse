@@ -32,6 +32,7 @@ class Gridworld(object):
         self.tax = kwargs.get('tax', 0.01)
         self.wall_type = kwargs.get('walls', None)
         self.show_grid = kwargs.get('show_grid', None)
+        self.visibility = kwargs.get('visibility', 5)
 
         self.walls = self.generate_walls(style=self.wall_type)
 
