@@ -32,7 +32,7 @@ grid = Gridworld(
     show_grid=True,
     visibility=5,
     speed_limit=8,
-    motion_auto=True,
+    motion_auto=False,
 )
 
 
