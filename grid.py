@@ -233,7 +233,7 @@ class Player(object):
         wait_time = 1.0 / self.speed_limit
         can_move = now_relative > (self.motion_timestamp + wait_time)
 
-        can_afford_to_move = self.score > self.motion_cost
+        can_afford_to_move = self.score >= self.motion_cost
 
         if can_move and can_afford_to_move:
             if (self.grid.player_overlap or (
