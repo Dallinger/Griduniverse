@@ -37,6 +37,7 @@ grid = Gridworld(
     speed_limit=8,
     motion_auto=False,
     motion_cost=0.25,
+    motion_tremble_rate=0.25,
 )
 
 
@@ -52,7 +53,7 @@ def game_loop():
         # Update motion.
         if grid.motion_auto:
             for player in grid.players:
-                player.move(player.motion_direction)
+                player.move(player.motion_direction, tremble_rate=0)
 
         # Consume the food.
         grid.consume()
@@ -120,7 +121,7 @@ def handle_message(message):
 @socketio.on('move')
 def handle_move(msg):
     player = grid.players[msg['player']]
-    player.move(msg['move'])
+    player.move(msg['move'], tremble_rate=player.motion_tremble_rate)
 
 
 @socketio.on('change_color')

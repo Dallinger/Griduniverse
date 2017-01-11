@@ -40,6 +40,7 @@ class Gridworld(object):
         self.start_timestamp = kwargs.get('start_timestamp', time.time())
         self.motion_cost = kwargs.get('motion_cost', 0)
         self.initial_score = kwargs.get('initial_score', 0)
+        self.motion_tremble_rate = kwargs.get('motion_tremble_rate', 0)
 
         self.walls = self.generate_walls(style=self.wall_type)
 
@@ -81,6 +82,7 @@ class Gridworld(object):
             speed_limit=self.speed_limit,
             motion_cost=self.motion_cost,
             score=self.initial_score,
+            motion_tremble_rate=self.motion_tremble_rate,
             grid=self,
         )
         self.players.append(player)
@@ -192,6 +194,7 @@ class Player(object):
         self.speed_limit = kwargs.get('speed_limit', 8)
         self.num_possible_colors = kwargs.get('num_possible_colors', 2)
         self.motion_cost = kwargs.get('motion_cost', 0)
+        self.motion_tremble_rate = kwargs.get('motion_tremble_rate', 0)
         self.grid = kwargs.get('grid', None)
         self.score = kwargs.get('score', 0)
 
@@ -208,8 +211,23 @@ class Player(object):
 
         self.motion_timestamp = 0
 
-    def move(self, direction):
+    def tremble(self, direction):
+        """Change direction with some probability."""
+        directions = [
+            "up",
+            "down",
+            "left",
+            "right"
+        ]
+        directions.remove(direction)
+        direction = random.choice(directions)
+        return direction
+
+    def move(self, direction, tremble_rate=0):
         """Move the player."""
+
+        if random.random() < tremble_rate:
+            direction = self.tremble(direction)
 
         self.motion_direction = direction
 
