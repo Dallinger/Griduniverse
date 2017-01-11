@@ -27,12 +27,13 @@ grid = Gridworld(
     player_overlap=False,
     background_animation=True,
     time=300,
-    tax=0.1,
+    tax=-0.1,
     walls="maze",
     show_grid=True,
     visibility=5,
     speed_limit=8,
     motion_auto=False,
+    movement_cost=0.25,
 )
 
 

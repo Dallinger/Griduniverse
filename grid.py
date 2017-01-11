@@ -37,6 +37,7 @@ class Gridworld(object):
         self.motion_auto = kwargs.get('motion_auto', False)
         self.speed_limit = kwargs.get('speed_limit', 8)
         self.start_timestamp = kwargs.get('start_timestamp', time.time())
+        self.movement_cost = kwargs.get('movement_cost', 0)
 
         self.walls = self.generate_walls(style=self.wall_type)
 
@@ -76,6 +77,7 @@ class Gridworld(object):
             position=self._random_empty_position(),
             num_possible_colors=self.num_colors,
             speed_limit=self.speed_limit,
+            movement_cost=self.movement_cost,
             grid=self,
         )
         self.players.append(player)
@@ -186,6 +188,7 @@ class Player(object):
         self.motion_direction = kwargs.get('motion_direction', 'right')
         self.speed_limit = kwargs.get('speed_limit', 8)
         self.num_possible_colors = kwargs.get('num_possible_colors', 2)
+        self.movement_cost = kwargs.get('movement_cost', 0)
         self.grid = kwargs.get('grid', None)
 
         # Determine the player's color.
@@ -230,13 +233,16 @@ class Player(object):
         wait_time = 1.0 / self.speed_limit
         can_move = now_relative > (self.motion_timestamp + wait_time)
 
-        if can_move:
+        can_afford_to_move = self.score > self.movement_cost
+
+        if can_move and can_afford_to_move:
             if (self.grid.player_overlap or (
                 (not self.grid._has_player(new_position)) and
                 (not self.grid._has_wall(new_position))
             )):
                 self.position = new_position
                 self.motion_timestamp = now_relative
+                self.score -= self.movement_cost
 
     def serialize(self):
         return {
