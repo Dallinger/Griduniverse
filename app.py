@@ -18,6 +18,7 @@ grid = Gridworld(
     num_players=10,
     columns=25,
     rows=25,
+    num_food=1,
     block_size=10,
     padding=1,
     num_colors=2,
