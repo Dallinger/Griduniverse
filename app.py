@@ -46,13 +46,14 @@ grid = Gridworld(
 
 def game_loop():
     """Update the world state."""
-    previous_tax_timestamp = grid.start_timestamp
-    previous_frequency_dependence_timestamp = grid.start_timestamp
+    previous_second_timestamp = grid.start_timestamp
 
     complete = False
     while not complete:
 
         socketio.sleep(0.010)
+
+        now = time.time()
 
         # Update motion.
         if grid.motion_auto:
@@ -62,30 +63,30 @@ def game_loop():
         # Consume the food.
         grid.consume()
 
-        # Apply tax.
-        if (time.time() - previous_tax_timestamp) > 1.000:
+        if (now - previous_second_timestamp) > 1.000:
+
             for player in grid.players:
+                # Apply tax.
                 player.score = max(player.score - grid.tax, 0)
-            previous_tax_timestamp = time.time()
 
-        # Apply frequency-dependent payoff.
-        if (time.time() - previous_frequency_dependence_timestamp) > 1.000:
-            for player in grid.players:
-                abundance = len(
-                    [p for p in grid.players if p.color == player.color]
-                )
-                relative_frequency = 1.0 * abundance / len(grid.players)
-                payoff = fermi(
-                    beta=grid.frequency_dependence,
-                    p1=relative_frequency,
-                    p2=0.5
-                ) * grid.frequency_dependent_payoff_rate
-                player.score += payoff
+                # Apply frequency-dependent payoff.
+                for player in grid.players:
+                    abundance = len(
+                        [p for p in grid.players if p.color == player.color]
+                    )
+                    relative_frequency = 1.0 * abundance / len(grid.players)
+                    payoff = fermi(
+                        beta=grid.frequency_dependence,
+                        p1=relative_frequency,
+                        p2=0.5
+                    ) * grid.frequency_dependent_payoff_rate
 
-            previous_frequency_dependence_timestamp = time.time()
+                    player.score = max(player.score + payoff, 0)
+
+            previous_second_timestamp = now
 
         # Check if the game is over.
-        if (time.time() - grid.start_timestamp) > grid.time:
+        if (now - grid.start_timestamp) > grid.time:
             complete = True
             socketio.emit('stop', {}, broadcast=True)
 
