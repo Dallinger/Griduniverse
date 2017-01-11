@@ -26,6 +26,7 @@ grid = Gridworld(
     food_visible=False,
     mutable_colors=False,
     dollars_per_point=0.02,
+    initial_score=50,
     player_overlap=False,
     background_animation=True,
     time=300,

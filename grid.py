@@ -39,6 +39,7 @@ class Gridworld(object):
         self.speed_limit = kwargs.get('speed_limit', 8)
         self.start_timestamp = kwargs.get('start_timestamp', time.time())
         self.motion_cost = kwargs.get('motion_cost', 0)
+        self.initial_score = kwargs.get('initial_score', 0)
 
         self.walls = self.generate_walls(style=self.wall_type)
 
@@ -79,6 +80,7 @@ class Gridworld(object):
             num_possible_colors=self.num_colors,
             speed_limit=self.speed_limit,
             motion_cost=self.motion_cost,
+            score=self.initial_score,
             grid=self,
         )
         self.players.append(player)
@@ -191,6 +193,7 @@ class Player(object):
         self.num_possible_colors = kwargs.get('num_possible_colors', 2)
         self.motion_cost = kwargs.get('motion_cost', 0)
         self.grid = kwargs.get('grid', None)
+        self.score = kwargs.get('score', 0)
 
         # Determine the player's color.
         if 'color' in kwargs:
@@ -204,7 +207,6 @@ class Player(object):
         self.color = Player.colors[self.color_idx]
 
         self.motion_timestamp = 0
-        self.score = 0
 
     def move(self, direction):
         """Move the player."""
