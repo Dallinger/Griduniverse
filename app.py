@@ -31,14 +31,14 @@ grid = Gridworld(
     walls="maze",
     show_grid=True,
     visibility=5,
+    speed_limit=8,
+    motion_auto=True,
 )
-
-start = time.time()
 
 
 def game_loop():
     """Update the world state."""
-    previous_tax_timestamp = start
+    previous_tax_timestamp = grid.start_timestamp
 
     complete = False
     while not complete:
@@ -46,14 +46,9 @@ def game_loop():
         socketio.sleep(0.010)
 
         # Update motion.
-        for player in grid.players:
-
-            if player.motion_auto:
-                ts = time.time() - start
-                wait_time = 1.0 / player.motion_speed
-                if (ts > (player.motion_timestamp + wait_time)):
-                    player.move(player.motion_direction, grid=grid)
-                    player.motion_timestamp = ts
+        if grid.motion_auto:
+            for player in grid.players:
+                player.move(player.motion_direction)
 
         # Consume the food.
         grid.consume()
@@ -65,7 +60,7 @@ def game_loop():
             previous_tax_timestamp = time.time()
 
         # Check if the game is over.
-        if (time.time() - start) > grid.time:
+        if (time.time() - grid.start_timestamp) > grid.time:
             complete = True
             socketio.emit('stop', {}, broadcast=True)
 
@@ -85,7 +80,7 @@ def send_state_thread():
                 'state_json': grid.serialize(),
                 'clients': clients,
                 'count': count,
-                'remaining_time': time.time() - start,
+                'remaining_time': time.time() - grid.start_timestamp,
             },
             broadcast=True,
         )
@@ -121,7 +116,7 @@ def handle_message(message):
 @socketio.on('move')
 def handle_move(msg):
     player = grid.players[msg['player']]
-    player.move(msg['move'], grid=grid)
+    player.move(msg['move'])
 
 
 @socketio.on('change_color')

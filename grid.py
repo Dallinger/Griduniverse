@@ -2,6 +2,7 @@
 
 import json
 import random
+import time
 import uuid
 
 from maze import generate_maze
@@ -33,6 +34,9 @@ class Gridworld(object):
         self.wall_type = kwargs.get('walls', None)
         self.show_grid = kwargs.get('show_grid', None)
         self.visibility = kwargs.get('visibility', 5)
+        self.motion_auto = kwargs.get('motion_auto', False)
+        self.speed_limit = kwargs.get('speed_limit', 8)
+        self.start_timestamp = kwargs.get('start_timestamp', time.time())
 
         self.walls = self.generate_walls(style=self.wall_type)
 
@@ -71,6 +75,8 @@ class Gridworld(object):
             id=id,
             position=self._random_empty_position(),
             num_possible_colors=self.num_colors,
+            speed_limit=self.speed_limit,
+            grid=self,
         )
         self.players.append(player)
 
@@ -178,8 +184,9 @@ class Player(object):
         self.position = kwargs.get('position', [0, 0])
         self.motion_auto = kwargs.get('motion_auto', False)
         self.motion_direction = kwargs.get('motion_direction', 'right')
-        self.motion_speed = kwargs.get('motion_speed', 8)
+        self.speed_limit = kwargs.get('speed_limit', 8)
         self.num_possible_colors = kwargs.get('num_possible_colors', 2)
+        self.grid = kwargs.get('grid', None)
 
         # Determine the player's color.
         if 'color' in kwargs:
@@ -195,7 +202,7 @@ class Player(object):
         self.motion_timestamp = 0
         self.score = 0
 
-    def move(self, direction, grid):
+    def move(self, direction):
         """Move the player."""
 
         self.motion_direction = direction
@@ -207,7 +214,7 @@ class Player(object):
                 new_position[0] -= 1
 
         elif direction == "down":
-            if self.position[0] < (grid.rows - 1):
+            if self.position[0] < (self.grid.rows - 1):
                 new_position[0] = self.position[0] + 1
 
         elif direction == "left":
@@ -215,14 +222,21 @@ class Player(object):
                 new_position[1] = self.position[1] - 1
 
         elif direction == "right":
-            if self.position[1] < (grid.columns - 1):
+            if self.position[1] < (self.grid.columns - 1):
                 new_position[1] = self.position[1] + 1
 
-        if (grid.player_overlap or (
-            (not grid._has_player(new_position)) and
-            (not grid._has_wall(new_position))
-        )):
-            self.position = new_position
+        # Update motion.
+        now_relative = time.time() - self.grid.start_timestamp
+        wait_time = 1.0 / self.speed_limit
+        can_move = now_relative > (self.motion_timestamp + wait_time)
+
+        if can_move:
+            if (self.grid.player_overlap or (
+                (not self.grid._has_player(new_position)) and
+                (not self.grid._has_wall(new_position))
+            )):
+                self.position = new_position
+                self.motion_timestamp = now_relative
 
     def serialize(self):
         return {
@@ -232,6 +246,6 @@ class Player(object):
             "color": self.color,
             "motion_auto": self.motion_auto,
             "motion_direction": self.motion_direction,
-            "motion_speed": self.motion_speed,
+            "speed_limit": self.speed_limit,
             "motion_timestamp": self.motion_timestamp,
         }
