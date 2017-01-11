@@ -1,5 +1,68 @@
 body {
     font-family: sans-serif;
+    font-size: 12px;
+}
+
+#instructions {
+    display: none;
+}
+
+#dashboard { }
+
+canvas {
+    display: none;
+    margin-left: 0px !important;
+    margin-right: 0px !important;
+}
+
+#chat {
+    width: 100%;
+    display: none;
+}
+
+#chatlog {
+    margin-top: 10px;
+    overflow-y: auto;
+    border: 1px solid #cccccc;
+    min-height: 100px;
+    height: calc(100vh - 475px);
+    color: #333333;
+}
+
+#chatlog ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+#chatlog li {
+    padding: 8px 10px;
+}
+
+#chatlog li:nth-child(odd) {
+    background: #eee;
+}
+
+.name {
+    font-weight: bold;
+}
+
+#message {
+    width: 300px;
+    background-color: #eeeeee;
+    margin-top: 5px;
+    border: 1px solid #cccccc;
+    padding: 10px;
+    border-radius: 3px;
+}
+
+#submit-message {
+    background:none;
+    border:none;
+    margin:0;
+    padding-left: 5px;
+    color: #1693A5;
+    font-weight: bold;
 }
 
 #game-over {

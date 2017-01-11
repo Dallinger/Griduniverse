@@ -5,7 +5,6 @@ from flask import render_template
 from flask import request
 from flask_socketio import SocketIO
 
-import json
 import math
 import time
 
@@ -41,6 +40,7 @@ grid = Gridworld(
     motion_tremble_rate=0.25,
     frequency_dependence=-2,
     frequency_dependent_payoff_rate=1,
+    chatroom=False,
 )
 
 
@@ -140,8 +140,8 @@ def index():
 
 
 @socketio.on('message')
-def handle_message(message):
-    print(json.dumps(message))
+def handle_message(msg):
+    socketio.emit('message', msg, broadcast=True)
 
 
 @socketio.on('move')

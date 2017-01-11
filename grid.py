@@ -44,6 +44,7 @@ class Gridworld(object):
         self.frequency_dependence = kwargs.get('frequency_dependence', 0)
         self.frequency_dependent_payoff_rate = kwargs.get(
             'frequency_dependent_payoff_rate', 1)
+        self.chatroom = kwargs.get('chatroom', False)
 
         self.walls = self.generate_walls(style=self.wall_type)
 

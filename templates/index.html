@@ -19,6 +19,7 @@
         settings.show_grid = {% if grid.show_grid %}true{% else %}false{% endif %};
         settings.visibility = {{ grid.visibility }};
         settings.food_visible = {% if grid.food_visible %}true{% else %}false{% endif %};
+        settings.chatroom = {% if grid.chatroom %}true{% else %}false{% endif %};
     </script>
     <link rel="stylesheet" type="text/css" href="static/styles/styles.css" />
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
@@ -32,6 +33,16 @@
     </div>
 
     <script src="static/bundle.js"></script>
+
+    <div id="chat">
+        <div id="chatlog">
+            <ul id="messages"></ul>
+        </div>
+        <form action="">
+            <input id="message" autocomplete="off" placeholder="Message the group." />
+            <button id="submit-message">Send to all</button>
+        </form>
+    </div>
 
     <div id="instructions">
         <h1>Instructions</h1>

@@ -32,10 +32,6 @@ var pixels = grid(data, {
   formatted: true
 });
 
-if (!settings.show_grid) {
-    pixels.canvas.style.display = "none";
-}
-
 Food = function (settings) {
     if (!(this instanceof Food)) {
         return new Food();
@@ -254,6 +250,14 @@ function getRandomInt(min, max) {
 
 $(document).ready(function() {
 
+    if (settings.show_grid) {
+        pixels.canvas.style.display = "inline";
+    }
+
+    if (settings.chatroom) {
+        $("#chat").show();
+    }
+
     url = location.protocol + '//' + document.domain + ':' + location.port;
     var socket = io.connect(url);
 
@@ -307,7 +311,24 @@ $(document).ready(function() {
         $("#game-over").show();
         $("#dashboard").hide();
         $("#instructions").hide();
+        $("#chat").hide();
         pixels.canvas.style.display = "none";
+    });
+
+    $("form").submit(function(){
+        socket.emit("message", {
+            "contents": $("#message").val(),
+            "player_id": ego,
+            "timestamp": Date.now() - start,
+        });
+        $("#message").val("");
+        return false;
+    });
+
+    socket.on("message", function(msg){
+      entry = "<span class='name'>Player " + msg.player_id + ":</span> " + msg.contents;
+      $("#messages").append($("<li>").html(entry));
+      $('#chatlog').scrollTop($('#chatlog')[0].scrollHeight);
     });
 
     //
