@@ -41,6 +41,9 @@ class Gridworld(object):
         self.motion_cost = kwargs.get('motion_cost', 0)
         self.initial_score = kwargs.get('initial_score', 0)
         self.motion_tremble_rate = kwargs.get('motion_tremble_rate', 0)
+        self.frequency_dependence = kwargs.get('frequency_dependence', 0)
+        self.frequency_dependent_payoff_rate = kwargs.get(
+            'frequency_dependent_payoff_rate', 1)
 
         self.walls = self.generate_walls(style=self.wall_type)
 

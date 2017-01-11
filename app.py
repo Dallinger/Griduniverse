@@ -6,6 +6,7 @@ from flask import request
 from flask_socketio import SocketIO
 
 import json
+import math
 import time
 
 app = Flask(__name__)
@@ -38,12 +39,15 @@ grid = Gridworld(
     motion_auto=False,
     motion_cost=0.25,
     motion_tremble_rate=0.25,
+    frequency_dependence=-2,
+    frequency_dependent_payoff_rate=1,
 )
 
 
 def game_loop():
     """Update the world state."""
     previous_tax_timestamp = grid.start_timestamp
+    previous_frequency_dependence_timestamp = grid.start_timestamp
 
     complete = False
     while not complete:
@@ -64,6 +68,22 @@ def game_loop():
                 player.score = max(player.score - grid.tax, 0)
             previous_tax_timestamp = time.time()
 
+        # Apply frequency-dependent payoff.
+        if (time.time() - previous_frequency_dependence_timestamp) > 1.000:
+            for player in grid.players:
+                abundance = len(
+                    [p for p in grid.players if p.color == player.color]
+                )
+                relative_frequency = 1.0 * abundance / len(grid.players)
+                payoff = fermi(
+                    beta=grid.frequency_dependence,
+                    p1=relative_frequency,
+                    p2=0.5
+                ) * grid.frequency_dependent_payoff_rate
+                player.score += payoff
+
+            previous_frequency_dependence_timestamp = time.time()
+
         # Check if the game is over.
         if (time.time() - grid.start_timestamp) > grid.time:
             complete = True
@@ -71,6 +91,11 @@ def game_loop():
 
 
 socketio.start_background_task(target=game_loop)
+
+
+def fermi(beta, p1, p2):
+    """The Fermi function from statistical physics."""
+    return 2.0 * ((1.0 / (1 + math.exp(-beta * (p1 - p2)))) - 0.5)
 
 
 def send_state_thread():
