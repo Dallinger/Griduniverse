@@ -190,8 +190,10 @@ pixels.frame(function () {
             break;
         } else {
              // Draw the food.
-            idx = (food[i].position[0]) * COLUMNS + food[i].position[1];
-            data[idx] = food[i].color;
+            if (FOOD_VISIBLE) {
+                idx = (food[i].position[0]) * COLUMNS + food[i].position[1];
+                data[idx] = food[i].color;
+            }
         }
       }
   }

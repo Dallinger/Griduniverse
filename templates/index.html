@@ -17,6 +17,7 @@
         WALLS = "{{ grid.wall_type }}";
         SHOW_GRID = {% if grid.show_grid %}true{% else %}false{% endif %};
         VISIBILITY = {{ grid.visibility }};
+        FOOD_VISIBLE = {% if grid.food_visible %}true{% else %}false{% endif %};
     </script>
     <link rel="stylesheet" type="text/css" href="static/styles/styles.css" />
 </head>

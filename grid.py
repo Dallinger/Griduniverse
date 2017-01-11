@@ -23,6 +23,7 @@ class Gridworld(object):
         self.block_size = kwargs.get('block_size', 15)
         self.padding = kwargs.get('padding', 1)
         self.num_food = kwargs.get('num_food', self.num_players - 1)
+        self.food_visible = kwargs.get('food_visible')
         self.respawn_food = kwargs.get('respawn_food', True)
         self.dollars_per_point = kwargs.get('dollars_per_point', 0.02)
         self.num_colors = kwargs.get('num_colors', 2)
