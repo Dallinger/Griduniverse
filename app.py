@@ -33,7 +33,7 @@ grid = Gridworld(
     visibility=5,
     speed_limit=8,
     motion_auto=False,
-    movement_cost=0.25,
+    motion_cost=0.25,
 )
 
 
