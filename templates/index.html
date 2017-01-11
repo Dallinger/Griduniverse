@@ -3,21 +3,22 @@
 <head>
     <script type="text/javascript">
         // Parameters
-        BLOCK_SIZE = {{ grid.block_size }};
-        PADDING = {{ grid.padding }};
-        RESPAWN_FOOD = {% if grid.respawn_food %}true{% else %}false{% endif %};
-        DOLLARS_PER_POINT = {{ grid.dollars_per_point }};
-        ROWS = {{ grid.rows }};
-        COLUMNS = {{ grid.columns }};
-        MUTABLE_COLORS = {% if grid.mutable_colors %}true{% else %}false{% endif %};
-        PLAYER_OVERLAP = {% if grid.player_overlap %}true{% else %}false{% endif %};
-        BACKGROUND_ANIMATION = {% if grid.background_animation %}true{% else %}false{% endif %};
-        TIME = {{ grid.time }};
-        TAX = {{ grid.tax }};
-        WALLS = "{{ grid.wall_type }}";
-        SHOW_GRID = {% if grid.show_grid %}true{% else %}false{% endif %};
-        VISIBILITY = {{ grid.visibility }};
-        FOOD_VISIBLE = {% if grid.food_visible %}true{% else %}false{% endif %};
+        settings = {};
+        settings.block_size = {{ grid.block_size }};
+        settings.padding = {{ grid.padding }};
+        settings.respawn_food = {% if grid.respawn_food %}true{% else %}false{% endif %};
+        settings.dollars_per_point = {{ grid.dollars_per_point }};
+        settings.rows = {{ grid.rows }};
+        settings.columns = {{ grid.columns }};
+        settings.mutable_colors = {% if grid.mutable_colors %}true{% else %}false{% endif %};
+        settings.player_overlap = {% if grid.player_overlap %}true{% else %}false{% endif %};
+        settings.background_animation = {% if grid.background_animation %}true{% else %}false{% endif %};
+        settings.time = {{ grid.time }};
+        settings.tax = {{ grid.tax }};
+        settings.walls = "{{ grid.wall_type }}";
+        settings.show_grid = {% if grid.show_grid %}true{% else %}false{% endif %};
+        settings.visibility = {{ grid.visibility }};
+        settings.food_visible = {% if grid.food_visible %}true{% else %}false{% endif %};
     </script>
     <link rel="stylesheet" type="text/css" href="static/styles/styles.css" />
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">

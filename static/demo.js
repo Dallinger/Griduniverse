@@ -11,8 +11,8 @@ var gaussian = require('gaussian');
 
 var data = [];
 var background = [];
-for (var i = 0; i < ROWS; i++) {
-  for (var j = 0; j < COLUMNS; j++) {
+for (var i = 0; i < settings.rows; i++) {
+  for (var j = 0; j < settings.columns; j++) {
     data.push([0, 0, 0]);
     background.push([0, 0, 0]);
   }
@@ -24,15 +24,15 @@ WHITE = [1.00, 1.00, 1.00];
 
 var pixels = grid(data, {
   root: document.body,
-  rows: ROWS,
-  columns: COLUMNS,
-  size: BLOCK_SIZE,
-  padding: PADDING,
+  rows: settings.rows,
+  columns: settings.columns,
+  size: settings.block_size,
+  padding: settings.padding,
   background: [0.1, 0.1, 0.1],
   formatted: true
 });
 
-if (!SHOW_GRID) {
+if (!settings.show_grid) {
     pixels.canvas.style.display = "none";
 }
 
@@ -49,7 +49,7 @@ Food = function (settings) {
 respawnFood = function () {
     food.push(new Food({
         id: food.length + foodConsumed.length,
-        position: [getRandomInt(0, ROWS), getRandomInt(0, COLUMNS)],
+        position: [getRandomInt(0, settings.rows), getRandomInt(0, settings.columns)],
         color: WHITE,
     }));
 };
@@ -96,7 +96,7 @@ Player.prototype.move = function (direction) {
                 break;
 
             case "down":
-                if (this.position[0] < ROWS - 1) {
+                if (this.position[0] < settings.rows - 1) {
                     newPosition[0] += 1;
                 }
                 break;
@@ -108,7 +108,7 @@ Player.prototype.move = function (direction) {
                 break;
 
             case "right":
-                if (this.position[1] < COLUMNS - 1) {
+                if (this.position[1] < settings.columns - 1) {
                     newPosition[1] += 1;
                 }
                 break;
@@ -117,7 +117,7 @@ Player.prototype.move = function (direction) {
                 console.log("Direction not recognized.");
 
             if (
-                PLAYER_OVERLAP ||
+                settings.player_overlap ||
                 (!hasPlayer(newPosition) & !hasWall(newPosition))
             ) {
                 this.position = newPosition;
@@ -166,7 +166,7 @@ pixels.frame(function () {
 
   // Update the background.
   for (var i = 0; i < data.length; i++) {
-      if (BACKGROUND_ANIMATION) {
+      if (settings.background_animation) {
           rand = Math.random() * 0.02;
       } else {
           rand = 0.01;
@@ -190,8 +190,8 @@ pixels.frame(function () {
             break;
         } else {
              // Draw the food.
-            if (FOOD_VISIBLE) {
-                idx = (food[i].position[0]) * COLUMNS + food[i].position[1];
+            if (settings.food_visible) {
+                idx = (food[i].position[0]) * settings.columns + food[i].position[1];
                 data[idx] = food[i].color;
             }
         }
@@ -203,25 +203,25 @@ pixels.frame(function () {
       if (p.motion_auto) {
           p.move(p.motion_direction);
       }
-      data[(p.position[0]) * COLUMNS + p.position[1]] = p.color;
+      data[(p.position[0]) * settings.columns + p.position[1]] = p.color;
   });
 
   // Draw the walls.
   walls.forEach(function (w) {
-      data[(w.position[0]) * COLUMNS + w.position[1]] = w.color;
+      data[(w.position[0]) * settings.columns + w.position[1]] = w.color;
   });
 
   // Add the Gaussian mask.
-  limitVisibility = VISIBILITY < Math.max(COLUMNS, ROWS);
-  if (limitVisibility && (typeof EGO !== 'undefined')) {
-      var g = gaussian(0, Math.pow(VISIBILITY, 2));
+  limitVisibility = settings.visibility < Math.max(settings.columns, settings.rows);
+  if (limitVisibility && (typeof ego !== 'undefined')) {
+      var g = gaussian(0, Math.pow(settings.visibility, 2));
       rescaling = 1 / g.pdf(0);
-      for (var i = 0; i < COLUMNS; i++) {
-          for (var j = 0; j < ROWS; j++) {
-              x = players[EGO].position[0];
-              y = players[EGO].position[1];
+      for (var i = 0; i < settings.columns; i++) {
+          for (var j = 0; j < settings.rows; j++) {
+              x = players[ego].position[0];
+              y = players[ego].position[1];
               dimness = g.pdf(distance(x, y, i, j)) * rescaling;
-              idx = (i * COLUMNS + j);
+              idx = (i * settings.columns + j);
               data[idx] = [
                   data[idx][0] * dimness,
                   data[idx][1] * dimness,
@@ -259,12 +259,12 @@ $(document).ready(function() {
 
     socket.on('state', function(msg) {
 
-        // Update EGO.
+        // Update ego.
         clients = msg.clients;
-        EGO = clients.indexOf(socket.io.engine.id);
+        ego = clients.indexOf(socket.io.engine.id);
 
         // Update remaining time.
-        remainingTime = Math.max(Math.round(TIME - msg.remaining_time), 0);
+        remainingTime = Math.max(Math.round(settings.time - msg.remaining_time), 0);
         $("#time").html(remainingTime);
 
         // Update players.
@@ -294,8 +294,8 @@ $(document).ready(function() {
         }
 
         // Update displayed score.
-        $("#score").html(Math.round(players[EGO].score));
-        dollars = (players[EGO].score * DOLLARS_PER_POINT).toFixed(2);
+        $("#score").html(Math.round(players[ego].score));
+        dollars = (players[ego].score * settings.dollars_per_point).toFixed(2);
         $("#dollars").html(dollars);
     });
 
@@ -318,9 +318,9 @@ $(document).ready(function() {
     directions.forEach(function (direction){
         Mousetrap.bind(direction, function () {
             if (!lock) {
-                players[EGO].move(direction);
+                players[ego].move(direction);
                 socket.emit('move', {
-                    player: players[EGO].id,
+                    player: players[ego].id,
                     move: direction,
                 });
             }
@@ -333,19 +333,19 @@ $(document).ready(function() {
         }, "keyup");
     });
 
-    if (MUTABLE_COLORS) {
+    if (settings.mutable_colors) {
         Mousetrap.bind("b", function () {
-            players[EGO].color = BLUE;
+            players[ego].color = BLUE;
             socket.emit('change_color', {
-                player: players[EGO].id,
+                player: players[ego].id,
                 color: BLUE,
             });
         });
 
         Mousetrap.bind("y", function () {
-            players[EGO].color = YELLOW;
+            players[ego].color = YELLOW;
             socket.emit('change_color', {
-                player: players[EGO].id,
+                player: players[ego].id,
                 color: YELLOW,
             });
         });
