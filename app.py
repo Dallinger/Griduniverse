@@ -41,6 +41,7 @@ grid = Gridworld(
     frequency_dependence=-2,
     frequency_dependent_payoff_rate=1,
     chatroom=False,
+    contagion=0,
 )
 
 
@@ -63,6 +64,23 @@ def game_loop():
         # Consume the food.
         grid.consume()
 
+        # Spread through contagion.
+        if grid.contagion > 0:
+            color_updates = []
+            for player in grid.players:
+                colors = [n.color for n in player.neighbors(d=grid.contagion)]
+                if colors:
+                    colors.append(player.color)
+                    plurality_color = max(colors, key=colors.count)
+                    if colors.count(plurality_color) > len(colors) / 2.0:
+                        color_updates.append((
+                            player,
+                            plurality_color
+                        ))
+            for (player, color) in color_updates:
+                player.color = color
+
+        # Trigger time-based events.
         if (now - previous_second_timestamp) > 1.000:
 
             for player in grid.players:

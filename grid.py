@@ -45,6 +45,7 @@ class Gridworld(object):
         self.frequency_dependent_payoff_rate = kwargs.get(
             'frequency_dependent_payoff_rate', 1)
         self.chatroom = kwargs.get('chatroom', False)
+        self.contagion = kwargs.get('contagion', False)
 
         self.walls = self.generate_walls(style=self.wall_type)
 
@@ -269,6 +270,22 @@ class Player(object):
                 self.position = new_position
                 self.motion_timestamp = now_relative
                 self.score -= self.motion_cost
+
+    def is_neighbor(self, player, d=1):
+        """Determine whether other player is adjacent."""
+        manhattan_distance = (
+            abs(self.position[0] - player.position[0]) +
+            abs(self.position[1] - player.position[1])
+        )
+        return (manhattan_distance <= d)
+
+    def neighbors(self, d=1):
+        """Return all adjacent players."""
+        return [
+            p for p in self.grid.players if (
+                self.is_neighbor(p, d=d) and (p is not self)
+            )
+        ]
 
     def serialize(self):
         return {
