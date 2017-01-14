@@ -65,7 +65,8 @@ class Gridworld(object):
                 if food.position == player.position:
                     self.food_consumed.append(food)
                     self.food.remove(food)
-                    self.spawn_food()
+                    if self.respawn_food:
+                        self.spawn_food()
                     player.score = player.score + 1
                     break
 
