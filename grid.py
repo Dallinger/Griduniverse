@@ -10,6 +10,19 @@ from maze import generate_maze
 
 class Gridworld(object):
     """A Gridworld in the Griduniverse."""
+    color_names = [
+        "blue",
+        "yellow",
+        "green",
+        "red",
+    ]
+    colors = [
+        [0.50, 0.86, 1.00],
+        [1.00, 0.86, 0.50],
+        [0.56, 0.60, 0.16],
+        [0.64, 0.11, 0.31],
+    ]
+
     def __init__(self, **kwargs):
         super(Gridworld, self).__init__()
 
@@ -46,11 +59,16 @@ class Gridworld(object):
             'frequency_dependent_payoff_rate', 1)
         self.chatroom = kwargs.get('chatroom', False)
         self.contagion = kwargs.get('contagion', False)
+        self.contagion_hierarchy = kwargs.get('contagion_hierarchy', False)
 
         self.walls = self.generate_walls(style=self.wall_type)
 
         for i in range(self.num_food):
             self.spawn_food()
+
+        if self.contagion_hierarchy:
+            self.contagion_hierarchy = range(self.num_colors)
+            random.shuffle(self.contagion_hierarchy)
 
     def serialize(self):
         return json.dumps({
@@ -143,6 +161,28 @@ class Gridworld(object):
                 return True
         return False
 
+    def spread_contagion(self):
+        """Spread contagion."""
+        color_updates = []
+        for player in self.players:
+            colors = [n.color for n in player.neighbors(d=self.contagion)]
+            if colors:
+                colors.append(player.color)
+                plurality_color = max(colors, key=colors.count)
+                if colors.count(plurality_color) > len(colors) / 2.0:
+                    if (self.rank(plurality_color) < self.rank(player.color)):
+                        color_updates.append((player, plurality_color))
+
+        for (player, color) in color_updates:
+            player.color = color
+
+    def rank(self, color):
+        """Where does this color fall on the color hierarchy?"""
+        if self.contagion_hierarchy:
+            return self.contagion_hierarchy[Gridworld.colors.index(color)]
+        else:
+            return 1
+
 
 class Food(object):
     """Food."""
@@ -177,18 +217,6 @@ class Wall(object):
 
 class Player(object):
     """A player."""
-    color_names = [
-        "blue",
-        "yellow",
-        "green",
-        "red",
-    ]
-    colors = [
-        [0.50, 0.86, 1.00],
-        [1.00, 0.86, 0.50],
-        [0.56, 0.60, 0.16],
-        [0.64, 0.11, 0.31],
-    ]
 
     def __init__(self, **kwargs):
         super(Player, self).__init__()
@@ -206,14 +234,14 @@ class Player(object):
 
         # Determine the player's color.
         if 'color' in kwargs:
-            self.color_idx = Player.colors.index(kwargs['color'])
+            self.color_idx = Gridworld.colors.index(kwargs['color'])
         elif 'color_name' in kwargs:
-            self.color_idx = Player.color_names.index(kwargs['color_name'])
+            self.color_idx = Gridworld.color_names.index(kwargs['color_name'])
         else:
             self.color_idx = random.randint(0, self.num_possible_colors - 1)
 
-        self.color_name = Player.color_names[self.color_idx]
-        self.color = Player.colors[self.color_idx]
+        self.color_name = Gridworld.color_names[self.color_idx]
+        self.color = Gridworld.colors[self.color_idx]
 
         self.motion_timestamp = 0
 
