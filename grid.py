@@ -60,6 +60,7 @@ class Gridworld(object):
         self.chatroom = kwargs.get('chatroom', False)
         self.contagion = kwargs.get('contagion', False)
         self.contagion_hierarchy = kwargs.get('contagion_hierarchy', False)
+        self.donation = kwargs.get('donation', 0)
 
         self.walls = self.generate_walls(style=self.wall_type)
 

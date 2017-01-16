@@ -32,6 +32,8 @@ var pixels = grid(data, {
   formatted: true
 });
 
+var mouse = position(pixels.canvas);
+
 Food = function (settings) {
     if (!(this instanceof Food)) {
         return new Food();
@@ -258,6 +260,34 @@ $(document).ready(function() {
         $("#chat").show();
     }
 
+    $(pixels.canvas).click(function () {
+        row = pixels2cells(mouse[1]);
+        column = pixels2cells(mouse[0]);
+        player_to = nearestPlayer(row, column);
+        if (player_to.id != ego) {
+            socket.emit('donate', {
+                player_to: player_to.id,
+                player_from: ego,
+                amount: settings.donation,
+            });
+        }
+    });
+
+    pixels2cells = function (pix) {
+        return Math.floor(pix / (settings.block_size + settings.padding));
+    };
+
+    nearestPlayer = function (row, column) {
+        distances = [];
+        for (var i = 0; i < players.length; i++) {
+            distances.push(
+                Math.abs(row - players[i].position[0]) +
+                Math.abs(column - players[i].position[1])
+            );
+        }
+        return players[distances.indexOf(Math.min.apply(null, distances))];
+    };
+
     url = location.protocol + '//' + document.domain + ':' + location.port;
     var socket = io.connect(url);
 
@@ -327,6 +357,17 @@ $(document).ready(function() {
 
     socket.on("message", function(msg){
       entry = "<span class='name'>Player " + msg.player_id + ":</span> " + msg.contents;
+      $("#messages").append($("<li>").html(entry));
+      $('#chatlog').scrollTop($('#chatlog')[0].scrollHeight);
+    });
+
+    socket.on("donate", function(msg){
+      entry = "Player " + msg.player_from + " gave you " + msg.donation;
+      if (msg.donation == 1) {
+        entry += " point.";
+      } else {
+        entry += " points.";
+      }
       $("#messages").append($("<li>").html(entry));
       $('#chatlog').scrollTop($('#chatlog')[0].scrollHeight);
     });

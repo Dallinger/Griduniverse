@@ -43,6 +43,7 @@ grid = Gridworld(
     chatroom=True,
     contagion=0,
     contagion_hierarchy=False,
+    donation=1,
 )
 
 
@@ -161,6 +162,28 @@ def handle_move(msg):
 def handle_change_color(msg):
     player = grid.players[msg['player']]
     player.color = msg['color']
+
+
+@socketio.on('donate')
+def handle_donate(msg):
+    """Send a donation from one player to another."""
+    player_to = grid.players[msg['player_to']]
+    player_from = grid.players[msg['player_from']]
+    donation = msg['amount']
+
+    if player_from.score >= donation:
+
+        player_from.score -= donation
+        player_to.score += donation
+
+        socketio.emit(
+            'donate', {
+                'player_from': player_from.id,
+                'player_to': player_to.id,
+                'donation': donation,
+            },
+            room=clients[player_to.id]
+        )
 
 
 if __name__ == '__main__':
