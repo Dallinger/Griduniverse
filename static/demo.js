@@ -357,10 +357,10 @@ $(document).ready(function() {
     });
 
     socket.on("message", function(msg){
-      if (settings.player_pseudonyms) {
-          name = "Player " + msg.player_id;
-      } else {
+      if (settings.pseudonyms) {
           name = players[msg.player_id].name;
+      } else {
+          name = "Player " + msg.player_id;
       }
       entry = "<span class='name'>" + name + ":</span> " + msg.contents;
       $("#messages").append($("<li>").html(entry));
