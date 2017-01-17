@@ -44,6 +44,8 @@ grid = Gridworld(
     contagion=0,
     contagion_hierarchy=False,
     donation=1,
+    pseudonyms=True,
+    pseudonyms_locale="it_IT",
 )
 
 

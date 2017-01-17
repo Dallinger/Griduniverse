@@ -73,6 +73,7 @@ Player = function (settings) {
     this.speed_limit = settings.speed_limit;
     this.motion_timestamp = settings.motion_timestamp;
     this.score = settings.score;
+    this.name = settings.name;
     return this;
 };
 
@@ -356,7 +357,12 @@ $(document).ready(function() {
     });
 
     socket.on("message", function(msg){
-      entry = "<span class='name'>Player " + msg.player_id + ":</span> " + msg.contents;
+      if (settings.player_pseudonyms) {
+          name = "Player " + msg.player_id;
+      } else {
+          name = players[msg.player_id].name;
+      }
+      entry = "<span class='name'>" + name + ":</span> " + msg.contents;
       $("#messages").append($("<li>").html(entry));
       $('#chatlog').scrollTop($('#chatlog')[0].scrollHeight);
     });
