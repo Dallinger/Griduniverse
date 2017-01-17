@@ -22,6 +22,7 @@
         settings.chatroom = {% if grid.chatroom %}true{% else %}false{% endif %};
         settings.donation = {{ grid.donation }};
         settings.pseudonyms = {% if grid.pseudonyms %}true{% else %}false{% endif %};
+        settings.walls_visible = {% if grid.walls_visible %}true{% else %}false{% endif %};
     </script>
     <link rel="stylesheet" type="text/css" href="static/styles/styles.css" />
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">

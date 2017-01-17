@@ -48,6 +48,7 @@ class Gridworld(object):
         self.time = kwargs.get('time', 300)
         self.tax = kwargs.get('tax', 0.01)
         self.wall_type = kwargs.get('walls', None)
+        self.walls_visible = kwargs.get('walls_visible', True)
         self.show_grid = kwargs.get('show_grid', None)
         self.visibility = kwargs.get('visibility', 5)
         self.motion_auto = kwargs.get('motion_auto', False)

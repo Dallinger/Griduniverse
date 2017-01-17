@@ -206,9 +206,11 @@ pixels.frame(function () {
   });
 
   // Draw the walls.
-  walls.forEach(function (w) {
-      data[(w.position[0]) * settings.columns + w.position[1]] = w.color;
-  });
+  if (settings.walls_visible) {
+      walls.forEach(function (w) {
+          data[(w.position[0]) * settings.columns + w.position[1]] = w.color;
+      });
+  }
 
   // Add the Gaussian mask.
   limitVisibility = settings.visibility < Math.max(settings.columns, settings.rows);
