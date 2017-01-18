@@ -39,6 +39,7 @@ class Gridworld(object):
         self.padding = kwargs.get('padding', 1)
         self.num_food = kwargs.get('num_food', self.num_players - 1)
         self.food_visible = kwargs.get('food_visible')
+        self.food_pg_multiplier = kwargs.get('food_pg_multiplier')
         self.respawn_food = kwargs.get('respawn_food', True)
         self.dollars_per_point = kwargs.get('dollars_per_point', 0.02)
         self.num_colors = kwargs.get('num_colors', 2)
@@ -70,6 +71,10 @@ class Gridworld(object):
 
         self.walls = self.generate_walls(style=self.wall_type)
 
+        self.public_good = (
+            (self.food_reward * self.food_pg_multiplier) / self.num_players
+        )
+
         for i in range(self.num_food):
             self.spawn_food()
 
@@ -93,7 +98,9 @@ class Gridworld(object):
                     self.food.remove(food)
                     if self.respawn_food:
                         self.spawn_food()
-                    player.score = player.score + self.food_reward
+                    player.score += self.food_reward
+                    for player_to in self.players:
+                        player_to.score += self.public_good
                     break
 
     def spawn_food(self):
