@@ -66,6 +66,7 @@ class Gridworld(object):
         self.donation = kwargs.get('donation', 0)
         self.pseudonyms = kwargs.get('pseudonyms', False)
         self.pseudonyms_locale = kwargs.get('pseudonyms_locale', 'en_US')
+        self.food_reward = kwargs.get('food_reward', 1)
 
         self.walls = self.generate_walls(style=self.wall_type)
 
@@ -92,7 +93,7 @@ class Gridworld(object):
                     self.food.remove(food)
                     if self.respawn_food:
                         self.spawn_food()
-                    player.score = player.score + 1
+                    player.score = player.score + self.food_reward
                     break
 
     def spawn_food(self):

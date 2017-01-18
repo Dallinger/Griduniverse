@@ -25,6 +25,7 @@ grid = Gridworld(
     respawn_food=True,
     food_visible=True,
     mutable_colors=False,
+    food_reward=1,
     dollars_per_point=0.02,
     initial_score=50,
     player_overlap=False,
