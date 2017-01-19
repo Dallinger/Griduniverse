@@ -1,63 +1,61 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <script type="text/javascript">
-        // Parameters
-        settings = {};
-        settings.block_size = {{ grid.block_size }};
-        settings.padding = {{ grid.padding }};
-        settings.respawn_food = {% if grid.respawn_food %}true{% else %}false{% endif %};
-        settings.dollars_per_point = {{ grid.dollars_per_point }};
-        settings.rows = {{ grid.rows }};
-        settings.columns = {{ grid.columns }};
-        settings.mutable_colors = {% if grid.mutable_colors %}true{% else %}false{% endif %};
-        settings.player_overlap = {% if grid.player_overlap %}true{% else %}false{% endif %};
-        settings.background_animation = {% if grid.background_animation %}true{% else %}false{% endif %};
-        settings.time = {{ grid.time }};
-        settings.tax = {{ grid.tax }};
-        settings.walls = "{{ grid.wall_type }}";
-        settings.show_grid = {% if grid.show_grid %}true{% else %}false{% endif %};
-        settings.visibility = {{ grid.visibility }};
-        settings.food_visible = {% if grid.food_visible %}true{% else %}false{% endif %};
-        settings.chatroom = {% if grid.chatroom %}true{% else %}false{% endif %};
-        settings.donation = {{ grid.donation }};
-        settings.pseudonyms = {% if grid.pseudonyms %}true{% else %}false{% endif %};
-        settings.walls_visible = {% if grid.walls_visible %}true{% else %}false{% endif %};
-    </script>
-    <link rel="stylesheet" type="text/css" href="static/styles/styles.css" />
-    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
-</head>
-<body>
-    <div id="dashboard">
-        <p>
-            <span id="score">0</span> points ($<span id="dollars">0.00</span>),
-            <span id="time">?</span> seconds remaining.
-        </p>
-    </div>
+{% block head %}
+{{ super() }}
+<script type="text/javascript">
+    // Parameters
+    settings = {};
+    settings.block_size = {{ grid.block_size }};
+    settings.padding = {{ grid.padding }};
+    settings.respawn_food = {% if grid.respawn_food %}true{% else %}false{% endif %};
+    settings.dollars_per_point = {{ grid.dollars_per_point }};
+    settings.rows = {{ grid.rows }};
+    settings.columns = {{ grid.columns }};
+    settings.mutable_colors = {% if grid.mutable_colors %}true{% else %}false{% endif %};
+    settings.player_overlap = {% if grid.player_overlap %}true{% else %}false{% endif %};
+    settings.background_animation = {% if grid.background_animation %}true{% else %}false{% endif %};
+    settings.time = {{ grid.time }};
+    settings.tax = {{ grid.tax }};
+    settings.walls = "{{ grid.wall_type }}";
+    settings.show_grid = {% if grid.show_grid %}true{% else %}false{% endif %};
+    settings.visibility = {{ grid.visibility }};
+    settings.food_visible = {% if grid.food_visible %}true{% else %}false{% endif %};
+    settings.chatroom = {% if grid.chatroom %}true{% else %}false{% endif %};
+    settings.donation = {{ grid.donation }};
+    settings.pseudonyms = {% if grid.pseudonyms %}true{% else %}false{% endif %};
+    settings.walls_visible = {% if grid.walls_visible %}true{% else %}false{% endif %};
+</script>
+<script src="{{ url_for('static', filename='jsfx.js') }}"></script>
+{% endblock %}
 
-    <script src="static/bundle.js"></script>
+{% block body %}
+<div id="dashboard">
+    <p>
+        <span id="score">0</span> points ($<span id="dollars">0.00</span>),
+        <span id="time">?</span> seconds remaining.
+    </p>
+</div>
 
-    <div id="chat">
-        <div id="chatlog">
-            <ul id="messages"></ul>
-        </div>
-        <form action="">
-            <input id="message" autocomplete="off" placeholder="Message the group." />
-            <button id="submit-message">Send to all</button>
-        </form>
-    </div>
+<script src="static/bundle.js"></script>
 
-    <div id="instructions">
-        <h1>Instructions</h1>
-        <p>You are one of the squares. Move using the arrow keys.
-        {% if grid.mutable_colors %}
-            Press 'b' or 'y' to switch to blue or yellow.
-        {% endif %}
-        </p>
+<div id="chat">
+    <div id="chatlog">
+        <ul id="messages"></ul>
     </div>
+    <form action="">
+        <input id="message" autocomplete="off" placeholder="Message the group." />
+        <button id="submit-message">Send to all</button>
+    </form>
+</div>
 
-    <div id="game-over">
-        <p>The game is over, thank you for participating.</p>
-    </div>
-</body>
-</html>
+<div id="instructions">
+    <h1>Instructions</h1>
+    <p>You are one of the squares. Move using the arrow keys.
+    {% if grid.mutable_colors %}
+        Press 'b' or 'y' to switch to blue or yellow.
+    {% endif %}
+    </p>
+</div>
+
+<div id="game-over">
+    <p>The game is over, thank you for participating.</p>
+</div>
+{% endblock %}

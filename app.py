@@ -1,11 +1,14 @@
 from grid import Gridworld
 
+from flask import abort
 from flask import Flask
 from flask import render_template
 from flask import request
 from flask_socketio import SocketIO
+from jinja2 import TemplateNotFound
 
 import math
+import random
 import time
 
 app = Flask(__name__)
@@ -22,11 +25,12 @@ grid = Gridworld(
     block_size=10,
     padding=1,
     num_colors=2,
-    respawn_food=True,
+    respawn_food=False,
     food_visible=True,
-    mutable_colors=False,
     food_reward=1,
-    food_pg_multiplier=-2,
+    food_pg_multiplier=0,
+    food_growth_rate=1.05,
+    mutable_colors=True,
     dollars_per_point=0.02,
     initial_score=50,
     player_overlap=False,
@@ -42,10 +46,10 @@ grid = Gridworld(
     motion_cost=0,
     motion_tremble_rate=0.00,
     frequency_dependence=0,
-    frequency_dependent_payoff_rate=1,
+    frequency_dependent_payoff_rate=0,
     chatroom=True,
-    contagion=0,
-    contagion_hierarchy=False,
+    contagion=5,
+    contagion_hierarchy=True,
     donation=1,
     pseudonyms=False,
     pseudonyms_locale="it_IT",
@@ -77,6 +81,18 @@ def game_loop():
 
         # Trigger time-based events.
         if (now - previous_second_timestamp) > 1.000:
+
+            # Grow the food stores.
+            grid.num_food = max(min(
+                grid.num_food * grid.food_growth_rate,
+                grid.rows * grid.columns,
+            ), 0)
+
+            for i in range(int(round(grid.num_food) - len(grid.food))):
+                grid.spawn_food()
+
+            for i in range(len(grid.food) - int(round(grid.num_food))):
+                grid.food.remove(random.choice(grid.food))
 
             for player in grid.players:
                 # Apply tax.
@@ -150,6 +166,12 @@ def test_disconnect():
 @app.route('/')
 def index():
     return render_template('index.html', grid=grid)
+
+
+@app.route('/consent')
+def consent():
+    print("test!!!!")
+    return render_template('consent.html', grid=grid)
 
 
 @socketio.on('message')

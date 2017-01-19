@@ -68,6 +68,7 @@ class Gridworld(object):
         self.pseudonyms = kwargs.get('pseudonyms', False)
         self.pseudonyms_locale = kwargs.get('pseudonyms_locale', 'en_US')
         self.food_reward = kwargs.get('food_reward', 1)
+        self.food_growth_rate = kwargs.get('food_growth_rate', 1)
 
         self.walls = self.generate_walls(style=self.wall_type)
 
@@ -94,10 +95,15 @@ class Gridworld(object):
         for food in self.food:
             for player in self.players:
                 if food.position == player.position:
+                    # Update existence and count of food.
                     self.food_consumed.append(food)
                     self.food.remove(food)
                     if self.respawn_food:
                         self.spawn_food()
+                    else:
+                        self.num_food -= 1
+
+                    # Update scores.
                     player.score += self.food_reward
                     for player_to in self.players:
                         player_to.score += self.public_good

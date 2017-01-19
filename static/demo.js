@@ -34,6 +34,22 @@ var pixels = grid(data, {
 
 var mouse = position(pixels.canvas);
 
+var library = {
+    "donation": {
+        "Frequency": {
+            "Start": 734.7291558862061,
+            "ChangeSpeed": 0.23966899924998872,
+            "ChangeAmount": 8.440642297186233
+        },
+        "Volume": {
+            "Sustain": 0.09810917608846803,
+            "Decay": 0.30973154812929393,
+            "Punch": 0.5908451401277536
+        }
+    },
+};
+var sfx = jsfx.Sounds(library);
+
 Food = function (settings) {
     if (!(this instanceof Food)) {
         return new Food();
@@ -263,7 +279,16 @@ $(document).ready(function() {
         $("#chat").show();
     }
 
-    $(pixels.canvas).click(function () {
+    $(pixels.canvas).contextmenu(function (e) {
+        e.preventDefault();
+        donateToClicked(-settings.donation);
+    });
+
+    $(pixels.canvas).click(function (e) {
+        donateToClicked(settings.donation);
+    });
+
+    donateToClicked = function (amt) {
         row = pixels2cells(mouse[1]);
         column = pixels2cells(mouse[0]);
         player_to = nearestPlayer(row, column);
@@ -271,10 +296,10 @@ $(document).ready(function() {
             socket.emit('donate', {
                 player_to: player_to.id,
                 player_from: ego,
-                amount: settings.donation,
+                amount: amt,
             });
         }
-    });
+    };
 
     pixels2cells = function (pix) {
         return Math.floor(pix / (settings.block_size + settings.padding));
@@ -378,6 +403,7 @@ $(document).ready(function() {
       }
       $("#messages").append($("<li>").html(entry));
       $('#chatlog').scrollTop($('#chatlog')[0].scrollHeight);
+      sfx.donation();
     });
 
     //
