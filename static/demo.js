@@ -271,6 +271,50 @@ function getRandomInt(min, max) {
 
 $(document).ready(function() {
 
+    // Consent to the experiment.
+    $("#go-to-experiment").click(function() {
+        allow_exit();
+        window.location.href = '/exp';
+    });
+
+    // Submit the questionnaire.
+    $("#submit-questionnaire").click(function() {
+        submitResponses();
+    });
+
+    $("#finish-reading").click(function() {
+        $("#stimulus").hide();
+        $("#response-form").show();
+        $("#submit-response").removeClass('disabled');
+        $("#submit-response").html('Submit');
+    });
+
+    $("#submit-response").click(function() {
+        $("#submit-response").addClass('disabled');
+        $("#submit-response").html('Sending...');
+
+        response = $("#reproduction").val();
+
+        $("#reproduction").val("");
+
+        reqwest({
+            url: "/info/" + my_node_id,
+            method: 'post',
+            data: {
+                contents: response,
+                info_type: "Info"
+            },
+            success: function (resp) {
+                create_agent();
+            }
+        });
+    });
+
+    // Submit the questionnaire.
+    $("#submit-questionnaire").click(function() {
+        submitResponses();
+    });
+
     if (settings.show_grid) {
         pixels.canvas.style.display = "inline";
     }

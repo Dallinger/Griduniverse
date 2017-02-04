@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+
+{% block head %}
+{{ super() }}
+<script src="/static/scripts/instructions.js" type="text/javascript"></script>
+{% endblock %}
+
+{% block body %}
+<div class="main_div">
+
+    <h1>Instructions</h1>
+
+    <hr>
+
+    <p>Welcome to the Griduniverse.</p>
+
+    <hr>
+
+    <div>
+        <div class="row">
+            <div class="col-xs-10"></div>
+            <div class="col-xs-2">
+                <button type="button" class="btn btn-success btn-lg" id="begin-experiment">
+                Begin</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
