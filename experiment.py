@@ -524,14 +524,14 @@ class Griduniverse(dallinger.experiments.Experiment):
         print('Client {} has disconnected.'.format(request.sid))
         self.clients[self.clients.index(request.sid)] = -1
 
-    def handle_message(msg):
+    def handle_message(self, msg):
         socketio.emit('message', msg, broadcast=True)
 
-    def handle_change_color(msg):
+    def handle_change_color(self, msg):
         player = grid.players[msg['player']]
         player.color = msg['color']
 
-    def handle_move(msg):
+    def handle_move(self, msg):
         player = grid.players[msg['player']]
         player.move(msg['move'], tremble_rate=player.motion_tremble_rate)
 
