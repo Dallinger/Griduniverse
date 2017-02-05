@@ -25,7 +25,6 @@
     settings.pseudonyms = {% if grid.pseudonyms %}true{% else %}false{% endif %};
     settings.walls_visible = {% if grid.walls_visible %}true{% else %}false{% endif %};
 </script>
-<script src="{{ url_for('static', filename='jsfx.js') }}"></script>
 {% endblock %}
 
 {% block body %}
@@ -36,7 +35,7 @@
     </p>
 </div>
 
-<script src="static/bundle.js"></script>
+<script src="static/scripts/bundle.js"></script>
 
 <div id="chat">
     <div id="chatlog">

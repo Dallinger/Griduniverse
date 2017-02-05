@@ -21,8 +21,6 @@ import dallinger
 
 config = dallinger.config.get_config()
 
-clients = []
-
 socketio = SocketIO(engineio_logger=True)
 
 
@@ -367,7 +365,7 @@ class Player(object):
             "motion_direction": self.motion_direction,
             "speed_limit": self.speed_limit,
             "motion_timestamp": self.motion_timestamp,
-            "name": self.name,
+            # "name": self.name,
         }
 
 
@@ -437,7 +435,7 @@ grid = Gridworld(
     food_visible=True,
     food_reward=1,
     food_pg_multiplier=0,
-    food_growth_rate=1.05,
+    food_growth_rate=1.00,
     mutable_colors=True,
     dollars_per_point=0.02,
     initial_score=50,
@@ -495,142 +493,6 @@ def serve_grid():
     return render_template("grid.html", grid=grid)
 
 
-@socketio.on('connect')
-def test_connect():
-    print("Client {} has connected.".format(request.sid))
-    client_count = len([c for c in clients if clients is not -1])
-    if client_count < grid.num_players:
-        clients.append(request.sid)
-        grid.spawn_player(id=clients.index(request.sid))
-
-
-@socketio.on('disconnect')
-def test_disconnect():
-    print('Client {} has disconnected.'.format(request.sid))
-    clients[clients.index(request.sid)] = -1
-
-
-@socketio.on('message')
-def handle_message(msg):
-    socketio.emit('message', msg, broadcast=True)
-
-
-@socketio.on('change_color')
-def handle_change_color(msg):
-    player = grid.players[msg['player']]
-    player.color = msg['color']
-
-
-@socketio.on('move')
-def handle_move(msg):
-    player = grid.players[msg['player']]
-    player.move(msg['move'], tremble_rate=player.motion_tremble_rate)
-
-
-@socketio.on('donate')
-def handle_donate(msg):
-    """Send a donation from one player to another."""
-    player_to = grid.players[msg['player_to']]
-    player_from = grid.players[msg['player_from']]
-    donation = msg['amount']
-
-    if player_from.score >= donation:
-
-        player_from.score -= donation
-        player_to.score += donation
-
-        socketio.emit(
-            'donate', {
-                'player_from': player_from.id,
-                'player_to': player_to.id,
-                'donation': donation,
-            },
-            room=clients[player_to.id]
-        )
-
-
-def send_state_thread():
-    """Example of how to send server-generated events to clients."""
-    count = 0
-    while True:
-        socketio.sleep(0.050)
-        count += 1
-        socketio.emit(
-            'state',
-            {
-                'state_json': grid.serialize(),
-                'clients': clients,
-                'count': count,
-                'remaining_time': time.time() - grid.start_timestamp,
-            },
-            broadcast=True,
-        )
-
-
-def game_loop():
-    """Update the world state."""
-    previous_second_timestamp = grid.start_timestamp
-
-    complete = False
-    while not complete:
-
-        socketio.sleep(0.010)
-
-        now = time.time()
-
-        # Update motion.
-        if grid.motion_auto:
-            for player in grid.players:
-                player.move(player.motion_direction, tremble_rate=0)
-
-        # Consume the food.
-        grid.consume()
-
-        # Spread through contagion.
-        if grid.contagion > 0:
-            grid.spread_contagion()
-
-        # Trigger time-based events.
-        if (now - previous_second_timestamp) > 1.000:
-
-            # Grow the food stores.
-            grid.num_food = max(min(
-                grid.num_food * grid.food_growth_rate,
-                grid.rows * grid.columns,
-            ), 0)
-
-            for i in range(int(round(grid.num_food) - len(grid.food))):
-                grid.spawn_food()
-
-            for i in range(len(grid.food) - int(round(grid.num_food))):
-                grid.food.remove(random.choice(grid.food))
-
-            for player in grid.players:
-                # Apply tax.
-                player.score = max(player.score - grid.tax, 0)
-
-                # Apply frequency-dependent payoff.
-                for player in grid.players:
-                    abundance = len(
-                        [p for p in grid.players if p.color == player.color]
-                    )
-                    relative_frequency = 1.0 * abundance / len(grid.players)
-                    payoff = fermi(
-                        beta=grid.frequency_dependence,
-                        p1=relative_frequency,
-                        p2=0.5
-                    ) * grid.frequency_dependent_payoff_rate
-
-                    player.score = max(player.score + payoff, 0)
-
-            previous_second_timestamp = now
-
-        # Check if the game is over.
-        if (now - grid.start_timestamp) > grid.time:
-            complete = True
-            socketio.emit('stop', {}, broadcast=True)
-
-
 class Griduniverse(dallinger.experiments.Experiment):
     """Define the structure of the experiment."""
 
@@ -640,3 +502,137 @@ class Griduniverse(dallinger.experiments.Experiment):
         self.experiment_repeats = 1
         self.initial_recruitment_size = 1
         self.setup()
+        self.clients = []
+
+        # Register Socket.IO event handler.
+        socketio.on_event('connect', self.handle_connect)
+        socketio.on_event('disconnect', self.handle_disconnect)
+        socketio.on_event('message', self.handle_message)
+        socketio.on_event('change_color', self.handle_change_color)
+        socketio.on_event('move', self.handle_move)
+        socketio.on_event('donate', self.handle_donate)
+
+    def handle_connect(self):
+        print("Client {} has connected.".format(request.sid))
+        client_count = len([c for c in self.clients if c is not -1])
+        print("Grid num players: {}".format(grid.num_players))
+        if client_count < grid.num_players:
+            self.clients.append(request.sid)
+            grid.spawn_player(id=self.clients.index(request.sid))
+
+    def handle_disconnect(self):
+        print('Client {} has disconnected.'.format(request.sid))
+        self.clients[self.clients.index(request.sid)] = -1
+
+    def handle_message(msg):
+        socketio.emit('message', msg, broadcast=True)
+
+    def handle_change_color(msg):
+        player = grid.players[msg['player']]
+        player.color = msg['color']
+
+    def handle_move(msg):
+        player = grid.players[msg['player']]
+        player.move(msg['move'], tremble_rate=player.motion_tremble_rate)
+
+    def handle_donate(self, msg):
+        """Send a donation from one player to another."""
+        player_to = grid.players[msg['player_to']]
+        player_from = grid.players[msg['player_from']]
+        donation = msg['amount']
+
+        if player_from.score >= donation:
+
+            player_from.score -= donation
+            player_to.score += donation
+
+            socketio.emit(
+                'donate', {
+                    'player_from': player_from.id,
+                    'player_to': player_to.id,
+                    'donation': donation,
+                },
+                room=self.clients[player_to.id]
+            )
+
+    def send_state_thread(self):
+        """Example of how to send server-generated events to clients."""
+        count = 0
+        while True:
+            socketio.sleep(0.050)
+            count += 1
+            print("emitting state")
+            print(self.clients)
+            socketio.emit(
+                'state',
+                {
+                    'state_json': grid.serialize(),
+                    'clients': self.clients,
+                    'count': count,
+                    'remaining_time': time.time() - grid.start_timestamp,
+                },
+                broadcast=True,
+            )
+
+    def game_loop(self):
+        """Update the world state."""
+        previous_second_timestamp = grid.start_timestamp
+
+        complete = False
+        while not complete:
+
+            socketio.sleep(0.010)
+
+            now = time.time()
+
+            # Update motion.
+            if grid.motion_auto:
+                for player in grid.players:
+                    player.move(player.motion_direction, tremble_rate=0)
+
+            # Consume the food.
+            grid.consume()
+
+            # Spread through contagion.
+            if grid.contagion > 0:
+                grid.spread_contagion()
+
+            # Trigger time-based events.
+            if (now - previous_second_timestamp) > 1.000:
+
+                # Grow the food stores.
+                grid.num_food = max(min(
+                    grid.num_food * grid.food_growth_rate,
+                    grid.rows * grid.columns,
+                ), 0)
+
+                for i in range(int(round(grid.num_food) - len(grid.food))):
+                    grid.spawn_food()
+
+                for i in range(len(grid.food) - int(round(grid.num_food))):
+                    grid.food.remove(random.choice(grid.food))
+
+                for player in grid.players:
+                    # Apply tax.
+                    player.score = max(player.score - grid.tax, 0)
+
+                    # Apply frequency-dependent payoff.
+                    for player in grid.players:
+                        abundance = len(
+                            [p for p in grid.players if p.color == player.color]
+                        )
+                        relative_frequency = 1.0 * abundance / len(grid.players)
+                        payoff = fermi(
+                            beta=grid.frequency_dependence,
+                            p1=relative_frequency,
+                            p2=0.5
+                        ) * grid.frequency_dependent_payoff_rate
+
+                        player.score = max(player.score + payoff, 0)
+
+                previous_second_timestamp = now
+
+            # Check if the game is over.
+            if (now - grid.start_timestamp) > grid.time:
+                complete = True
+                socketio.emit('stop', {}, broadcast=True)

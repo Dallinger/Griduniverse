@@ -48,7 +48,6 @@ var library = {
         }
     },
 };
-var sfx = jsfx.Sounds(library);
 
 Food = function (settings) {
     if (!(this instanceof Food)) {
@@ -142,7 +141,6 @@ Player.prototype.move = function (direction) {
     }
 };
 
-clients = [];
 food = [];
 foodConsumed = [];
 players = [];
@@ -269,7 +267,11 @@ function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+console.log("top-level print statement.");
+
 $(document).ready(function() {
+
+    console.log("document is ready.");
 
     // Consent to the experiment.
     $("#go-to-experiment").click(function() {
@@ -365,9 +367,10 @@ $(document).ready(function() {
 
     socket.on('state', function(msg) {
 
+        console.log("got state");
+
         // Update ego.
-        clients = msg.clients;
-        ego = clients.indexOf(socket.io.engine.id);
+        ego = 1;
 
         // Update remaining time.
         remainingTime = Math.max(Math.round(settings.time - msg.remaining_time), 0);
@@ -447,7 +450,6 @@ $(document).ready(function() {
       }
       $("#messages").append($("<li>").html(entry));
       $('#chatlog').scrollTop($('#chatlog')[0].scrollHeight);
-      sfx.donation();
     });
 
     //
