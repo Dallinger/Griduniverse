@@ -5,25 +5,25 @@
 <script type="text/javascript">
     // Parameters
     settings = {};
-    settings.block_size = {{ grid.block_size }};
-    settings.padding = {{ grid.padding }};
-    settings.respawn_food = {% if grid.respawn_food %}true{% else %}false{% endif %};
-    settings.dollars_per_point = {{ grid.dollars_per_point }};
-    settings.rows = {{ grid.rows }};
-    settings.columns = {{ grid.columns }};
-    settings.mutable_colors = {% if grid.mutable_colors %}true{% else %}false{% endif %};
-    settings.player_overlap = {% if grid.player_overlap %}true{% else %}false{% endif %};
-    settings.background_animation = {% if grid.background_animation %}true{% else %}false{% endif %};
-    settings.time = {{ grid.time }};
-    settings.tax = {{ grid.tax }};
-    settings.walls = "{{ grid.wall_type }}";
-    settings.show_grid = {% if grid.show_grid %}true{% else %}false{% endif %};
-    settings.visibility = {{ grid.visibility }};
-    settings.food_visible = {% if grid.food_visible %}true{% else %}false{% endif %};
-    settings.chatroom = {% if grid.chatroom %}true{% else %}false{% endif %};
-    settings.donation = {{ grid.donation }};
-    settings.pseudonyms = {% if grid.pseudonyms %}true{% else %}false{% endif %};
-    settings.walls_visible = {% if grid.walls_visible %}true{% else %}false{% endif %};
+    settings.block_size = {{ experiment.grid.block_size }};
+    settings.padding = {{ experiment.grid.padding }};
+    settings.respawn_food = {% if experiment.grid.respawn_food %}true{% else %}false{% endif %};
+    settings.dollars_per_point = {{ experiment.grid.dollars_per_point }};
+    settings.rows = {{ experiment.grid.rows }};
+    settings.columns = {{ experiment.grid.columns }};
+    settings.mutable_colors = {% if experiment.grid.mutable_colors %}true{% else %}false{% endif %};
+    settings.player_overlap = {% if experiment.grid.player_overlap %}true{% else %}false{% endif %};
+    settings.background_animation = {% if experiment.grid.background_animation %}true{% else %}false{% endif %};
+    settings.time = {{ experiment.grid.time }};
+    settings.tax = {{ experiment.grid.tax }};
+    settings.walls = "{{ experiment.grid.wall_type }}";
+    settings.show_grid = {% if experiment.grid.show_grid %}true{% else %}false{% endif %};
+    settings.visibility = {{ experiment.grid.visibility }};
+    settings.food_visible = {% if experiment.grid.food_visible %}true{% else %}false{% endif %};
+    settings.chatroom = {% if experiment.grid.chatroom %}true{% else %}false{% endif %};
+    settings.donation = {{ experiment.grid.donation }};
+    settings.pseudonyms = {% if experiment.grid.pseudonyms %}true{% else %}false{% endif %};
+    settings.walls_visible = {% if experiment.grid.walls_visible %}true{% else %}false{% endif %};
 </script>
 {% endblock %}
 
@@ -50,7 +50,7 @@
 <div id="instructions">
     <h1>Instructions</h1>
     <p>You are one of the squares. Move using the arrow keys.
-    {% if grid.mutable_colors %}
+    {% if experiment.grid.mutable_colors %}
         Press 'b' or 'y' to switch to blue or yellow.
     {% endif %}
     </p>
