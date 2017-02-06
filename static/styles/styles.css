@@ -9,6 +9,10 @@ body {
 
 #dashboard { }
 
+#ad-logo {
+    width: 100px;
+}
+
 canvas {
     display: none;
     margin-left: 0px !important;
