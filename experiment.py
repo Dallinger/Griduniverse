@@ -4,6 +4,7 @@ import json
 import math
 import random
 import time
+import os
 import uuid
 
 from faker import Factory
@@ -15,13 +16,18 @@ from flask import (
     request,
 )
 from flask_socketio import SocketIO
+from sqlalchemy import create_engine
+from sqlalchemy.orm import (
+    sessionmaker,
+    scoped_session,
+)
 
 import dallinger
 
 
 config = dallinger.config.get_config()
 
-socketio = SocketIO(engineio_logger=True)
+socketio = SocketIO()
 
 
 class Gridworld(object):
@@ -505,6 +511,13 @@ class Griduniverse(dallinger.experiments.Experiment):
         socketio.on_event('move', self.handle_move)
         socketio.on_event('donate', self.handle_donate)
 
+    def setup(self):
+        """Setup the networks."""
+        if not self.networks():
+            super(Griduniverse, self).setup()
+            for net in self.networks():
+                dallinger.nodes.Environment(network=net)
+
     def handle_connect(self):
         print("Client {} has connected.".format(request.sid))
         client_count = len([c for c in self.clients if c is not -1])
@@ -551,11 +564,10 @@ class Griduniverse(dallinger.experiments.Experiment):
     def send_state_thread(self):
         """Example of how to send server-generated events to clients."""
         count = 0
+        socketio.sleep(1.00)
         while True:
             socketio.sleep(0.050)
             count += 1
-            print("emitting state")
-            print(self.clients)
             socketio.emit(
                 'state',
                 {
@@ -569,10 +581,28 @@ class Griduniverse(dallinger.experiments.Experiment):
 
     def game_loop(self):
         """Update the world state."""
+        from dallinger.db import db_url
+        engine = create_engine(db_url, pool_size=1000)
+        session = scoped_session(
+            sessionmaker(
+                autocommit=False,
+                autoflush=True,
+                bind=engine
+            )
+        )
+
         previous_second_timestamp = self.grid.start_timestamp
+
+        socketio.sleep(0.200)
+
+        environment = session.query(dallinger.nodes.Environment).one()
 
         complete = False
         while not complete:
+
+            state = environment.update(self.grid.serialize())
+            session.add(state)
+            session.commit()
 
             socketio.sleep(0.010)
 
