@@ -85,8 +85,8 @@ class Gridworld(object):
         self.contagion = kwargs.get('contagion', False)
         self.contagion_hierarchy = kwargs.get('contagion_hierarchy', False)
         self.donation = kwargs.get('donation', 0)
-        # self.pseudonyms = kwargs.get('pseudonyms', False)
-        # self.pseudonyms_locale = kwargs.get('pseudonyms_locale', 'en_US')
+        self.pseudonyms = kwargs.get('pseudonyms', False)
+        self.pseudonyms_locale = kwargs.get('pseudonyms_locale', 'en_US')
         self.food_reward = kwargs.get('food_reward', 1)
         self.food_growth_rate = kwargs.get('food_growth_rate', 1)
 
@@ -147,7 +147,7 @@ class Gridworld(object):
             motion_cost=self.motion_cost,
             score=self.initial_score,
             motion_tremble_rate=self.motion_tremble_rate,
-            # pseudonym_locale=self.pseudonyms_locale,
+            pseudonym_locale=self.pseudonyms_locale,
             grid=self,
         )
         self.players.append(player)
@@ -272,7 +272,7 @@ class Player(object):
         self.motion_tremble_rate = kwargs.get('motion_tremble_rate', 0)
         self.grid = kwargs.get('grid', None)
         self.score = kwargs.get('score', 0)
-        # self.pseudonym_locale = kwargs.get('pseudonym_locale', 'en_US')
+        self.pseudonym_locale = kwargs.get('pseudonym_locale', 'en_US')
 
         # Determine the player's color.
         if 'color' in kwargs:
@@ -286,8 +286,8 @@ class Player(object):
         self.color = Gridworld.colors[self.color_idx]
 
         # Determine the player's pseudonym.
-        # self.fake = Factory.create(self.pseudonym_locale)
-        # self.name = self.fake.name()
+        self.fake = Factory.create(self.pseudonym_locale)
+        self.name = self.fake.name()
 
         self.motion_timestamp = 0
 
@@ -371,7 +371,7 @@ class Player(object):
             "motion_direction": self.motion_direction,
             "speed_limit": self.speed_limit,
             "motion_timestamp": self.motion_timestamp,
-            # "name": self.name,
+            "name": self.name,
         }
 
 
@@ -499,8 +499,8 @@ class Griduniverse(dallinger.experiments.Experiment):
             contagion=5,
             contagion_hierarchy=True,
             donation=1,
-            # pseudonyms=False,
-            # pseudonyms_locale="it_IT",
+            pseudonyms=True,
+            pseudonyms_locale="it_IT",
         )
 
         # Register Socket.IO event handler.
