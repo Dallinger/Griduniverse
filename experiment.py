@@ -561,6 +561,13 @@ class Griduniverse(dallinger.experiments.Experiment):
                 room=self.clients[player_to.id]
             )
 
+    @property
+    def background_tasks(self):
+        return [
+            self.send_state_thread,
+            self.game_loop,
+        ]
+
     def send_state_thread(self):
         """Example of how to send server-generated events to clients."""
         count = 0
