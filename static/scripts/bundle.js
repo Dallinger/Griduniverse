@@ -21353,7 +21353,6 @@ YELLOW = [1.00, 0.86, 0.50];
 WHITE = [1.00, 1.00, 1.00];
 
 var pixels = grid(data, {
-  root: document.body,
   rows: settings.rows,
   columns: settings.columns,
   size: settings.block_size,
@@ -21599,6 +21598,9 @@ function getRandomInt(min, max) {
 }
 
 $(document).ready(function() {
+
+    // Append the canvas.
+    $("#grid").append(pixels.canvas);
 
     // Consent to the experiment.
     $("#go-to-experiment").click(function() {
