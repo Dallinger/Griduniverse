@@ -77,3 +77,9 @@ canvas {
 #game-over {
     display: none;
 }
+
+#opt-out {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+}

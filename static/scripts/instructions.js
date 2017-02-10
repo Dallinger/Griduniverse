@@ -4,4 +4,9 @@ $(document).ready(function() {
         allow_exit();
         window.location.href = '/grid';
     });
+
+    // Opt out of the experiment.
+    $("#opt-out").click(function() {
+        questionnaire();
+    });
 });

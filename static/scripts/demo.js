@@ -272,6 +272,11 @@ $(document).ready(function() {
     // Append the canvas.
     $("#grid").append(pixels.canvas);
 
+    // Opt out of the experiment.
+    $("#opt-out").click(function() {
+        questionnaire();
+    });
+
     // Consent to the experiment.
     $("#go-to-experiment").click(function() {
         allow_exit();
@@ -411,12 +416,16 @@ $(document).ready(function() {
     });
 
     socket.on('stop', function(msg) {
+        gameOver();
+    });
+
+    function gameOver() {
         $("#game-over").show();
         $("#dashboard").hide();
         $("#instructions").hide();
         $("#chat").hide();
         pixels.canvas.style.display = "none";
-    });
+    }
 
     $("form").submit(function(){
         socket.emit("message", {

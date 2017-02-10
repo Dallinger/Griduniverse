@@ -58,9 +58,11 @@
     </p>
 </div>
 
-<div id="game-over">
-    <p>The game is over, thank you for participating.</p>
-</div>
-
 <script src="static/scripts/bundle.js"></script>
+{% endblock %}
+
+{% block opt_out %}
+<div>
+    <button class="button button-clear button-small" id="opt-out">Opt out</button>
+</div>
 {% endblock %}
