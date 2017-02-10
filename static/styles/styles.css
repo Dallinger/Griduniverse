@@ -41,7 +41,11 @@ canvas {
 }
 
 #chatlog li {
-    padding: 8px 10px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 8px;
+    padding-right: 0px;
+    margin-bottom: 0px;
 }
 
 #chatlog li:nth-child(odd) {
