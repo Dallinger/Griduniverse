@@ -316,11 +316,6 @@ $(document).ready(function() {
         });
     });
 
-    // Submit the questionnaire.
-    $("#submit-questionnaire").click(function() {
-        submitResponses();
-    });
-
     if (settings.show_grid) {
         pixels.canvas.style.display = "inline";
     }
