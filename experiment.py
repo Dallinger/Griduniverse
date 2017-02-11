@@ -27,7 +27,7 @@ import dallinger
 
 config = dallinger.config.get_config()
 
-socketio = SocketIO(engineio_logger=True)
+socketio = SocketIO(logger=True, engineio_logger=True)
 
 
 class Gridworld(object):
