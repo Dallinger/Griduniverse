@@ -21602,6 +21602,11 @@ $(document).ready(function() {
     // Append the canvas.
     $("#grid").append(pixels.canvas);
 
+    // Opt out of the experiment.
+    $("#opt-out").click(function() {
+        questionnaire();
+    });
+
     // Consent to the experiment.
     $("#go-to-experiment").click(function() {
         allow_exit();
