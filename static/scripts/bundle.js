@@ -21741,12 +21741,16 @@ $(document).ready(function() {
     });
 
     socket.on('stop', function(msg) {
+        gameOver();
+    });
+
+    function gameOver() {
         $("#game-over").show();
         $("#dashboard").hide();
         $("#instructions").hide();
         $("#chat").hide();
         pixels.canvas.style.display = "none";
-    });
+    }
 
     $("form").submit(function(){
         socket.emit("message", {
