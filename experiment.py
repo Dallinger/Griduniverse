@@ -518,6 +518,9 @@ class Griduniverse(dallinger.experiments.Experiment):
             for net in self.networks():
                 dallinger.nodes.Environment(network=net)
 
+    def recruit(self):
+        pass
+
     def handle_connect(self):
         print("Client {} has connected.".format(request.sid))
         client_count = len([c for c in self.clients if c is not -1])
