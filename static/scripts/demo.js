@@ -13,21 +13,21 @@ var data = [];
 var background = [];
 for (var i = 0; i < settings.rows; i++) {
   for (var j = 0; j < settings.columns; j++) {
-    data.push([ 0, 0, 0 ]);
-    background.push([ 0, 0, 0 ]);
+    data.push([0, 0, 0]);
+    background.push([0, 0, 0]);
   }
 }
 
-BLUE = [ 0.50, 0.86, 1.00 ];
-YELLOW = [ 1.00, 0.86, 0.50 ];
-WHITE = [ 1.00, 1.00, 1.00 ];
+BLUE = [0.50, 0.86, 1.00];
+YELLOW = [1.00, 0.86, 0.50];
+WHITE = [1.00, 1.00, 1.00];
 
 var pixels = grid(data, {
   rows: settings.rows,
   columns: settings.columns,
   size: settings.block_size,
   padding: settings.padding,
-  background: [ 0.1, 0.1, 0.1 ],
+  background: [0.1, 0.1, 0.1],
   formatted: true
 });
 
@@ -59,14 +59,16 @@ Food = function(settings) {
 };
 
 respawnFood = function() {
-  food.push(new Food({
-    id: food.length + foodConsumed.length,
-    position: [
-      getRandomInt(0, settings.rows),
-      getRandomInt(0, settings.columns)
-    ],
-    color: WHITE
-  }));
+  food.push(
+    new Food({
+      id: food.length + foodConsumed.length,
+      position: [
+        getRandomInt(0, settings.rows),
+        getRandomInt(0, settings.columns)
+      ],
+      color: WHITE
+    })
+  );
 };
 
 Wall = function(settings) {
@@ -132,7 +134,7 @@ Player.prototype.move = function(direction) {
 
         if (
           settings.player_overlap ||
-            !hasPlayer(newPosition) & !hasWall(newPosition)
+          !hasPlayer(newPosition) & !hasWall(newPosition)
         ) {
           this.position = newPosition;
         }
@@ -272,7 +274,8 @@ $(document).ready(function() {
 
   // Opt out of the experiment.
   $("#opt-out").click(function() {
-    questionnaire();
+    allow_exit();
+    window.location.href = "/questionnaire";
   });
 
   // Consent to the experiment.
@@ -377,20 +380,24 @@ $(document).ready(function() {
     // Update food.
     food = [];
     for (var j = 0; j < state.food.length; j++) {
-      food.push(new Food({
-        id: state.food[j].id,
-        position: state.food[j].position,
-        color: WHITE
-      }));
+      food.push(
+        new Food({
+          id: state.food[j].id,
+          position: state.food[j].position,
+          color: WHITE
+        })
+      );
     }
 
     // Update walls if they haven't been created yet.
     if (walls.length === 0) {
       for (var k = 0; k < state.walls.length; k++) {
-        walls.push(new Wall({
-          position: state.walls[k].position,
-          color: state.walls[k].color
-        }));
+        walls.push(
+          new Wall({
+            position: state.walls[k].position,
+            color: state.walls[k].color
+          })
+        );
       }
     }
 
@@ -451,7 +458,7 @@ $(document).ready(function() {
   //
   // Key bindings
   //
-  directions = [ "up", "down", "left", "right" ];
+  directions = ["up", "down", "left", "right"];
   lock = false;
   directions.forEach(function(direction) {
     Mousetrap.bind(direction, function() {
