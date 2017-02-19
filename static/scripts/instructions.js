@@ -7,6 +7,7 @@ $(document).ready(function() {
 
   // Opt out of the experiment.
   $("#opt-out").click(function() {
-    questionnaire();
+    allow_exit();
+    window.location.href = "/questionnaire";
   });
 });
