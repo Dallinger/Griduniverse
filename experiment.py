@@ -547,6 +547,8 @@ class Griduniverse(dallinger.experiments.Experiment):
     def handle_change_color(self, msg):
         player = self.grid.players[msg['player']]
         player.color = msg['color']
+        player.color_idx = Gridworld.colors.index(player.color)
+        player.color_name = Gridworld.color_names[player.color_idx]
 
     def handle_move(self, msg):
         player = self.grid.players[msg['player']]
