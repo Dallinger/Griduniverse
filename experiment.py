@@ -89,6 +89,7 @@ class Gridworld(object):
         self.pseudonyms_locale = kwargs.get('pseudonyms_locale', 'en_US')
         self.food_reward = kwargs.get('food_reward', 1)
         self.food_growth_rate = kwargs.get('food_growth_rate', 1)
+        self.relative_deprivation = kwargs.get('relative_deprivation', 1)
 
         self.walls = self.generate_walls(style=self.wall_type)
 
@@ -124,7 +125,13 @@ class Gridworld(object):
                         self.num_food -= 1
 
                     # Update scores.
-                    player.score += self.food_reward
+                    print(player.color_idx)
+                    if player.color_idx > 0:
+                        reward = self.food_reward
+                    else:
+                        reward = self.food_reward * self.relative_deprivation
+
+                    player.score += reward
                     for player_to in self.players:
                         player_to.score += self.public_good
                     break
@@ -501,6 +508,7 @@ class Griduniverse(dallinger.experiments.Experiment):
             donation=1,
             pseudonyms=True,
             pseudonyms_locale="it_IT",
+            relative_deprivation=1,
         )
 
         # Register Socket.IO event handler.
