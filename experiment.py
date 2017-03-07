@@ -8,7 +8,6 @@ import uuid
 
 from faker import Factory
 from flask import (
-    abort,
     Blueprint,
     jsonify,
     render_template,
