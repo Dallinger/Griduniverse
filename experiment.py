@@ -74,7 +74,7 @@ class Gridworld(object):
         self.show_grid = kwargs.get('show_grid', None)
         self.visibility = kwargs.get('visibility', 5)
         self.motion_auto = kwargs.get('motion_auto', False)
-        self.speed_limit = kwargs.get('speed_limit', 8)
+        self.motion_speed_limit = kwargs.get('motion_speed_limit', 8)
         self.start_timestamp = kwargs.get('start_timestamp', time.time())
         self.motion_cost = kwargs.get('motion_cost', 0)
         self.initial_score = kwargs.get('initial_score', 0)
@@ -160,7 +160,7 @@ class Gridworld(object):
             id=id,
             position=self._random_empty_position(),
             num_possible_colors=self.num_colors,
-            speed_limit=self.speed_limit,
+            motion_speed_limit=self.motion_speed_limit,
             motion_cost=self.motion_cost,
             score=self.initial_score,
             motion_tremble_rate=self.motion_tremble_rate,
@@ -286,7 +286,7 @@ class Player(object):
         self.position = kwargs.get('position', [0, 0])
         self.motion_auto = kwargs.get('motion_auto', False)
         self.motion_direction = kwargs.get('motion_direction', 'right')
-        self.speed_limit = kwargs.get('speed_limit', 8)
+        self.motion_speed_limit = kwargs.get('motion_speed_limit', 8)
         self.num_possible_colors = kwargs.get('num_possible_colors', 2)
         self.motion_cost = kwargs.get('motion_cost', 0)
         self.motion_tremble_rate = kwargs.get('motion_tremble_rate', 0)
@@ -356,7 +356,7 @@ class Player(object):
 
         # Update motion.
         now_relative = time.time() - self.grid.start_timestamp
-        wait_time = 1.0 / self.speed_limit
+        wait_time = 1.0 / self.motion_speed_limit
         can_move = now_relative > (self.motion_timestamp + wait_time)
 
         can_afford_to_move = self.score >= self.motion_cost
@@ -394,7 +394,7 @@ class Player(object):
             "color": self.color,
             "motion_auto": self.motion_auto,
             "motion_direction": self.motion_direction,
-            "speed_limit": self.speed_limit,
+            "motion_speed_limit": self.motion_speed_limit,
             "motion_timestamp": self.motion_timestamp,
             "name": self.name,
         }
@@ -516,7 +516,7 @@ class Griduniverse(dallinger.experiments.Experiment):
             walls_visible=True,
             show_grid=True,
             visibility=1000,
-            speed_limit=8,
+            motion_speed_limit=8,
             motion_auto=False,
             motion_cost=0,
             motion_tremble_rate=0.00,

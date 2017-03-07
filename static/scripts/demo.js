@@ -79,7 +79,7 @@ Player = function(settings) {
   this.color = settings.color;
   this.motion_auto = settings.motion_auto;
   this.motion_direction = settings.motion_direction;
-  this.speed_limit = settings.speed_limit;
+  this.motion_speed_limit = settings.motion_speed_limit;
   this.motion_timestamp = settings.motion_timestamp;
   this.score = settings.score;
   this.name = settings.name;
@@ -90,7 +90,7 @@ Player.prototype.move = function(direction) {
   this.motion_direction = direction;
 
   ts = Date.now() - start;
-  waitTime = 1000 / this.speed_limit;
+  waitTime = 1000 / this.motion_speed_limit;
   if (ts > this.motion_timestamp + waitTime) {
     var newPosition = this.position.slice();
 
