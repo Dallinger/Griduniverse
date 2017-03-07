@@ -353,13 +353,18 @@ $(document).ready(function() {
   var socket = io.connect(url);
 
   socket.on("state", function(msg) {
+
     // Update ego.
     clients = msg.clients;
     ego = clients.indexOf(socket.io.engine.id);
 
     // Update remaining time.
-    remainingTime = Math.max(Math.round(settings.time - msg.remaining_time), 0);
-    $("#time").html(remainingTime);
+    $("#time").html(Math.max(Math.round(msg.remaining_time), 0));
+
+    // Update round.
+    if (settings.num_rounds > 1) {
+        $("#round").html(msg.round + 1);
+    }
 
     // Update players.
     state = JSON.parse(msg.state_json);

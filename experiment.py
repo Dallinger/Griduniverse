@@ -66,7 +66,8 @@ class Gridworld(object):
         self.costly_colors = kwargs.get('costly_colors', False)
         self.player_overlap = kwargs.get('player_overlap', True)
         self.background_animation = kwargs.get('background_animation', True)
-        self.time = kwargs.get('time', 300)
+        self.time_per_round = kwargs.get('time_per_round', 300)
+        self.num_rounds = kwargs.get('num_rounds', 1)
         self.tax = kwargs.get('tax', 0.01)
         self.wall_type = kwargs.get('walls', None)
         self.walls_visible = kwargs.get('walls_visible', True)
@@ -94,6 +95,8 @@ class Gridworld(object):
 
         self.walls = self.generate_walls(style=self.wall_type)
 
+        self.round = 0
+
         self.public_good = (
             (self.food_reward * self.food_pg_multiplier) / self.num_players
         )
@@ -114,6 +117,7 @@ class Gridworld(object):
             "players": [player.serialize() for player in self.players],
             "food": [food.serialize() for food in self.food],
             "walls": [wall.serialize() for wall in self.walls],
+            "round": self.round,
         })
 
     def consume(self):
@@ -326,7 +330,6 @@ class Player(object):
 
     def move(self, direction, tremble_rate=0):
         """Move the player."""
-
         if random.random() < tremble_rate:
             direction = self.tremble(direction)
 
@@ -505,7 +508,8 @@ class Griduniverse(dallinger.experiments.Experiment):
             initial_score=50,
             player_overlap=False,
             background_animation=True,
-            time=300,
+            num_rounds=3,
+            time_per_round=15,
             tax=0,
             walls=None,
             walls_visible=True,
@@ -615,13 +619,15 @@ class Griduniverse(dallinger.experiments.Experiment):
         while True:
             socketio.sleep(0.050)
             count += 1
+            elapsed_time = time.time() - self.grid.start_timestamp
             socketio.emit(
                 'state',
                 {
                     'state_json': self.grid.serialize(),
                     'clients': self.clients,
                     'count': count,
-                    'remaining_time': time.time() - self.grid.start_timestamp,
+                    'remaining_time': self.grid.time_per_round - elapsed_time,
+                    "round": self.grid.round,
                 },
                 broadcast=True,
             )
@@ -702,7 +708,13 @@ class Griduniverse(dallinger.experiments.Experiment):
 
                 previous_second_timestamp = now
 
-            # Check if the game is over.
-            if (now - self.grid.start_timestamp) > self.grid.time:
+            # Check if the round is over.
+            if (now - self.grid.start_timestamp) > self.grid.time_per_round:
+                self.grid.round += 1
+                self.grid.start_timestamp = time.time()
+                for player in self.grid.players:
+                    player.motion_timestamp = 0
+
+            if self.grid.round == self.grid.num_rounds:
                 complete = True
                 socketio.emit('stop', {}, broadcast=True)

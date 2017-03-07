@@ -14,7 +14,8 @@
     settings.mutable_colors = {% if experiment.grid.mutable_colors %}true{% else %}false{% endif %};
     settings.player_overlap = {% if experiment.grid.player_overlap %}true{% else %}false{% endif %};
     settings.background_animation = {% if experiment.grid.background_animation %}true{% else %}false{% endif %};
-    settings.time = {{ experiment.grid.time }};
+    settings.time_per_round = {{ experiment.grid.time_per_round }};
+    settings.num_rounds = {{ experiment.grid.num_rounds }};
     settings.tax = {{ experiment.grid.tax }};
     settings.walls = "{{ experiment.grid.wall_type }}";
     settings.show_grid = {% if experiment.grid.show_grid %}true{% else %}false{% endif %};
@@ -31,7 +32,8 @@
 <div id="dashboard">
     <p>
         <span id="score">0</span> points ($<span id="dollars">0.00</span>),
-        <span id="time">?</span> seconds remaining.
+        <span id="time">?</span> seconds remaining
+        {% if experiment.grid.num_rounds > 1 %}in round <span id="round">?</span>{% endif %}
     </p>
 </div>
 
