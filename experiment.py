@@ -93,6 +93,8 @@ class Gridworld(object):
         self.food_growth_rate = kwargs.get('food_growth_rate', 1)
         self.relative_deprivation = kwargs.get('relative_deprivation', 1)
         self.seasonal_growth_rate = kwargs.get('seasonal_growth_rate', 1)
+        self.agriculture = kwargs.get('agriculture', False)
+        self.food_maturation_speed = kwargs.get('food_maturation_speed', 100)
 
         self.walls = self.generate_walls(style=self.wall_type)
 
@@ -151,7 +153,7 @@ class Gridworld(object):
         self.food.append(Food(
             id=(len(self.food) + len(self.food_consumed)),
             position=self._random_empty_position(),
-            color=Gridworld.WHITE,
+            maturation_speed=self.food_maturation_speed,
         ))
 
     def spawn_player(self, id=None):
@@ -252,13 +254,29 @@ class Food(object):
         self.id = kwargs.get('id', uuid.uuid4())
         self.position = kwargs.get('position', [0, 0])
         self.color = kwargs.get('color', [0.5, 0.5, 0.5])
+        self.maturation_speed = kwargs.get('maturation_speed', 0.1)
+        self.creation_timestamp = time.time()
 
     def serialize(self):
         return {
             "id": self.id,
             "position": self.position,
-            "color": self.color,
+            "maturity": self.maturity,
+            "color": self._maturity_to_rgb(self.maturity),
         }
+
+    def _maturity_to_rgb(self, maturity):
+        B = [0.48, 0.42, 0.33]  # Brown
+        G = [0.54, 0.61, 0.06]  # Green
+        return [B[i] + maturity * (G[i] - B[i]) for i in range(3)]
+
+    @property
+    def maturity(self):
+        return 1 - math.exp(-self._age * self.maturation_speed)
+
+    @property
+    def _age(self):
+        return time.time() - self.creation_timestamp
 
 
 class Wall(object):
@@ -549,6 +567,8 @@ class Griduniverse(dallinger.experiments.Experiment):
             food_pg_multiplier=0,
             food_growth_rate=1.00,
             seasonal_growth_rate=1.05,
+            agriculture=True,
+            food_maturation_speed=0.1,
         )
 
         # Register Socket.IO event handler.
