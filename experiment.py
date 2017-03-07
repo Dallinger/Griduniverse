@@ -92,6 +92,7 @@ class Gridworld(object):
         self.food_reward = kwargs.get('food_reward', 1)
         self.food_growth_rate = kwargs.get('food_growth_rate', 1)
         self.relative_deprivation = kwargs.get('relative_deprivation', 1)
+        self.seasonal_growth_rate = kwargs.get('seasonal_growth_rate', 1)
 
         self.walls = self.generate_walls(style=self.wall_type)
 
@@ -508,8 +509,8 @@ class Griduniverse(dallinger.experiments.Experiment):
             initial_score=50,
             player_overlap=False,
             background_animation=True,
-            num_rounds=3,
-            time_per_round=15,
+            num_rounds=10,
+            time_per_round=30,
             tax=0,
             walls=None,
             walls_visible=True,
@@ -529,6 +530,7 @@ class Griduniverse(dallinger.experiments.Experiment):
             pseudonyms_locale="it_IT",
             pseudonyms_gender=None,
             relative_deprivation=1,
+            seasonal_growth_rate=1.05,
         )
 
         # Register Socket.IO event handler.
@@ -676,9 +678,16 @@ class Griduniverse(dallinger.experiments.Experiment):
             # Trigger time-based events.
             if (now - previous_second_timestamp) > 1.000:
 
-                # Grow the food stores.
+                # Grow or shrink the food stores.
+                seasonal_growth = (
+                    self.grid.seasonal_growth_rate **
+                    (-1 if self.grid.round % 2 else 1)
+                )
+
                 self.grid.num_food = max(min(
-                    self.grid.num_food * self.grid.food_growth_rate,
+                    self.grid.num_food *
+                    self.grid.food_growth_rate *
+                    seasonal_growth,
                     self.grid.rows * self.grid.columns,
                 ), 0)
 
