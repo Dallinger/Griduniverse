@@ -496,7 +496,7 @@ class Griduniverse(dallinger.experiments.Experiment):
             block_size=10,
             padding=1,
             num_colors=2,
-            respawn_food=False,
+            respawn_food=True,
             food_visible=True,
             food_reward=1,
             food_pg_multiplier=0,
