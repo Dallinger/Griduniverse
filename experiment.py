@@ -87,6 +87,7 @@ class Gridworld(object):
         self.donation = kwargs.get('donation', 0)
         self.pseudonyms = kwargs.get('pseudonyms', False)
         self.pseudonyms_locale = kwargs.get('pseudonyms_locale', 'en_US')
+        self.pseudonyms_gender = kwargs.get('pseudonyms_gender', None)
         self.food_reward = kwargs.get('food_reward', 1)
         self.food_growth_rate = kwargs.get('food_growth_rate', 1)
         self.relative_deprivation = kwargs.get('relative_deprivation', 1)
@@ -155,6 +156,7 @@ class Gridworld(object):
             score=self.initial_score,
             motion_tremble_rate=self.motion_tremble_rate,
             pseudonym_locale=self.pseudonyms_locale,
+            pseudonym_gender=self.pseudonyms_gender,
             grid=self,
         )
         self.players.append(player)
@@ -292,9 +294,15 @@ class Player(object):
         self.color_name = Gridworld.color_names[self.color_idx]
         self.color = Gridworld.colors[self.color_idx]
 
-        # Determine the player's pseudonym.
+        # Determine the player's profile.
         self.fake = Factory.create(self.pseudonym_locale)
-        self.name = self.fake.name()
+        self.profile = self.fake.simple_profile(
+            sex=kwargs.get('pseudonym_gender', None)
+        )
+        self.name = self.profile['name']
+        self.username = self.profile['username']
+        self.gender = self.profile['sex']
+        self.birthdate = self.profile['birthdate']
 
         self.motion_timestamp = 0
 
@@ -508,6 +516,7 @@ class Griduniverse(dallinger.experiments.Experiment):
             donation=1,
             pseudonyms=True,
             pseudonyms_locale="it_IT",
+            pseudonyms_gender=None,
             relative_deprivation=1,
         )
 
