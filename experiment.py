@@ -491,45 +491,63 @@ class Griduniverse(dallinger.experiments.Experiment):
         self.clients = []
 
         self.grid = Gridworld(
+
+            # Players
             num_players=8,
-            num_food=8,
+
+            # Rounds
+            num_rounds=10,
+            time_per_round=30,
+
+            # Grid
             columns=25,
             rows=25,
             block_size=10,
             padding=1,
+            visibility=1000,
+            background_animation=True,
+            player_overlap=False,
+
+            # Motion
+            motion_speed_limit=8,
+            motion_auto=False,
+            motion_cost=0,
+            motion_tremble_rate=0.00,
+
+            # Components
+            chatroom=True,
+            show_grid=True,
+
+            # Identity
             num_colors=2,
+            mutable_colors=True,
+            costly_colors=True,
+            pseudonyms=True,
+            pseudonyms_locale="it_IT",
+            pseudonyms_gender=None,
+            contagion=5,
+            contagion_hierarchy=True,
+
+            # Walls
+            walls=None,
+            walls_visible=True,
+
+            # Payoffs
+            initial_score=50,
+            dollars_per_point=0.02,
+            tax=0,
+            relative_deprivation=1,
+            frequency_dependence=0,
+            frequency_dependent_payoff_rate=0,
+            donation=1,
+
+            # Food
+            num_food=8,
             respawn_food=True,
             food_visible=True,
             food_reward=1,
             food_pg_multiplier=0,
             food_growth_rate=1.00,
-            mutable_colors=True,
-            costly_colors=True,
-            dollars_per_point=0.02,
-            initial_score=50,
-            player_overlap=False,
-            background_animation=True,
-            num_rounds=10,
-            time_per_round=30,
-            tax=0,
-            walls=None,
-            walls_visible=True,
-            show_grid=True,
-            visibility=1000,
-            motion_speed_limit=8,
-            motion_auto=False,
-            motion_cost=0,
-            motion_tremble_rate=0.00,
-            frequency_dependence=0,
-            frequency_dependent_payoff_rate=0,
-            chatroom=True,
-            contagion=5,
-            contagion_hierarchy=True,
-            donation=1,
-            pseudonyms=True,
-            pseudonyms_locale="it_IT",
-            pseudonyms_gender=None,
-            relative_deprivation=1,
             seasonal_growth_rate=1.05,
         )
 
