@@ -32,18 +32,19 @@ socketio = SocketIO(logger=True, engineio_logger=True)
 
 class Gridworld(object):
     """A Gridworld in the Griduniverse."""
-    color_names = [
-        "blue",
-        "yellow",
-        "green",
-        "red",
+    player_color_names = [
+        "BLUE",
+        "YELLOW",
+        "RED",
     ]
-    colors = [
+    player_colors = [
         [0.50, 0.86, 1.00],
         [1.00, 0.86, 0.50],
-        [0.56, 0.60, 0.16],
         [0.64, 0.11, 0.31],
     ]
+
+    GREEN = [0.51, 0.69, 0.61]
+    WHITE = [1.00, 1.00, 1.00]
 
     def __init__(self, **kwargs):
         super(Gridworld, self).__init__()
@@ -64,6 +65,7 @@ class Gridworld(object):
         self.dollars_per_point = kwargs.get('dollars_per_point', 0.02)
         self.num_colors = kwargs.get('num_colors', 2)
         self.mutable_colors = kwargs.get('mutable_colors', False)
+        self.costly_colors = kwargs.get('costly_colors', False)
         self.player_overlap = kwargs.get('player_overlap', True)
         self.background_animation = kwargs.get('background_animation', True)
         self.time = kwargs.get('time', 300)
@@ -105,6 +107,10 @@ class Gridworld(object):
             self.contagion_hierarchy = range(self.num_colors)
             random.shuffle(self.contagion_hierarchy)
 
+        if self.costly_colors:
+            self.color_costs = [2**i for i in range(self.num_colors)]
+            random.shuffle(self.color_costs)
+
     def serialize(self):
         return json.dumps({
             "players": [player.serialize() for player in self.players],
@@ -142,7 +148,7 @@ class Gridworld(object):
         self.food.append(Food(
             id=(len(self.food) + len(self.food_consumed)),
             position=self._random_empty_position(),
-            color=[1.00, 1.00, 1.00],
+            color=Gridworld.WHITE,
         ))
 
     def spawn_player(self, id=None):
@@ -229,7 +235,8 @@ class Gridworld(object):
     def rank(self, color):
         """Where does this color fall on the color hierarchy?"""
         if self.contagion_hierarchy:
-            return self.contagion_hierarchy[Gridworld.colors.index(color)]
+            return self.contagion_hierarchy[
+                Gridworld.player_colors.index(color)]
         else:
             return 1
 
@@ -247,6 +254,7 @@ class Food(object):
         return {
             "id": self.id,
             "position": self.position,
+            "color": self.color,
         }
 
 
@@ -285,14 +293,14 @@ class Player(object):
 
         # Determine the player's color.
         if 'color' in kwargs:
-            self.color_idx = Gridworld.colors.index(kwargs['color'])
+            self.color_idx = Gridworld.player_colors.index(kwargs['color'])
         elif 'color_name' in kwargs:
-            self.color_idx = Gridworld.color_names.index(kwargs['color_name'])
+            self.color_idx = Gridworld.player_color_names.index(kwargs['color_name'])
         else:
             self.color_idx = random.randint(0, self.num_possible_colors - 1)
 
-        self.color_name = Gridworld.color_names[self.color_idx]
-        self.color = Gridworld.colors[self.color_idx]
+        self.color_name = Gridworld.player_color_names[self.color_idx]
+        self.color = Gridworld.player_colors[self.color_idx]
 
         # Determine the player's profile.
         self.fake = Factory.create(self.pseudonym_locale)
@@ -494,6 +502,7 @@ class Griduniverse(dallinger.experiments.Experiment):
             food_pg_multiplier=0,
             food_growth_rate=1.00,
             mutable_colors=True,
+            costly_colors=True,
             dollars_per_point=0.02,
             initial_score=50,
             player_overlap=False,
@@ -555,9 +564,20 @@ class Griduniverse(dallinger.experiments.Experiment):
 
     def handle_change_color(self, msg):
         player = self.grid.players[msg['player']]
+        color_idx = Gridworld.player_colors.index(msg['color'])
+
+        if player.color_idx == color_idx:
+            return  # Requested color change is no change at all.
+
+        if self.grid.costly_colors:
+            if player.score < self.grid.color_costs[color_idx]:
+                return
+            else:
+                player.score -= self.grid.color_costs[color_idx]
+
         player.color = msg['color']
-        player.color_idx = Gridworld.colors.index(player.color)
-        player.color_name = Gridworld.color_names[player.color_idx]
+        player.color_idx = color_idx
+        player.color_name = Gridworld.player_color_names[color_idx]
 
     def handle_move(self, msg):
         player = self.grid.players[msg['player']]

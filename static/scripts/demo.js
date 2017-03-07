@@ -4,7 +4,6 @@ var grid = require("./index");
 var parse = require("parse-color");
 var position = require("mouse-position");
 var mousetrap = require("mousetrap");
-var colors = require("colors.css");
 var io = require("socket.io-client")();
 var $ = require("jquery");
 var gaussian = require("gaussian");
@@ -18,8 +17,12 @@ for (var i = 0; i < settings.rows; i++) {
   }
 }
 
-BLUE = [0.50, 0.86, 1.00];
-YELLOW = [1.00, 0.86, 0.50];
+PLAYER_COLORS = {
+  "BLUE": [0.50, 0.86, 1.00],
+  "YELLOW": [1.00, 0.86, 0.50],
+  "RED": [0.64, 0.11, 0.31],
+};
+GREEN = [0.51, 0.69, 0.61];
 WHITE = [1.00, 1.00, 1.00];
 
 var pixels = grid(data, {
@@ -56,19 +59,6 @@ Food = function(settings) {
   this.position = settings.position;
   this.color = settings.color;
   return this;
-};
-
-respawnFood = function() {
-  food.push(
-    new Food({
-      id: food.length + foodConsumed.length,
-      position: [
-        getRandomInt(0, settings.rows),
-        getRandomInt(0, settings.columns)
-      ],
-      color: WHITE
-    })
-  );
 };
 
 Wall = function(settings) {
@@ -384,7 +374,7 @@ $(document).ready(function() {
         new Food({
           id: state.food[j].id,
           position: state.food[j].position,
-          color: WHITE
+          color: state.food[j].color,
         })
       );
     }
@@ -479,15 +469,18 @@ $(document).ready(function() {
     );
   });
 
-  if (settings.mutable_colors) {
-    Mousetrap.bind("b", function() {
-      players[ego].color = BLUE;
-      socket.emit("change_color", { player: players[ego].id, color: BLUE });
+  function createBinding (key) {
+    Mousetrap.bind(key[0].toLowerCase(), function () {
+      players[ego].color = PLAYER_COLORS[key];
+      socket.emit("change_color", { player: players[ego].id, color: PLAYER_COLORS[key] });
     });
+  }
 
-    Mousetrap.bind("y", function() {
-      players[ego].color = YELLOW;
-      socket.emit("change_color", { player: players[ego].id, color: YELLOW });
-    });
+  if (settings.mutable_colors) {
+    for (var key in PLAYER_COLORS) {
+      if (PLAYER_COLORS.hasOwnProperty(key)) {
+        createBinding(key);
+      }
+    }
   }
 });
