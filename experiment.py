@@ -95,6 +95,10 @@ class Gridworld(object):
         self.seasonal_growth_rate = kwargs.get('seasonal_growth_rate', 1)
         self.agriculture = kwargs.get('agriculture', False)
         self.food_maturation_speed = kwargs.get('food_maturation_speed', 100)
+        self.food_maturation_threshold = kwargs.get(
+            'food_maturation_threshold', 0.0)
+        self.food_planting = kwargs.get('food_planting', False)
+        self.food_planting_cost = kwargs.get('food_planting_cost', 1)
 
         self.walls = self.generate_walls(style=self.wall_type)
 
@@ -123,9 +127,14 @@ class Gridworld(object):
             "round": self.round,
         })
 
+    @property
+    def food_mature(self):
+        return [f for f in self.food
+                if f.maturity >= self.food_maturation_threshold]
+
     def consume(self):
         """Players consume the food."""
-        for food in self.food:
+        for food in self.food_mature:
             for player in self.players:
                 if food.position == player.position:
                     # Update existence and count of food.
@@ -148,11 +157,14 @@ class Gridworld(object):
                         player_to.score += self.public_good
                     break
 
-    def spawn_food(self):
+    def spawn_food(self, position=None):
         """Respawn the food."""
+        if not position:
+            position = self._random_empty_position()
+
         self.food.append(Food(
             id=(len(self.food) + len(self.food_consumed)),
-            position=self._random_empty_position(),
+            position=position,
             maturation_speed=self.food_maturation_speed,
         ))
 
@@ -569,6 +581,9 @@ class Griduniverse(dallinger.experiments.Experiment):
             seasonal_growth_rate=1.05,
             agriculture=True,
             food_maturation_speed=0.1,
+            food_maturation_threshold=0.82,
+            food_planting=True,
+            food_planting_cost=1,
         )
 
         # Register Socket.IO event handler.
@@ -578,6 +593,7 @@ class Griduniverse(dallinger.experiments.Experiment):
         socketio.on_event('change_color', self.handle_change_color)
         socketio.on_event('move', self.handle_move)
         socketio.on_event('donate', self.handle_donate)
+        socketio.on_event('plant_food', self.handle_plant_food)
 
     def setup(self):
         """Setup the networks."""
@@ -644,6 +660,14 @@ class Griduniverse(dallinger.experiments.Experiment):
                 },
                 room=self.clients[player_to.id]
             )
+
+    def handle_plant_food(self, msg):
+        player = self.grid.players[msg['player']]
+        position = msg['position']
+        can_afford = player.score >= self.grid.food_planting_cost
+        if (can_afford and not self.grid._has_food(position)):
+            player.score -= self.grid.food_planting_cost
+            self.grid.spawn_food(position=position)
 
     @property
     def background_tasks(self):

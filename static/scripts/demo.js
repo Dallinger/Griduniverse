@@ -474,6 +474,13 @@ $(document).ready(function() {
     );
   });
 
+  Mousetrap.bind("space", function () {
+    socket.emit("plant_food", {
+      player: players[ego].id,
+      position: players[ego].position,
+    });
+  });
+
   function createBinding (key) {
     Mousetrap.bind(key[0].toLowerCase(), function () {
       players[ego].color = PLAYER_COLORS[key];
