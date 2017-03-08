@@ -7,7 +7,11 @@
 
 {% block body %}
 <h1>Instructions</h1>
-<p>Welcome to the Griduniverse.</p>
+{% if experiment.grid.instruct %}
+    <p>Welcome to the Griduniverse. Here are the instructions:</p>
+{% else %}
+    <p>Welcome to the Griduniverse. It's up to you to figure out the rules of the game.</p>
+{% endif %}
 <hr>
 <button type="button" class="button" id="begin-experiment">Begin</button>
 {% endblock %}

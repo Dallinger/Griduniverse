@@ -99,6 +99,7 @@ class Gridworld(object):
             'food_maturation_threshold', 0.0)
         self.food_planting = kwargs.get('food_planting', False)
         self.food_planting_cost = kwargs.get('food_planting_cost', 1)
+        self.instruct = kwargs.get('instruct', True)
 
         self.walls = self.generate_walls(style=self.wall_type)
 
@@ -528,6 +529,9 @@ class Griduniverse(dallinger.experiments.Experiment):
             # Rounds
             num_rounds=10,
             time_per_round=30,
+
+            # Instructions
+            instruct=False,
 
             # Grid
             columns=25,
