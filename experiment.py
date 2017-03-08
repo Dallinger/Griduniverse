@@ -93,7 +93,6 @@ class Gridworld(object):
         self.food_growth_rate = kwargs.get('food_growth_rate', 1)
         self.relative_deprivation = kwargs.get('relative_deprivation', 1)
         self.seasonal_growth_rate = kwargs.get('seasonal_growth_rate', 1)
-        self.agriculture = kwargs.get('agriculture', False)
         self.food_maturation_speed = kwargs.get('food_maturation_speed', 100)
         self.food_maturation_threshold = kwargs.get(
             'food_maturation_threshold', 0.0)
@@ -583,7 +582,6 @@ class Griduniverse(dallinger.experiments.Experiment):
             food_pg_multiplier=0,
             food_growth_rate=1.00,
             seasonal_growth_rate=1.05,
-            agriculture=True,
             food_maturation_speed=0.1,
             food_maturation_threshold=0.82,
             food_planting=True,
