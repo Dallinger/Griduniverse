@@ -526,11 +526,11 @@ class Griduniverse(dallinger.experiments.Experiment):
             num_players=8,
 
             # Rounds
-            num_rounds=10,
-            time_per_round=30,
+            num_rounds=1,
+            time_per_round=120,
 
             # Instructions
-            instruct=False,
+            instruct=True,
 
             # Grid
             columns=25,
@@ -542,24 +542,24 @@ class Griduniverse(dallinger.experiments.Experiment):
             player_overlap=False,
 
             # Motion
-            motion_speed_limit=8,
+            motion_speed_limit=16,
             motion_auto=False,
             motion_cost=0,
             motion_tremble_rate=0.00,
 
             # Components
-            chatroom=True,
+            show_chatroom=True,
             show_grid=True,
 
             # Identity
             num_colors=2,
-            mutable_colors=True,
-            costly_colors=True,
+            mutable_colors=False,
+            costly_colors=False,
             pseudonyms=True,
-            pseudonyms_locale="it_IT",
+            pseudonyms_locale="en_US",
             pseudonyms_gender=None,
-            contagion=5,
-            contagion_hierarchy=True,
+            contagion=0,
+            contagion_hierarchy=False,
 
             # Walls
             walls=None,
@@ -572,7 +572,7 @@ class Griduniverse(dallinger.experiments.Experiment):
             relative_deprivation=1,
             frequency_dependence=0,
             frequency_dependent_payoff_rate=0,
-            donation=1,
+            donation=0,
 
             # Food
             num_food=8,
@@ -581,11 +581,11 @@ class Griduniverse(dallinger.experiments.Experiment):
             food_reward=1,
             food_pg_multiplier=0,
             food_growth_rate=1.00,
-            seasonal_growth_rate=1.05,
-            food_maturation_speed=0.1,
+            food_maturation_speed=1,
             food_maturation_threshold=0.82,
-            food_planting=True,
+            food_planting=False,
             food_planting_cost=1,
+            seasonal_growth_rate=1.00,
         )
 
         # Register Socket.IO event handler.
