@@ -5,7 +5,7 @@ auto_recruit = true
 [HIT Configuration]
 title = Griduniverse
 description = Play a game
-amt_keywords = Psychology, game, play
+keywords = Psychology, game, play
 base_payment = 1.00
 lifetime = 24
 duration = 0.1
