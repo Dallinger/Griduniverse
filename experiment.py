@@ -82,7 +82,7 @@ class Gridworld(object):
         self.frequency_dependence = kwargs.get('frequency_dependence', 0)
         self.frequency_dependent_payoff_rate = kwargs.get(
             'frequency_dependent_payoff_rate', 1)
-        self.chatroom = kwargs.get('chatroom', False)
+        self.show_chatroom = kwargs.get('show_chatroom', False)
         self.contagion = kwargs.get('contagion', False)
         self.contagion_hierarchy = kwargs.get('contagion_hierarchy', False)
         self.donation = kwargs.get('donation', 0)

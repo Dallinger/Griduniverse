@@ -308,7 +308,7 @@ $(document).ready(function() {
     pixels.canvas.style.display = "inline";
   }
 
-  if (settings.chatroom) {
+  if (settings.show_chatroom) {
     $("#chat").show();
   }
 
