@@ -1,2 +1,2 @@
--e git://github.com/Dallinger/Dallinger.git@griduniverse#egg=dallinger
+-e git://github.com/Dallinger/Dallinger.git@socket-io#egg=dallinger
 faker==0.7.9
