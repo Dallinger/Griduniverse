@@ -345,7 +345,7 @@ $(document).ready(function() {
   // Opt out of the experiment.
   $("#opt-out").click(function() {
     allow_exit();
-    window.location.href = "/questionnaire";
+    window.location.href = "/questionnaire?participant_id="+participant_id;
   });
 
   // Consent to the experiment.

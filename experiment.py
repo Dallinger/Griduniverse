@@ -847,3 +847,41 @@ class Griduniverse(dallinger.experiments.Experiment):
             if self.grid.round == self.grid.num_rounds:
                 complete = True
                 self.publish({'type': 'stop'})
+
+
+### Bots ###
+import random
+
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import StaleElementReferenceException
+
+from dallinger.bots import BotBase
+
+
+class RandomBot(BotBase):
+    """A bot that plays griduniverse randomly"""
+
+    VALID_KEYS = [Keys.UP, Keys.DOWN, Keys.RIGHT, Keys.LEFT, Keys.SPACE]
+    KEY_RATE = 0.1
+
+    def get_next_key(self):
+        return random.choice(self.VALID_KEYS)
+
+    def participate(self):
+        """Finish reading and send text"""
+        grid = WebDriverWait(self.driver, 15).until(
+            EC.presence_of_element_located((By.ID, "grid"))
+        )
+        try:
+            while True:
+                time.sleep(self.KEY_RATE)
+                grid.send_keys(self.get_next_key())
+        except StaleElementReferenceException:
+            pass
+        return True
+
+
+Bot = RandomBot
