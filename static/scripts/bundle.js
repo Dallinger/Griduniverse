@@ -22851,13 +22851,12 @@ function toSpaceCase(string) {
 }
 
 },{"to-no-case":21}],23:[function(require,module,exports){
+/*global allow_exit, create_agent, getUrlParameter, require, settings, submitResponses */
 var util = require("util");
 var css = require("dom-css");
 var grid = require("./index");
-// var parse = require("parse-color");
 var position = require("mouse-position");
 var mousetrap = require("mousetrap");
-// var io = require("socket.io-client")();
 var ReconnectingWebSocket = require("reconnecting-websocket");
 var $ = require("jquery");
 var gaussian = require("gaussian");
@@ -22871,13 +22870,13 @@ for (var i = 0; i < settings.rows; i++) {
   }
 }
 
-PLAYER_COLORS = {
+var PLAYER_COLORS = {
   "BLUE": [0.50, 0.86, 1.00],
   "YELLOW": [1.00, 0.86, 0.50],
   "RED": [0.64, 0.11, 0.31],
 };
-GREEN = [0.51, 0.69, 0.61];
-WHITE = [1.00, 1.00, 1.00];
+var GREEN = [0.51, 0.69, 0.61];
+var WHITE = [1.00, 1.00, 1.00];
 var CHANNEL_MARKER = 'griduniverse:';
 
 var pixels = grid(data, {
@@ -22916,7 +22915,7 @@ Food = function(settings) {
   return this;
 };
 
-Wall = function(settings) {
+var Wall = function(settings) {
   if (!(this instanceof Wall)) {
     return new Wall();
   }
@@ -22925,7 +22924,7 @@ Wall = function(settings) {
   return this;
 };
 
-Player = function(settings) {
+var Player = function(settings) {
   if (!(this instanceof Player)) {
     return new Player();
   }
@@ -23113,6 +23112,7 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+
 $(document).ready(function() {
   // Append the canvas.
   $("#grid").append(pixels.canvas);
@@ -23180,14 +23180,14 @@ $(document).ready(function() {
     row = pixels2cells(mouse[1]);
     column = pixels2cells(mouse[0]);
     player_to = nearestPlayer(row, column);
-    if (player_to.id != ego) {
+    if (player_to.id !== ego) {
       msg = {
         type: "donate", 
         player_to: player_to.id,
         player_from: ego,
         amount: amt
       };
-      inbox.send(JSON.stringify(msg));
+      sendToBackend(msg);
     }
   };
 
@@ -23207,12 +23207,10 @@ $(document).ready(function() {
   };
 
   url = location.protocol + "//" + document.domain + ":" + location.port;
-  // var socket = io.connect(url);
-
-  // NEW STUFF
   var ws_scheme = (window.location.protocol === "https:") ? 'wss://' : 'ws://';
   var inbox = new ReconnectingWebSocket(
-    ws_scheme + location.host + "/receive_chat?channel=griduniverse");  
+    ws_scheme + location.host + "/receive_chat?channel=griduniverse"
+  );  
   inbox.debug = true;
 
   inbox.onopen = function (event) {
@@ -23220,14 +23218,10 @@ $(document).ready(function() {
       type: 'connect',
       player_id: getUrlParameter('participant_id'),
     };
-    msg = CHANNEL_MARKER + JSON.stringify(data);
-    inbox.send(msg);
-    console.log("Socket opened... sending " + msg);
-    return false;    
+    sendToBackend(data);
   };
 
   inbox.onmessage = function (event) {
-    console.log("Raw message is: " + event.data);
     if (event.data.indexOf(CHANNEL_MARKER) !== 0) { 
       console.log("Message was not of our " + CHANNEL_MARKER + " channel. Ignoring");
       return; 
@@ -23251,6 +23245,12 @@ $(document).ready(function() {
     }
   };
 
+  function sendToBackend(data) {
+    var msg = CHANNEL_MARKER + JSON.stringify(data);
+    console.log("Sending message to the backend: " + msg);
+    inbox.send(msg);
+  }
+  
   onChatMessage = function (msg) {
     var name;
     if (settings.pseudonyms) {
@@ -23277,8 +23277,7 @@ $(document).ready(function() {
   onGameStateChange = function (msg) {
     // Update ego.
     clients = msg.clients;
-    // ego = clients.indexOf(socket.io.engine.id);
-    // XXX hail mary pass...
+    // XXX 
     ego = clients.indexOf(participant_id);
 
     // Update remaining time.
@@ -23325,13 +23324,6 @@ $(document).ready(function() {
     $("#dollars").html(dollars);
   };
 
-
-
-  // socket.on("connect", function(msg) {
-  //   console.log("connected!");
-  // });
-
-
   function gameOver(msg) {
     $("#game-over").show();
     $("#dashboard").hide();
@@ -23340,29 +23332,17 @@ $(document).ready(function() {
     pixels.canvas.style.display = "none";
   }
 
-  // OLD
-  // $("form").submit(function() {
-  //   socket.emit("message", {
-  //     contents: $("#message").val(),
-  //     player_id: ego,
-  //     timestamp: Date.now() - start
-  //   });
-  //   $("#message").val("");
-  //   return false;
-  // });
-  // NEW
   $("form").submit(function() {
-    msg = {
+    var msg = {
       type: 'chat',
       contents: $("#message").val(),
       player_id: ego,
       timestamp: Date.now() - start
     };
-    inbox.send(JSON.stringify(msg));
+    sendToBackend(msg);
     $("#message").val("");
     return false;
   });
-
 
   //
   // Key bindings
@@ -23378,8 +23358,7 @@ $(document).ready(function() {
           player: players[ego].id,
           move: direction,
         };
-        // socket.emit("move", { player: players[ego].id, move: direction });
-        inbox.send(JSON.stringify(msg));
+        sendToBackend(msg);
       }
       lock = true;
       return false;
@@ -23400,7 +23379,7 @@ $(document).ready(function() {
       player: players[ego].id,
       position: players[ego].position,
     };
-    inbox.send(JSON.stringify(msg));
+    sendToBackend(msg);
   });
 
   function createBinding (key) {
@@ -23411,7 +23390,7 @@ $(document).ready(function() {
         player: players[ego].id, 
         color: PLAYER_COLORS[key]
       };
-      inbox.send(JSON.stringify(msg));
+      sendToBackend(msg);
     });
   }
 
