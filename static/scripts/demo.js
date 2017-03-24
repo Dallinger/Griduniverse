@@ -1,10 +1,9 @@
+/*global allow_exit, create_agent, getUrlParameter, require, settings, submitResponses */
 var util = require("util");
 var css = require("dom-css");
 var grid = require("./index");
-// var parse = require("parse-color");
 var position = require("mouse-position");
 var mousetrap = require("mousetrap");
-// var io = require("socket.io-client")();
 var ReconnectingWebSocket = require("reconnecting-websocket");
 var $ = require("jquery");
 var gaussian = require("gaussian");
@@ -18,13 +17,13 @@ for (var i = 0; i < settings.rows; i++) {
   }
 }
 
-PLAYER_COLORS = {
+var PLAYER_COLORS = {
   "BLUE": [0.50, 0.86, 1.00],
   "YELLOW": [1.00, 0.86, 0.50],
   "RED": [0.64, 0.11, 0.31],
 };
-GREEN = [0.51, 0.69, 0.61];
-WHITE = [1.00, 1.00, 1.00];
+var GREEN = [0.51, 0.69, 0.61];
+var WHITE = [1.00, 1.00, 1.00];
 var CHANNEL_MARKER = 'griduniverse:';
 
 var pixels = grid(data, {
@@ -63,7 +62,7 @@ Food = function(settings) {
   return this;
 };
 
-Wall = function(settings) {
+var Wall = function(settings) {
   if (!(this instanceof Wall)) {
     return new Wall();
   }
@@ -72,7 +71,7 @@ Wall = function(settings) {
   return this;
 };
 
-Player = function(settings) {
+var Player = function(settings) {
   if (!(this instanceof Player)) {
     return new Player();
   }
@@ -361,9 +360,6 @@ $(document).ready(function() {
   };
 
   url = location.protocol + "//" + document.domain + ":" + location.port;
-  // var socket = io.connect(url);
-
-  // NEW STUFF
   var ws_scheme = (window.location.protocol === "https:") ? 'wss://' : 'ws://';
   var inbox = new ReconnectingWebSocket(
     ws_scheme + location.host + "/receive_chat?channel=griduniverse"
@@ -428,7 +424,6 @@ $(document).ready(function() {
   onGameStateChange = function (msg) {
     // Update ego.
     clients = msg.clients;
-    // ego = clients.indexOf(socket.io.engine.id);
     // XXX 
     ego = clients.indexOf(participant_id);
 
@@ -485,7 +480,7 @@ $(document).ready(function() {
   }
 
   $("form").submit(function() {
-    msg = {
+    var msg = {
       type: 'chat',
       contents: $("#message").val(),
       player_id: ego,
@@ -510,7 +505,6 @@ $(document).ready(function() {
           player: players[ego].id,
           move: direction,
         };
-        // socket.emit("move", { player: players[ego].id, move: direction });
         sendToBackend(msg);
       }
       lock = true;
