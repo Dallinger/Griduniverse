@@ -403,7 +403,7 @@ $(document).ready(function() {
   };
 
   function sendToBackend(data) {
-    var msg = CHANNEL_MARKER + JSON.stringify(data);
+    var msg = JSON.stringify(data);
     console.log("Sending message to the backend: " + msg);
     outbox.send(msg);
   }
