@@ -259,12 +259,6 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function sendToBackend(data) {
-    var msg = CHANNEL_MARKER + JSON.stringify(data);
-    console.log("Sending message to the backend: " + msg);
-    inbox.send(msg);
-}
-
 
 $(document).ready(function() {
   // Append the canvas.
@@ -398,6 +392,12 @@ $(document).ready(function() {
     }
   };
 
+  function sendToBackend(data) {
+    var msg = CHANNEL_MARKER + JSON.stringify(data);
+    console.log("Sending message to the backend: " + msg);
+    inbox.send(msg);
+  }
+  
   onChatMessage = function (msg) {
     var name;
     if (settings.pseudonyms) {
