@@ -588,37 +588,19 @@ class Griduniverse(dallinger.experiments.Experiment):
             seasonal_growth_rate=1.00,
         )
 
+    @property
+    def background_tasks(self):
+        return [
+            self.send_state_thread,
+            self.game_loop,
+        ]
+
     def create_network(self):
         """This should read the config file for the class name,
         but we're taking shortcuts for now.
         """
         return dallinger.networks.FullyConnected(
             max_size=self.initial_recruitment_size)
-
-    def dispatch(self, message):
-        mapping = {
-            'connect': self.handle_connect,
-            'disconnect': self.handle_disconnect,
-            'message': self.handle_chat_message,
-            'change_color': self.handle_change_color,
-            'move': self.handle_move,
-            'donate': self.handle_donate,
-            'plant_food': self.handle_plant_food,
-        }
-        if message['type'] in mapping:
-            mapping[message['type']](message)
-
-    def send(self, message):
-        """socket interface implementation"""
-        logger.info(message)
-        if message.startswith(self.channel + ":"):
-            logger.info("We received a message for our channel: {}".format(message))
-            without_channel = message.replace(self.channel + ":", "")
-            logger.info("Going to try to parse {}".format(without_channel))
-            as_dict = json.loads(without_channel)
-            self.dispatch((as_dict))
-        else:
-            logger.info("Received a message, but not our channel: {}".format((message)))
 
     def setup(self):
         """Setup the networks."""
@@ -630,6 +612,42 @@ class Griduniverse(dallinger.experiments.Experiment):
     def recruit(self):
         pass
 
+    def dispatch(self, msg):
+        """Route to the appropriate method based on message type"""
+        mapping = {
+            'connect': self.handle_connect,
+            'disconnect': self.handle_disconnect,
+            'message': self.handle_chat_message,
+            'change_color': self.handle_change_color,
+            'move': self.handle_move,
+            'donate': self.handle_donate,
+            'plant_food': self.handle_plant_food,
+        }
+        if msg['type'] in mapping:
+            mapping[msg['type']](msg)
+
+    def send(self, raw_message):
+        """socket interface implementation, and point of entry for incoming
+        messages.
+
+        param raw_message is a string with a channel prefix, for example:
+
+            'griduniverse:{"type":"move","player":0,"move":"left"}'
+        """
+        if raw_message.startswith(self.channel + ":"):
+            logger.info("We received a message for our channel: {}".format(
+                raw_message))
+            body = raw_message.replace(self.channel + ":", "")
+            message = json.loads(body)
+            self.dispatch((message))
+        else:
+            logger.info("Received a message, but not our channel: {}".format(
+                raw_message))
+
+    def publish(self, msg):
+        """Publish a message to our channel"""
+        redis.publish(self.channel, json.dumps(msg))
+
     def handle_connect(self, msg):
         logger.info("Client {} has connected.".format(msg['player_id']))
         client_count = len([c for c in self.clients if c is not -1])
@@ -639,17 +657,16 @@ class Griduniverse(dallinger.experiments.Experiment):
             self.grid.spawn_player(id=self.clients.index(msg['player_id']))
 
     def handle_disconnect(self, msg):
-        logger.info('Client {} has disconnected.'.format(request.sid))
-        self.clients[self.clients.index(request.sid)] = -1
+        logger.info('Client {} has disconnected.'.format(msg['player_id']))
+        self.clients[self.clients.index(msg['player_id'])] = -1
 
     def handle_chat_message(self, msg):
-        # We don't know or care about the format of the message; we
-        # just propagate it to all clients.
-        message = json.dumps({
+        """Publish the given message to all clients."""
+        message = {
             'type': 'chat',
             'message': msg,
-        })
-        redis.publish(self.channel, message)
+        }
+        self.publish(message)
 
     def handle_change_color(self, msg):
         player = self.grid.players[msg['player']]
@@ -681,13 +698,13 @@ class Griduniverse(dallinger.experiments.Experiment):
         if player_from.score >= donation:
             player_from.score -= donation
             player_to.score += donation
-            message = json.dumps({
+            message = {
                 'type': 'donate',
                 'player_from': player_from.id,
                 'player_to': player_to.id,
                 'donation': donation,
-            })
-            redis.publish(self.channel, message)
+            }
+            self.publish(message)
 
     def handle_plant_food(self, msg):
         player = self.grid.players[msg['player']]
@@ -697,15 +714,8 @@ class Griduniverse(dallinger.experiments.Experiment):
             player.score -= self.grid.food_planting_cost
             self.grid.spawn_food(position=position)
 
-    @property
-    def background_tasks(self):
-        return [
-            self.send_state_thread,
-            self.game_loop,
-        ]
-
     def send_state_thread(self):
-        """Example of how to send server-generated events to clients."""
+        """Publish the current state of the grid and game"""
         count = 0
         gevent.sleep(1.00)
         while True:
@@ -713,15 +723,15 @@ class Griduniverse(dallinger.experiments.Experiment):
             # gevent.sleep(10.0)
             count += 1
             elapsed_time = time.time() - self.grid.start_timestamp
-            message = json.dumps({
+            message = {
                 'type': 'state',
                 'state_json': self.grid.serialize(),
                 'clients': self.clients,
                 'count': count,
                 'remaining_time': self.grid.time_per_round - elapsed_time,
                 "round": self.grid.round,
-            })
-            redis.publish(self.channel, message)
+            }
+            self.publish(message)
 
     def game_loop(self):
         """Update the world state."""
@@ -815,8 +825,7 @@ class Griduniverse(dallinger.experiments.Experiment):
 
             if self.grid.round == self.grid.num_rounds:
                 complete = True
-                message = json.dumps({'type': 'stop'})
-                redis.publish(self.channel, message)
+                self.publish({'type': 'stop'})
 
 
 # XXX Having problems with import, so we're piggybacking on the /chat_backend
@@ -830,7 +839,6 @@ class Griduniverse(dallinger.experiments.Experiment):
 
 # @backend.sockets.route('/griduniverse_socket')
 # def pipe(ws):
-#     backend.app.logger.debug("WE CALLED outbox()!!!")
 #     chat_backend.subscribe(ws, channel='griduniverse')
 
 #     while not ws.closed:
