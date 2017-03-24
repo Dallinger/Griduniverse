@@ -1,10 +1,11 @@
 var util = require("util");
 var css = require("dom-css");
 var grid = require("./index");
-var parse = require("parse-color");
+// var parse = require("parse-color");
 var position = require("mouse-position");
 var mousetrap = require("mousetrap");
-var io = require("socket.io-client")();
+// var io = require("socket.io-client")();
+var ReconnectingWebSocket = require("reconnecting-websocket");
 var $ = require("jquery");
 var gaussian = require("gaussian");
 
@@ -24,6 +25,7 @@ PLAYER_COLORS = {
 };
 GREEN = [0.51, 0.69, 0.61];
 WHITE = [1.00, 1.00, 1.00];
+var CHANNEL_MARKER = 'griduniverse:';
 
 var pixels = grid(data, {
   rows: settings.rows,
@@ -258,6 +260,13 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function sendToBackend(data) {
+    var msg = CHANNEL_MARKER + JSON.stringify(data);
+    console.log("Sending message to the backend: " + msg);
+    inbox.send(msg);
+}
+
+
 $(document).ready(function() {
   // Append the canvas.
   $("#grid").append(pixels.canvas);
@@ -325,12 +334,14 @@ $(document).ready(function() {
     row = pixels2cells(mouse[1]);
     column = pixels2cells(mouse[0]);
     player_to = nearestPlayer(row, column);
-    if (player_to.id != ego) {
-      socket.emit("donate", {
+    if (player_to.id !== ego) {
+      msg = {
+        type: "donate", 
         player_to: player_to.id,
         player_from: ego,
         amount: amt
-      });
+      };
+      sendToBackend(msg);
     }
   };
 
@@ -350,13 +361,76 @@ $(document).ready(function() {
   };
 
   url = location.protocol + "//" + document.domain + ":" + location.port;
-  var socket = io.connect(url);
+  // var socket = io.connect(url);
 
-  socket.on("state", function(msg) {
+  // NEW STUFF
+  var ws_scheme = (window.location.protocol === "https:") ? 'wss://' : 'ws://';
+  var inbox = new ReconnectingWebSocket(
+    ws_scheme + location.host + "/receive_chat?channel=griduniverse"
+  );  
+  inbox.debug = true;
 
+  inbox.onopen = function (event) {
+    data = {
+      type: 'connect',
+      player_id: getUrlParameter('participant_id'),
+    };
+    sendToBackend(data);
+  };
+
+  inbox.onmessage = function (event) {
+    if (event.data.indexOf(CHANNEL_MARKER) !== 0) { 
+      console.log("Message was not of our " + CHANNEL_MARKER + " channel. Ignoring");
+      return; 
+    }
+    var msg = JSON.parse(event.data.substring(CHANNEL_MARKER.length));
+    switch(msg.type) {
+      case "chat":
+        onChatMessage(msg);
+        break;
+      case "donate":
+        onDonate(msg);
+        break;
+      case "state":
+        onGameStateChange(msg);
+        break;
+      case "stop":
+        gameOver(msg);
+        break;
+      default:
+        console.log("Unrecognized message type " + msg.type + ' from backend.');
+    }
+  };
+
+  onChatMessage = function (msg) {
+    var name;
+    if (settings.pseudonyms) {
+      name = players[msg.player_id].name;
+    } else {
+      name = "Player " + msg.player_id;
+    }
+    entry = "<span class='name'>" + name + ":</span> " + msg.contents;
+    $("#messages").append($("<li>").html(entry));
+    $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
+  };
+
+  onDonate = function (msg) {
+    entry = "Player " + msg.player_from + " gave you " + msg.donation;
+    if (msg.donation === 1) {
+      entry += " point.";
+    } else {
+      entry += " points.";
+    }
+    $("#messages").append($("<li>").html(entry));
+    $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
+  };
+
+  onGameStateChange = function (msg) {
     // Update ego.
     clients = msg.clients;
-    ego = clients.indexOf(socket.io.engine.id);
+    // ego = clients.indexOf(socket.io.engine.id);
+    // XXX 
+    ego = clients.indexOf(participant_id);
 
     // Update remaining time.
     $("#time").html(Math.max(Math.round(msg.remaining_time), 0));
@@ -400,17 +474,9 @@ $(document).ready(function() {
     $("#score").html(Math.round(players[ego].score));
     dollars = (players[ego].score * settings.dollars_per_point).toFixed(2);
     $("#dollars").html(dollars);
-  });
+  };
 
-  socket.on("connect", function(msg) {
-    console.log("connected!");
-  });
-
-  socket.on("stop", function(msg) {
-    gameOver();
-  });
-
-  function gameOver() {
+  function gameOver(msg) {
     $("#game-over").show();
     $("#dashboard").hide();
     $("#instructions").hide();
@@ -419,35 +485,15 @@ $(document).ready(function() {
   }
 
   $("form").submit(function() {
-    socket.emit("message", {
+    msg = {
+      type: 'chat',
       contents: $("#message").val(),
       player_id: ego,
       timestamp: Date.now() - start
-    });
+    };
+    sendToBackend(msg);
     $("#message").val("");
     return false;
-  });
-
-  socket.on("message", function(msg) {
-    if (settings.pseudonyms) {
-      name = players[msg.player_id].name;
-    } else {
-      name = "Player " + msg.player_id;
-    }
-    entry = "<span class='name'>" + name + ":</span> " + msg.contents;
-    $("#messages").append($("<li>").html(entry));
-    $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
-  });
-
-  socket.on("donate", function(msg) {
-    entry = "Player " + msg.player_from + " gave you " + msg.donation;
-    if (msg.donation == 1) {
-      entry += " point.";
-    } else {
-      entry += " points.";
-    }
-    $("#messages").append($("<li>").html(entry));
-    $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
   });
 
   //
@@ -459,7 +505,13 @@ $(document).ready(function() {
     Mousetrap.bind(direction, function() {
       if (!lock) {
         players[ego].move(direction);
-        socket.emit("move", { player: players[ego].id, move: direction });
+        msg = {
+          type: "move",
+          player: players[ego].id,
+          move: direction,
+        };
+        // socket.emit("move", { player: players[ego].id, move: direction });
+        sendToBackend(msg);
       }
       lock = true;
       return false;
@@ -475,16 +527,23 @@ $(document).ready(function() {
   });
 
   Mousetrap.bind("space", function () {
-    socket.emit("plant_food", {
+    msg = {
+      type: "plant_food", 
       player: players[ego].id,
       position: players[ego].position,
-    });
+    };
+    sendToBackend(msg);
   });
 
   function createBinding (key) {
     Mousetrap.bind(key[0].toLowerCase(), function () {
       players[ego].color = PLAYER_COLORS[key];
-      socket.emit("change_color", { player: players[ego].id, color: PLAYER_COLORS[key] });
+      msg = {
+        type: "change_color",
+        player: players[ego].id, 
+        color: PLAYER_COLORS[key]
+      };
+      sendToBackend(msg);
     });
   }
 

@@ -1,6 +1,7 @@
 """The Griduniverse."""
 
 import json
+import logging
 import math
 import random
 import time
@@ -9,23 +10,21 @@ import uuid
 from faker import Factory
 from flask import (
     Blueprint,
-    jsonify,
     render_template,
     request,
 )
-from flask_socketio import SocketIO
 from sqlalchemy import create_engine
 from sqlalchemy.orm import (
     sessionmaker,
     scoped_session,
 )
 
+import gevent
 import dallinger
+from dallinger.heroku.worker import conn as redis
 
-
+logger = logging.getLogger(__file__)
 config = dallinger.config.get_config()
-
-socketio = SocketIO(logger=True, engineio_logger=True)
 
 
 class Gridworld(object):
@@ -511,6 +510,7 @@ def serve_grid():
 
 class Griduniverse(dallinger.experiments.Experiment):
     """Define the structure of the experiment."""
+    channel = 'griduniverse'
 
     def __init__(self, session):
         """Initialize the experiment."""
@@ -588,14 +588,37 @@ class Griduniverse(dallinger.experiments.Experiment):
             seasonal_growth_rate=1.00,
         )
 
-        # Register Socket.IO event handler.
-        socketio.on_event('connect', self.handle_connect)
-        socketio.on_event('disconnect', self.handle_disconnect)
-        socketio.on_event('message', self.handle_message)
-        socketio.on_event('change_color', self.handle_change_color)
-        socketio.on_event('move', self.handle_move)
-        socketio.on_event('donate', self.handle_donate)
-        socketio.on_event('plant_food', self.handle_plant_food)
+    def create_network(self):
+        """This should read the config file for the class name,
+        but we're taking shortcuts for now.
+        """
+        return dallinger.networks.FullyConnected(
+            max_size=self.initial_recruitment_size)
+
+    def dispatch(self, message):
+        mapping = {
+            'connect': self.handle_connect,
+            'disconnect': self.handle_disconnect,
+            'message': self.handle_chat_message,
+            'change_color': self.handle_change_color,
+            'move': self.handle_move,
+            'donate': self.handle_donate,
+            'plant_food': self.handle_plant_food,
+        }
+        if message['type'] in mapping:
+            mapping[message['type']](message)
+
+    def send(self, message):
+        """socket interface implementation"""
+        logger.info(message)
+        if message.startswith(self.channel + ":"):
+            logger.info("We received a message for our channel: {}".format(message))
+            without_channel = message.replace(self.channel + ":", "")
+            logger.info("Going to try to parse {}".format(without_channel))
+            as_dict = json.loads(without_channel)
+            self.dispatch((as_dict))
+        else:
+            logger.info("Received a message, but not our channel: {}".format((message)))
 
     def setup(self):
         """Setup the networks."""
@@ -607,20 +630,26 @@ class Griduniverse(dallinger.experiments.Experiment):
     def recruit(self):
         pass
 
-    def handle_connect(self):
-        print("Client {} has connected.".format(request.sid))
+    def handle_connect(self, msg):
+        logger.info("Client {} has connected.".format(msg['player_id']))
         client_count = len([c for c in self.clients if c is not -1])
-        print("Grid num players: {}".format(self.grid.num_players))
+        logger.info("Grid num players: {}".format(self.grid.num_players))
         if client_count < self.grid.num_players:
-            self.clients.append(request.sid)
-            self.grid.spawn_player(id=self.clients.index(request.sid))
+            self.clients.append(msg['player_id'])
+            self.grid.spawn_player(id=self.clients.index(msg['player_id']))
 
-    def handle_disconnect(self):
-        print('Client {} has disconnected.'.format(request.sid))
+    def handle_disconnect(self, msg):
+        logger.info('Client {} has disconnected.'.format(request.sid))
         self.clients[self.clients.index(request.sid)] = -1
 
-    def handle_message(self, msg):
-        socketio.emit('message', msg, broadcast=True)
+    def handle_chat_message(self, msg):
+        # We don't know or care about the format of the message; we
+        # just propagate it to all clients.
+        message = json.dumps({
+            'type': 'chat',
+            'message': msg,
+        })
+        redis.publish(self.channel, message)
 
     def handle_change_color(self, msg):
         player = self.grid.players[msg['player']]
@@ -650,18 +679,15 @@ class Griduniverse(dallinger.experiments.Experiment):
         donation = msg['amount']
 
         if player_from.score >= donation:
-
             player_from.score -= donation
             player_to.score += donation
-
-            socketio.emit(
-                'donate', {
-                    'player_from': player_from.id,
-                    'player_to': player_to.id,
-                    'donation': donation,
-                },
-                room=self.clients[player_to.id]
-            )
+            message = json.dumps({
+                'type': 'donate',
+                'player_from': player_from.id,
+                'player_to': player_to.id,
+                'donation': donation,
+            })
+            redis.publish(self.channel, message)
 
     def handle_plant_food(self, msg):
         player = self.grid.players[msg['player']]
@@ -681,22 +707,21 @@ class Griduniverse(dallinger.experiments.Experiment):
     def send_state_thread(self):
         """Example of how to send server-generated events to clients."""
         count = 0
-        socketio.sleep(1.00)
+        gevent.sleep(1.00)
         while True:
-            socketio.sleep(0.050)
+            gevent.sleep(0.050)
+            # gevent.sleep(10.0)
             count += 1
             elapsed_time = time.time() - self.grid.start_timestamp
-            socketio.emit(
-                'state',
-                {
-                    'state_json': self.grid.serialize(),
-                    'clients': self.clients,
-                    'count': count,
-                    'remaining_time': self.grid.time_per_round - elapsed_time,
-                    "round": self.grid.round,
-                },
-                broadcast=True,
-            )
+            message = json.dumps({
+                'type': 'state',
+                'state_json': self.grid.serialize(),
+                'clients': self.clients,
+                'count': count,
+                'remaining_time': self.grid.time_per_round - elapsed_time,
+                "round": self.grid.round,
+            })
+            redis.publish(self.channel, message)
 
     def game_loop(self):
         """Update the world state."""
@@ -712,7 +737,7 @@ class Griduniverse(dallinger.experiments.Experiment):
 
         previous_second_timestamp = self.grid.start_timestamp
 
-        socketio.sleep(0.200)
+        gevent.sleep(0.200)
 
         environment = session.query(dallinger.nodes.Environment).one()
 
@@ -723,7 +748,7 @@ class Griduniverse(dallinger.experiments.Experiment):
             session.add(state)
             session.commit()
 
-            socketio.sleep(0.010)
+            gevent.sleep(0.010)
 
             now = time.time()
 
@@ -790,4 +815,28 @@ class Griduniverse(dallinger.experiments.Experiment):
 
             if self.grid.round == self.grid.num_rounds:
                 complete = True
-                socketio.emit('stop', {}, broadcast=True)
+                message = json.dumps({'type': 'stop'})
+                redis.publish(self.channel, message)
+
+
+# XXX Having problems with import, so we're piggybacking on the /chat_backend
+# route for now.
+
+# from dallinger.experiment_server import sockets as backend
+
+# chat_backend = backend.ChatBackend()
+# backend.app.before_first_request(chat_backend.start)
+
+
+# @backend.sockets.route('/griduniverse_socket')
+# def pipe(ws):
+#     backend.app.logger.debug("WE CALLED outbox()!!!")
+#     chat_backend.subscribe(ws, channel='griduniverse')
+
+#     while not ws.closed:
+#         # Wait for chat backend
+#         gevent.sleep(0.1)
+
+#         message = ws.receive()
+#         backend.app.logger.debug("message is: {}".format(message))
+#         backend.conn.publish('griduniverse', message.replace('griduniverse:', ''))
