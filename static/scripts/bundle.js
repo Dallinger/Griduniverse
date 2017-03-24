@@ -22877,7 +22877,8 @@ var PLAYER_COLORS = {
 };
 var GREEN = [0.51, 0.69, 0.61];
 var WHITE = [1.00, 1.00, 1.00];
-var CHANNEL_MARKER = 'griduniverse:';
+var CHANNEL = "griduniverse";
+var CHANNEL_MARKER = CHANNEL + ":";
 
 var pixels = grid(data, {
   rows: settings.rows,
@@ -23112,6 +23113,18 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function openSocket(endpoint) {
+  var ws_scheme = (window.location.protocol === "https:") ? 'wss://' : 'ws://',
+      app_root = ws_scheme + location.host + '/',
+      socket;
+
+  socket = new ReconnectingWebSocket(
+    app_root + endpoint + "?channel=" + CHANNEL
+  );  
+  socket.debug = true;  
+
+  return socket;
+}
 
 $(document).ready(function() {
   // Append the canvas.
@@ -23206,14 +23219,11 @@ $(document).ready(function() {
     return players[distances.indexOf(Math.min.apply(null, distances))];
   };
 
-  url = location.protocol + "//" + document.domain + ":" + location.port;
-  var ws_scheme = (window.location.protocol === "https:") ? 'wss://' : 'ws://';
-  var inbox = new ReconnectingWebSocket(
-    ws_scheme + location.host + "/receive_chat?channel=griduniverse"
-  );  
-  inbox.debug = true;
 
-  inbox.onopen = function (event) {
+  var inbox = openSocket('receive_chat');
+  var outbox = openSocket('send_chat');
+
+  outbox.onopen = function (event) {
     data = {
       type: 'connect',
       player_id: getUrlParameter('participant_id'),
@@ -23248,7 +23258,7 @@ $(document).ready(function() {
   function sendToBackend(data) {
     var msg = CHANNEL_MARKER + JSON.stringify(data);
     console.log("Sending message to the backend: " + msg);
-    inbox.send(msg);
+    outbox.send(msg);
   }
   
   onChatMessage = function (msg) {
