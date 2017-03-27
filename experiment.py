@@ -865,10 +865,13 @@ class RandomBot(BotBase):
     """A bot that plays griduniverse randomly"""
 
     VALID_KEYS = [Keys.UP, Keys.DOWN, Keys.RIGHT, Keys.LEFT, Keys.SPACE]
-    KEY_RATE = 0.1
+    KEY_INTERVAL = 0.1
 
     def get_next_key(self):
         return random.choice(self.VALID_KEYS)
+
+    def get_wait_time(self):
+        return random.expovariate(1.0 / self.KEY_INTERVAL)
 
     def participate(self):
         """Finish reading and send text"""
@@ -877,7 +880,7 @@ class RandomBot(BotBase):
         )
         try:
             while True:
-                time.sleep(self.KEY_RATE)
+                time.sleep(self.get_wait_time())
                 grid.send_keys(self.get_next_key())
         except StaleElementReferenceException:
             pass
