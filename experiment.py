@@ -720,7 +720,6 @@ class Griduniverse(dallinger.experiments.Experiment):
         gevent.sleep(1.00)
         while True:
             gevent.sleep(0.050)
-            # gevent.sleep(10.0)
             count += 1
             elapsed_time = time.time() - self.grid.start_timestamp
             message = {
