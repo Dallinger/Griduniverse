@@ -860,7 +860,40 @@ from selenium.common.exceptions import StaleElementReferenceException
 from dallinger.bots import BotBase
 
 
-class RandomBot(BotBase):
+class BaseGridUniverseBot(BotBase):
+
+    def wait_for_grid(self):
+        return WebDriverWait(self.driver, 15).until(
+            EC.presence_of_element_located((By.ID, "grid"))
+        )
+
+    @property
+    def state(self):
+        return self.driver.execute_script('return state;')
+
+    @property
+    def player_index(self):
+        return self.driver.execute_script('return ego;')
+
+    @property
+    def food_positions(self):
+        state = self.state
+        food = state['food']
+        return [tuple(item['position']) for item in food if item['maturity'] > 0.5]
+
+    @property
+    def player_positions(self):
+        state = self.state
+        players = state['players']
+        return [tuple(player['position']) for player in players]
+
+    @property
+    def my_position(self):
+        ego = self.player_index
+        return self.player_positions[ego]
+
+
+class RandomBot(BaseGridUniverseBot):
     """A bot that plays griduniverse randomly"""
 
     VALID_KEYS = [Keys.UP, Keys.DOWN, Keys.RIGHT, Keys.LEFT, Keys.SPACE, 'r', 'b', 'y']
@@ -874,9 +907,7 @@ class RandomBot(BotBase):
 
     def participate(self):
         """Finish reading and send text"""
-        grid = WebDriverWait(self.driver, 15).until(
-            EC.presence_of_element_located((By.ID, "grid"))
-        )
+        grid = self.wait_for_grid()
         try:
             while True:
                 time.sleep(self.get_wait_time())
@@ -884,6 +915,69 @@ class RandomBot(BotBase):
         except StaleElementReferenceException:
             pass
         return True
+
+
+class AdvantageSeekingBot(BaseGridUniverseBot):
+    """A bot that plays griduniverse by going towards the food it has the
+    biggest advantage over the other players at getting"""
+
+    KEY_INTERVAL = 0.1
+
+    def get_next_key(self):
+        my_distances = self.distances()[self.player_index]
+        closest_food, distance = min(my_distances.items(), key=lambda (k,v): v)
+        food_position = self.food_positions[closest_food]
+        my_position = self.my_position
+        valid_keys = []
+        print food_position, my_position
+        if food_position[0] < my_position[0]:
+            valid_keys.append(Keys.UP)
+        elif food_position[0] > my_position[0]:
+            valid_keys.append(Keys.DOWN)
+        if food_position[1] < my_position[1]:
+            valid_keys.append(Keys.LEFT)
+        elif food_position[1] > my_position[1]:
+            valid_keys.append(Keys.RIGHT)
+        if not valid_keys:
+            valid_keys = RandomBot.VALID_KEYS
+        return random.choice(valid_keys)
+
+    def get_wait_time(self):
+        return random.expovariate(1.0 / self.KEY_INTERVAL)
+
+    @property
+    def competitor_positions(self):
+        state = self.state
+        players = state['players']
+        locations = {tuple(player['position']) for player in players}
+        return locations - {self.my_position, }
+
+    @staticmethod
+    def manhattan_distance(coord1, coord2):
+        x = coord1[0] - coord2[0]
+        y = coord1[1] - coord2[1]
+        return abs(x) + abs(y)
+
+    def distances(self):
+        distances = {}
+        for i, player in enumerate(self.player_positions):
+            player_distances = {}
+            for j, food in enumerate(self.food_positions):
+                player_distances[j] = self.manhattan_distance(player, food)
+            distances[i] = player_distances
+        return distances
+
+    def participate(self):
+        """Finish reading and send text"""
+        grid = self.wait_for_grid()
+        try:
+            while True:
+                time.sleep(self.get_wait_time())
+                grid.send_keys(self.get_next_key())
+        except StaleElementReferenceException:
+            pass
+        return True
+
 
 
 def Bot(*args, **kwargs):
