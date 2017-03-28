@@ -553,7 +553,7 @@ class Griduniverse(dallinger.experiments.Experiment):
 
             # Identity
             num_colors=2,
-            mutable_colors=False,
+            mutable_colors=True,
             costly_colors=False,
             pseudonyms=True,
             pseudonyms_locale="en_US",
