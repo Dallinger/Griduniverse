@@ -825,25 +825,3 @@ class Griduniverse(dallinger.experiments.Experiment):
             if self.grid.round == self.grid.num_rounds:
                 complete = True
                 self.publish({'type': 'stop'})
-
-
-# XXX Having problems with import, so we're piggybacking on the /chat_backend
-# route for now.
-
-# from dallinger.experiment_server import sockets as backend
-
-# chat_backend = backend.ChatBackend()
-# backend.app.before_first_request(chat_backend.start)
-
-
-# @backend.sockets.route('/griduniverse_socket')
-# def pipe(ws):
-#     chat_backend.subscribe(ws, channel='griduniverse')
-
-#     while not ws.closed:
-#         # Wait for chat backend
-#         gevent.sleep(0.1)
-
-#         message = ws.receive()
-#         backend.app.logger.debug("message is: {}".format(message))
-#         backend.conn.publish('griduniverse', message.replace('griduniverse:', ''))
