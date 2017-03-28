@@ -31,6 +31,7 @@ config = dallinger.config.get_config()
 def extra_parameters():
     config.register('network', unicode)
     config.register('max_participants', int)
+    config.register('bot_policy', unicode)
 
 
 class Gridworld(object):
@@ -850,8 +851,6 @@ class Griduniverse(dallinger.experiments.Experiment):
 
 
 ### Bots ###
-import random
-
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -887,4 +886,10 @@ class RandomBot(BotBase):
         return True
 
 
-Bot = RandomBot
+def Bot(*args, **kwargs):
+    bot_implementation = config.get('bot_policy', u'RandomBot')
+    bot_class = globals().get(bot_implementation, None)
+    if issubclass(bot_class, BotBase):
+        return bot_class(*args, **kwargs)
+    else:
+        raise NotImplementedError
