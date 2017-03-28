@@ -620,7 +620,7 @@ class Griduniverse(dallinger.experiments.Experiment):
             'message': self.handle_chat_message,
             'change_color': self.handle_change_color,
             'move': self.handle_move,
-            'donate': self.handle_donate,
+            'donation_submitted': self.handle_donation,
             'plant_food': self.handle_plant_food,
         }
         if msg['type'] in mapping:
@@ -689,20 +689,20 @@ class Griduniverse(dallinger.experiments.Experiment):
         player = self.grid.players[msg['player']]
         player.move(msg['move'], tremble_rate=player.motion_tremble_rate)
 
-    def handle_donate(self, msg):
+    def handle_donation(self, msg):
         """Send a donation from one player to another."""
-        player_to = self.grid.players[msg['player_to']]
-        player_from = self.grid.players[msg['player_from']]
+        recipient = self.grid.players[msg['recipient_index']]
+        donor = self.grid.players[msg['donor_index']]
         donation = msg['amount']
 
-        if player_from.score >= donation:
-            player_from.score -= donation
-            player_to.score += donation
+        if donor.score >= donation:
+            donor.score -= donation
+            recipient.score += donation
             message = {
-                'type': 'donate',
-                'player_from': player_from.id,
-                'player_to': player_to.id,
-                'donation': donation,
+                'type': 'donation_processed',
+                'donor_index': msg['donor_index'],
+                'recipient_index': msg['recipient_index'],
+                'amount': donation,
             }
             self.publish(message)
 
