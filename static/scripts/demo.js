@@ -1,9 +1,12 @@
 /*global allow_exit, create_agent, getUrlParameter, require, settings, submitResponses */
+
+(function (allow_exit, getUrlParameter, require, reqwest, settings, submitResponses) {
+
 var util = require("util");
 var css = require("dom-css");
 var grid = require("./index");
 var position = require("mouse-position");
-var mousetrap = require("mousetrap");
+var Mousetrap = require("mousetrap");
 var ReconnectingWebSocket = require("reconnecting-websocket");
 var $ = require("jquery");
 var gaussian = require("gaussian");
@@ -53,6 +56,14 @@ var library = {
   }
 };
 
+var start = Date.now();
+var clients = [];
+var food = [];
+var foodConsumed = [];
+var players = [];
+var walls = [];
+var row, column, rand, color;
+
 var Food = function(settings) {
   if (!(this instanceof Food)) {
     return new Food();
@@ -91,8 +102,9 @@ var Player = function(settings) {
 Player.prototype.move = function(direction) {
   this.motion_direction = direction;
 
-  ts = Date.now() - start;
-  waitTime = 1000 / this.motion_speed_limit;
+  var ts = Date.now() - start,
+      waitTime = 1000 / this.motion_speed_limit;
+
   if (ts > this.motion_timestamp + waitTime) {
     var newPosition = this.position.slice();
 
@@ -126,7 +138,7 @@ Player.prototype.move = function(direction) {
 
         if (
           settings.player_overlap ||
-          !hasPlayer(newPosition) & !hasWall(newPosition)
+          !hasPlayer(newPosition) && !hasWall(newPosition)
         ) {
           this.position = newPosition;
         }
@@ -135,16 +147,12 @@ Player.prototype.move = function(direction) {
   }
 };
 
-clients = [];
-food = [];
-foodConsumed = [];
-players = [];
-walls = [];
+
 
 // Determine whether any player occupies the given position.
 function hasPlayer(position) {
   for (var i = 0; i < players.length; i++) {
-    if (position == players[i].position) {
+    if (position === players[i].position) {
       return false;
     }
   }
@@ -154,7 +162,7 @@ function hasPlayer(position) {
 // Determine whether any wall occupies the given position.
 function hasWall(position) {
   for (var i = 0; i < walls.length; i++) {
-    if (position == walls[i].position) {
+    if (position === walls[i].position) {
       return false;
     }
   }
@@ -166,13 +174,15 @@ pixels.canvas.style.marginTop = window.innerHeight * 0.04 / 2 + "px";
 document.body.style.transition = "0.3s all";
 document.body.style.background = "#ffffff";
 
-var mouse = position(pixels.canvas);
-
-var row, column, rand, color;
 
 pixels.frame(function() {
   // Update the background.
-  for (var i = 0; i < data.length; i++) {
+  var limitVisibility,
+      dimness,
+      rescaling,
+      idx, i, j, x, y;
+
+  for (i = 0; i < data.length; i++) {
     if (settings.background_animation) {
       rand = Math.random() * 0.02;
     } else {
@@ -190,7 +200,7 @@ pixels.frame(function() {
   // Update the food.
   for (i = 0; i < food.length; i++) {
     // Players digest the food.
-    for (var j = 0; j < players.length; j++) {
+    for (j = 0; j < players.length; j++) {
       if (arraysEqual(players[j].position, food[i].position)) {
         foodConsumed.push(food.splice(i, 1));
         break;
@@ -225,8 +235,8 @@ pixels.frame(function() {
   if (limitVisibility && typeof ego_index !== "undefined") {
     var g = gaussian(0, Math.pow(settings.visibility, 2));
     rescaling = 1 / g.pdf(0);
-    for (var i = 0; i < settings.columns; i++) {
-      for (var j = 0; j < settings.rows; j++) {
+    for (i = 0; i < settings.columns; i++) {
+      for (j = 0; j < settings.rows; j++) {
         x = players[ego_index].position[0];
         y = players[ego_index].position[1];
         dimness = g.pdf(distance(x, y, i, j)) * rescaling;
@@ -247,11 +257,11 @@ function distance(x, y, xx, yy) {
   return Math.sqrt((xx - x) * (xx - x) + (yy - y) * (yy - y));
 }
 
-start = Date.now();
-
 function arraysEqual(arr1, arr2) {
   for (var i = arr1.length; i--; ) {
-    if (arr1[i] !== arr2[i]) return false;
+    if (arr1[i] !== arr2[i]) {
+      return false;
+    }
   }
   return true;
 }
@@ -306,16 +316,16 @@ $(document).ready(function() {
     $("#submit-response").addClass("disabled");
     $("#submit-response").html("Sending...");
 
-    response = $("#reproduction").val();
+    var response = $("#reproduction").val();
 
     $("#reproduction").val("");
 
     reqwest({
-      url: "/info/" + my_node_id,
+      url: "/info/" + my_node_id,  // XXX my_node_id is undefined(?)
       method: "post",
       data: { contents: response, info_type: "Info" },
       success: function(resp) {
-        create_agent();
+        console.log("Would call create_agent() if defined...");
       }
     });
   });
@@ -372,7 +382,9 @@ $(document).ready(function() {
   };
 
   var onChatMessage = function (msg) {
-    var name;
+    var name, 
+        entry;
+
     if (settings.pseudonyms) {
       name = players[msg.player_index].name;
     } else {
@@ -384,6 +396,8 @@ $(document).ready(function() {
   };
 
   var onDonationProcessed = function (msg) {
+    var entry;
+
     entry = "Player " + msg.donor_index + " gave you " + msg.amount;
     if (msg.amount === 1) {
       entry += " point.";
@@ -397,6 +411,8 @@ $(document).ready(function() {
   var onGameStateChange = function (msg) {
     // Update ego.
     ego_index = msg.clients.indexOf(player_id);
+    var dollars,
+        state;
 
     // Update remaining time.
     $("#time").html(Math.max(Math.round(msg.remaining_time), 0));
@@ -508,13 +524,13 @@ $(document).ready(function() {
   //
   // Key bindings
   //
-  directions = ["up", "down", "left", "right"];
-  lock = false;
+  var directions = ["up", "down", "left", "right"];
+  var lock = false;
   directions.forEach(function(direction) {
     Mousetrap.bind(direction, function() {
       if (!lock) {
         players[ego_index].move(direction);
-        msg = {
+        var msg = {
           type: "move",
           player: players[ego_index].id,
           move: direction,
@@ -535,7 +551,7 @@ $(document).ready(function() {
   });
 
   Mousetrap.bind("space", function () {
-    msg = {
+    var msg = {
       type: "plant_food", 
       player: players[ego_index].id,
       position: players[ego_index].position,
@@ -546,7 +562,7 @@ $(document).ready(function() {
   function createBinding (key) {
     Mousetrap.bind(key[0].toLowerCase(), function () {
       players[ego_index].color = PLAYER_COLORS[key];
-      msg = {
+      var msg = {
         type: "change_color",
         player: players[ego_index].id, 
         color: PLAYER_COLORS[key]
@@ -563,3 +579,5 @@ $(document).ready(function() {
     }
   }
 });
+
+}(allow_exit, getUrlParameter, require, reqwest, settings, submitResponses));
