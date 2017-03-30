@@ -195,6 +195,12 @@ class Gridworld(object):
 
         return walls
 
+    def get_player(self, id):
+        """Get a player by ID"""
+        for player in self.players:
+            if player.id == id:
+                return player
+
     def _random_empty_position(self):
         """Select an empty cell at random."""
         empty_cell = False
@@ -518,7 +524,6 @@ class Griduniverse(dallinger.experiments.Experiment):
         self.experiment_repeats = 1
         self.initial_recruitment_size = 1
         self.setup()
-        self.clients = []
 
         self.grid = Gridworld(
 
@@ -650,15 +655,13 @@ class Griduniverse(dallinger.experiments.Experiment):
 
     def handle_connect(self, msg):
         logger.info("Client {} has connected.".format(msg['player_id']))
-        client_count = len([c for c in self.clients if c is not -1])
+        client_count = len(self.grid.players)
         logger.info("Grid num players: {}".format(self.grid.num_players))
         if client_count < self.grid.num_players:
-            self.clients.append(msg['player_id'])
-            self.grid.spawn_player(id=self.clients.index(msg['player_id']))
+            self.grid.spawn_player(id=msg['player_id'])
 
     def handle_disconnect(self, msg):
         logger.info('Client {} has disconnected.'.format(msg['player_id']))
-        self.clients[self.clients.index(msg['player_id'])] = -1
 
     def handle_chat_message(self, msg):
         """Publish the given message to all clients."""
@@ -669,7 +672,7 @@ class Griduniverse(dallinger.experiments.Experiment):
         self.publish(message)
 
     def handle_change_color(self, msg):
-        player = self.grid.players[msg['player']]
+        player = self.grid.get_player(msg['player'])
         color_idx = Gridworld.player_colors.index(msg['color'])
 
         if player.color_idx == color_idx:
@@ -686,13 +689,13 @@ class Griduniverse(dallinger.experiments.Experiment):
         player.color_name = Gridworld.player_color_names[color_idx]
 
     def handle_move(self, msg):
-        player = self.grid.players[msg['player']]
+        player = self.grid.get_player(msg['player'])
         player.move(msg['move'], tremble_rate=player.motion_tremble_rate)
 
     def handle_donation(self, msg):
         """Send a donation from one player to another."""
-        recipient = self.grid.players[msg['recipient_index']]
-        donor = self.grid.players[msg['donor_index']]
+        recipient = self.grid.get_player(msg['recipient_id'])
+        donor = self.grid.get_player(msg['donor_id'])
         donation = msg['amount']
 
         if donor.score >= donation:
@@ -700,14 +703,14 @@ class Griduniverse(dallinger.experiments.Experiment):
             recipient.score += donation
             message = {
                 'type': 'donation_processed',
-                'donor_index': msg['donor_index'],
-                'recipient_index': msg['recipient_index'],
+                'donor_id': msg['donor_id'],
+                'recipient_id': msg['recipient_id'],
                 'amount': donation,
             }
             self.publish(message)
 
     def handle_plant_food(self, msg):
-        player = self.grid.players[msg['player']]
+        player = self.grid.get_player(msg['player'])
         position = msg['position']
         can_afford = player.score >= self.grid.food_planting_cost
         if (can_afford and not self.grid._has_food(position)):
@@ -725,7 +728,6 @@ class Griduniverse(dallinger.experiments.Experiment):
             message = {
                 'type': 'state',
                 'state_json': self.grid.serialize(),
-                'clients': self.clients,
                 'count': count,
                 'remaining_time': self.grid.time_per_round - elapsed_time,
                 "round": self.grid.round,
