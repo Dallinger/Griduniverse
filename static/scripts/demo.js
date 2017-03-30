@@ -57,10 +57,8 @@ var library = {
 };
 
 var start = Date.now();
-var clients = [];
 var food = [];
 var foodConsumed = [];
-var players = [];
 var walls = [];
 var row, column, rand, color;
 
@@ -135,39 +133,103 @@ Player.prototype.move = function(direction) {
 
       default:
         console.log("Direction not recognized.");
-
-        if (
-          settings.player_overlap ||
-          !hasPlayer(newPosition) && !hasWall(newPosition)
-        ) {
-          this.position = newPosition;
-        }
     }
     this.motion_timestamp = ts;
   }
 };
 
+var playerSet = (function () {
+
+    var PlayerSet = function (settings) {
+        if (!(this instanceof PlayerSet)) {
+            return new PlayerSet(settings);
+        }
+
+        this._players = {};
+        this.ego_id = settings.ego_id;
+    };
 
 
-// Determine whether any player occupies the given position.
-function hasPlayer(position) {
-  for (var i = 0; i < players.length; i++) {
-    if (position === players[i].position) {
+    PlayerSet.prototype.isPlayerAt = function (position) {
+      var id, player;
+
+      for (id in this._players) {
+        if (this._players.hasOwnProperty(id)) {
+          player = this._players[id];
+          if (position === player.position) {
+            return true;
+          }
+        } 
+      }
       return false;
-    }
-  }
-  return true;
-}
+    };
 
-// Determine whether any wall occupies the given position.
-function hasWall(position) {
-  for (var i = 0; i < walls.length; i++) {
-    if (position === walls[i].position) {
-      return false;
-    }
-  }
-  return true;
-}
+
+    PlayerSet.prototype.drawToGrid = function (grid) {
+      var positions = [],
+          idx,
+          player,
+          id;
+
+      for (id in this._players) {
+        if (this._players.hasOwnProperty(id)) {
+          player = this._players[id];
+          if (player.motion_auto) {
+            player.move(player.motion_direction);
+          }
+          idx = player.position[0] * settings.columns + player.position[1];
+          // positions.push({'position': idx, 'color': player.color});
+          grid[idx] = player.color;
+        }
+      }  
+    };
+
+    PlayerSet.prototype.nearest = function (row, column) {
+      var distances = [],
+                      distance,
+                      player,
+                      id;
+
+      for (id in this._players) {
+        if (this._players.hasOwnProperty(id)) {
+          player = this._players[id];
+          if (player.hasOwnProperty('position')) {
+            distance = Math.abs(row - player.position[0]) + Math.abs(column - player.position[1]);
+            distances.push({"player": player, "distance": distance});
+          }
+        }
+      }
+
+      distances.sort(function (a, b) {
+        return a.distance - b.distance;
+      });
+
+      return distances[0].player;
+    };
+
+    PlayerSet.prototype.ego = function () {
+      return this.get(this.ego_id);
+    };  
+
+    PlayerSet.prototype.get = function (id) {
+      return this._players[id];
+    }; 
+
+    PlayerSet.prototype.update = function (playerData) {
+      var currentPlayerData,
+          i;
+
+      for (i = 0; i < playerData.length; i++) {
+        currentPlayerData = playerData[i];
+        this._players[currentPlayerData.id] = new Player(currentPlayerData);
+      }
+    };
+
+    return PlayerSet;
+}());
+
+// ego will be updated on page load
+var players = playerSet({'ego_id': undefined});  
 
 pixels.canvas.style.marginLeft = window.innerWidth * 0.03 / 2 + "px";
 pixels.canvas.style.marginTop = window.innerHeight * 0.04 / 2 + "px";
@@ -177,7 +239,8 @@ document.body.style.background = "#ffffff";
 
 pixels.frame(function() {
   // Update the background.
-  var limitVisibility,
+  var ego = players.ego(),
+      limitVisibility,
       dimness,
       rescaling,
       idx, i, j, x, y;
@@ -197,30 +260,20 @@ pixels.frame(function() {
 
   data = background;
 
-  // Update the food.
   for (i = 0; i < food.length; i++) {
     // Players digest the food.
-    for (j = 0; j < players.length; j++) {
-      if (arraysEqual(players[j].position, food[i].position)) {
-        foodConsumed.push(food.splice(i, 1));
-        break;
-      } else {
-        // Draw the food.
-        if (settings.food_visible) {
-          idx = food[i].position[0] * settings.columns + food[i].position[1];
-          data[idx] = food[i].color;
-        }
+    if (players.isPlayerAt(food[i].position)) {
+      foodConsumed.push(food.splice(i, 1));
+    } else {
+      if (settings.food_visible) {
+        idx = food[i].position[0] * settings.columns + food[i].position[1];
+        data[idx] = food[i].color;
       }
     }
-  }
+  }  
 
-  // Update the players' positions.
-  players.forEach(function(p) {
-    if (p.motion_auto) {
-      p.move(p.motion_direction);
-    }
-    data[p.position[0] * settings.columns + p.position[1]] = p.color;
-  });
+  // Draw the players:
+  players.drawToGrid(data);
 
   // Draw the walls.
   if (settings.walls_visible) {
@@ -232,13 +285,13 @@ pixels.frame(function() {
   // Add the Gaussian mask.
   limitVisibility = settings.visibility <
     Math.max(settings.columns, settings.rows);
-  if (limitVisibility && typeof ego_index !== "undefined") {
+  if (limitVisibility && typeof ego !== "undefined") {
     var g = gaussian(0, Math.pow(settings.visibility, 2));
     rescaling = 1 / g.pdf(0);
     for (i = 0; i < settings.columns; i++) {
       for (j = 0; j < settings.rows; j++) {
-        x = players[ego_index].position[0];
-        y = players[ego_index].position[1];
+        x = ego.position[0];
+        y = ego.position[1];
         dimness = g.pdf(distance(x, y, i, j)) * rescaling;
         idx = i * settings.columns + j;
         data[idx] = [
@@ -285,6 +338,8 @@ function openSocket(endpoint) {
 
 $(document).ready(function() {
   var player_id = getUrlParameter('participant_id');
+      players.ego_id = player_id;
+
   // Append the canvas.
   $("#grid").append(pixels.canvas);
 
@@ -350,16 +405,15 @@ $(document).ready(function() {
   var donateToClicked = function(amt) {
     var row = pixels2cells(mouse[1]),
         column = pixels2cells(mouse[0]),
-        recipient_index = nearestPlayerIndex(row, column),
-        recipient = players[recipient_index],
-        donor = players[ego_index],
+        recipient = players.nearest(row, column),
+        donor = players.ego(),
         msg;
 
     if (recipient.id !== donor.id) {
       msg = {
         type: "donation_submitted", 
-        recipient_index: recipient_index,
-        donor_index: ego_index,
+        recipient_id: recipient.id,
+        donor_id: donor.id,
         amount: amt
       };
       sendToBackend(msg);
@@ -370,23 +424,12 @@ $(document).ready(function() {
     return Math.floor(pix / (settings.block_size + settings.padding));
   };
 
-  var nearestPlayerIndex = function(row, column) {
-    var distances = [];
-    for (var i = 0; i < players.length; i++) {
-      distances.push(
-        Math.abs(row - players[i].position[0]) +
-          Math.abs(column - players[i].position[1])
-      );
-    }
-    return distances.indexOf(Math.min.apply(null, distances));
-  };
-
   var onChatMessage = function (msg) {
     var name, 
         entry;
 
     if (settings.pseudonyms) {
-      name = players[msg.player_index].name;
+      name = players.get(msg.player_id).name;
     } else {
       name = "Player " + msg.player_index;
     }
@@ -396,9 +439,26 @@ $(document).ready(function() {
   };
 
   var onDonationProcessed = function (msg) {
-    var entry;
+    var ego = players.ego(),
+        donor = players.get(msg.donor_id),
+        recipient = players.get(msg.recipient_id),
+        donor_name,
+        recipient_name,
+        entry;
 
-    entry = "Player " + msg.donor_index + " gave you " + msg.amount;
+    if (donor === ego) {
+      donor_name = 'You';
+    } else {
+      donor_name = "Player " + donor.name;
+    }
+
+    if (recipient === ego) {
+      recipient_name = 'you';
+    } else {
+      recipient_name = recipient.name;
+    }    
+
+    entry = donor_name + " gave " + recipient_name + " " + msg.amount;
     if (msg.amount === 1) {
       entry += " point.";
     } else {
@@ -409,9 +469,8 @@ $(document).ready(function() {
   };
 
   var onGameStateChange = function (msg) {
-    // Update ego.
-    ego_index = msg.clients.indexOf(player_id);
-    var dollars,
+    var ego,
+        dollars,
         state;
 
     // Update remaining time.
@@ -424,9 +483,8 @@ $(document).ready(function() {
 
     // Update players.
     state = JSON.parse(msg.state_json);
-    for (var i = 0; i < state.players.length; i++) {
-      players[state.players[i].id] = new Player(state.players[i]);
-    }
+    players.update(state.players);
+    ego = players.ego();
 
     // Update food.
     food = [];
@@ -453,9 +511,11 @@ $(document).ready(function() {
     }
 
     // Update displayed score.
-    $("#score").html(Math.round(players[ego_index].score));
-    dollars = (players[ego_index].score * settings.dollars_per_point).toFixed(2);
-    $("#dollars").html(dollars);
+    if (ego !== undefined) {
+      $("#score").html(Math.round(ego.score));
+      dollars = (ego.score * settings.dollars_per_point).toFixed(2);
+      $("#dollars").html(dollars);
+    }
   };
 
   function gameOver(msg) {
@@ -513,7 +573,7 @@ $(document).ready(function() {
     var msg = {
       type: 'chat',
       contents: $("#message").val(),
-      player_index: ego_index,
+      player_id: players.ego().id,
       timestamp: Date.now() - start
     };
     sendToBackend(msg);
@@ -529,10 +589,10 @@ $(document).ready(function() {
   directions.forEach(function(direction) {
     Mousetrap.bind(direction, function() {
       if (!lock) {
-        players[ego_index].move(direction);
+        players.ego().move(direction);
         var msg = {
           type: "move",
-          player: players[ego_index].id,
+          player: players.ego().id,
           move: direction,
         };
         sendToBackend(msg);
@@ -553,18 +613,18 @@ $(document).ready(function() {
   Mousetrap.bind("space", function () {
     var msg = {
       type: "plant_food", 
-      player: players[ego_index].id,
-      position: players[ego_index].position,
+      player: players.ego().id,
+      position: players.ego().position,
     };
     sendToBackend(msg);
   });
 
   function createBinding (key) {
     Mousetrap.bind(key[0].toLowerCase(), function () {
-      players[ego_index].color = PLAYER_COLORS[key];
+      players.ego().color = PLAYER_COLORS[key];
       var msg = {
         type: "change_color",
-        player: players[ego_index].id, 
+        player: players.ego().id, 
         color: PLAYER_COLORS[key]
       };
       sendToBackend(msg);
