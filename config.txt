@@ -1,6 +1,8 @@
 [Experiment Configuration]
 mode = sandbox
 auto_recruit = true
+network = FullyConnected
+max_participants = 8
 
 [HIT Configuration]
 title = Griduniverse
