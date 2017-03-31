@@ -178,7 +178,6 @@ var playerSet = (function () {
             player.move(player.motion_direction);
           }
           idx = player.position[0] * settings.columns + player.position[1];
-          // positions.push({'position': idx, 'color': player.color});
           grid[idx] = player.color;
         }
       }  
