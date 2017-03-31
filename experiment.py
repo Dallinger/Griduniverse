@@ -849,8 +849,9 @@ class Griduniverse(dallinger.experiments.Experiment):
                 complete = True
                 self.publish({'type': 'stop'})
 
-
 ### Bots ###
+import itertools
+import operator
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -867,9 +868,8 @@ class BaseGridUniverseBot(BotBase):
             EC.presence_of_element_located((By.ID, "grid"))
         )
 
-    @property
-    def state(self):
-        return self.driver.execute_script('return state;')
+    def get_state(self):
+        self.state = self.driver.execute_script('return state;')
 
     @property
     def player_index(self):
@@ -923,21 +923,72 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
 
     KEY_INTERVAL = 0.1
 
+    def get_logical_targets(self):
+        best_choices = {}
+        for player, food_info in self.distances().items():
+            for food_id, distance in food_info.items():
+                best_choices[player, food_id] = distance
+        best_choices = map(operator.itemgetter(0), sorted(best_choices.items(), key=operator.itemgetter(1)))
+        seen_players = set()
+        seen_food = set()
+        choices = {}
+        for choice in best_choices:
+            if choice[0] in seen_players:
+                continue
+            if choice[1] in seen_food:
+                continue
+            seen_players.add(choice[0])
+            seen_food.add(choice[1])
+            choices[choice[0]]=choice[1]
+        return choices
+
+    def get_player_spread(self, positions=None):
+        if positions is None:
+            positions = self.player_positions
+        pairs = itertools.combinations(positions, 2)
+        distances = itertools.starmap(self.manhattan_distance, pairs)
+        distances = tuple(distances)
+        return float(sum(distances)) / len(distances)
+
+    def get_expected_position(self, key):
+        positions = self.player_positions
+        player_id = self.player_index
+        my_position = positions[player_id]
+        if key == Keys.UP:
+            my_position = (my_position[0]-1, my_position[1])
+        if key == Keys.DOWN:
+            my_position = (my_position[0]+1, my_position[1])
+        if key == Keys.LEFT:
+            my_position = (my_position[0]-1, my_position[1])
+        if key == Keys.RIGHT:
+            my_position = (my_position[0]+1, my_position[1])
+        positions[player_id] = my_position
+        return positions
+
     def get_next_key(self):
-        my_distances = self.distances()[self.player_index]
-        closest_food, distance = min(my_distances.items(), key=lambda (k,v): v)
-        food_position = self.food_positions[closest_food]
-        my_position = self.my_position
         valid_keys = []
-        print food_position, my_position
-        if food_position[0] < my_position[0]:
-            valid_keys.append(Keys.UP)
-        elif food_position[0] > my_position[0]:
-            valid_keys.append(Keys.DOWN)
-        if food_position[1] < my_position[1]:
-            valid_keys.append(Keys.LEFT)
-        elif food_position[1] > my_position[1]:
-            valid_keys.append(Keys.RIGHT)
+        my_position = self.my_position
+        try:
+            target_id = self.get_logical_targets()[self.player_index]
+            food_position = self.food_positions[target_id]
+        except KeyError:
+            # There are no recommendations for where to go, so avoid others
+            current_spread = self.get_player_spread()
+            for key in (Keys.UP, Keys.DOWN, Keys.LEFT, Keys.RIGHT):
+                print "Checking", key
+                expected = self.get_expected_position(key)
+                print current_spread, self.get_player_spread(expected)
+                if self.get_player_spread(expected) > current_spread:
+                    valid_keys.append(key)
+        else:
+            if food_position[0] < my_position[0]:
+                valid_keys.append(Keys.UP)
+            elif food_position[0] > my_position[0]:
+                valid_keys.append(Keys.DOWN)
+            if food_position[1] < my_position[1]:
+                valid_keys.append(Keys.LEFT)
+            elif food_position[1] > my_position[1]:
+                valid_keys.append(Keys.RIGHT)
         if not valid_keys:
             valid_keys = RandomBot.VALID_KEYS
         return random.choice(valid_keys)
@@ -970,8 +1021,10 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
     def participate(self):
         """Finish reading and send text"""
         grid = self.wait_for_grid()
+        self.get_state()
         try:
             while True:
+                self.get_state()
                 time.sleep(self.get_wait_time())
                 grid.send_keys(self.get_next_key())
         except StaleElementReferenceException:
