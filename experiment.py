@@ -22,9 +22,15 @@ from sqlalchemy.orm import (
 import gevent
 import dallinger
 from dallinger.heroku.worker import conn as redis
+from dallinger.compat import unicode
 
 logger = logging.getLogger(__file__)
 config = dallinger.config.get_config()
+
+
+def extra_parameters():
+    config.register('network', unicode)
+    config.register('max_participants', int)
 
 
 class Gridworld(object):
@@ -523,12 +529,14 @@ class Griduniverse(dallinger.experiments.Experiment):
         super(Griduniverse, self).__init__(session)
         self.experiment_repeats = 1
         self.initial_recruitment_size = 1
+        self.network_factory = config.get('network')
+        self.num_participants = config.get('max_participants')
         self.setup()
 
         self.grid = Gridworld(
 
             # Players
-            num_players=8,
+            num_players=self.num_participants,
 
             # Rounds
             num_rounds=1,
@@ -601,11 +609,12 @@ class Griduniverse(dallinger.experiments.Experiment):
         ]
 
     def create_network(self):
-        """This should read the config file for the class name,
-        but we're taking shortcuts for now.
-        """
-        return dallinger.networks.FullyConnected(
-            max_size=self.initial_recruitment_size)
+        """Create a new network by reading the configuration file."""
+        class_ = getattr(
+            dallinger.networks,
+            self.network_factory
+        )
+        return class_(max_size=self.num_participants + 1)
 
     def setup(self):
         """Setup the networks."""
@@ -654,11 +663,22 @@ class Griduniverse(dallinger.experiments.Experiment):
         redis.publish(self.channel, json.dumps(msg))
 
     def handle_connect(self, msg):
-        logger.info("Client {} has connected.".format(msg['player_id']))
+        player_id = msg['player_id']
+        logger.info("Client {} has connected.".format(player_id))
         client_count = len(self.grid.players)
         logger.info("Grid num players: {}".format(self.grid.num_players))
         if client_count < self.grid.num_players:
-            self.grid.spawn_player(id=msg['player_id'])
+            participant = dallinger.models.Participant.query.get(player_id)
+            network = self.get_network_for_participant(participant)
+            if network:
+                logger.info("Found on open network. Adding participant node...")
+                self.create_node(participant, network)
+                logger.info("Spawning player on the grid...")
+                self.grid.spawn_player(id=player_id)
+            else:
+                logger.info(
+                    "No free network found for player {}".format(player_id)
+                )
 
     def handle_disconnect(self, msg):
         logger.info('Client {} has disconnected.'.format(msg['player_id']))
