@@ -870,7 +870,7 @@ class BaseGridUniverseBot(BotBase):
         )
 
     def get_state(self):
-        self.state = self.driver.execute_script('return state;')
+        self.state = self.driver.execute_script('return window.state;')
 
     @property
     def player_index(self):
