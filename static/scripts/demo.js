@@ -482,9 +482,12 @@ $(document).ready(function() {
 
     // Update players.
     state = JSON.parse(msg.state_json);
-    window.state = state;
     players.update(state.players);
     ego = players.ego();
+
+    // Give bots access to state.
+    window.state = state;
+    window.ego = ego.id;
 
     // Update food.
     food = [];

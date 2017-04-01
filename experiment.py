@@ -874,7 +874,7 @@ class BaseGridUniverseBot(BotBase):
 
     @property
     def player_index(self):
-        return self.driver.execute_script('return ego;')
+        return self.driver.execute_script('return window.ego;')
 
     @property
     def food_positions(self):
