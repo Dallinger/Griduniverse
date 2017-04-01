@@ -1083,7 +1083,7 @@ def Bot(*args, **kwargs):
 
     bot_implementation = config.get('bot_policy', u'RandomBot')
     bot_class = globals().get(bot_implementation, None)
-    if issubclass(bot_class, BotBase):
+    if bot_class and issubclass(bot_class, BotBase):
         return bot_class(*args, **kwargs)
     else:
         raise NotImplementedError
