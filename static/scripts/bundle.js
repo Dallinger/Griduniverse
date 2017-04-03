@@ -15130,10 +15130,6 @@ $(document).ready(function() {
     players.update(state.players);
     ego = players.ego();
 
-    // Give bots access to state.
-    window.state = state;
-    window.ego = ego.id;
-
     // Update food.
     food = [];
     for (var j = 0; j < state.food.length; j++) {
@@ -15163,6 +15159,12 @@ $(document).ready(function() {
       $("#score").html(Math.round(ego.score));
       dollars = (ego.score * settings.dollars_per_point).toFixed(2);
       $("#dollars").html(dollars);
+    }
+
+    if (ego !== undefined) {
+      // Give bots access to state.
+      window.state = state;
+      window.ego = ego.id;    
     }
   };
 
