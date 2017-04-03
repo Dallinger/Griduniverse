@@ -39,4 +39,4 @@ jspm_packages
 *.pyc
 snapshots/*
 
-static/scripts/bundle.js
+!static/scripts/bundle.js
