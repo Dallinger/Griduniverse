@@ -15163,8 +15163,8 @@ $(document).ready(function() {
 
     if (ego !== undefined) {
       // Give bots access to state.
-      window.state = state;
-      window.ego = ego.id;    
+      window.state = msg.state_json;
+      window.ego = ego.id;
     }
   };
 

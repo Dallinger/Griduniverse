@@ -870,11 +870,13 @@ class BaseGridUniverseBot(BotBase):
         )
 
     def get_state(self):
-        self.state = self.driver.execute_script('return window.state;')
+        self.state = json.loads(
+            self.driver.execute_script('return window.wrappedJSObject.state;'))
 
     @property
     def player_index(self):
-        return self.driver.execute_script('return window.ego;')
+        return int(
+            self.driver.execute_script('return window.wrappedJSObject.ego;'))
 
     @property
     def food_positions(self):
