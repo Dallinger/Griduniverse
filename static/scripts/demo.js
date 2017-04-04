@@ -481,7 +481,7 @@ $(document).ready(function() {
     }
 
     // Update players.
-    state = JSON.parse(msg.state_json);
+    state = JSON.parse(msg.grid);
     players.update(state.players);
     ego = players.ego();
 
@@ -518,7 +518,7 @@ $(document).ready(function() {
 
     if (ego !== undefined) {
       // Give bots access to state.
-      window.state = msg.state_json;
+      window.state = msg.grid;
       window.ego = ego.id;
     }
   };

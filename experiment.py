@@ -748,7 +748,7 @@ class Griduniverse(dallinger.experiments.Experiment):
             elapsed_time = time.time() - self.grid.start_timestamp
             message = {
                 'type': 'state',
-                'state_json': self.grid.serialize(),
+                'grid': self.grid.serialize(),
                 'count': count,
                 'remaining_time': self.grid.time_per_round - elapsed_time,
                 "round": self.grid.round,
