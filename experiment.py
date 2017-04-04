@@ -1017,13 +1017,15 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
         positions = self.player_positions
         player_id = self.player_index
         my_position = positions[player_id]
-        if key == Keys.UP and my_position[0] > 5:
+        pad = 5
+        rows = self.state['rows']
+        if key == Keys.UP and my_position[0] > pad:
             my_position = (my_position[0]-1, my_position[1])
-        if key == Keys.DOWN and my_position[0] < 20:
+        if key == Keys.DOWN and my_position[0] < (rows - pad):
             my_position = (my_position[0]+1, my_position[1])
-        if key == Keys.LEFT and my_position[1] > 5:
+        if key == Keys.LEFT and my_position[1] > pad:
             my_position = (my_position[0], my_position[1]-1)
-        if key == Keys.RIGHT and my_position[1] < 20:
+        if key == Keys.RIGHT and my_position[1] < (rows - pad):
             my_position = (my_position[0], my_position[1]+1)
         positions[player_id] = my_position
         return positions
