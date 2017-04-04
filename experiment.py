@@ -869,26 +869,39 @@ class BaseGridUniverseBot(BotBase):
             EC.presence_of_element_located((By.ID, "grid"))
         )
 
-    def get_state(self):
-        self.state = json.loads(
-            self.driver.execute_script('return window.wrappedJSObject.state;'))
+    @property
+    def state(self):
+        try:
+            return json.loads(self.driver.execute_script(
+                'return window.wrappedJSObject.state;'))
+        except AttributeError:
+            raise
 
     @property
     def player_index(self):
-        return int(self.driver.execute_script(
-            'return window.wrappedJSObject.ego;')) - 1
+        try:
+            return int(self.driver.execute_script(
+                'return window.wrappedJSObject.ego;')) - 1
+        except AttributeError:
+            raise
 
     @property
     def food_positions(self):
-        state = self.state
-        food = state['food']
-        return [tuple(item['position']) for item in food if item['maturity'] > 0.5]
+        try:
+            food = self.state['food']
+        except AttributeError:
+            return None
+        else:
+            return [tuple(item['position']) for item in food if item['maturity'] > 0.5]
 
     @property
     def player_positions(self):
-        state = self.state
-        players = state['players']
-        return [tuple(player['position']) for player in players]
+        try:
+            players = self.state['players']
+        except AttributeError:
+            return None
+        else:
+            return [tuple(player['position']) for player in players]
 
     @property
     def my_position(self):
@@ -1068,13 +1081,13 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
         """Wait a random amount of time, then send a key according to
         the algorithm above."""
         grid = self.wait_for_grid()
-        self.get_state()
         try:
             while True:
-                self.get_state()
                 time.sleep(self.get_wait_time())
-                if self.player_positions and self.player_index >= 0:
+                try:
                     grid.send_keys(self.get_next_key())
+                except Exception:
+                    pass
         except StaleElementReferenceException:
             pass
         return True
