@@ -1,0 +1,37 @@
+{
+  "name": "griduniverse",
+  "version": "0.1.0",
+  "description": "Welcome to the Griduniverse.",
+  "main": "index.js",
+  "dependencies": {
+    "dom-css": "^2.1.0",
+    "gaussian": "^1.1.0",
+    "jquery": "^3.1.1",
+    "moment": "^2.17.1",
+    "mousetrap-pause": "^1.0.0",
+    "semantic-ui": "^2.2.7",
+    "socket.io-client": "^1.7.2",
+    "stackblur-canvas": "^1.4.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dallinger/Griduniverse.git"
+  },
+  "keywords": [
+    "game",
+    "experiment",
+    "web",
+    "social",
+    "science"
+  ],
+  "author": "Jordan W. Suchow",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Dallinger/Griduniverse/issues"
+  },
+  "homepage": "https://github.com/Dallinger/Griduniverse#readme"
+}

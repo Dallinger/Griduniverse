@@ -159,7 +159,7 @@ var playerSet = (function () {
           if (position === player.position) {
             return true;
           }
-        } 
+        }
       }
       return false;
     };
@@ -180,7 +180,7 @@ var playerSet = (function () {
           idx = player.position[0] * settings.columns + player.position[1];
           grid[idx] = player.color;
         }
-      }  
+      }
     };
 
     PlayerSet.prototype.nearest = function (row, column) {
@@ -208,11 +208,11 @@ var playerSet = (function () {
 
     PlayerSet.prototype.ego = function () {
       return this.get(this.ego_id);
-    };  
+    };
 
     PlayerSet.prototype.get = function (id) {
       return this._players[id];
-    }; 
+    };
 
     PlayerSet.prototype.update = function (playerData) {
       var currentPlayerData,
@@ -228,7 +228,7 @@ var playerSet = (function () {
 }());
 
 // ego will be updated on page load
-var players = playerSet({'ego_id': undefined});  
+var players = playerSet({'ego_id': undefined});
 
 pixels.canvas.style.marginLeft = window.innerWidth * 0.03 / 2 + "px";
 pixels.canvas.style.marginTop = window.innerHeight * 0.04 / 2 + "px";
@@ -269,7 +269,7 @@ pixels.frame(function() {
         data[idx] = food[i].color;
       }
     }
-  }  
+  }
 
   // Draw the players:
   players.drawToGrid(data);
@@ -329,8 +329,8 @@ function openSocket(endpoint) {
 
   socket = new ReconnectingWebSocket(
     app_root + endpoint + "?channel=" + CHANNEL
-  );  
-  socket.debug = true;  
+  );
+  socket.debug = true;
 
   return socket;
 }
@@ -345,7 +345,7 @@ $(document).ready(function() {
   // Opt out of the experiment.
   $("#opt-out").click(function() {
     allow_exit();
-    window.location.href = "/questionnaire";
+    window.location.href = "/questionnaire?participant_id=" + player_id;
   });
 
   // Consent to the experiment.
@@ -410,7 +410,7 @@ $(document).ready(function() {
 
     if (recipient.id !== donor.id) {
       msg = {
-        type: "donation_submitted", 
+        type: "donation_submitted",
         recipient_id: recipient.id,
         donor_id: donor.id,
         amount: amt
@@ -424,7 +424,7 @@ $(document).ready(function() {
   };
 
   var onChatMessage = function (msg) {
-    var name, 
+    var name,
         entry;
 
     if (settings.pseudonyms) {
@@ -455,7 +455,7 @@ $(document).ready(function() {
       recipient_name = 'you';
     } else {
       recipient_name = recipient.name;
-    }    
+    }
 
     entry = donor_name + " gave " + recipient_name + " " + msg.amount;
     if (msg.amount === 1) {
@@ -481,7 +481,7 @@ $(document).ready(function() {
     }
 
     // Update players.
-    state = JSON.parse(msg.state_json);
+    state = JSON.parse(msg.grid);
     players.update(state.players);
     ego = players.ego();
 
@@ -515,6 +515,12 @@ $(document).ready(function() {
       dollars = (ego.score * settings.dollars_per_point).toFixed(2);
       $("#dollars").html(dollars);
     }
+
+    if (ego !== undefined) {
+      // Give bots access to state.
+      window.state = msg.grid;
+      window.ego = ego.id;
+    }
   };
 
   function gameOver(msg) {
@@ -538,9 +544,9 @@ $(document).ready(function() {
   };
 
   inbox.onmessage = function (event) {
-    if (event.data.indexOf(CHANNEL_MARKER) !== 0) { 
+    if (event.data.indexOf(CHANNEL_MARKER) !== 0) {
       console.log("Message was not on channel " + CHANNEL_MARKER + ". Ignoring.");
-      return; 
+      return;
     }
     var msg = JSON.parse(event.data.substring(CHANNEL_MARKER.length));
     switch(msg.type) {
@@ -566,7 +572,7 @@ $(document).ready(function() {
     console.log("Sending message to the backend: " + msg);
     outbox.send(msg);
   }
-  
+
 
   $("form").submit(function() {
     var msg = {
@@ -611,7 +617,7 @@ $(document).ready(function() {
 
   Mousetrap.bind("space", function () {
     var msg = {
-      type: "plant_food", 
+      type: "plant_food",
       player: players.ego().id,
       position: players.ego().position,
     };
@@ -623,7 +629,7 @@ $(document).ready(function() {
       players.ego().color = PLAYER_COLORS[key];
       var msg = {
         type: "change_color",
-        player: players.ego().id, 
+        player: players.ego().id,
         color: PLAYER_COLORS[key]
       };
       sendToBackend(msg);

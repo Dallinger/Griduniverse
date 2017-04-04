@@ -2,7 +2,7 @@
 mode = sandbox
 auto_recruit = true
 network = FullyConnected
-max_participants = 8
+max_participants = 3
 
 [HIT Configuration]
 title = Griduniverse
