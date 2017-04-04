@@ -874,39 +874,46 @@ class BaseGridUniverseBot(BotBase):
             EC.presence_of_element_located((By.ID, "grid"))
         )
 
+    def get_js_variable(self, variable_name):
+        try:
+            script = 'return window.wrappedJSObject.{};'.format(variable_name)
+            return json.loads(self.driver.execute_script(script))
+        except TypeError:
+            return None
+        except AttributeError:
+            raise
+
     @property
     def state(self):
         try:
-            return json.loads(self.driver.execute_script(
-                'return window.wrappedJSObject.state;'))
+            return self.get_js_variable("state")
         except AttributeError:
             raise
 
     @property
     def player_index(self):
-        try:
-            return int(self.driver.execute_script(
-                'return window.wrappedJSObject.ego;')) - 1
-        except AttributeError:
-            raise
+        idx = self.get_js_variable("ego")
+        if idx:
+            return int(idx) - 1
+        else:
+            raise AttributeError
 
     @property
     def food_positions(self):
         try:
-            food = self.state['food']
-        except AttributeError:
-            return None
-        else:
-            return [tuple(item['position']) for item in food if item['maturity'] > 0.5]
+            state = self.state
+            return [tuple(item['position']) for item in state['food']
+                    if item['maturity'] > 0.5]
+        except (AttributeError, TypeError):
+            return []
 
     @property
     def player_positions(self):
         try:
-            players = self.state['players']
-        except AttributeError:
-            return None
-        else:
-            return [tuple(player['position']) for player in players]
+            state = self.state
+            return [tuple(player['position']) for player in state['players']]
+        except (AttributeError, TypeError):
+            return []
 
     @property
     def my_position(self):
@@ -1098,16 +1105,14 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
         """Wait a random amount of time, then send a key according to
         the algorithm above."""
         grid = self.wait_for_grid()
-        try:
-            while True:
-                time.sleep(self.get_wait_time())
-                try:
-                    grid.send_keys(self.get_next_key())
-                except Exception:
-                    pass
-        except StaleElementReferenceException:
-            pass
-        return True
+        while True:
+            time.sleep(self.get_wait_time())
+            try:
+                self.state
+                self.player_index
+                grid.send_keys(self.get_next_key())
+            except (StaleElementReferenceException, AttributeError):
+                return True
 
     def complete_questionnaire(self):
         """Complete the standard debriefing form."""
