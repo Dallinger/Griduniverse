@@ -40,3 +40,5 @@ jspm_packages
 snapshots/*
 
 !static/scripts/bundle.js
+
+data/*
