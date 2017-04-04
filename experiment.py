@@ -131,6 +131,8 @@ class Gridworld(object):
             "food": [food.serialize() for food in self.food],
             "walls": [wall.serialize() for wall in self.walls],
             "round": self.round,
+            "rows": self.rows,
+            "columns": self.columns,
         })
 
     @property
