@@ -875,8 +875,8 @@ class BaseGridUniverseBot(BotBase):
 
     @property
     def player_index(self):
-        return int(
-            self.driver.execute_script('return window.wrappedJSObject.ego;'))
+        return int(self.driver.execute_script(
+            'return window.wrappedJSObject.ego;')) - 1
 
     @property
     def food_positions(self):
