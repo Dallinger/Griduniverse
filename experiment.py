@@ -892,8 +892,11 @@ class BaseGridUniverseBot(BotBase):
 
     @property
     def my_position(self):
-        ego = self.player_index
-        return self.player_positions[ego]
+        if self.player_positions:
+            ego = self.player_index
+            return self.player_positions[ego]
+        else:
+            return None
 
 
 class RandomBot(BaseGridUniverseBot):
@@ -1070,7 +1073,8 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
             while True:
                 self.get_state()
                 time.sleep(self.get_wait_time())
-                grid.send_keys(self.get_next_key())
+                if self.player_positions and self.player_index >= 0:
+                    grid.send_keys(self.get_next_key())
         except StaleElementReferenceException:
             pass
         return True
