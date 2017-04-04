@@ -15174,6 +15174,8 @@ $(document).ready(function() {
     $("#instructions").hide();
     $("#chat").hide();
     pixels.canvas.style.display = "none";
+    allow_exit();
+    window.location.href = "/questionnaire?participant_id=" + player_id;
   }
 
 
