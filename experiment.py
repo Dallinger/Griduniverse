@@ -1109,6 +1109,10 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
             pass
         return True
 
+    def complete_questionnaire(self):
+        """Complete the standard debriefing form."""
+        pass
+
 
 def Bot(*args, **kwargs):
     """Pick any bot implementation in this class based on a configuration
