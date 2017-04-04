@@ -529,7 +529,7 @@ class Griduniverse(dallinger.experiments.Experiment):
         """Initialize the experiment."""
         super(Griduniverse, self).__init__(session)
         self.experiment_repeats = 1
-        self.initial_recruitment_size = 1
+        self.initial_recruitment_size = config.get('max_participants')
         self.network_factory = config.get('network')
         self.num_participants = config.get('max_participants')
         self.setup()
