@@ -920,7 +920,17 @@ class BaseGridUniverseBot(BotBase):
 class RandomBot(BaseGridUniverseBot):
     """A bot that plays griduniverse randomly"""
 
-    VALID_KEYS = [Keys.UP, Keys.DOWN, Keys.RIGHT, Keys.LEFT, Keys.SPACE, 'r', 'b', 'y']
+    VALID_KEYS = [
+        Keys.UP,
+        Keys.DOWN,
+        Keys.RIGHT,
+        Keys.LEFT,
+        Keys.SPACE,
+        'r',
+        'b',
+        'y'
+    ]
+
     KEY_INTERVAL = 0.1
 
     def get_next_key(self):
