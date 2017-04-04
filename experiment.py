@@ -23,9 +23,11 @@ import gevent
 import dallinger
 from dallinger.heroku.worker import conn as redis
 from dallinger.compat import unicode
+from dallinger.config import get_config
+from dallinger.experiments import Experiment
 
 logger = logging.getLogger(__file__)
-config = dallinger.config.get_config()
+config = get_config()
 
 
 def extra_parameters():
@@ -523,18 +525,19 @@ def serve_grid():
     return render_template("grid.html")
 
 
-class Griduniverse(dallinger.experiments.Experiment):
+class Griduniverse(Experiment):
     """Define the structure of the experiment."""
     channel = 'griduniverse'
 
-    def __init__(self, session):
+    def __init__(self, session=None):
         """Initialize the experiment."""
         super(Griduniverse, self).__init__(session)
         self.experiment_repeats = 1
         self.initial_recruitment_size = config.get('max_participants')
         self.network_factory = config.get('network')
         self.num_participants = config.get('max_participants')
-        self.setup()
+        if session:
+            self.setup()
 
         self.grid = Gridworld(
 
