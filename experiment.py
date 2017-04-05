@@ -858,6 +858,15 @@ class Griduniverse(Experiment):
                 self.publish({'type': 'stop'})
                 return
 
+    def analyze(self, data):
+        return self.average_score(data)
+
+    def average_score(self, data):
+        final_state = json.loads(data.infos.list[-1][-1])
+        players = final_state['players']
+        scores = [player['score'] for player in players]
+        return float(sum(scores)) / len(scores)
+
 
 ### Bots ###
 import itertools
