@@ -760,6 +760,8 @@ class Griduniverse(Experiment):
                 "round": self.grid.round,
             }
             self.publish(message)
+            if (self.grid.round == self.grid.num_rounds):
+                return
 
     def game_loop(self):
         """Update the world state."""
@@ -854,6 +856,7 @@ class Griduniverse(Experiment):
             if self.grid.round == self.grid.num_rounds:
                 complete = True
                 self.publish({'type': 'stop'})
+                return
 
 
 ### Bots ###
