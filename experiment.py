@@ -7,6 +7,7 @@ import random
 import time
 import uuid
 
+import gevent
 from faker import Factory
 from flask import (
     Blueprint,
@@ -19,7 +20,6 @@ from sqlalchemy.orm import (
     scoped_session,
 )
 
-import gevent
 import dallinger
 from dallinger.heroku.worker import conn as redis
 from dallinger.compat import unicode
