@@ -630,7 +630,7 @@ class Griduniverse(Experiment):
                 dallinger.nodes.Environment(network=net)
 
     def recruit(self):
-        pass
+        self.recruiter().close_recruitment()
 
     def dispatch(self, msg):
         """Route to the appropriate method based on message type"""
