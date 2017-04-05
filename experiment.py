@@ -606,7 +606,7 @@ class Griduniverse(Experiment):
         if session:
             self.setup()
 
-        self.grid = Gridworld(**config.__dict__())
+        self.grid = Gridworld(**config.as_dict())
 
     @property
     def background_tasks(self):
