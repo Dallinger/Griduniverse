@@ -31,9 +31,59 @@ config = get_config()
 
 
 def extra_parameters():
-    config.register('network', unicode)
-    config.register('max_participants', int)
-    config.register('bot_policy', unicode)
+
+    types = {
+        'network': unicode,
+        'max_participants': int,
+        'bot_policy': unicode,
+        'num_rounds': int,
+        'time_per_round': float,
+        'instruct': bool,
+        'columns': int,
+        'rows': int,
+        'block_size': int,
+        'padding': int,
+        'visibility': int,
+        'background_animation': bool,
+        'player_overlap': bool,
+        'motion_speed_limit': float,
+        'motion_auto': bool,
+        'motion_cost': float,
+        'motion_tremble_rate': float,
+        'show_chatroom': bool,
+        'show_grid': bool,
+        'num_colors': int,
+        'mutable_colors': bool,
+        'costly_colors': bool,
+        'pseudonyms': bool,
+        'pseudonyms_locale': unicode,
+        'pseudonyms_gender': unicode,
+        'contagion': int,
+        'contagion_hierarchy': bool,
+        'walls': unicode,
+        'walls_visible': bool,
+        'initial_score': int,
+        'dollars_per_point': float,
+        'tax': float,
+        'relative_deprivation': float,
+        'frequency_dependence': float,
+        'frequency_dependent_payoff_rate': float,
+        'donation': int,
+        'num_food': int,
+        'respawn_food': bool,
+        'food_visible': bool,
+        'food_reward': int,
+        'food_pg_multiplier': float,
+        'food_growth_rate': float,
+        'food_maturation_speed': float,
+        'food_maturation_threshold': float,
+        'food_planting': bool,
+        'food_planting_cost': int,
+        'seasonal_growth_rate': float,
+    }
+
+    for key in types:
+        config.register(key, types[key])
 
 
 class Gridworld(object):
@@ -55,63 +105,80 @@ class Gridworld(object):
     def __init__(self, **kwargs):
         super(Gridworld, self).__init__()
 
-        self.players = []
-        self.food = []
-        self.food_consumed = []
+        # Players
+        self.num_players = kwargs.get('max_participants', 3)
 
-        self.num_players = kwargs.get('num_players', 4)
+        # Rounds
+        self.num_rounds = kwargs.get('num_rounds', 1)
+        self.time_per_round = kwargs.get('time_per_round', 30)
+
+        # Instructions
+        self.instruct = kwargs.get('instruct', True)
+
+        # Grid
         self.columns = kwargs.get('columns', 25)
         self.rows = kwargs.get('rows', 25)
-        self.block_size = kwargs.get('block_size', 15)
+        self.block_size = kwargs.get('block_size', 10)
         self.padding = kwargs.get('padding', 1)
-        self.num_food = kwargs.get('num_food', self.num_players - 1)
-        self.food_visible = kwargs.get('food_visible')
-        self.food_pg_multiplier = kwargs.get('food_pg_multiplier')
-        self.respawn_food = kwargs.get('respawn_food', True)
-        self.dollars_per_point = kwargs.get('dollars_per_point', 0.02)
-        self.num_colors = kwargs.get('num_colors', 2)
+        self.visibility = kwargs.get('visibility', 1000)
+        self.background_animation = kwargs.get('background_animation', True)
+        self.player_overlap = kwargs.get('player_overlap', False)
+
+        # Motion
+        self.motion_speed_limit = kwargs.get('motion_speed_limit', 16)
+        self.motion_auto = kwargs.get('motion_auto', False)
+        self.motion_cost = kwargs.get('motion_cost', 0)
+        self.motion_tremble_rate = kwargs.get('motion_tremble_rate', 0)
+
+        # Components
+        self.show_chatroom = kwargs.get('show_chatroom', True)
+        self.show_grid = kwargs.get('show_grid', True)
+
+        # Identity
+        self.num_colors = kwargs.get('num_colors', 3)
         self.mutable_colors = kwargs.get('mutable_colors', False)
         self.costly_colors = kwargs.get('costly_colors', False)
-        self.player_overlap = kwargs.get('player_overlap', True)
-        self.background_animation = kwargs.get('background_animation', True)
-        self.time_per_round = kwargs.get('time_per_round', 300)
-        self.num_rounds = kwargs.get('num_rounds', 1)
-        self.tax = kwargs.get('tax', 0.01)
-        self.wall_type = kwargs.get('walls', None)
-        self.walls_visible = kwargs.get('walls_visible', True)
-        self.show_grid = kwargs.get('show_grid', None)
-        self.visibility = kwargs.get('visibility', 5)
-        self.motion_auto = kwargs.get('motion_auto', False)
-        self.motion_speed_limit = kwargs.get('motion_speed_limit', 8)
-        self.start_timestamp = kwargs.get('start_timestamp', time.time())
-        self.motion_cost = kwargs.get('motion_cost', 0)
-        self.initial_score = kwargs.get('initial_score', 0)
-        self.motion_tremble_rate = kwargs.get('motion_tremble_rate', 0)
-        self.frequency_dependence = kwargs.get('frequency_dependence', 0)
-        self.frequency_dependent_payoff_rate = kwargs.get(
-            'frequency_dependent_payoff_rate', 1)
-        self.show_chatroom = kwargs.get('show_chatroom', False)
-        self.contagion = kwargs.get('contagion', False)
-        self.contagion_hierarchy = kwargs.get('contagion_hierarchy', False)
-        self.donation = kwargs.get('donation', 0)
-        self.pseudonyms = kwargs.get('pseudonyms', False)
+        self.pseudonyms = kwargs.get('pseudonyms', True)
         self.pseudonyms_locale = kwargs.get('pseudonyms_locale', 'en_US')
         self.pseudonyms_gender = kwargs.get('pseudonyms_gender', None)
-        self.food_reward = kwargs.get('food_reward', 1)
-        self.food_growth_rate = kwargs.get('food_growth_rate', 1)
+        self.contagion = kwargs.get('contagion', 0)
+        self.contagion_hierarchy = kwargs.get('contagion_hierarchy', False)
+
+        # Walls
+        self.wall_type = kwargs.get('walls', None)
+        self.walls_visible = kwargs.get('walls_visible', True)
+
+        # Payoffs
+        self.initial_score = kwargs.get('initial_score', 0)
+        self.dollars_per_point = kwargs.get('dollars_per_point', 0.02)
+        self.tax = kwargs.get('tax', 0.01)
         self.relative_deprivation = kwargs.get('relative_deprivation', 1)
-        self.seasonal_growth_rate = kwargs.get('seasonal_growth_rate', 1)
-        self.food_maturation_speed = kwargs.get('food_maturation_speed', 100)
+        self.frequency_dependence = kwargs.get('frequency_dependence', 0)
+        self.frequency_dependent_payoff_rate = kwargs.get(
+            'frequency_dependent_payoff_rate', 0)
+        self.donation = kwargs.get('donation', 0)
+
+        # Food
+        self.num_food = kwargs.get('num_food', 8)
+        self.respawn_food = kwargs.get('respawn_food', True)
+        self.food_visible = kwargs.get('food_visible', True)
+        self.food_reward = kwargs.get('food_reward', 1)
+        self.food_pg_multiplier = kwargs.get('food_pg_multiplier', 1)
+        self.food_growth_rate = kwargs.get('food_growth_rate', 1.00)
+        self.food_maturation_speed = kwargs.get('food_maturation_speed', 1)
         self.food_maturation_threshold = kwargs.get(
             'food_maturation_threshold', 0.0)
         self.food_planting = kwargs.get('food_planting', False)
         self.food_planting_cost = kwargs.get('food_planting_cost', 1)
-        self.instruct = kwargs.get('instruct', True)
+        self.seasonal_growth_rate = kwargs.get('seasonal_growth_rate', 1)
 
+        # Set some variables.
+        self.players = []
+        self.food = []
+        self.food_consumed = []
+        self.start_timestamp = kwargs.get('start_timestamp', time.time())
         self.walls = self.generate_walls(style=self.wall_type)
-
         self.round = 0
-
         self.public_good = (
             (self.food_reward * self.food_pg_multiplier) / self.num_players
         )
@@ -539,73 +606,7 @@ class Griduniverse(Experiment):
         if session:
             self.setup()
 
-        self.grid = Gridworld(
-
-            # Players
-            num_players=self.num_participants,
-
-            # Rounds
-            num_rounds=1,
-            time_per_round=120,
-
-            # Instructions
-            instruct=True,
-
-            # Grid
-            columns=25,
-            rows=25,
-            block_size=10,
-            padding=1,
-            visibility=1000,
-            background_animation=True,
-            player_overlap=False,
-
-            # Motion
-            motion_speed_limit=16,
-            motion_auto=False,
-            motion_cost=0,
-            motion_tremble_rate=0.00,
-
-            # Components
-            show_chatroom=True,
-            show_grid=True,
-
-            # Identity
-            num_colors=2,
-            mutable_colors=True,
-            costly_colors=False,
-            pseudonyms=True,
-            pseudonyms_locale="en_US",
-            pseudonyms_gender=None,
-            contagion=0,
-            contagion_hierarchy=False,
-
-            # Walls
-            walls=None,
-            walls_visible=True,
-
-            # Payoffs
-            initial_score=50,
-            dollars_per_point=0.02,
-            tax=0,
-            relative_deprivation=1,
-            frequency_dependence=0,
-            frequency_dependent_payoff_rate=0,
-            donation=0,
-
-            # Food
-            num_food=8,
-            respawn_food=True,
-            food_visible=True,
-            food_reward=1,
-            food_pg_multiplier=0,
-            food_growth_rate=1.00,
-            food_maturation_speed=1,
-            food_maturation_threshold=0.82,
-            food_planting=False,
-            food_planting_cost=1,
-            seasonal_growth_rate=1.00,
-        )
+        self.grid = Gridworld(**config.__dict__())
 
     @property
     def background_tasks(self):
