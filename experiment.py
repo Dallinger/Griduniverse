@@ -749,7 +749,7 @@ class Griduniverse(Experiment):
         count = 0
         gevent.sleep(1.00)
         while True:
-            gevent.sleep(0.050)
+            gevent.sleep(1)
             count += 1
             elapsed_time = time.time() - self.grid.start_timestamp
             message = {
@@ -876,6 +876,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import StaleElementReferenceException
+from selenium.common.exceptions import WebDriverException
 
 from dallinger.bots import BotBase
 
@@ -888,20 +889,23 @@ class BaseGridUniverseBot(BotBase):
         )
 
     def get_js_variable(self, variable_name):
-        try:
+        script = 'return window.{};'.format(variable_name)
+        result = self.driver.execute_script(script)
+        if result is None:
+            # In some cases (older remote Firefox)
+            # we need to use window.wrappedJSObject
             script = 'return window.wrappedJSObject.{};'.format(variable_name)
-            return json.loads(self.driver.execute_script(script))
-        except TypeError:
-            return None
-        except AttributeError:
-            raise
+            try:
+                result = self.driver.execute_script(script)
+            except WebDriverException:
+                result = None
+        logger.info('State: {}'.format(result))
+        if result is not None:
+            return json.loads(result)
 
     @property
     def state(self):
-        try:
-            return self.get_js_variable("state")
-        except AttributeError:
-            raise
+        return self.get_js_variable("state")
 
     @property
     def player_index(self):
@@ -1118,6 +1122,11 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
         """Wait a random amount of time, then send a key according to
         the algorithm above."""
         grid = self.wait_for_grid()
+
+        # Wait for state to be available
+        while self.state is None:
+            time.sleep(self.get_wait_time())
+
         while True:
             time.sleep(self.get_wait_time())
             try:
