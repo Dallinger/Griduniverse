@@ -899,27 +899,24 @@ class BaseGridUniverseBot(BotBase):
                 result = self.driver.execute_script(script)
             except WebDriverException:
                 result = None
-        logger.info('State: {}'.format(result))
+
         if result is not None:
             return json.loads(result)
 
-    @property
-    def state(self):
+    def observe_state(self):
         return self.get_js_variable("state")
 
-    @property
-    def player_index(self):
+    def get_player_index(self):
         idx = self.get_js_variable("ego")
         if idx:
             return int(idx) - 1
         else:
-            raise AttributeError
+            return None
 
     @property
     def food_positions(self):
         try:
-            state = self.state
-            return [tuple(item['position']) for item in state['food']
+            return [tuple(item['position']) for item in self.state['food']
                     if item['maturity'] > 0.5]
         except (AttributeError, TypeError):
             return []
@@ -927,16 +924,14 @@ class BaseGridUniverseBot(BotBase):
     @property
     def player_positions(self):
         try:
-            state = self.state
-            return [tuple(player['position']) for player in state['players']]
+            return [tuple(player['position']) for player in self.state['players']]
         except (AttributeError, TypeError):
             return []
 
     @property
     def my_position(self):
         if self.player_positions:
-            ego = self.player_index
-            return self.player_positions[ego]
+            return self.player_positions[self.player_index]
         else:
             return None
 
@@ -1052,8 +1047,7 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
         specified as a parameter, what would we expect the state to become,
         ignoring modeling of other players' behavior"""
         positions = self.player_positions
-        player_id = self.player_index
-        my_position = positions[player_id]
+        my_position = positions[self.player_index]
         pad = 5
         rows = self.state['rows']
         if key == Keys.UP and my_position[0] > pad:
@@ -1064,7 +1058,7 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
             my_position = (my_position[0], my_position[1]-1)
         if key == Keys.RIGHT and my_position[1] < (rows - pad):
             my_position = (my_position[0], my_position[1]+1)
-        positions[player_id] = my_position
+        positions[self.player_index] = my_position
         return positions
 
     def get_next_key(self):
@@ -1124,15 +1118,22 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
         grid = self.wait_for_grid()
 
         # Wait for state to be available
-        while self.state is None:
-            time.sleep(self.get_wait_time())
+        self.state = None
+        self.player_index = None
+        while (self.state is None) or (self.player_index is None):
+            time.sleep(0.500)
+            self.state = self.observe_state()
+            self.player_index = self.get_player_index()
 
         while True:
             time.sleep(self.get_wait_time())
             try:
-                self.state
-                self.player_index
-                grid.send_keys(self.get_next_key())
+                observed_state = self.observe_state()
+                if observed_state:
+                    self.state = observed_state
+                    grid.send_keys(self.get_next_key())
+                else:
+                    return
             except (StaleElementReferenceException, AttributeError):
                 return True
 
