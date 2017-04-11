@@ -28,10 +28,10 @@ doclink = """
 Documentation
 -------------
 
-The full documentation is at http://dlgr-griduniverse.rtfd.org."""
+The full documentation is at http://dallinger-griduniverse.rtfd.org."""
 
 setup_args = dict(
-    name='dlgr_griduniverse',
+    name='dallinger_griduniverse',
     version='0.1.0',
     description='A Dallinger experiment that creates a Griduniverse for the '
                 'study of human social behavior - a parameterized space of '
@@ -42,9 +42,9 @@ setup_args = dict(
     author_email='suchow@berkeley.edu',
     url='https://github.com/suchow/Griduniverse',
     packages=[
-        'dlgr_griduniverse',
+        'dallinger_griduniverse',
     ],
-    package_dir={'dlgr_griduniverse': 'dlgr_griduniverse'},
+    package_dir={'dallinger_griduniverse': 'dallinger_griduniverse'},
     include_package_data=True,
     install_requires=[
     ],
@@ -60,7 +60,7 @@ setup_args = dict(
     ],
     entry_points={
         'dallinger.experiments': [
-            'Griduniverse = dlgr_griduniverse.experiment:Griduniverse',
+            'Griduniverse = dallinger_griduniverse.experiment:Griduniverse',
         ],
     },
 )

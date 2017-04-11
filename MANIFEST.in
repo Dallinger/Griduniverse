@@ -1,4 +1,4 @@
-recursive-include dlgr_griduniverse *
+recursive-include dallinger_griduniverse *
 recursive-include docs *
 recursive-include licenses *
 

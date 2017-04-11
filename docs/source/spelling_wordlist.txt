@@ -6,7 +6,7 @@ Chatroom
 chatroom
 Dallinger
 dallinger
-dlgr_griduniverse
+dallinger_griduniverse
 Gameplay
 GitHub
 Griduniverse
