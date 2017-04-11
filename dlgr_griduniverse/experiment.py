@@ -26,6 +26,19 @@ from dallinger.compat import unicode
 from dallinger.config import get_config
 from dallinger.experiments import Experiment
 
+# Bots #
+import itertools
+import operator
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import StaleElementReferenceException
+from selenium.common.exceptions import WebDriverException
+
+from dallinger.bots import BotBase
+
+
 logger = logging.getLogger(__file__)
 config = get_config()
 
