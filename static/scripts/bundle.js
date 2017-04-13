@@ -14674,6 +14674,7 @@ var GREEN = [0.51, 0.69, 0.61];
 var WHITE = [1.00, 1.00, 1.00];
 var CHANNEL = "griduniverse";
 var CHANNEL_MARKER = CHANNEL + ":";
+var CONTROL_CHANNEL = "griduniverse_ctl";
 
 var pixels = grid(data, {
   rows: settings.rows,
@@ -14967,13 +14968,13 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function openSocket(endpoint) {
+function openSocket(endpoint, channel) {
   var ws_scheme = (window.location.protocol === "https:") ? 'wss://' : 'ws://',
       app_root = ws_scheme + location.host + '/',
       socket;
 
   socket = new ReconnectingWebSocket(
-    app_root + endpoint + "?channel=" + CHANNEL
+    app_root + endpoint + "?channel=" + channel
   );
   socket.debug = true;
 
@@ -15179,8 +15180,8 @@ $(document).ready(function() {
   }
 
 
-  var inbox = openSocket('receive_chat');
-  var outbox = openSocket('send_chat');
+  var inbox = openSocket('receive_chat', CHANNEL);
+  var outbox = openSocket('send_chat', CONTROL_CHANNEL);
 
   outbox.onopen = function (event) {
     data = {

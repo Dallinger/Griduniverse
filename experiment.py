@@ -594,7 +594,7 @@ def serve_grid():
 
 class Griduniverse(Experiment):
     """Define the structure of the experiment."""
-    channel = 'griduniverse'
+    channel = 'griduniverse_ctl'
 
     def __init__(self, session=None):
         """Initialize the experiment."""
@@ -666,8 +666,8 @@ class Griduniverse(Experiment):
                 raw_message))
 
     def publish(self, msg):
-        """Publish a message to our channel"""
-        redis.publish(self.channel, json.dumps(msg))
+        """Publish a message to all griduniverse clients"""
+        redis.publish('griduniverse', json.dumps(msg))
 
     def handle_connect(self, msg):
         player_id = msg['player_id']
@@ -889,16 +889,16 @@ class BaseGridUniverseBot(BotBase):
         )
 
     def get_js_variable(self, variable_name):
-        script = 'return window.{};'.format(variable_name)
-        result = self.driver.execute_script(script)
-        if result is None:
-            # In some cases (older remote Firefox)
-            # we need to use window.wrappedJSObject
-            script = 'return window.wrappedJSObject.{};'.format(variable_name)
-            try:
+        try:
+            script = 'return window.{};'.format(variable_name)
+            result = self.driver.execute_script(script)
+            if result is None:
+                # In some cases (older remote Firefox)
+                # we need to use window.wrappedJSObject
+                script = 'return window.wrappedJSObject.{};'.format(variable_name)
                 result = self.driver.execute_script(script)
-            except WebDriverException:
-                result = None
+        except WebDriverException:
+            result = None
 
         if result is not None:
             return json.loads(result)
@@ -1132,8 +1132,6 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
                 if observed_state:
                     self.state = observed_state
                     grid.send_keys(self.get_next_key())
-                else:
-                    return
             except (StaleElementReferenceException, AttributeError):
                 return True
 
