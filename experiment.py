@@ -594,7 +594,7 @@ def serve_grid():
 
 class Griduniverse(Experiment):
     """Define the structure of the experiment."""
-    channel = 'griduniverse_ctl'
+    channel = 'griduniverse_ctrl'
 
     def __init__(self, session=None):
         """Initialize the experiment."""

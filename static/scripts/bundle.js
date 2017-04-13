@@ -14674,7 +14674,7 @@ var GREEN = [0.51, 0.69, 0.61];
 var WHITE = [1.00, 1.00, 1.00];
 var CHANNEL = "griduniverse";
 var CHANNEL_MARKER = CHANNEL + ":";
-var CONTROL_CHANNEL = "griduniverse_ctl";
+var CONTROL_CHANNEL = "griduniverse_ctrl";
 
 var pixels = grid(data, {
   rows: settings.rows,
