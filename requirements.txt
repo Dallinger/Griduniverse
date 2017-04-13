@@ -1,2 +1,2 @@
--e git://github.com/Dallinger/Dallinger.git@bot_queue#egg=dallinger
+-e git://github.com/Dallinger/Dallinger.git@development#egg=dallinger
 faker==0.7.10
