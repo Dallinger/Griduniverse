@@ -110,7 +110,7 @@ class Gridworld(object):
 
         # Rounds
         self.num_rounds = kwargs.get('num_rounds', 1)
-        self.time_per_round = kwargs.get('time_per_round', 30)
+        self.time_per_round = kwargs.get('time_per_round', 300)
 
         # Instructions
         self.instruct = kwargs.get('instruct', True)
@@ -173,7 +173,7 @@ class Gridworld(object):
         self.seasonal_growth_rate = kwargs.get('seasonal_growth_rate', 1)
 
         # Set some variables.
-        self.players = []
+        self.players = {}
         self.food = []
         self.food_consumed = []
         self.start_timestamp = kwargs.get('start_timestamp', time.time())
@@ -196,7 +196,7 @@ class Gridworld(object):
 
     def serialize(self):
         return json.dumps({
-            "players": [player.serialize() for player in self.players],
+            "players": [player.serialize() for player in self.players.values()],
             "food": [food.serialize() for food in self.food],
             "walls": [wall.serialize() for wall in self.walls],
             "round": self.round,
@@ -212,7 +212,7 @@ class Gridworld(object):
     def consume(self):
         """Players consume the food."""
         for food in self.food_mature:
-            for player in self.players:
+            for player in self.players.values():
                 if food.position == player.position:
                     # Update existence and count of food.
                     self.food_consumed.append(food)
@@ -230,7 +230,7 @@ class Gridworld(object):
                         reward = self.food_reward * self.relative_deprivation
 
                     player.score += reward
-                    for player_to in self.players:
+                    for player_to in self.players.values():
                         player_to.score += self.public_good
                     break
 
@@ -259,7 +259,7 @@ class Gridworld(object):
             pseudonym_gender=self.pseudonyms_gender,
             grid=self,
         )
-        self.players.append(player)
+        self.players[id] = player
 
     def generate_walls(self, style=None):
         """Generate the walls."""
@@ -275,7 +275,7 @@ class Gridworld(object):
 
     def get_player(self, id):
         """Get a player by ID"""
-        for player in self.players:
+        for player in self.players.values():
             if player.id == id:
                 return player
 
@@ -300,7 +300,7 @@ class Gridworld(object):
         )
 
     def _has_player(self, position):
-        for player in self.players:
+        for player in self.players.values():
             if player.position == position:
                 return True
         return False
@@ -320,7 +320,7 @@ class Gridworld(object):
     def spread_contagion(self):
         """Spread contagion."""
         color_updates = []
-        for player in self.players:
+        for player in self.players.values():
             colors = [n.color for n in player.neighbors(d=self.contagion)]
             if colors:
                 colors.append(player.color)
@@ -494,7 +494,7 @@ class Player(object):
     def neighbors(self, d=1):
         """Return all adjacent players."""
         return [
-            p for p in self.grid.players if (
+            p for p in self.grid.players.values() if (
                 self.is_neighbor(p, d=d) and (p is not self)
             )
         ]
@@ -794,7 +794,7 @@ class Griduniverse(Experiment):
 
             # Update motion.
             if self.grid.motion_auto:
-                for player in self.grid.players:
+                for player in self.grid.players.values():
                     player.move(player.motion_direction, tremble_rate=0)
 
             # Consume the food.
@@ -826,14 +826,14 @@ class Griduniverse(Experiment):
                 for i in range(len(self.grid.food) - int(round(self.grid.num_food))):
                     self.grid.food.remove(random.choice(self.grid.food))
 
-                for player in self.grid.players:
+                for player in self.grid.players.values():
                     # Apply tax.
                     player.score = max(player.score - self.grid.tax, 0)
 
                     # Apply frequency-dependent payoff.
-                    for player in self.grid.players:
+                    for player in self.grid.players.values():
                         abundance = len(
-                            [p for p in self.grid.players if p.color == player.color]
+                            [p for p in self.grid.players.values() if p.color == player.color]
                         )
                         relative_frequency = 1.0 * abundance / len(self.grid.players)
                         payoff = fermi(
@@ -850,7 +850,7 @@ class Griduniverse(Experiment):
             if (now - self.grid.start_timestamp) > self.grid.time_per_round:
                 self.grid.round += 1
                 self.grid.start_timestamp = time.time()
-                for player in self.grid.players:
+                for player in self.grid.players.values():
                     player.motion_timestamp = 0
 
             if self.grid.round == self.grid.num_rounds:
@@ -908,12 +908,8 @@ class BaseGridUniverseBot(BotBase):
     def observe_state(self):
         return self.get_js_variable("state")
 
-    def get_player_index(self):
-        idx = self.get_js_variable("ego")
-        if idx:
-            return int(idx) - 1
-        else:
-            return None
+    def get_player_id(self):
+        return str(self.get_js_variable("ego"))
 
     @property
     def food_positions(self):
@@ -925,15 +921,14 @@ class BaseGridUniverseBot(BotBase):
 
     @property
     def player_positions(self):
-        try:
-            return [tuple(player['position']) for player in self.state['players']]
-        except (AttributeError, TypeError):
-            return []
+        return {
+            player['id']: player['position'] for player in self.state['players']
+        }
 
     @property
     def my_position(self):
         if self.player_positions:
-            return self.player_positions[self.player_index]
+            return self.player_positions[self.player_id]
         else:
             return None
 
@@ -1031,6 +1026,7 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
         # future state, rather than the current state
         if positions is None:
             positions = self.player_positions
+        positions = positions.values()
         # Find the distances between all pairs of players
         pairs = itertools.combinations(positions, 2)
         distances = itertools.starmap(self.manhattan_distance, pairs)
@@ -1049,7 +1045,7 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
         specified as a parameter, what would we expect the state to become,
         ignoring modeling of other players' behavior"""
         positions = self.player_positions
-        my_position = positions[self.player_index]
+        my_position = positions[self.player_id]
         pad = 5
         rows = self.state['rows']
         if key == Keys.UP and my_position[0] > pad:
@@ -1060,7 +1056,7 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
             my_position = (my_position[0], my_position[1]-1)
         if key == Keys.RIGHT and my_position[1] < (rows - pad):
             my_position = (my_position[0], my_position[1]+1)
-        positions[self.player_index] = my_position
+        positions[self.player_id] = my_position
         return positions
 
     def get_next_key(self):
@@ -1068,7 +1064,7 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
         my_position = self.my_position
         try:
             # If there is a most logical target, we move towards it
-            target_id = self.get_logical_targets()[self.player_index]
+            target_id = self.get_logical_targets()[self.player_id]
             food_position = self.food_positions[target_id]
         except KeyError:
             # Otherwise, move in a direction that increases average spread.
@@ -1107,11 +1103,11 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
         dictionary which maps the index of a food item in the positions list
         to the distance between that player and that food item."""
         distances = {}
-        for i, player in enumerate(self.player_positions):
+        for player_id, position in self.player_positions.items():
             player_distances = {}
             for j, food in enumerate(self.food_positions):
-                player_distances[j] = self.manhattan_distance(player, food)
-            distances[i] = player_distances
+                player_distances[j] = self.manhattan_distance(position, food)
+            distances[player_id] = player_distances
         return distances
 
     def participate(self):
@@ -1121,11 +1117,11 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
 
         # Wait for state to be available
         self.state = None
-        self.player_index = None
-        while (self.state is None) or (self.player_index is None):
+        self.player_id = None
+        while (self.state is None) or (self.player_id is None):
             time.sleep(0.500)
             self.state = self.observe_state()
-            self.player_index = self.get_player_index()
+            self.player_id = self.get_player_id()
 
         while True:
             time.sleep(self.get_wait_time())
