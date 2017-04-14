@@ -535,10 +535,9 @@ $(document).ready(function() {
   }
 
 
-  var inbox = openSocket('receive_chat', CHANNEL);
-  var outbox = openSocket('send_chat', CONTROL_CHANNEL);
-
-  outbox.onopen = function (event) {
+  var socket = openSocket('chat', CHANNEL);
+  
+  socket.onopen = function (event) {
     data = {
       type: 'connect',
       player_id: player_id
@@ -546,7 +545,7 @@ $(document).ready(function() {
     sendToBackend(data);
   };
 
-  inbox.onmessage = function (event) {
+  socket.onmessage = function (event) {
     if (event.data.indexOf(CHANNEL_MARKER) !== 0) {
       console.log("Message was not on channel " + CHANNEL_MARKER + ". Ignoring.");
       return;
@@ -573,7 +572,7 @@ $(document).ready(function() {
   function sendToBackend(data) {
     var msg = JSON.stringify(data);
     console.log("Sending message to the backend: " + msg);
-    outbox.send(msg);
+    socket.send(CONTROL_CHANNEL + ':' + msg);
   }
 
 
