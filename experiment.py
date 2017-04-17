@@ -1136,7 +1136,7 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
                     # This is a roundabout way of sending the key
                     # to the grid element; it's needed to avoid a
                     # "cannot focus element" error with chromedriver
-                    if isinstance(self.driver, webdriver.Chrome):
+                    if config.get('webdriver_type') == "chrome":
                         action = ActionChains(self.driver).move_to_element(grid)
                         action.click().send_keys(self.get_next_key()).perform()
                     else:
