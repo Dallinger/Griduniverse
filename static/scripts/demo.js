@@ -23,7 +23,7 @@ for (var i = 0; i < settings.rows; i++) {
 var PLAYER_COLORS = {
   "BLUE": [0.50, 0.86, 1.00],
   "YELLOW": [1.00, 0.86, 0.50],
-  "RED": [0.64, 0.11, 0.31],
+  "RED": [0.64, 0.11, 0.31]
 };
 var GREEN = [0.51, 0.69, 0.61];
 var WHITE = [1.00, 1.00, 1.00];
@@ -493,7 +493,7 @@ $(document).ready(function() {
         new Food({
           id: state.food[j].id,
           position: state.food[j].position,
-          color: state.food[j].color,
+          color: state.food[j].color
         })
       );
     }
@@ -569,10 +569,13 @@ $(document).ready(function() {
     }
   };
 
-  function sendToBackend(data) {
+  function sendToBackend(data, channel) {
+    if (channel === undefined) {
+      channel = CONTROL_CHANNEL;
+    }
     var msg = JSON.stringify(data);
-    console.log("Sending message to the backend: " + msg);
-    socket.send(CONTROL_CHANNEL + ':' + msg);
+    console.log("Sending message to the " + channel + " channel: " + msg);
+    socket.send(channel + ':' + msg);
   }
 
 
@@ -583,7 +586,8 @@ $(document).ready(function() {
       player_id: players.ego().id,
       timestamp: Date.now() - start
     };
-    sendToBackend(msg);
+    // send directly to all clients
+    sendToBackend(msg, CHANNEL);
     $("#message").val("");
     return false;
   });
@@ -600,7 +604,7 @@ $(document).ready(function() {
         var msg = {
           type: "move",
           player: players.ego().id,
-          move: direction,
+          move: direction
         };
         sendToBackend(msg);
       }
@@ -621,7 +625,7 @@ $(document).ready(function() {
     var msg = {
       type: "plant_food",
       player: players.ego().id,
-      position: players.ego().position,
+      position: players.ego().position
     };
     sendToBackend(msg);
   });
