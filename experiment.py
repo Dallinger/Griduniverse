@@ -871,7 +871,9 @@ class Griduniverse(Experiment):
 ### Bots ###
 import itertools
 import operator
+from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
@@ -935,6 +937,16 @@ class BaseGridUniverseBot(BotBase):
         else:
             return None
 
+    def send_next_key(self, grid):
+        # This is a roundabout way of sending the key
+        # to the grid element; it's needed to avoid a
+        # "cannot focus element" error with chromedriver
+        if self.driver.desired_capabilities['browserName'] == 'chrome':
+            action = ActionChains(self.driver).move_to_element(grid)
+            action.click().send_keys(self.get_next_key()).perform()
+        else:
+            grid.send_keys(self.get_next_key())
+
 
 class RandomBot(BaseGridUniverseBot):
     """A bot that plays griduniverse randomly"""
@@ -964,7 +976,7 @@ class RandomBot(BaseGridUniverseBot):
         try:
             while True:
                 time.sleep(self.get_wait_time())
-                grid.send_keys(self.get_next_key())
+                self.send_next_key(grid)
         except StaleElementReferenceException:
             pass
         return True
@@ -1131,7 +1143,7 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
                 observed_state = self.observe_state()
                 if observed_state:
                     self.state = observed_state
-                    grid.send_keys(self.get_next_key())
+                    self.send_next_key(grid)
             except (StaleElementReferenceException, AttributeError):
                 return True
 
