@@ -273,12 +273,6 @@ class Gridworld(object):
 
         return walls
 
-    def get_player(self, id):
-        """Get a player by ID"""
-        for player in self.players.values():
-            if player.id == id:
-                return player
-
     def _random_empty_position(self):
         """Select an empty cell at random."""
         empty_cell = False
@@ -699,7 +693,7 @@ class Griduniverse(Experiment):
         self.publish(message)
 
     def handle_change_color(self, msg):
-        player = self.grid.get_player(msg['player'])
+        player = self.grid.players[msg['player']]
         color_idx = Gridworld.player_colors.index(msg['color'])
 
         if player.color_idx == color_idx:
@@ -716,13 +710,13 @@ class Griduniverse(Experiment):
         player.color_name = Gridworld.player_color_names[color_idx]
 
     def handle_move(self, msg):
-        player = self.grid.get_player(msg['player'])
+        player = self.grid.players[msg['player']]
         player.move(msg['move'], tremble_rate=player.motion_tremble_rate)
 
     def handle_donation(self, msg):
         """Send a donation from one player to another."""
-        recipient = self.grid.get_player(msg['recipient_id'])
-        donor = self.grid.get_player(msg['donor_id'])
+        recipient = self.grid.players[msg['recipient_id']]
+        donor = self.grid.players[msg['donor_id']]
         donation = msg['amount']
 
         if donor.score >= donation:
@@ -737,7 +731,7 @@ class Griduniverse(Experiment):
             self.publish(message)
 
     def handle_plant_food(self, msg):
-        player = self.grid.get_player(msg['player'])
+        player = self.grid.players[msg['player']]
         position = msg['position']
         can_afford = player.score >= self.grid.food_planting_cost
         if (can_afford and not self.grid._has_food(position)):
