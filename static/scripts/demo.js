@@ -337,8 +337,11 @@ function openSocket(endpoint, channel) {
 }
 
 $(document).ready(function() {
-  var player_id = getUrlParameter('participant_id');
-      players.ego_id = player_id;
+  var player_id = getUrlParameter('participant_id'),
+      isSpectator = typeof player_id === 'undefined';
+      
+  players.ego_id = player_id;
+
 
   // Append the canvas.
   $("#grid").append(pixels.canvas);
@@ -348,6 +351,10 @@ $(document).ready(function() {
     allow_exit();
     window.location.href = "/questionnaire?participant_id=" + player_id;
   });
+
+  if (isSpectator) {
+    $("#opt-out").hide();
+  }
 
   // Consent to the experiment.
   $("#go-to-experiment").click(function() {

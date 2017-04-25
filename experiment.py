@@ -702,6 +702,11 @@ class Griduniverse(Experiment):
         redis.publish('griduniverse', json.dumps(msg))
 
     def handle_connect(self, msg):
+        logger.info(msg)
+        if 'player_id' not in msg:
+            logger.info('A spectator has connected.')
+            return
+
         player_id = msg['player_id']
         logger.info("Client {} has connected.".format(player_id))
         client_count = len(self.grid.players)

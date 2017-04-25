@@ -45,13 +45,13 @@
     <div id="chatlog">
         <ul id="messages"></ul>
     </div>
-    <form action="">
+    <form action="" class="for-players">
         <input id="message" autocomplete="off" placeholder="Message the group." />
         <button id="submit-message" class="button button-clear">Send to all</button>
     </form>
 </div>
 
-<div id="instructions">
+<div id="instructions" class="for-players">
     <h1>Instructions</h1>
     <p>You are one of the squares. Move using the arrow keys.
     {% if experiment.grid.mutable_colors %}
@@ -64,7 +64,7 @@
 {% endblock %}
 
 {% block opt_out %}
-<div>
+<div class="for-players">
     <button class="button button-clear button-small" id="opt-out">Opt out</button>
 </div>
 {% endblock %}
