@@ -225,7 +225,7 @@ class Gridworld(object):
 
     def _start_if_ready(self):
         # Don't start unless we have a least one player
-        if self.start_timestamp is None and self.players:
+        if self.players and not self.game_started:
             self.start_timestamp = time.time()
 
     @property
