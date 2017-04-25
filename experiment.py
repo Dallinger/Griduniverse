@@ -196,7 +196,7 @@ class Gridworld(object):
 
     def can_occupy(self, position):
         if self.player_overlap:
-            return True
+            return not self.has_wall(position)
         return not self.has_player(position) and not self.has_wall(position)
 
     @property
