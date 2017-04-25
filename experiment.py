@@ -308,7 +308,7 @@ class Gridworld(object):
         """Generate the walls."""
         if style is None:
             walls = []
-        elif style is "maze":
+        elif style == u"maze":
             maze = generate_maze(columns=self.columns, rows=self.rows)
             walls = []
             for w in maze:
