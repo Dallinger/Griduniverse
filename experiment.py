@@ -176,7 +176,7 @@ class Gridworld(object):
         self.players = {}
         self.food = []
         self.food_consumed = []
-        self.start_timestamp = kwargs.get('start_timestamp', time.time())
+        self.start_timestamp = kwargs.get('start_timestamp', None)
         self.walls = self.generate_walls(style=self.wall_type)
         self.round = 0
         self.public_good = (
@@ -201,18 +201,36 @@ class Gridworld(object):
 
     @property
     def elapsed_round_time(self):
+        if self.start_timestamp is None:
+            return 0
         return time.time() - self.start_timestamp
 
     @property
     def remaining_round_time(self):
-        return self.time_per_round - self.elapsed_round_time
+        if self.start_timestamp is None:
+            return 0
+        raw_remaining = self.time_per_round - self.elapsed_round_time
+
+        return max(0, raw_remaining)
 
     def check_round_completion(self):
+        if not self.game_started:
+            return
+
         if not self.remaining_round_time:
             self.round += 1
             self.start_timestamp = time.time()
             for player in self.players.values():
                 player.motion_timestamp = 0
+
+    def _start_if_ready(self):
+        # Game starts when the first player joins
+        if len(self.players) == 1:
+            self.start_timestamp = time.time()
+
+    @property
+    def game_started(self):
+        return self.start_timestamp is not None
 
     @property
     def game_over(self):
@@ -284,6 +302,7 @@ class Gridworld(object):
             grid=self,
         )
         self.players[id] = player
+        self._start_if_ready()
 
     def generate_walls(self, style=None):
         """Generate the walls."""
@@ -787,15 +806,16 @@ class Griduniverse(Experiment):
             )
         )
 
-        previous_second_timestamp = self.grid.start_timestamp
-
         gevent.sleep(0.200)
-
         environment = session.query(dallinger.nodes.Environment).one()
 
-        complete = False
-        while not complete:
+        while not self.grid.game_started:
+            gevent.sleep(0.01)
 
+        previous_second_timestamp = self.grid.start_timestamp
+
+        while not self.grid.game_over:
+            # Record grid state to database
             state = environment.update(self.grid.serialize())
             session.add(state)
             session.commit()
@@ -860,10 +880,8 @@ class Griduniverse(Experiment):
 
             self.grid.check_round_completion()
 
-            if self.grid.game_over:
-                complete = True
-                self.publish({'type': 'stop'})
-                return
+        self.publish({'type': 'stop'})
+        return
 
     def analyze(self, data):
         return self.average_score(data)
