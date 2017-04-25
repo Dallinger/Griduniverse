@@ -224,8 +224,8 @@ class Gridworld(object):
                 player.motion_timestamp = 0
 
     def _start_if_ready(self):
-        # Game starts when the first player joins
-        if len(self.players) == 1:
+        # Don't start unless we have a least one player
+        if self.start_timestamp is None and len(self.players):
             self.start_timestamp = time.time()
 
     @property
