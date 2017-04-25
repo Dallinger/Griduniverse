@@ -194,6 +194,30 @@ class Gridworld(object):
             self.color_costs = [2**i for i in range(self.num_colors)]
             random.shuffle(self.color_costs)
 
+    def can_occupy(self, position):
+        if self.player_overlap:
+            return True
+        return not self.has_player(position) and not self.has_wall(position)
+
+    @property
+    def elapsed_round_time(self):
+        return time.time() - self.start_timestamp
+
+    @property
+    def remaining_round_time(self):
+        return self.time_per_round - self.elapsed_round_time
+
+    def check_round_completion(self):
+        if not self.remaining_round_time:
+            self.round += 1
+            self.start_timestamp = time.time()
+            for player in self.players.values():
+                player.motion_timestamp = 0
+
+    @property
+    def game_over(self):
+        return self.round >= self.num_rounds
+
     def serialize(self):
         return json.dumps({
             "players": [player.serialize() for player in self.players.values()],
@@ -288,24 +312,24 @@ class Gridworld(object):
     def _empty(self, position):
         """Determine whether a particular cell is empty."""
         return not (
-            self._has_player(position) or
-            self._has_food(position) or
-            self._has_wall(position)
+            self.has_player(position) or
+            self.has_food(position) or
+            self.has_wall(position)
         )
 
-    def _has_player(self, position):
+    def has_player(self, position):
         for player in self.players.values():
             if player.position == position:
                 return True
         return False
 
-    def _has_food(self, position):
+    def has_food(self, position):
         for food in self.food:
             if food.position == position:
                 return True
         return False
 
-    def _has_wall(self, position):
+    def has_wall(self, position):
         for wall in self.walls:
             if wall.position == position:
                 return True
@@ -462,20 +486,15 @@ class Player(object):
                 new_position[1] = self.position[1] + 1
 
         # Update motion.
-        now_relative = time.time() - self.grid.start_timestamp
+        elapsed_time = self.grid.elapsed_round_time
         wait_time = 1.0 / self.motion_speed_limit
-        can_move = now_relative > (self.motion_timestamp + wait_time)
-
+        can_move = elapsed_time > (self.motion_timestamp + wait_time)
         can_afford_to_move = self.score >= self.motion_cost
 
-        if can_move and can_afford_to_move:
-            if (self.grid.player_overlap or (
-                (not self.grid._has_player(new_position)) and
-                (not self.grid._has_wall(new_position))
-            )):
-                self.position = new_position
-                self.motion_timestamp = now_relative
-                self.score -= self.motion_cost
+        if can_move and can_afford_to_move and self.grid.can_occupy(new_position):
+            self.position = new_position
+            self.motion_timestamp = elapsed_time
+            self.score -= self.motion_cost
 
     def is_neighbor(self, player, d=1):
         """Determine whether other player is adjacent."""
@@ -734,7 +753,7 @@ class Griduniverse(Experiment):
         player = self.grid.players[msg['player']]
         position = msg['position']
         can_afford = player.score >= self.grid.food_planting_cost
-        if (can_afford and not self.grid._has_food(position)):
+        if (can_afford and not self.grid.has_food(position)):
             player.score -= self.grid.food_planting_cost
             self.grid.spawn_food(position=position)
 
@@ -745,16 +764,15 @@ class Griduniverse(Experiment):
         while True:
             gevent.sleep(0.050)
             count += 1
-            elapsed_time = time.time() - self.grid.start_timestamp
             message = {
                 'type': 'state',
                 'grid': self.grid.serialize(),
                 'count': count,
-                'remaining_time': self.grid.time_per_round - elapsed_time,
-                "round": self.grid.round,
+                'remaining_time': self.grid.remaining_round_time,
+                'round': self.grid.round,
             }
             self.publish(message)
-            if (self.grid.round == self.grid.num_rounds):
+            if self.grid.game_over:
                 return
 
     def game_loop(self):
@@ -840,14 +858,9 @@ class Griduniverse(Experiment):
 
                 previous_second_timestamp = now
 
-            # Check if the round is over.
-            if (now - self.grid.start_timestamp) > self.grid.time_per_round:
-                self.grid.round += 1
-                self.grid.start_timestamp = time.time()
-                for player in self.grid.players.values():
-                    player.motion_timestamp = 0
+            self.grid.check_round_completion()
 
-            if self.grid.round == self.grid.num_rounds:
+            if self.grid.game_over:
                 complete = True
                 self.publish({'type': 'stop'})
                 return
