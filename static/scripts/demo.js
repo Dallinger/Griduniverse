@@ -353,7 +353,7 @@ $(document).ready(function() {
   });
 
   if (isSpectator) {
-    $("#opt-out").hide();
+    $(".for-players").hide();
   }
 
   // Consent to the experiment.
@@ -522,10 +522,7 @@ $(document).ready(function() {
       $("#score").html(Math.round(ego.score));
       dollars = (ego.score * settings.dollars_per_point).toFixed(2);
       $("#dollars").html(dollars);
-    }
 
-    if (ego !== undefined) {
-      // Give bots access to state.
       window.state = msg.grid;
       window.ego = ego.id;
     }
@@ -533,12 +530,14 @@ $(document).ready(function() {
 
   function gameOver(msg) {
     $("#game-over").show();
-    $("#dashboard").hide();
-    $("#instructions").hide();
-    $("#chat").hide();
-    pixels.canvas.style.display = "none";
     allow_exit();
-    window.location.href = "/questionnaire?participant_id=" + player_id;
+    if (!isSpectator) {
+      $("#dashboard").hide();
+      $("#instructions").hide();
+      $("#chat").hide();
+      pixels.canvas.style.display = "none";
+      window.location.href = "/questionnaire?participant_id=" + player_id;
+    }
   }
 
 
