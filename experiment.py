@@ -702,7 +702,6 @@ class Griduniverse(Experiment):
         redis.publish('griduniverse', json.dumps(msg))
 
     def handle_connect(self, msg):
-        logger.info(msg)
         player_id = msg['player_id']
         if player_id == 'spectator':
             logger.info('A spectator has connected.')

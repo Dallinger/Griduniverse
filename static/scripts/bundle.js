@@ -23397,11 +23397,9 @@ $(document).ready(function() {
   var socket = openSocket('chat', CHANNEL);
   
   socket.onopen = function (event) {
-    var playerId = isSpectator ? 'spectator' : player_id;
-
     data = {
       type: 'connect',
-      player_id: playerId
+      player_id: isSpectator ? 'spectator' : player_id
     };
     sendToBackend(data);
   };
