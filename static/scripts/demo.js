@@ -3,7 +3,6 @@
 (function (allow_exit, getUrlParameter, require, reqwest, settings, submitResponses) {
 
 var util = require("util");
-var css = require("dom-css");
 var grid = require("./index");
 var position = require("mouse-position");
 var Mousetrap = require("mousetrap");
