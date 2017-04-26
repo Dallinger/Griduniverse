@@ -703,11 +703,11 @@ class Griduniverse(Experiment):
 
     def handle_connect(self, msg):
         logger.info(msg)
-        if 'player_id' not in msg:
+        player_id = msg['player_id']
+        if player_id == 'spectator':
             logger.info('A spectator has connected.')
             return
 
-        player_id = msg['player_id']
         logger.info("Client {} has connected.".format(player_id))
         client_count = len(self.grid.players)
         logger.info("Grid num players: {}".format(self.grid.num_players))
