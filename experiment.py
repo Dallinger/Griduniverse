@@ -587,7 +587,7 @@ class Labyrinth(object):
         # Convert the maze to a list of wall cell positions.
         the_rows = ([j for i in zip(hor, ver) for j in i])
         the_rows = [list("".join(j)) for j in the_rows]
-        maze = [item is '*' for sublist in the_rows for item in sublist]
+        maze = [item == '*' for sublist in the_rows for item in sublist]
         walls = []
         for idx in range(len(maze)):
             if maze[idx]:
