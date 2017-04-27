@@ -103,8 +103,15 @@ class Gridworld(object):
     GREEN = [0.51, 0.69, 0.61]
     WHITE = [1.00, 1.00, 1.00]
 
+    def __new__(cls, **kwargs):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(Gridworld, cls).__new__(cls)
+        return cls.instance
+
     def __init__(self, **kwargs):
-        super(Gridworld, self).__init__()
+        # If Singleton is already initialized, just return it:
+        if hasattr(self, 'num_players'):
+            return
 
         # Players
         self.num_players = kwargs.get('max_participants', 3)
@@ -117,8 +124,8 @@ class Gridworld(object):
         self.instruct = kwargs.get('instruct', True)
 
         # Grid
-        self.columns = kwargs.get('columns', 25)
-        self.rows = kwargs.get('rows', 25)
+        self.columns = kwargs.get('columns', 50)
+        self.rows = kwargs.get('rows', 50)
         self.block_size = kwargs.get('block_size', 10)
         self.padding = kwargs.get('padding', 1)
         self.visibility = kwargs.get('visibility', 1000)
@@ -147,7 +154,7 @@ class Gridworld(object):
 
         # Walls
         self.walls_visible = kwargs.get('walls_visible', True)
-        self.walls_density = kwargs.get('walls_density', 0.0)
+        self.walls_density = kwargs.get('walls_density', 0.85)
         self.walls_contiguity = kwargs.get('walls_contiguity', 1.0)
 
         # Payoffs
