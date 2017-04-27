@@ -219,6 +219,9 @@ class Gridworld(object):
 
         if not self.remaining_round_time:
             self.round += 1
+            if self.game_over:
+                return
+
             self.start_timestamp = time.time()
             for player in self.players.values():
                 player.motion_timestamp = 0
