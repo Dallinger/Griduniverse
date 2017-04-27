@@ -398,7 +398,7 @@ function bindGameKeys(sendToBackend) {
 $(document).ready(function() {
   var player_id = getUrlParameter('participant_id'),
       isSpectator = typeof player_id === 'undefined';
-      
+
   players.ego_id = player_id;
 
 
@@ -458,8 +458,6 @@ $(document).ready(function() {
   if (settings.show_chatroom) {
     $("#chat").show();
   }
-
-
 
   var donateToClicked = function(amt) {
     var row = pixels2cells(mouse[1]),
@@ -594,7 +592,7 @@ $(document).ready(function() {
 
 
   var socket = openSocket('chat', CHANNEL);
-  
+
   socket.onopen = function (event) {
     data = {
       type: 'connect',
@@ -655,14 +653,9 @@ $(document).ready(function() {
     // Main game keys:
     bindGameKeys(sendToBackend);
     // Donation click events:
-    $(pixels.canvas).contextmenu(function(e) {
-      e.preventDefault();
-      donateToClicked(-settings.donation);
-    });
-
     $(pixels.canvas).click(function(e) {
       donateToClicked(settings.donation);
-    });    
+    });
   }
 
 });
