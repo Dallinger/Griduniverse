@@ -15038,11 +15038,6 @@ $(document).ready(function() {
     $("#chat").show();
   }
 
-  $(pixels.canvas).contextmenu(function(e) {
-    e.preventDefault();
-    donateToClicked(-settings.donation);
-  });
-
   $(pixels.canvas).click(function(e) {
     donateToClicked(settings.donation);
   });
