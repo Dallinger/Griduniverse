@@ -147,7 +147,7 @@ class Gridworld(object):
 
         # Walls
         self.walls_visible = kwargs.get('walls_visible', True)
-        self.walls_density = kwargs.get('walls_density', 1.0)
+        self.walls_density = kwargs.get('walls_density', 0.0)
         self.walls_contiguity = kwargs.get('walls_contiguity', 1.0)
 
         # Payoffs
@@ -548,9 +548,11 @@ class Player(object):
 class Labyrinth(object):
     """A maze generator."""
     def __init__(self, columns=25, rows=25, density=1.0, contiguity=1.0):
-        super(Labyrinth, self).__init__()
-        walls = self._generate_maze(rows, columns)
-        self.walls = self._prune(walls, density, contiguity)
+        if density:
+            walls = self._generate_maze(rows, columns)
+            self.walls = self._prune(walls, density, contiguity)
+        else:
+            self.walls = []
 
     def _generate_maze(self, rows, columns):
 
