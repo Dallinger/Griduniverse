@@ -219,6 +219,9 @@ class Gridworld(object):
 
         if not self.remaining_round_time:
             self.round += 1
+            if self.game_over:
+                return
+
             self.start_timestamp = time.time()
             for player in self.players.values():
                 player.motion_timestamp = 0
@@ -703,6 +706,10 @@ class Griduniverse(Experiment):
 
     def handle_connect(self, msg):
         player_id = msg['player_id']
+        if player_id == 'spectator':
+            logger.info('A spectator has connected.')
+            return
+
         logger.info("Client {} has connected.".format(player_id))
         client_count = len(self.grid.players)
         logger.info("Grid num players: {}".format(self.grid.num_players))

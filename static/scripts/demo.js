@@ -336,9 +336,71 @@ function openSocket(endpoint, channel) {
   return socket;
 }
 
+function bindGameKeys(sendToBackend) {
+  var directions = ["up", "down", "left", "right"];
+  var lock = false;
+  directions.forEach(function(direction) {
+    Mousetrap.bind(direction, function() {
+      if (!lock) {
+        players.ego().move(direction);
+        var msg = {
+          type: "move",
+          player: players.ego().id,
+          move: direction
+        };
+        sendToBackend(msg);
+      }
+      lock = true;
+      return false;
+    });
+    Mousetrap.bind(
+      direction,
+      function() {
+        lock = false;
+        return false;
+      },
+      "keyup"
+    );
+  });
+
+  Mousetrap.bind("space", function () {
+    var msg = {
+      type: "plant_food",
+      player: players.ego().id,
+      position: players.ego().position
+    };
+    sendToBackend(msg);
+  });
+
+  function createBinding (key) {
+    Mousetrap.bind(key[0].toLowerCase(), function () {
+      players.ego().color = PLAYER_COLORS[key];
+      var msg = {
+        type: "change_color",
+        player: players.ego().id,
+        color: PLAYER_COLORS[key]
+      };
+      sendToBackend(msg);
+    });
+  }
+
+  if (settings.mutable_colors) {
+    for (var key in PLAYER_COLORS) {
+      if (PLAYER_COLORS.hasOwnProperty(key)) {
+        createBinding(key);
+      }
+    }
+  }
+
+}
+
+
 $(document).ready(function() {
-  var player_id = getUrlParameter('participant_id');
-      players.ego_id = player_id;
+  var player_id = getUrlParameter('participant_id'),
+      isSpectator = typeof player_id === 'undefined';
+
+  players.ego_id = player_id;
+
 
   // Append the canvas.
   $("#grid").append(pixels.canvas);
@@ -348,6 +410,10 @@ $(document).ready(function() {
     allow_exit();
     window.location.href = "/questionnaire?participant_id=" + player_id;
   });
+
+  if (isSpectator) {
+    $(".for-players").hide();
+  }
 
   // Consent to the experiment.
   $("#go-to-experiment").click(function() {
@@ -392,10 +458,6 @@ $(document).ready(function() {
   if (settings.show_chatroom) {
     $("#chat").show();
   }
-
-  $(pixels.canvas).click(function(e) {
-    donateToClicked(settings.donation);
-  });
 
   var donateToClicked = function(amt) {
     var row = pixels2cells(mouse[1]),
@@ -510,10 +572,7 @@ $(document).ready(function() {
       $("#score").html(Math.round(ego.score));
       dollars = (ego.score * settings.dollars_per_point).toFixed(2);
       $("#dollars").html(dollars);
-    }
 
-    if (ego !== undefined) {
-      // Give bots access to state.
       window.state = msg.grid;
       window.ego = ego.id;
     }
@@ -521,21 +580,23 @@ $(document).ready(function() {
 
   function gameOver(msg) {
     $("#game-over").show();
-    $("#dashboard").hide();
-    $("#instructions").hide();
-    $("#chat").hide();
-    pixels.canvas.style.display = "none";
     allow_exit();
-    window.location.href = "/questionnaire?participant_id=" + player_id;
+    if (!isSpectator) {
+      $("#dashboard").hide();
+      $("#instructions").hide();
+      $("#chat").hide();
+      pixels.canvas.style.display = "none";
+      window.location.href = "/questionnaire?participant_id=" + player_id;
+    }
   }
 
 
   var socket = openSocket('chat', CHANNEL);
-  
+
   socket.onopen = function (event) {
     data = {
       type: 'connect',
-      player_id: player_id
+      player_id: isSpectator ? 'spectator' : player_id
     };
     sendToBackend(data);
   };
@@ -587,63 +648,16 @@ $(document).ready(function() {
     return false;
   });
 
-  //
-  // Key bindings
-  //
-  var directions = ["up", "down", "left", "right"];
-  var lock = false;
-  directions.forEach(function(direction) {
-    Mousetrap.bind(direction, function() {
-      if (!lock) {
-        players.ego().move(direction);
-        var msg = {
-          type: "move",
-          player: players.ego().id,
-          move: direction
-        };
-        sendToBackend(msg);
-      }
-      lock = true;
-      return false;
-    });
-    Mousetrap.bind(
-      direction,
-      function() {
-        lock = false;
-        return false;
-      },
-      "keyup"
-    );
-  });
 
-  Mousetrap.bind("space", function () {
-    var msg = {
-      type: "plant_food",
-      player: players.ego().id,
-      position: players.ego().position
-    };
-    sendToBackend(msg);
-  });
-
-  function createBinding (key) {
-    Mousetrap.bind(key[0].toLowerCase(), function () {
-      players.ego().color = PLAYER_COLORS[key];
-      var msg = {
-        type: "change_color",
-        player: players.ego().id,
-        color: PLAYER_COLORS[key]
-      };
-      sendToBackend(msg);
+  if (!isSpectator) {
+    // Main game keys:
+    bindGameKeys(sendToBackend);
+    // Donation click events:
+    $(pixels.canvas).click(function(e) {
+      donateToClicked(settings.donation);
     });
   }
 
-  if (settings.mutable_colors) {
-    for (var key in PLAYER_COLORS) {
-      if (PLAYER_COLORS.hasOwnProperty(key)) {
-        createBinding(key);
-      }
-    }
-  }
 });
 
 }(allow_exit, getUrlParameter, require, reqwest, settings, submitResponses));
