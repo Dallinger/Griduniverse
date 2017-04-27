@@ -60,7 +60,8 @@ def extra_parameters():
         'pseudonyms_gender': unicode,
         'contagion': int,
         'contagion_hierarchy': bool,
-        'walls': unicode,
+        'walls_density': float,
+        'walls_contiguity': float,
         'walls_visible': bool,
         'initial_score': int,
         'dollars_per_point': float,
@@ -145,8 +146,9 @@ class Gridworld(object):
         self.contagion_hierarchy = kwargs.get('contagion_hierarchy', False)
 
         # Walls
-        self.wall_type = kwargs.get('walls', None)
         self.walls_visible = kwargs.get('walls_visible', True)
+        self.walls_density = kwargs.get('walls_density', 1.0)
+        self.walls_contiguity = kwargs.get('walls_contiguity', 1.0)
 
         # Payoffs
         self.initial_score = kwargs.get('initial_score', 0)
@@ -177,7 +179,14 @@ class Gridworld(object):
         self.food = []
         self.food_consumed = []
         self.start_timestamp = kwargs.get('start_timestamp', None)
-        self.walls = self.generate_walls(style=self.wall_type)
+        labyrinth = Labyrinth(
+            columns=self.columns,
+            rows=self.rows,
+            density=self.walls_density,
+            contiguity=self.walls_contiguity,
+        )
+        self.walls = labyrinth.walls
+
         self.round = 0
         self.public_good = (
             (self.food_reward * self.food_pg_multiplier) / self.num_players
@@ -306,18 +315,6 @@ class Gridworld(object):
         )
         self.players[id] = player
         self._start_if_ready()
-
-    def generate_walls(self, style=None):
-        """Generate the walls."""
-        if style is None:
-            walls = []
-        elif style == u"maze":
-            maze = generate_maze(columns=self.columns, rows=self.rows)
-            walls = []
-            for w in maze:
-                walls.append(Wall(position=[w[0], w[1]]))
-
-        return walls
 
     def _random_empty_position(self):
         """Select an empty cell at random."""
@@ -548,48 +545,85 @@ class Player(object):
         }
 
 
-def generate_maze(columns=25, rows=25):
+class Labyrinth(object):
+    """A maze generator."""
+    def __init__(self, columns=25, rows=25, density=1.0, contiguity=1.0):
+        super(Labyrinth, self).__init__()
+        walls = self._generate_maze(rows, columns)
+        self.walls = self._prune(walls, density, contiguity)
 
-    c = (columns - 1) / 2
-    r = (rows - 1) / 2
+    def _generate_maze(self, rows, columns):
 
-    visited = [[0] * c + [1] for _ in range(r)] + [[1] * (c + 1)]
-    ver = [["* "] * c + ['*'] for _ in range(r)] + [[]]
-    hor = [["**"] * c + ['*'] for _ in range(r + 1)]
+        c = (columns - 1) / 2
+        r = (rows - 1) / 2
 
-    sx = random.randrange(c)
-    sy = random.randrange(r)
-    visited[sy][sx] = 1
-    stack = [(sx, sy)]
-    while len(stack) > 0:
-        (x, y) = stack.pop()
-        d = [
-            (x - 1, y),
-            (x, y + 1),
-            (x + 1, y),
-            (x, y - 1)
-        ]
-        random.shuffle(d)
-        for (xx, yy) in d:
-            if visited[yy][xx]:
-                continue
-            if xx == x:
-                hor[max(y, yy)][x] = "* "
-            if yy == y:
-                ver[y][max(x, xx)] = "  "
-            stack.append((xx, yy))
-            visited[yy][xx] = 1
+        visited = [[0] * c + [1] for _ in range(r)] + [[1] * (c + 1)]
+        ver = [["* "] * c + ['*'] for _ in range(r)] + [[]]
+        hor = [["**"] * c + ['*'] for _ in range(r + 1)]
 
-    # Convert the maze to a list of wall cell positions.
-    the_rows = ([j for i in zip(hor, ver) for j in i])
-    the_rows = [list("".join(j)) for j in the_rows]
-    maze = [item is '*' for sublist in the_rows for item in sublist]
-    walls = []
-    for idx in range(len(maze)):
-        if maze[idx]:
-            walls.append((idx / columns, idx % columns))
+        sx = random.randrange(c)
+        sy = random.randrange(r)
+        visited[sy][sx] = 1
+        stack = [(sx, sy)]
+        while len(stack) > 0:
+            (x, y) = stack.pop()
+            d = [
+                (x - 1, y),
+                (x, y + 1),
+                (x + 1, y),
+                (x, y - 1)
+            ]
+            random.shuffle(d)
+            for (xx, yy) in d:
+                if visited[yy][xx]:
+                    continue
+                if xx == x:
+                    hor[max(y, yy)][x] = "* "
+                if yy == y:
+                    ver[y][max(x, xx)] = "  "
+                stack.append((xx, yy))
+                visited[yy][xx] = 1
 
-    return walls
+        # Convert the maze to a list of wall cell positions.
+        the_rows = ([j for i in zip(hor, ver) for j in i])
+        the_rows = [list("".join(j)) for j in the_rows]
+        maze = [item == '*' for sublist in the_rows for item in sublist]
+        walls = []
+        for idx, value in enumerate(maze):
+            if value:
+                walls.append(Wall(position=[idx / columns, idx % columns]))
+
+        logger.info("Walls: {}".format([w.position for w in walls]))
+        return walls
+
+    def _prune(self, walls, density, contiguity):
+        properties = [density, contiguity]
+        for i in range(len(properties)):
+            thinning = int(round(len(walls) * (1 - properties[i])))
+            for _ in range(thinning):
+                terminals_nonterminals = self._classify_terminals(walls)
+                if terminals_nonterminals[i]:
+                    walls.remove(random.choice(terminals_nonterminals[i]))
+                else:
+                    walls.remove(random.choice(terminals_nonterminals[not i]))
+
+        return walls
+
+    def _classify_terminals(self, walls):
+        terminals = []
+        nonterminals = []
+        positions = [w.position for w in walls]
+        for w in walls:
+            num_neighbors = 0
+            num_neighbors += [w.position[0] + 1, w.position[1]] in positions
+            num_neighbors += [w.position[0] - 1, w.position[1]] in positions
+            num_neighbors += [w.position[0], w.position[1] + 1] in positions
+            num_neighbors += [w.position[0], w.position[1] - 1] in positions
+            if num_neighbors == 1:
+                terminals.append(w)
+            else:
+                nonterminals.append(w)
+        return (terminals, nonterminals)
 
 
 def fermi(beta, p1, p2):
