@@ -124,8 +124,8 @@ class Gridworld(object):
         self.instruct = kwargs.get('instruct', True)
 
         # Grid
-        self.columns = kwargs.get('columns', 50)
-        self.rows = kwargs.get('rows', 50)
+        self.columns = kwargs.get('columns', 25)
+        self.rows = kwargs.get('rows', 25)
         self.block_size = kwargs.get('block_size', 10)
         self.padding = kwargs.get('padding', 1)
         self.visibility = kwargs.get('visibility', 1000)
@@ -154,7 +154,7 @@ class Gridworld(object):
 
         # Walls
         self.walls_visible = kwargs.get('walls_visible', True)
-        self.walls_density = kwargs.get('walls_density', 0.85)
+        self.walls_density = kwargs.get('walls_density', 0.0)
         self.walls_contiguity = kwargs.get('walls_contiguity', 1.0)
 
         # Payoffs
