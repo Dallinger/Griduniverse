@@ -593,7 +593,6 @@ class Labyrinth(object):
             if value:
                 walls.append(Wall(position=[idx / columns, idx % columns]))
 
-        logger.info("Walls: {}".format([w.position for w in walls]))
         return walls
 
     def _prune(self, walls, density, contiguity):
