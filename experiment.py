@@ -109,7 +109,7 @@ class Gridworld(object):
         return cls.instance
 
     def __init__(self, **kwargs):
-        # If Singleton is already initialized, just return it:
+        # If Singleton is already initialized, do nothing
         if hasattr(self, 'num_players'):
             return
 
