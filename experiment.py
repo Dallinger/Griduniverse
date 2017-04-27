@@ -589,8 +589,8 @@ class Labyrinth(object):
         the_rows = [list("".join(j)) for j in the_rows]
         maze = [item == '*' for sublist in the_rows for item in sublist]
         walls = []
-        for idx in range(len(maze)):
-            if maze[idx]:
+        for idx, value in enumerate(maze):
+            if value:
                 walls.append(Wall(position=[idx / columns, idx % columns]))
 
         logger.info("Walls: {}".format([w.position for w in walls]))
