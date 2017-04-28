@@ -1,4 +1,5 @@
 var webpack = require('webpack');
+var BrowserSyncPlugin = require('browser-sync-webpack-plugin');
 var UglifyJsPlugin = webpack.optimize.UglifyJsPlugin;
 var env = process.env.WEBPACK_ENV;
 
@@ -10,6 +11,19 @@ if (env === 'build') {
   plugins.push(new webpack.DefinePlugin({'process.env': {'NODE_ENV': JSON.stringify('production')}}));
   // uglify code for production
   plugins.push(new UglifyJsPlugin({minimize: true}));
+} else {
+  plugins.push(new BrowserSyncPlugin({
+    host: 'localhost',
+    port: 5000,
+    proxy: {
+      target: 'http://localhost:22362',
+      ws: true
+    },
+    serveStatic: [{
+      route: '/static',
+      dir: 'static'
+    }]
+  }));
 }
 
 module.exports = {
