@@ -16,9 +16,9 @@ Next run `yarn` to install the dependencies:
 
 ## Building bundle.js
 
-Run webpack:
+To update bundle.js:
 
-    $ webpack
+    $ yarn run build
 
 Note: Updates to the bundle should be committed to version control.
 
