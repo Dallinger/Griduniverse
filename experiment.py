@@ -605,15 +605,19 @@ class Labyrinth(object):
         return walls
 
     def _prune(self, walls, density, contiguity):
-        properties = [density, contiguity]
-        for i in range(len(properties)):
-            thinning = int(round(len(walls) * (1 - properties[i])))
-            for _ in range(thinning):
-                terminals_nonterminals = self._classify_terminals(walls)
-                if terminals_nonterminals[i]:
-                    walls.remove(random.choice(terminals_nonterminals[i]))
-                else:
-                    walls.remove(random.choice(terminals_nonterminals[not i]))
+        """Prune walls to a labyrinth with the given density and contiguity."""
+        num_to_prune = int(round(len(walls) * (1 - density)))
+        num_pruned = 0
+        while num_pruned < num_to_prune:
+            (terminals, nonterminals) = self._classify_terminals(walls)
+            walls_to_prune = terminals[:num_to_prune]
+            for w in walls_to_prune:
+                walls.remove(w)
+            num_pruned += len(walls_to_prune)
+
+        num_to_prune = int(round(len(walls) * (1 - contiguity)))
+        for _ in range(num_to_prune):
+            walls.remove(random.choice(walls))
 
         return walls
 
