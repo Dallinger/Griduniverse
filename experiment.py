@@ -103,8 +103,15 @@ class Gridworld(object):
     GREEN = [0.51, 0.69, 0.61]
     WHITE = [1.00, 1.00, 1.00]
 
+    def __new__(cls, **kwargs):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(Gridworld, cls).__new__(cls)
+        return cls.instance
+
     def __init__(self, **kwargs):
-        super(Gridworld, self).__init__()
+        # If Singleton is already initialized, do nothing
+        if hasattr(self, 'num_players'):
+            return
 
         # Players
         self.num_players = kwargs.get('max_participants', 3)
@@ -147,7 +154,7 @@ class Gridworld(object):
 
         # Walls
         self.walls_visible = kwargs.get('walls_visible', True)
-        self.walls_density = kwargs.get('walls_density', 1.0)
+        self.walls_density = kwargs.get('walls_density', 0.0)
         self.walls_contiguity = kwargs.get('walls_contiguity', 1.0)
 
         # Payoffs
@@ -548,9 +555,11 @@ class Player(object):
 class Labyrinth(object):
     """A maze generator."""
     def __init__(self, columns=25, rows=25, density=1.0, contiguity=1.0):
-        super(Labyrinth, self).__init__()
-        walls = self._generate_maze(rows, columns)
-        self.walls = self._prune(walls, density, contiguity)
+        if density:
+            walls = self._generate_maze(rows, columns)
+            self.walls = self._prune(walls, density, contiguity)
+        else:
+            self.walls = []
 
     def _generate_maze(self, rows, columns):
 
@@ -593,7 +602,6 @@ class Labyrinth(object):
             if value:
                 walls.append(Wall(position=[idx / columns, idx % columns]))
 
-        logger.info("Walls: {}".format([w.position for w in walls]))
         return walls
 
     def _prune(self, walls, density, contiguity):

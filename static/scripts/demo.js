@@ -28,7 +28,6 @@ var PLAYER_COLORS = {
 var GREEN = [0.51, 0.69, 0.61];
 var WHITE = [1.00, 1.00, 1.00];
 var CHANNEL = "griduniverse";
-var CHANNEL_MARKER = CHANNEL + ":";
 var CONTROL_CHANNEL = "griduniverse_ctrl";
 
 var pixels = grid(data, {
@@ -228,6 +227,91 @@ var playerSet = (function () {
     return PlayerSet;
 }());
 
+var GUSocket = (function () {
+
+    var makeSocket = function (endpoint, channel) {
+      var ws_scheme = (window.location.protocol === "https:") ? 'wss://' : 'ws://',
+          app_root = ws_scheme + location.host + '/',
+          socket;
+
+      socket = new ReconnectingWebSocket(
+        app_root + endpoint + "?channel=" + channel
+      );
+      socket.debug = true;
+
+      return socket;
+    };
+
+    var dispatch = function (self, event) {
+        var marker = self.broadcastChannel + ':';
+        if (event.data.indexOf(marker) !== 0) {
+          console.log(
+            "Message was not on channel " + self.broadcastChannel + ". Ignoring.");
+          return;
+        }
+        var msg = JSON.parse(event.data.substring(marker.length));
+
+        var callback = self.callbackMap[msg.type];
+        if (typeof callback !== 'undefined') {
+          callback(msg);
+        } else {
+          console.log("Unrecognized message type " + msg.type + ' from backend.');
+        }
+    };
+
+
+    /*
+     * Public API
+     */
+    var Socket = function (settings) {
+        if (!(this instanceof Socket)) {
+            return new Socket(settings);
+        }
+
+        var self = this,
+            isOpen = $.Deferred();
+
+        this.broadcastChannel = settings.broadcast;
+        this.controlChannel = settings.control;
+        this.callbackMap = settings.callbackMap;
+
+        this.socket = makeSocket(settings.endpoint, this.broadcastChannel);
+
+        this.socket.onmessage = function (event) {
+          dispatch(self, event);
+        };
+    };
+
+    Socket.prototype.open = function () {
+      var isOpen = $.Deferred();
+
+      this.socket.onopen = function (event) {
+        isOpen.resolve();
+      };
+
+      return isOpen;
+    };
+
+    Socket.prototype.send = function (data) {
+      var msg = JSON.stringify(data),
+          channel = this.controlChannel;
+
+      console.log("Sending message to the " + channel + " channel: " + msg);
+      this.socket.send(channel + ':' + msg);
+    };
+
+    Socket.prototype.broadcast = function (data) {
+      var msg = JSON.stringify(data),
+          channel = this.broadcastChannel;
+
+      console.log("Broadcasting message to the " + channel + " channel: " + msg);
+      this.socket.send(channel + ':' + msg);
+    };
+
+
+    return Socket;
+}());
+
 // ego will be updated on page load
 var players = playerSet({'ego_id': undefined});
 
@@ -323,20 +407,7 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function openSocket(endpoint, channel) {
-  var ws_scheme = (window.location.protocol === "https:") ? 'wss://' : 'ws://',
-      app_root = ws_scheme + location.host + '/',
-      socket;
-
-  socket = new ReconnectingWebSocket(
-    app_root + endpoint + "?channel=" + channel
-  );
-  socket.debug = true;
-
-  return socket;
-}
-
-function bindGameKeys(sendToBackend) {
+function bindGameKeys(socket) {
   var directions = ["up", "down", "left", "right"];
   var lock = false;
   directions.forEach(function(direction) {
@@ -348,7 +419,7 @@ function bindGameKeys(sendToBackend) {
           player: players.ego().id,
           move: direction
         };
-        sendToBackend(msg);
+        socket.send(msg);
       }
       lock = true;
       return false;
@@ -369,7 +440,7 @@ function bindGameKeys(sendToBackend) {
       player: players.ego().id,
       position: players.ego().position
     };
-    sendToBackend(msg);
+    socket.send(msg);
   });
 
   function createBinding (key) {
@@ -380,7 +451,7 @@ function bindGameKeys(sendToBackend) {
         player: players.ego().id,
         color: PLAYER_COLORS[key]
       };
-      sendToBackend(msg);
+      socket.send(msg);
     });
   }
 
@@ -394,10 +465,145 @@ function bindGameKeys(sendToBackend) {
 
 }
 
+function onChatMessage(msg) {
+  var name,
+      entry;
+
+  if (settings.pseudonyms) {
+    name = players.get(msg.player_id).name;
+  } else {
+    name = "Player " + msg.player_index;
+  }
+  entry = "<span class='name'>" + name + ":</span> " + msg.contents;
+  $("#messages").append($("<li>").html(entry));
+  $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
+}
+
+function onDonationProcessed(msg) {
+  var ego = players.ego(),
+      donor = players.get(msg.donor_id),
+      recipient = players.get(msg.recipient_id),
+      donor_name,
+      recipient_name,
+      entry;
+
+  if (donor === ego) {
+    donor_name = 'You';
+  } else {
+    donor_name = "Player " + donor.name;
+  }
+
+  if (recipient === ego) {
+    recipient_name = 'you';
+  } else {
+    recipient_name = recipient.name;
+  }
+
+  entry = donor_name + " gave " + recipient_name + " " + msg.amount;
+  if (msg.amount === 1) {
+    entry += " point.";
+  } else {
+    entry += " points.";
+  }
+  $("#messages").append($("<li>").html(entry));
+  $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
+}
+
+function onGameStateChange(msg) {
+  var ego,
+      dollars,
+      state;
+
+  // Update remaining time.
+  $("#time").html(Math.max(Math.round(msg.remaining_time), 0));
+
+  // Update round.
+  if (settings.num_rounds > 1) {
+      $("#round").html(msg.round + 1);
+  }
+
+  // Update players.
+  state = JSON.parse(msg.grid);
+  players.update(state.players);
+  ego = players.ego();
+
+  // Update food.
+  food = [];
+  for (var j = 0; j < state.food.length; j++) {
+    food.push(
+      new Food({
+        id: state.food[j].id,
+        position: state.food[j].position,
+        color: state.food[j].color
+      })
+    );
+  }
+
+  // Update walls if they haven't been created yet.
+  if (walls.length === 0) {
+    for (var k = 0; k < state.walls.length; k++) {
+      walls.push(
+        new Wall({
+          position: state.walls[k].position,
+          color: state.walls[k].color
+        })
+      );
+    }
+  }
+
+  // Update displayed score.
+  if (ego !== undefined) {
+    $("#score").html(Math.round(ego.score));
+    dollars = (ego.score * settings.dollars_per_point).toFixed(2);
+    $("#dollars").html(dollars);
+
+    window.state = msg.grid;
+    window.ego = ego.id;
+  }
+}
+
+function gameOverHandler(isSpectator, player_id) {
+  if (isSpectator) {
+    return function (msg) {
+      $("#game-over").show();
+      allow_exit();
+    };
+  }
+  return function (msg) {
+    $("#game-over").show();
+    allow_exit();
+    $("#dashboard").hide();
+    $("#instructions").hide();
+    $("#chat").hide();
+    pixels.canvas.style.display = "none";
+    window.location.href = "/questionnaire?participant_id=" + player_id;
+  };
+}
 
 $(document).ready(function() {
   var player_id = getUrlParameter('participant_id'),
-      isSpectator = typeof player_id === 'undefined';
+      isSpectator = typeof player_id === 'undefined',
+      socketSettings = {
+        'endpoint': 'chat',
+        'broadcast': CHANNEL,
+        'control': CONTROL_CHANNEL,
+        'callbackMap': {
+          'chat': onChatMessage,
+          'donation_processed': onDonationProcessed,
+          'state': onGameStateChange,
+          'stop': gameOverHandler(isSpectator, player_id)
+        }
+      },
+      socket = new GUSocket(socketSettings);
+
+  socket.open().done(function () {
+      var data = {
+        type: 'connect',
+        player_id: isSpectator ? 'spectator' : player_id
+      };
+      socket.send(data);
+    }
+  );
 
   players.ego_id = player_id;
 
@@ -459,6 +665,7 @@ $(document).ready(function() {
     $("#chat").show();
   }
 
+
   var donateToClicked = function(amt) {
     var row = pixels2cells(mouse[1]),
         column = pixels2cells(mouse[0]),
@@ -473,167 +680,13 @@ $(document).ready(function() {
         donor_id: donor.id,
         amount: amt
       };
-      sendToBackend(msg);
+      socket.send(msg);
     }
   };
 
   var pixels2cells = function(pix) {
     return Math.floor(pix / (settings.block_size + settings.padding));
   };
-
-  var onChatMessage = function (msg) {
-    var name,
-        entry;
-
-    if (settings.pseudonyms) {
-      name = players.get(msg.player_id).name;
-    } else {
-      name = "Player " + msg.player_index;
-    }
-    entry = "<span class='name'>" + name + ":</span> " + msg.contents;
-    $("#messages").append($("<li>").html(entry));
-    $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
-  };
-
-  var onDonationProcessed = function (msg) {
-    var ego = players.ego(),
-        donor = players.get(msg.donor_id),
-        recipient = players.get(msg.recipient_id),
-        donor_name,
-        recipient_name,
-        entry;
-
-    if (donor === ego) {
-      donor_name = 'You';
-    } else {
-      donor_name = "Player " + donor.name;
-    }
-
-    if (recipient === ego) {
-      recipient_name = 'you';
-    } else {
-      recipient_name = recipient.name;
-    }
-
-    entry = donor_name + " gave " + recipient_name + " " + msg.amount;
-    if (msg.amount === 1) {
-      entry += " point.";
-    } else {
-      entry += " points.";
-    }
-    $("#messages").append($("<li>").html(entry));
-    $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
-  };
-
-  var onGameStateChange = function (msg) {
-    var ego,
-        dollars,
-        state;
-
-    // Update remaining time.
-    $("#time").html(Math.max(Math.round(msg.remaining_time), 0));
-
-    // Update round.
-    if (settings.num_rounds > 1) {
-        $("#round").html(msg.round + 1);
-    }
-
-    // Update players.
-    state = JSON.parse(msg.grid);
-    players.update(state.players);
-    ego = players.ego();
-
-    // Update food.
-    food = [];
-    for (var j = 0; j < state.food.length; j++) {
-      food.push(
-        new Food({
-          id: state.food[j].id,
-          position: state.food[j].position,
-          color: state.food[j].color
-        })
-      );
-    }
-
-    // Update walls if they haven't been created yet.
-    if (walls.length === 0) {
-      for (var k = 0; k < state.walls.length; k++) {
-        walls.push(
-          new Wall({
-            position: state.walls[k].position,
-            color: state.walls[k].color
-          })
-        );
-      }
-    }
-
-    // Update displayed score.
-    if (ego !== undefined) {
-      $("#score").html(Math.round(ego.score));
-      dollars = (ego.score * settings.dollars_per_point).toFixed(2);
-      $("#dollars").html(dollars);
-
-      window.state = msg.grid;
-      window.ego = ego.id;
-    }
-  };
-
-  function gameOver(msg) {
-    $("#game-over").show();
-    allow_exit();
-    if (!isSpectator) {
-      $("#dashboard").hide();
-      $("#instructions").hide();
-      $("#chat").hide();
-      pixels.canvas.style.display = "none";
-      window.location.href = "/questionnaire?participant_id=" + player_id;
-    }
-  }
-
-
-  var socket = openSocket('chat', CHANNEL);
-
-  socket.onopen = function (event) {
-    data = {
-      type: 'connect',
-      player_id: isSpectator ? 'spectator' : player_id
-    };
-    sendToBackend(data);
-  };
-
-  socket.onmessage = function (event) {
-    if (event.data.indexOf(CHANNEL_MARKER) !== 0) {
-      console.log("Message was not on channel " + CHANNEL_MARKER + ". Ignoring.");
-      return;
-    }
-    var msg = JSON.parse(event.data.substring(CHANNEL_MARKER.length));
-    switch(msg.type) {
-      case "chat":
-        onChatMessage(msg);
-        break;
-      case "donation_processed":
-        onDonationProcessed(msg);
-        break;
-      case "state":
-        onGameStateChange(msg);
-        break;
-      case "stop":
-        gameOver(msg);
-        break;
-      default:
-        console.log("Unrecognized message type " + msg.type + ' from backend.');
-    }
-  };
-
-  function sendToBackend(data, channel) {
-    if (channel === undefined) {
-      channel = CONTROL_CHANNEL;
-    }
-    var msg = JSON.stringify(data);
-    console.log("Sending message to the " + channel + " channel: " + msg);
-    socket.send(channel + ':' + msg);
-  }
-
 
   $("form").submit(function() {
     var msg = {
@@ -643,7 +696,7 @@ $(document).ready(function() {
       timestamp: Date.now() - start
     };
     // send directly to all clients
-    sendToBackend(msg, CHANNEL);
+    socket.broadcast(msg);
     $("#message").val("");
     return false;
   });
@@ -651,7 +704,7 @@ $(document).ready(function() {
 
   if (!isSpectator) {
     // Main game keys:
-    bindGameKeys(sendToBackend);
+    bindGameKeys(socket);
     // Donation click events:
     $(pixels.canvas).click(function(e) {
       donateToClicked(settings.donation);
