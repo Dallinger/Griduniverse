@@ -696,13 +696,15 @@ class Griduniverse(Experiment):
         """Initialize the experiment."""
         super(Griduniverse, self).__init__(session)
         self.experiment_repeats = 1
+        if session:
+            self.setup()
+            self.grid = Gridworld(**config.as_dict())
+
+    def configure(self):
+        super(Griduniverse, self).configure()
         self.num_participants = config.get('max_participants', 3)
         self.initial_recruitment_size = config.get('max_participants', 3)
         self.network_factory = config.get('network', 'FullyConnected')
-        if session:
-            self.setup()
-
-        self.grid = Gridworld(**config.as_dict())
 
     @property
     def background_tasks(self):
