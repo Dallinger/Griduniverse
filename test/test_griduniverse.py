@@ -1,5 +1,5 @@
 """
-Tests for `dallinger_griduniverse` module.
+Tests for `dlgr.griduniverse` module.
 """
 # import pytest
 

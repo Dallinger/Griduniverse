@@ -3,10 +3,7 @@
 import os
 import sys
 
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
+from setuptools import setup, find_packages
 
 
 if sys.argv[-1] == 'publish':
@@ -31,7 +28,7 @@ Documentation
 The full documentation is at http://dallinger-griduniverse.rtfd.org."""
 
 setup_args = dict(
-    name='dallinger_griduniverse',
+    name='dlgr.griduniverse',
     version='0.1.0',
     description='A Dallinger experiment that creates a Griduniverse for the '
                 'study of human social behavior - a parameterized space of '
@@ -41,12 +38,12 @@ setup_args = dict(
     author='Jordan Suchow',
     author_email='suchow@berkeley.edu',
     url='https://github.com/suchow/Griduniverse',
-    packages=[
-        'dallinger_griduniverse',
-    ],
-    package_dir={'dallinger_griduniverse': 'dallinger_griduniverse'},
+    packages=find_packages('.'),
+    package_dir={'': '.'},
+    namespace_packages=['dlgr'],
     include_package_data=True,
     install_requires=[
+        'setuptools',
     ],
     license='MIT',
     zip_safe=False,
@@ -60,13 +57,13 @@ setup_args = dict(
     ],
     entry_points={
         'dallinger.experiments': [
-            'Griduniverse = dallinger_griduniverse.experiment:Griduniverse',
+            'Griduniverse = dlgr.griduniverse.experiment:Griduniverse',
         ],
     },
 )
 
 # Read in requirements.txt for dependencies.
-setup_args['install_requires'] = install_requires = []
+install_requires = setup_args['install_requires']
 setup_args['dependency_links'] = dependency_links = []
 with open('requirements.txt') as f:
     for line in f.readlines():

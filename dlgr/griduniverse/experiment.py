@@ -26,7 +26,7 @@ from dallinger.compat import unicode
 from dallinger.config import get_config
 from dallinger.experiment import Experiment
 
-from dallinger_griduniverse.bots import Bot
+from bots import Bot
 
 logger = logging.getLogger(__file__)
 config = get_config()

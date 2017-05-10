@@ -6,10 +6,12 @@ Chatroom
 chatroom
 Dallinger
 dallinger
-dallinger_griduniverse
+dlgr
+dlgr.griduniverse
 Gameplay
 GitHub
 Griduniverse
+griduniverse
 Gridworlds
 gridworld
 Hedonic
