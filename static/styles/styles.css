@@ -83,3 +83,69 @@ canvas {
     bottom: 0;
     right: 0;
 }
+
+.DIFI {
+    border: solid 1px #000;
+    width: 100%;
+    padding-top: 60%;
+    position: relative;
+}
+
+.DIFI-range {
+    position: absolute;
+    left: 16.5%;
+    right: 13.5%;
+    top: 50%;
+    width: 70%;
+    padding-top: 13%;
+    transform: translateY(-50%);
+}
+
+.DIFI-me {
+    background-color: rgba(255, 255, 255, .8);
+    border: solid 1px #000;
+    border-radius: 50%;
+    cursor: move;
+    cursor: grab;
+    cursor: -webkit-grab;
+    padding-top: 18.571428%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 18.571428%;
+    user-select: none;
+}
+
+.DIFI-me.dragging {
+    cursor: move;
+    cursor: grabbing;
+    cursor: -webkit-grabbing;
+}
+
+.DIFI-me label {
+    cursor: move;
+    cursor: grab;
+    cursor: -webkit-grab;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.DIFI-group {
+    background-color: #ccc;
+    border-radius: 50%;
+    left: 80%;
+    padding-top: 20%;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 20%;
+}
+
+.DIFI-group label {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translate(-50%, -150%);
+}
