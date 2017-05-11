@@ -14,9 +14,9 @@ if (env === 'build') {
 } else {
   plugins.push(new BrowserSyncPlugin({
     host: 'localhost',
-    port: 5000,
+    port: 6000,
     proxy: {
-      target: 'http://localhost:22362',
+      target: 'http://localhost:5000',
       ws: true
     },
     serveStatic: [{
