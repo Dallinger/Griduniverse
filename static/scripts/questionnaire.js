@@ -32,11 +32,12 @@ DynamicIdentityFusionIndexInput.prototype.initializeDOM = function () {
 
 DynamicIdentityFusionIndexInput.prototype.update = function () {
   // update value based on position
-  var group_pos = this.$group.offset().left + this.$group.width() / 2;
-  var me_pos = this.$me.offset().left + this.$me.width() / 2;
-  var unit = this.$content.width() / 15;
-  var x_small = (group_pos - me_pos) / unit;
-  var value = 125 - 25 * x_small;
+  var unit = this.$me.outerWidth() / 4;
+  var me_pos = this.$me.offset().left - parseInt(this.$me.css('border-left-width'), 10);
+  var group_pos = this.$group.offset().left - parseInt(this.$group.css('border-left-width'), 10);
+  var x_small = (me_pos - group_pos) / unit;
+  var value = 100 + 25 * x_small;
+  value = Math.max(Math.min(Math.round(value * 1000) / 1000, 125), -100);
   this.$el.val(value);
 };
 
