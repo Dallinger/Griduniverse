@@ -20,6 +20,7 @@
     settings.walls = "{{ experiment.grid.wall_type }}";
     settings.show_grid = {% if experiment.grid.show_grid %}true{% else %}false{% endif %};
     settings.visibility = {{ experiment.grid.visibility }};
+    settings.opponent_visible = {% if experiment.grid.opponent_visible %}true{% else %}false{% endif %};
     settings.food_visible = {% if experiment.grid.food_visible %}true{% else %}false{% endif %};
     settings.show_chatroom = {% if experiment.grid.show_chatroom %}true{% else %}false{% endif %};
     settings.donation = {{ experiment.grid.donation }};
