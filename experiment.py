@@ -83,6 +83,7 @@ def extra_parameters():
         'seasonal_growth_rate': float,
         'DIFI_question': bool,
         'DIFI_group_label': unicode,
+        'DIFI_group_image': unicode,
     }
 
     for key in types:
@@ -186,6 +187,7 @@ class Gridworld(object):
         # Questionnaire
         self.DIFI_question = kwargs.get('DIFI_question', True)
         self.DIFI_group_label = kwargs.get('DIFI_group_label', 'Group')
+        self.DIFI_group_image = kwargs.get('DIFI_group_image', '/static/images/group.jpg')
 
         # Set some variables.
         self.players = {}
