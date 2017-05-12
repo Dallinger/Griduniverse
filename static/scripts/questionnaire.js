@@ -99,12 +99,12 @@ $(document).ready(function() {
   // Initialize DIFI widget
   var $DIFI = $('input.DIFI-input');
   if ($DIFI.length) {
-  var input = new DynamicIdentityFusionIndexInput($DIFI);
+    var input = new DynamicIdentityFusionIndexInput($DIFI);
   }
 
   // Submit the questionnaire.
   $("#submit-questionnaire").click(function() {
-  console.log("Submitting questionnaire.");
-  submitResponses();
+    console.log("Submitting questionnaire.");
+    submitResponses();
   });
 });
