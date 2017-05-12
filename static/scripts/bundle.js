@@ -13614,7 +13614,7 @@ var playerSet = (function () {
             player.move(player.motion_direction);
           }
           idx = player.position[0] * settings.columns + player.position[1];
-          if (!(settings.opponent_visible)) {
+          if (!(settings.opponents_visible)) {
             if (id == this.ego_id) {
               grid[idx] = player.color;
             }
