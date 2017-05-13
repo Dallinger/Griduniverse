@@ -185,7 +185,7 @@ class Gridworld(object):
         self.seasonal_growth_rate = kwargs.get('seasonal_growth_rate', 1)
 
         # Questionnaire
-        self.DIFI_question = kwargs.get('DIFI_question', True)
+        self.DIFI_question = kwargs.get('DIFI_question', False)
         self.DIFI_group_label = kwargs.get('DIFI_group_label', 'Group')
         self.DIFI_group_image = kwargs.get('DIFI_group_image', '/static/images/group.jpg')
 
