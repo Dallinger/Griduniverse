@@ -26,13 +26,17 @@ DynamicIdentityFusionIndexInput.prototype.initializeDOM = function () {
   }
 
   var $controls = this.$content.find('.DIFI-controls');
-  $('<button type="button">&#9664;&#9664;</button>').appendTo($controls)
+  $('<button type="button" class="button button-outline">&#9664;&#9664;</button>')
+    .appendTo($controls)
     .click(this.nudge.bind(this, -0.5));
-  $('<button type="button">&#9664;</button>').appendTo($controls)
+  $('<button type="button" class="button button-outline">&#9664;</button>')
+    .appendTo($controls)
     .click(this.nudge.bind(this, -0.1));
-  $('<button type="button">&#9654;</button>').appendTo($controls)
+  $('<button type="button" class="button button-outline">&#9654;</button>')
+    .appendTo($controls)
     .click(this.nudge.bind(this, 0.1));
-  $('<button type="button">&#9654;&#9654;</button>').appendTo($controls)
+  $('<button type="button" class="button button-outline">&#9654;&#9654;</button>')
+    .appendTo($controls)
     .click(this.nudge.bind(this, 0.5));
 
   this.$content.insertBefore(this.$el);
@@ -68,7 +72,7 @@ DynamicIdentityFusionIndexInput.prototype.update = function () {
 };
 
 DynamicIdentityFusionIndexInput.prototype.render = function () {
-  var left = 20;
+  var left = 10;
   var range = 60;
   var pos = left + (this.value / range);
   this.$me.css('left', pos + '%');
