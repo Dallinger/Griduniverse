@@ -26,13 +26,13 @@ DynamicIdentityFusionIndexInput.prototype.initializeDOM = function () {
   }
 
   var $controls = this.$content.find('.DIFI-controls');
-  $('<button type="button">&lt;&lt;</button>').appendTo($controls)
+  $('<button type="button">&#9664;&#9664;</button>').appendTo($controls)
     .click(this.nudge.bind(this, -0.5));
-  $('<button type="button">&lt;</button>').appendTo($controls)
+  $('<button type="button">&#9664;</button>').appendTo($controls)
     .click(this.nudge.bind(this, -0.1));
-  $('<button type="button">&gt;</button>').appendTo($controls)
+  $('<button type="button">&#9654;</button>').appendTo($controls)
     .click(this.nudge.bind(this, 0.1));
-  $('<button type="button">&gt;&gt;</button>').appendTo($controls)
+  $('<button type="button">&#9654;&#9654;</button>').appendTo($controls)
     .click(this.nudge.bind(this, 0.5));
 
   this.$content.insertBefore(this.$el);
