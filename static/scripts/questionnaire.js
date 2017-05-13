@@ -91,7 +91,7 @@ DynamicIdentityFusionIndexInput.prototype.nudge = function (delta) {
 
 DynamicIdentityFusionIndexInput.prototype.outerLeft = function ($el) {
   return $el.offset().left - parseInt($el.css('border-left-width'), 10);
-}
+};
 
 
 $(document).ready(function() {
