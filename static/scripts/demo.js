@@ -177,7 +177,9 @@ var playerSet = (function () {
             player.move(player.motion_direction);
           }
           idx = player.position[0] * settings.columns + player.position[1];
-          grid[idx] = player.color;
+          if (id == this.ego_id || settings.others_visible) {
+            grid[idx] = player.color;
+          }
         }
       }
     };
