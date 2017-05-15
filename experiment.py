@@ -52,7 +52,7 @@ def extra_parameters():
         'motion_tremble_rate': float,
         'show_chatroom': bool,
         'show_grid': bool,
-        'opponents_visible': bool,
+        'others_visible': bool,
         'num_colors': int,
         'mutable_colors': bool,
         'costly_colors': bool,
@@ -144,7 +144,7 @@ class Gridworld(object):
         self.show_grid = kwargs.get('show_grid', True)
 
         # Identity
-        self.opponents_visible = kwargs.get('opponents_visible', True)
+        self.others_visible = kwargs.get('others_visible', True)
         self.num_colors = kwargs.get('num_colors', 3)
         self.mutable_colors = kwargs.get('mutable_colors', False)
         self.costly_colors = kwargs.get('costly_colors', False)
