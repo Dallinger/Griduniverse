@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 22);
+/******/ 	return __webpack_require__(__webpack_require__.s = 11);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -119,7 +119,7 @@ module.exports = isArray || function (val) {
 
 
 
-var typeOf = __webpack_require__(16);
+var typeOf = __webpack_require__(19);
 
 module.exports = function isNumber(num) {
   var type = typeOf(num);
@@ -162,7 +162,7 @@ module.exports = function isString(value) {
 /* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var convert = __webpack_require__(12);
+var convert = __webpack_require__(15);
 
 module.exports = function (cstr) {
     var m, conv, parts, alpha;
@@ -249,6 +249,109 @@ module.exports = function (cstr) {
 
 /***/ }),
 /* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var parse = __webpack_require__(3);
+var isnumber = __webpack_require__(1);
+var isstring = __webpack_require__(2);
+var isarray = __webpack_require__(0);
+var convert = __webpack_require__(12);
+var layout = __webpack_require__(13);
+
+function Pixels(data, opts) {
+  if (!(this instanceof Pixels)) return new Pixels(data, opts);
+  var self = this;
+  opts = opts || {};
+
+  opts.background = opts.background || [ 0.5, 0.5, 0.5 ];
+  opts.size = isnumber(opts.size) ? opts.size : 10;
+  opts.padding = isnumber(opts.padding) ? opts.padding : 2;
+
+  if (isstring(opts.background))
+    opts.background = parse(opts.background).rgb.map(function(c) {
+      return c / 255;
+    });
+
+  if (isarray(data[0]) && data[0].length !== 3) {
+    opts.rows = data.length;
+    opts.columns = data[0].length;
+  }
+
+  if (!opts.rows || !opts.columns) {
+    opts.rows = opts.columns = Math.round(Math.sqrt(data.length));
+  }
+
+  var width = opts.columns * opts.size + (opts.columns + 1) * opts.padding;
+  var height = opts.rows * opts.size + (opts.rows + 1) * opts.padding;
+
+  var canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  if (opts.root) opts.root.appendChild(canvas);
+
+  var colors = opts.formatted ? data : convert(data);
+
+  var positions = layout(
+    opts.rows,
+    opts.columns,
+    2 * opts.padding / width,
+    2 * opts.size / width,
+    width / height
+  );
+
+  var regl = __webpack_require__(21)(canvas);
+
+  var squares = regl({
+    vert: `
+    precision mediump float;
+    attribute vec2 position;
+    attribute vec3 color;
+    varying vec3 vcolor;
+    void main() {
+      gl_PointSize = float(${opts.size});
+      gl_Position = vec4(position.x, position.y, 0.0, 1.0);
+      vcolor = color;
+    }
+    `,
+    frag: `
+    precision mediump float;
+    varying vec3 vcolor;
+    void main() {
+      gl_FragColor = vec4(vcolor, 1.0);
+    }
+    `,
+    attributes: { position: regl.prop("position"), color: regl.prop("color") },
+    primitive: "points",
+    count: colors.length
+  });
+
+  var buffer = { position: regl.buffer(positions), color: regl.buffer(colors) };
+
+  var draw = function(positions, colors) {
+    regl.clear({ color: opts.background.concat([ 1 ]) });
+    squares({ position: positions, color: colors });
+  };
+
+  draw(buffer.position, buffer.color);
+
+  self._buffer = buffer;
+  self._draw = draw;
+  self._formatted = opts.formatted;
+  self.canvas = canvas;
+  self.frame = regl.frame;
+}
+
+Pixels.prototype.update = function(data) {
+  var self = this;
+  var colors = self._formatted ? data : convert(data);
+  self._draw(self._buffer.position, self._buffer.color(colors));
+};
+
+module.exports = Pixels;
+
+
+/***/ }),
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function(exports) {
@@ -367,10 +470,10 @@ module.exports = function (cstr) {
 
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Emitter = __webpack_require__(13)
+var Emitter = __webpack_require__(16)
 
 module.exports = attach
 
@@ -418,7 +521,7 @@ function attach(element, listener) {
 
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/*global define:false */
@@ -1469,7 +1572,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*global define:false */
 
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1681,7 +1784,7 @@ module.exports = ReconnectingWebsocket;
 
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -2209,7 +2312,7 @@ function isPrimitive(arg) {
 }
 exports.isPrimitive = isPrimitive;
 
-exports.isBuffer = __webpack_require__(20);
+exports.isBuffer = __webpack_require__(23);
 
 function objectToString(o) {
   return Object.prototype.toString.call(o);
@@ -2253,7 +2356,7 @@ exports.log = function() {
  *     prototype.
  * @param {function} superCtor Constructor function to inherit prototype from.
  */
-exports.inherits = __webpack_require__(19);
+exports.inherits = __webpack_require__(22);
 
 exports._extend = function(origin, add) {
   // Don't do anything if add isn't an object
@@ -2271,110 +2374,7 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(21), __webpack_require__(17)))
-
-/***/ }),
-/* 9 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var parse = __webpack_require__(3);
-var isnumber = __webpack_require__(1);
-var isstring = __webpack_require__(2);
-var isarray = __webpack_require__(0);
-var convert = __webpack_require__(23);
-var layout = __webpack_require__(24);
-
-function Pixels(data, opts) {
-  if (!(this instanceof Pixels)) return new Pixels(data, opts);
-  var self = this;
-  opts = opts || {};
-
-  opts.background = opts.background || [ 0.5, 0.5, 0.5 ];
-  opts.size = isnumber(opts.size) ? opts.size : 10;
-  opts.padding = isnumber(opts.padding) ? opts.padding : 2;
-
-  if (isstring(opts.background))
-    opts.background = parse(opts.background).rgb.map(function(c) {
-      return c / 255;
-    });
-
-  if (isarray(data[0]) && data[0].length !== 3) {
-    opts.rows = data.length;
-    opts.columns = data[0].length;
-  }
-
-  if (!opts.rows || !opts.columns) {
-    opts.rows = opts.columns = Math.round(Math.sqrt(data.length));
-  }
-
-  var width = opts.columns * opts.size + (opts.columns + 1) * opts.padding;
-  var height = opts.rows * opts.size + (opts.rows + 1) * opts.padding;
-
-  var canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  if (opts.root) opts.root.appendChild(canvas);
-
-  var colors = opts.formatted ? data : convert(data);
-
-  var positions = layout(
-    opts.rows,
-    opts.columns,
-    2 * opts.padding / width,
-    2 * opts.size / width,
-    width / height
-  );
-
-  var regl = __webpack_require__(18)(canvas);
-
-  var squares = regl({
-    vert: `
-    precision mediump float;
-    attribute vec2 position;
-    attribute vec3 color;
-    varying vec3 vcolor;
-    void main() {
-      gl_PointSize = float(${opts.size});
-      gl_Position = vec4(position.x, position.y, 0.0, 1.0);
-      vcolor = color;
-    }
-    `,
-    frag: `
-    precision mediump float;
-    varying vec3 vcolor;
-    void main() {
-      gl_FragColor = vec4(vcolor, 1.0);
-    }
-    `,
-    attributes: { position: regl.prop("position"), color: regl.prop("color") },
-    primitive: "points",
-    count: colors.length
-  });
-
-  var buffer = { position: regl.buffer(positions), color: regl.buffer(colors) };
-
-  var draw = function(positions, colors) {
-    regl.clear({ color: opts.background.concat([ 1 ]) });
-    squares({ position: positions, color: colors });
-  };
-
-  draw(buffer.position, buffer.color);
-
-  self._buffer = buffer;
-  self._draw = draw;
-  self._formatted = opts.formatted;
-  self.canvas = canvas;
-  self.frame = regl.frame;
-}
-
-Pixels.prototype.update = function(data) {
-  var self = this;
-  var colors = self._formatted ? data : convert(data);
-  self._draw(self._buffer.position, self._buffer.color(colors));
-};
-
-module.exports = Pixels;
-
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(24), __webpack_require__(20)))
 
 /***/ }),
 /* 10 */
@@ -2384,6 +2384,783 @@ module.exports = jQuery;
 
 /***/ }),
 /* 11 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var require;/*global allow_exit, create_agent, getUrlParameter, require, settings, submitResponses */
+
+(function (allow_exit, getUrlParameter, require, reqwest, settings, submitResponses) {
+
+var util = __webpack_require__(9);
+var grid = __webpack_require__(4);
+var position = __webpack_require__(6);
+var Mousetrap = __webpack_require__(7);
+var ReconnectingWebSocket = __webpack_require__(8);
+var $ = __webpack_require__(10);
+var gaussian = __webpack_require__(5);
+
+var data = [];
+var background = [];
+for (var i = 0; i < settings.rows; i++) {
+  for (var j = 0; j < settings.columns; j++) {
+    data.push([0, 0, 0]);
+    background.push([0, 0, 0]);
+  }
+}
+
+var PLAYER_COLORS = {
+  "BLUE": [0.50, 0.86, 1.00],
+  "YELLOW": [1.00, 0.86, 0.50],
+  "RED": [0.64, 0.11, 0.31]
+};
+var GREEN = [0.51, 0.69, 0.61];
+var WHITE = [1.00, 1.00, 1.00];
+var CHANNEL = "griduniverse";
+var CONTROL_CHANNEL = "griduniverse_ctrl";
+
+var pixels = grid(data, {
+  rows: settings.rows,
+  columns: settings.columns,
+  size: settings.block_size,
+  padding: settings.padding,
+  background: [0.1, 0.1, 0.1],
+  formatted: true
+});
+
+var mouse = position(pixels.canvas);
+
+var library = {
+  donation: {
+    Frequency: {
+      Start: 734.7291558862061,
+      ChangeSpeed: 0.23966899924998872,
+      ChangeAmount: 8.440642297186233
+    },
+    Volume: {
+      Sustain: 0.09810917608846803,
+      Decay: 0.30973154812929393,
+      Punch: 0.5908451401277536
+    }
+  }
+};
+
+var start = Date.now();
+var food = [];
+var foodConsumed = [];
+var walls = [];
+var row, column, rand, color;
+
+var Food = function(settings) {
+  if (!(this instanceof Food)) {
+    return new Food();
+  }
+  this.id = settings.id;
+  this.position = settings.position;
+  this.color = settings.color;
+  return this;
+};
+
+var Wall = function(settings) {
+  if (!(this instanceof Wall)) {
+    return new Wall();
+  }
+  this.position = settings.position;
+  this.color = settings.color;
+  return this;
+};
+
+var Player = function(settings) {
+  if (!(this instanceof Player)) {
+    return new Player();
+  }
+  this.id = settings.id;
+  this.position = settings.position;
+  this.color = settings.color;
+  this.motion_auto = settings.motion_auto;
+  this.motion_direction = settings.motion_direction;
+  this.motion_speed_limit = settings.motion_speed_limit;
+  this.motion_timestamp = settings.motion_timestamp;
+  this.score = settings.score;
+  this.name = settings.name;
+  return this;
+};
+
+Player.prototype.move = function(direction) {
+  this.motion_direction = direction;
+
+  var ts = Date.now() - start,
+      waitTime = 1000 / this.motion_speed_limit;
+
+  if (ts > this.motion_timestamp + waitTime) {
+    var newPosition = this.position.slice();
+
+    switch (direction) {
+      case "up":
+        if (this.position[0] > 0) {
+          newPosition[0] -= 1;
+        }
+        break;
+
+      case "down":
+        if (this.position[0] < settings.rows - 1) {
+          newPosition[0] += 1;
+        }
+        break;
+
+      case "left":
+        if (this.position[1] > 0) {
+          newPosition[1] -= 1;
+        }
+        break;
+
+      case "right":
+        if (this.position[1] < settings.columns - 1) {
+          newPosition[1] += 1;
+        }
+        break;
+
+      default:
+        console.log("Direction not recognized.");
+    }
+    this.motion_timestamp = ts;
+  }
+};
+
+var playerSet = (function () {
+
+    var PlayerSet = function (settings) {
+        if (!(this instanceof PlayerSet)) {
+            return new PlayerSet(settings);
+        }
+
+        this._players = {};
+        this.ego_id = settings.ego_id;
+    };
+
+
+    PlayerSet.prototype.isPlayerAt = function (position) {
+      var id, player;
+
+      for (id in this._players) {
+        if (this._players.hasOwnProperty(id)) {
+          player = this._players[id];
+          if (position === player.position) {
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+
+
+    PlayerSet.prototype.drawToGrid = function (grid) {
+      var positions = [],
+          idx,
+          player,
+          id;
+
+      for (id in this._players) {
+        if (this._players.hasOwnProperty(id)) {
+          player = this._players[id];
+          if (player.motion_auto) {
+            player.move(player.motion_direction);
+          }
+          idx = player.position[0] * settings.columns + player.position[1];
+          if (id == this.ego_id || settings.others_visible) {
+            grid[idx] = player.color;
+          }
+        }
+      }
+    };
+
+    PlayerSet.prototype.nearest = function (row, column) {
+      var distances = [],
+                      distance,
+                      player,
+                      id;
+
+      for (id in this._players) {
+        if (this._players.hasOwnProperty(id)) {
+          player = this._players[id];
+          if (player.hasOwnProperty('position')) {
+            distance = Math.abs(row - player.position[0]) + Math.abs(column - player.position[1]);
+            distances.push({"player": player, "distance": distance});
+          }
+        }
+      }
+
+      distances.sort(function (a, b) {
+        return a.distance - b.distance;
+      });
+
+      return distances[0].player;
+    };
+
+    PlayerSet.prototype.ego = function () {
+      return this.get(this.ego_id);
+    };
+
+    PlayerSet.prototype.get = function (id) {
+      return this._players[id];
+    };
+
+    PlayerSet.prototype.update = function (playerData) {
+      var currentPlayerData,
+          i;
+
+      for (i = 0; i < playerData.length; i++) {
+        currentPlayerData = playerData[i];
+        this._players[currentPlayerData.id] = new Player(currentPlayerData);
+      }
+    };
+
+    return PlayerSet;
+}());
+
+var GUSocket = (function () {
+
+    var makeSocket = function (endpoint, channel) {
+      var ws_scheme = (window.location.protocol === "https:") ? 'wss://' : 'ws://',
+          app_root = ws_scheme + location.host + '/',
+          socket;
+
+      socket = new ReconnectingWebSocket(
+        app_root + endpoint + "?channel=" + channel
+      );
+      socket.debug = true;
+
+      return socket;
+    };
+
+    var dispatch = function (self, event) {
+        var marker = self.broadcastChannel + ':';
+        if (event.data.indexOf(marker) !== 0) {
+          console.log(
+            "Message was not on channel " + self.broadcastChannel + ". Ignoring.");
+          return;
+        }
+        var msg = JSON.parse(event.data.substring(marker.length));
+
+        var callback = self.callbackMap[msg.type];
+        if (typeof callback !== 'undefined') {
+          callback(msg);
+        } else {
+          console.log("Unrecognized message type " + msg.type + ' from backend.');
+        }
+    };
+
+
+    /*
+     * Public API
+     */
+    var Socket = function (settings) {
+        if (!(this instanceof Socket)) {
+            return new Socket(settings);
+        }
+
+        var self = this,
+            isOpen = $.Deferred();
+
+        this.broadcastChannel = settings.broadcast;
+        this.controlChannel = settings.control;
+        this.callbackMap = settings.callbackMap;
+
+        this.socket = makeSocket(settings.endpoint, this.broadcastChannel);
+
+        this.socket.onmessage = function (event) {
+          dispatch(self, event);
+        };
+    };
+
+    Socket.prototype.open = function () {
+      var isOpen = $.Deferred();
+
+      this.socket.onopen = function (event) {
+        isOpen.resolve();
+      };
+
+      return isOpen;
+    };
+
+    Socket.prototype.send = function (data) {
+      var msg = JSON.stringify(data),
+          channel = this.controlChannel;
+
+      console.log("Sending message to the " + channel + " channel: " + msg);
+      this.socket.send(channel + ':' + msg);
+    };
+
+    Socket.prototype.broadcast = function (data) {
+      var msg = JSON.stringify(data),
+          channel = this.broadcastChannel;
+
+      console.log("Broadcasting message to the " + channel + " channel: " + msg);
+      this.socket.send(channel + ':' + msg);
+    };
+
+
+    return Socket;
+}());
+
+// ego will be updated on page load
+var players = playerSet({'ego_id': undefined});
+
+pixels.canvas.style.marginLeft = window.innerWidth * 0.03 / 2 + "px";
+pixels.canvas.style.marginTop = window.innerHeight * 0.04 / 2 + "px";
+document.body.style.transition = "0.3s all";
+document.body.style.background = "#ffffff";
+
+
+pixels.frame(function() {
+  // Update the background.
+  var ego = players.ego(),
+      limitVisibility,
+      dimness,
+      rescaling,
+      idx, i, j, x, y;
+
+  for (i = 0; i < data.length; i++) {
+    if (settings.background_animation) {
+      rand = Math.random() * 0.02;
+    } else {
+      rand = 0.01;
+    }
+    background[i] = [
+      background[i][0] * 0.95 + rand,
+      background[i][1] * 0.95 + rand,
+      background[i][2] * 0.95 + rand
+    ];
+  }
+
+  data = background;
+
+  for (i = 0; i < food.length; i++) {
+    // Players digest the food.
+    if (players.isPlayerAt(food[i].position)) {
+      foodConsumed.push(food.splice(i, 1));
+    } else {
+      if (settings.food_visible) {
+        idx = food[i].position[0] * settings.columns + food[i].position[1];
+        data[idx] = food[i].color;
+      }
+    }
+  }
+
+  // Draw the players:
+  players.drawToGrid(data);
+
+  // Draw the walls.
+  if (settings.walls_visible) {
+    walls.forEach(function(w) {
+      data[w.position[0] * settings.columns + w.position[1]] = w.color;
+    });
+  }
+
+  // Add the Gaussian mask.
+  limitVisibility = settings.visibility <
+    Math.max(settings.columns, settings.rows);
+  if (limitVisibility && typeof ego !== "undefined") {
+    var g = gaussian(0, Math.pow(settings.visibility, 2));
+    rescaling = 1 / g.pdf(0);
+    for (i = 0; i < settings.columns; i++) {
+      for (j = 0; j < settings.rows; j++) {
+        x = ego.position[0];
+        y = ego.position[1];
+        dimness = g.pdf(distance(x, y, i, j)) * rescaling;
+        idx = i * settings.columns + j;
+        data[idx] = [
+          data[idx][0] * dimness,
+          data[idx][1] * dimness,
+          data[idx][2] * dimness
+        ];
+      }
+    }
+  }
+
+  pixels.update(data);
+});
+
+function distance(x, y, xx, yy) {
+  return Math.sqrt((xx - x) * (xx - x) + (yy - y) * (yy - y));
+}
+
+function arraysEqual(arr1, arr2) {
+  for (var i = arr1.length; i--; ) {
+    if (arr1[i] !== arr2[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function bindGameKeys(socket) {
+  var directions = ["up", "down", "left", "right"];
+  var lock = false;
+  directions.forEach(function(direction) {
+    Mousetrap.bind(direction, function() {
+      if (!lock) {
+        players.ego().move(direction);
+        var msg = {
+          type: "move",
+          player: players.ego().id,
+          move: direction
+        };
+        socket.send(msg);
+      }
+      lock = true;
+      return false;
+    });
+    Mousetrap.bind(
+      direction,
+      function() {
+        lock = false;
+        return false;
+      },
+      "keyup"
+    );
+  });
+
+  Mousetrap.bind("space", function () {
+    var msg = {
+      type: "plant_food",
+      player: players.ego().id,
+      position: players.ego().position
+    };
+    socket.send(msg);
+  });
+
+  function createBinding (key) {
+    Mousetrap.bind(key[0].toLowerCase(), function () {
+      players.ego().color = PLAYER_COLORS[key];
+      var msg = {
+        type: "change_color",
+        player: players.ego().id,
+        color: PLAYER_COLORS[key]
+      };
+      socket.send(msg);
+    });
+  }
+
+  if (settings.mutable_colors) {
+    for (var key in PLAYER_COLORS) {
+      if (PLAYER_COLORS.hasOwnProperty(key)) {
+        createBinding(key);
+      }
+    }
+  }
+
+}
+
+function onChatMessage(msg) {
+  var name,
+      entry;
+
+  if (settings.pseudonyms) {
+    name = players.get(msg.player_id).name;
+  } else {
+    name = "Player " + msg.player_index;
+  }
+  entry = "<span class='name'>" + name + ":</span> " + msg.contents;
+  $("#messages").append($("<li>").html(entry));
+  $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
+}
+
+function onDonationProcessed(msg) {
+  var ego = players.ego(),
+      donor = players.get(msg.donor_id),
+      recipient = players.get(msg.recipient_id),
+      donor_name,
+      recipient_name,
+      entry;
+
+  if (donor === ego) {
+    donor_name = 'You';
+  } else {
+    donor_name = "Player " + donor.name;
+  }
+
+  if (recipient === ego) {
+    recipient_name = 'you';
+  } else {
+    recipient_name = recipient.name;
+  }
+
+  entry = donor_name + " gave " + recipient_name + " " + msg.amount;
+  if (msg.amount === 1) {
+    entry += " point.";
+  } else {
+    entry += " points.";
+  }
+  $("#messages").append($("<li>").html(entry));
+  $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
+}
+
+function onGameStateChange(msg) {
+  var ego,
+      dollars,
+      state;
+
+  // Update remaining time.
+  $("#time").html(Math.max(Math.round(msg.remaining_time), 0));
+
+  // Update round.
+  if (settings.num_rounds > 1) {
+      $("#round").html(msg.round + 1);
+  }
+
+  // Update players.
+  state = JSON.parse(msg.grid);
+  players.update(state.players);
+  ego = players.ego();
+
+  // Update food.
+  food = [];
+  for (var j = 0; j < state.food.length; j++) {
+    food.push(
+      new Food({
+        id: state.food[j].id,
+        position: state.food[j].position,
+        color: state.food[j].color
+      })
+    );
+  }
+
+  // Update walls if they haven't been created yet.
+  if (walls.length === 0) {
+    for (var k = 0; k < state.walls.length; k++) {
+      walls.push(
+        new Wall({
+          position: state.walls[k].position,
+          color: state.walls[k].color
+        })
+      );
+    }
+  }
+
+  // Update displayed score.
+  if (ego !== undefined) {
+    $("#score").html(Math.round(ego.score));
+    dollars = (ego.score * settings.dollars_per_point).toFixed(2);
+    $("#dollars").html(dollars);
+
+    window.state = msg.grid;
+    window.ego = ego.id;
+  }
+}
+
+function gameOverHandler(isSpectator, player_id) {
+  if (isSpectator) {
+    return function (msg) {
+      $("#game-over").show();
+      allow_exit();
+    };
+  }
+  return function (msg) {
+    $("#game-over").show();
+    allow_exit();
+    $("#dashboard").hide();
+    $("#instructions").hide();
+    $("#chat").hide();
+    pixels.canvas.style.display = "none";
+    window.location.href = "/questionnaire?participant_id=" + player_id;
+  };
+}
+
+$(document).ready(function() {
+  var player_id = getUrlParameter('participant_id'),
+      isSpectator = typeof player_id === 'undefined',
+      socketSettings = {
+        'endpoint': 'chat',
+        'broadcast': CHANNEL,
+        'control': CONTROL_CHANNEL,
+        'callbackMap': {
+          'chat': onChatMessage,
+          'donation_processed': onDonationProcessed,
+          'state': onGameStateChange,
+          'stop': gameOverHandler(isSpectator, player_id)
+        }
+      },
+      socket = new GUSocket(socketSettings);
+
+  socket.open().done(function () {
+      var data = {
+        type: 'connect',
+        player_id: isSpectator ? 'spectator' : player_id
+      };
+      socket.send(data);
+    }
+  );
+
+  players.ego_id = player_id;
+
+
+  // Append the canvas.
+  $("#grid").append(pixels.canvas);
+
+  // Opt out of the experiment.
+  $("#opt-out").click(function() {
+    allow_exit();
+    window.location.href = "/questionnaire?participant_id=" + player_id;
+  });
+
+  if (isSpectator) {
+    $(".for-players").hide();
+  }
+
+  // Consent to the experiment.
+  $("#go-to-experiment").click(function() {
+    allow_exit();
+    window.location.href = "/exp";
+  });
+
+  // Submit the questionnaire.
+  $("#submit-questionnaire").click(function() {
+    submitResponses();
+  });
+
+  $("#finish-reading").click(function() {
+    $("#stimulus").hide();
+    $("#response-form").show();
+    $("#submit-response").removeClass("disabled");
+    $("#submit-response").html("Submit");
+  });
+
+  $("#submit-response").click(function() {
+    $("#submit-response").addClass("disabled");
+    $("#submit-response").html("Sending...");
+
+    var response = $("#reproduction").val();
+
+    $("#reproduction").val("");
+
+    reqwest({
+      url: "/info/" + my_node_id,  // XXX my_node_id is undefined(?)
+      method: "post",
+      data: { contents: response, info_type: "Info" },
+      success: function(resp) {
+        console.log("Would call create_agent() if defined...");
+      }
+    });
+  });
+
+  if (settings.show_grid) {
+    pixels.canvas.style.display = "inline";
+  }
+
+  if (settings.show_chatroom) {
+    $("#chat").show();
+  }
+
+
+  var donateToClicked = function(amt) {
+    var row = pixels2cells(mouse[1]),
+        column = pixels2cells(mouse[0]),
+        recipient = players.nearest(row, column),
+        donor = players.ego(),
+        msg;
+
+    if (recipient.id !== donor.id) {
+      msg = {
+        type: "donation_submitted",
+        recipient_id: recipient.id,
+        donor_id: donor.id,
+        amount: amt
+      };
+      socket.send(msg);
+    }
+  };
+
+  var pixels2cells = function(pix) {
+    return Math.floor(pix / (settings.block_size + settings.padding));
+  };
+
+  $("form").submit(function() {
+    var msg = {
+      type: 'chat',
+      contents: $("#message").val(),
+      player_id: players.ego().id,
+      timestamp: Date.now() - start
+    };
+    // send directly to all clients
+    socket.broadcast(msg);
+    $("#message").val("");
+    return false;
+  });
+
+
+  if (!isSpectator) {
+    // Main game keys:
+    bindGameKeys(socket);
+    // Donation click events:
+    $(pixels.canvas).click(function(e) {
+      donateToClicked(settings.donation);
+    });
+  }
+
+});
+
+}(allow_exit, getUrlParameter, require, reqwest, settings, submitResponses));
+
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var flatten = __webpack_require__(17);
+var isarray = __webpack_require__(0);
+var isnumber = __webpack_require__(1);
+var isstring = __webpack_require__(2);
+var parse = __webpack_require__(3);
+
+function convert(data) {
+  data = isarray(data[0]) && data[0].length !== 3 ? flatten(data, 1) : data;
+
+  if (isnumber(data[0])) {
+    data = data.map(function(d) {
+      return [ d, d, d ];
+    });
+  }
+
+  if (isstring(data[0])) {
+    data = data.map(function(d) {
+      return parse(d).rgb.map(function(c) {
+        return c / 255;
+      });
+    });
+  }
+
+  return data;
+}
+
+module.exports = convert;
+
+
+/***/ }),
+/* 13 */
+/***/ (function(module, exports) {
+
+function layout(rows, columns, padding, size, aspect) {
+  var grid = [];
+
+  for (var i = 0; i < rows; i++) {
+    for (var j = 0; j < columns; j++) {
+      var x = -1 + aspect * (i * (padding + size) + padding + size / 2);
+      var y = 1 - (j * (padding + size) + padding + size / 2);
+      grid.push([ y, x ]);
+    }
+  }
+
+  return grid.reverse();
+}
+
+module.exports = layout;
+
+
+/***/ }),
+/* 14 */
 /***/ (function(module, exports) {
 
 /* MIT license */
@@ -3087,10 +3864,10 @@ for (var key in cssKeywords) {
 
 
 /***/ }),
-/* 12 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var conversions = __webpack_require__(11);
+var conversions = __webpack_require__(14);
 
 var convert = function() {
    return new Converter();
@@ -3184,7 +3961,7 @@ Converter.prototype.getValues = function(space) {
 module.exports = convert;
 
 /***/ }),
-/* 13 */
+/* 16 */
 /***/ (function(module, exports) {
 
 // Copyright Joyent, Inc. and other Node contributors.
@@ -3492,7 +4269,7 @@ function isUndefined(arg) {
 
 
 /***/ }),
-/* 14 */
+/* 17 */
 /***/ (function(module, exports) {
 
 module.exports = function flatten(list, depth) {
@@ -3521,7 +4298,7 @@ module.exports = function flatten(list, depth) {
 
 
 /***/ }),
-/* 15 */
+/* 18 */
 /***/ (function(module, exports) {
 
 /*!
@@ -3548,10 +4325,10 @@ function isSlowBuffer (obj) {
 
 
 /***/ }),
-/* 16 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isBuffer = __webpack_require__(15);
+var isBuffer = __webpack_require__(18);
 var toString = Object.prototype.toString;
 
 /**
@@ -3670,7 +4447,7 @@ module.exports = function kindOf(val) {
 
 
 /***/ }),
-/* 17 */
+/* 20 */
 /***/ (function(module, exports) {
 
 // shim for using process in browser
@@ -3856,7 +4633,7 @@ process.umask = function() { return 0; };
 
 
 /***/ }),
-/* 18 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function (global, factory) {
@@ -13365,7 +14142,7 @@ return wrapREGL;
 
 
 /***/ }),
-/* 19 */
+/* 22 */
 /***/ (function(module, exports) {
 
 if (typeof Object.create === 'function') {
@@ -13394,7 +14171,7 @@ if (typeof Object.create === 'function') {
 
 
 /***/ }),
-/* 20 */
+/* 23 */
 /***/ (function(module, exports) {
 
 module.exports = function isBuffer(arg) {
@@ -13405,7 +14182,7 @@ module.exports = function isBuffer(arg) {
 }
 
 /***/ }),
-/* 21 */
+/* 24 */
 /***/ (function(module, exports) {
 
 var g;
@@ -13429,783 +14206,6 @@ try {
 // easier to handle this case. if(!global) { ...}
 
 module.exports = g;
-
-
-/***/ }),
-/* 22 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var require;/*global allow_exit, create_agent, getUrlParameter, require, settings, submitResponses */
-
-(function (allow_exit, getUrlParameter, require, reqwest, settings, submitResponses) {
-
-var util = __webpack_require__(8);
-var grid = __webpack_require__(9);
-var position = __webpack_require__(5);
-var Mousetrap = __webpack_require__(6);
-var ReconnectingWebSocket = __webpack_require__(7);
-var $ = __webpack_require__(10);
-var gaussian = __webpack_require__(4);
-
-var data = [];
-var background = [];
-for (var i = 0; i < settings.rows; i++) {
-  for (var j = 0; j < settings.columns; j++) {
-    data.push([0, 0, 0]);
-    background.push([0, 0, 0]);
-  }
-}
-
-var PLAYER_COLORS = {
-  "BLUE": [0.50, 0.86, 1.00],
-  "YELLOW": [1.00, 0.86, 0.50],
-  "RED": [0.64, 0.11, 0.31]
-};
-var GREEN = [0.51, 0.69, 0.61];
-var WHITE = [1.00, 1.00, 1.00];
-var CHANNEL = "griduniverse";
-var CONTROL_CHANNEL = "griduniverse_ctrl";
-
-var pixels = grid(data, {
-  rows: settings.rows,
-  columns: settings.columns,
-  size: settings.block_size,
-  padding: settings.padding,
-  background: [0.1, 0.1, 0.1],
-  formatted: true
-});
-
-var mouse = position(pixels.canvas);
-
-var library = {
-  donation: {
-    Frequency: {
-      Start: 734.7291558862061,
-      ChangeSpeed: 0.23966899924998872,
-      ChangeAmount: 8.440642297186233
-    },
-    Volume: {
-      Sustain: 0.09810917608846803,
-      Decay: 0.30973154812929393,
-      Punch: 0.5908451401277536
-    }
-  }
-};
-
-var start = Date.now();
-var food = [];
-var foodConsumed = [];
-var walls = [];
-var row, column, rand, color;
-
-var Food = function(settings) {
-  if (!(this instanceof Food)) {
-    return new Food();
-  }
-  this.id = settings.id;
-  this.position = settings.position;
-  this.color = settings.color;
-  return this;
-};
-
-var Wall = function(settings) {
-  if (!(this instanceof Wall)) {
-    return new Wall();
-  }
-  this.position = settings.position;
-  this.color = settings.color;
-  return this;
-};
-
-var Player = function(settings) {
-  if (!(this instanceof Player)) {
-    return new Player();
-  }
-  this.id = settings.id;
-  this.position = settings.position;
-  this.color = settings.color;
-  this.motion_auto = settings.motion_auto;
-  this.motion_direction = settings.motion_direction;
-  this.motion_speed_limit = settings.motion_speed_limit;
-  this.motion_timestamp = settings.motion_timestamp;
-  this.score = settings.score;
-  this.name = settings.name;
-  return this;
-};
-
-Player.prototype.move = function(direction) {
-  this.motion_direction = direction;
-
-  var ts = Date.now() - start,
-      waitTime = 1000 / this.motion_speed_limit;
-
-  if (ts > this.motion_timestamp + waitTime) {
-    var newPosition = this.position.slice();
-
-    switch (direction) {
-      case "up":
-        if (this.position[0] > 0) {
-          newPosition[0] -= 1;
-        }
-        break;
-
-      case "down":
-        if (this.position[0] < settings.rows - 1) {
-          newPosition[0] += 1;
-        }
-        break;
-
-      case "left":
-        if (this.position[1] > 0) {
-          newPosition[1] -= 1;
-        }
-        break;
-
-      case "right":
-        if (this.position[1] < settings.columns - 1) {
-          newPosition[1] += 1;
-        }
-        break;
-
-      default:
-        console.log("Direction not recognized.");
-    }
-    this.motion_timestamp = ts;
-  }
-};
-
-var playerSet = (function () {
-
-    var PlayerSet = function (settings) {
-        if (!(this instanceof PlayerSet)) {
-            return new PlayerSet(settings);
-        }
-
-        this._players = {};
-        this.ego_id = settings.ego_id;
-    };
-
-
-    PlayerSet.prototype.isPlayerAt = function (position) {
-      var id, player;
-
-      for (id in this._players) {
-        if (this._players.hasOwnProperty(id)) {
-          player = this._players[id];
-          if (position === player.position) {
-            return true;
-          }
-        }
-      }
-      return false;
-    };
-
-
-    PlayerSet.prototype.drawToGrid = function (grid) {
-      var positions = [],
-          idx,
-          player,
-          id;
-
-      for (id in this._players) {
-        if (this._players.hasOwnProperty(id)) {
-          player = this._players[id];
-          if (player.motion_auto) {
-            player.move(player.motion_direction);
-          }
-          idx = player.position[0] * settings.columns + player.position[1];
-          if (id == this.ego_id || settings.others_visible) {
-            grid[idx] = player.color;
-          }
-        }
-      }
-    };
-
-    PlayerSet.prototype.nearest = function (row, column) {
-      var distances = [],
-                      distance,
-                      player,
-                      id;
-
-      for (id in this._players) {
-        if (this._players.hasOwnProperty(id)) {
-          player = this._players[id];
-          if (player.hasOwnProperty('position')) {
-            distance = Math.abs(row - player.position[0]) + Math.abs(column - player.position[1]);
-            distances.push({"player": player, "distance": distance});
-          }
-        }
-      }
-
-      distances.sort(function (a, b) {
-        return a.distance - b.distance;
-      });
-
-      return distances[0].player;
-    };
-
-    PlayerSet.prototype.ego = function () {
-      return this.get(this.ego_id);
-    };
-
-    PlayerSet.prototype.get = function (id) {
-      return this._players[id];
-    };
-
-    PlayerSet.prototype.update = function (playerData) {
-      var currentPlayerData,
-          i;
-
-      for (i = 0; i < playerData.length; i++) {
-        currentPlayerData = playerData[i];
-        this._players[currentPlayerData.id] = new Player(currentPlayerData);
-      }
-    };
-
-    return PlayerSet;
-}());
-
-var GUSocket = (function () {
-
-    var makeSocket = function (endpoint, channel) {
-      var ws_scheme = (window.location.protocol === "https:") ? 'wss://' : 'ws://',
-          app_root = ws_scheme + location.host + '/',
-          socket;
-
-      socket = new ReconnectingWebSocket(
-        app_root + endpoint + "?channel=" + channel
-      );
-      socket.debug = true;
-
-      return socket;
-    };
-
-    var dispatch = function (self, event) {
-        var marker = self.broadcastChannel + ':';
-        if (event.data.indexOf(marker) !== 0) {
-          console.log(
-            "Message was not on channel " + self.broadcastChannel + ". Ignoring.");
-          return;
-        }
-        var msg = JSON.parse(event.data.substring(marker.length));
-
-        var callback = self.callbackMap[msg.type];
-        if (typeof callback !== 'undefined') {
-          callback(msg);
-        } else {
-          console.log("Unrecognized message type " + msg.type + ' from backend.');
-        }
-    };
-
-
-    /*
-     * Public API
-     */
-    var Socket = function (settings) {
-        if (!(this instanceof Socket)) {
-            return new Socket(settings);
-        }
-
-        var self = this,
-            isOpen = $.Deferred();
-
-        this.broadcastChannel = settings.broadcast;
-        this.controlChannel = settings.control;
-        this.callbackMap = settings.callbackMap;
-
-        this.socket = makeSocket(settings.endpoint, this.broadcastChannel);
-
-        this.socket.onmessage = function (event) {
-          dispatch(self, event);
-        };
-    };
-
-    Socket.prototype.open = function () {
-      var isOpen = $.Deferred();
-
-      this.socket.onopen = function (event) {
-        isOpen.resolve();
-      };
-
-      return isOpen;
-    };
-
-    Socket.prototype.send = function (data) {
-      var msg = JSON.stringify(data),
-          channel = this.controlChannel;
-
-      console.log("Sending message to the " + channel + " channel: " + msg);
-      this.socket.send(channel + ':' + msg);
-    };
-
-    Socket.prototype.broadcast = function (data) {
-      var msg = JSON.stringify(data),
-          channel = this.broadcastChannel;
-
-      console.log("Broadcasting message to the " + channel + " channel: " + msg);
-      this.socket.send(channel + ':' + msg);
-    };
-
-
-    return Socket;
-}());
-
-// ego will be updated on page load
-var players = playerSet({'ego_id': undefined});
-
-pixels.canvas.style.marginLeft = window.innerWidth * 0.03 / 2 + "px";
-pixels.canvas.style.marginTop = window.innerHeight * 0.04 / 2 + "px";
-document.body.style.transition = "0.3s all";
-document.body.style.background = "#ffffff";
-
-
-pixels.frame(function() {
-  // Update the background.
-  var ego = players.ego(),
-      limitVisibility,
-      dimness,
-      rescaling,
-      idx, i, j, x, y;
-
-  for (i = 0; i < data.length; i++) {
-    if (settings.background_animation) {
-      rand = Math.random() * 0.02;
-    } else {
-      rand = 0.01;
-    }
-    background[i] = [
-      background[i][0] * 0.95 + rand,
-      background[i][1] * 0.95 + rand,
-      background[i][2] * 0.95 + rand
-    ];
-  }
-
-  data = background;
-
-  for (i = 0; i < food.length; i++) {
-    // Players digest the food.
-    if (players.isPlayerAt(food[i].position)) {
-      foodConsumed.push(food.splice(i, 1));
-    } else {
-      if (settings.food_visible) {
-        idx = food[i].position[0] * settings.columns + food[i].position[1];
-        data[idx] = food[i].color;
-      }
-    }
-  }
-
-  // Draw the players:
-  players.drawToGrid(data);
-
-  // Draw the walls.
-  if (settings.walls_visible) {
-    walls.forEach(function(w) {
-      data[w.position[0] * settings.columns + w.position[1]] = w.color;
-    });
-  }
-
-  // Add the Gaussian mask.
-  limitVisibility = settings.visibility <
-    Math.max(settings.columns, settings.rows);
-  if (limitVisibility && typeof ego !== "undefined") {
-    var g = gaussian(0, Math.pow(settings.visibility, 2));
-    rescaling = 1 / g.pdf(0);
-    for (i = 0; i < settings.columns; i++) {
-      for (j = 0; j < settings.rows; j++) {
-        x = ego.position[0];
-        y = ego.position[1];
-        dimness = g.pdf(distance(x, y, i, j)) * rescaling;
-        idx = i * settings.columns + j;
-        data[idx] = [
-          data[idx][0] * dimness,
-          data[idx][1] * dimness,
-          data[idx][2] * dimness
-        ];
-      }
-    }
-  }
-
-  pixels.update(data);
-});
-
-function distance(x, y, xx, yy) {
-  return Math.sqrt((xx - x) * (xx - x) + (yy - y) * (yy - y));
-}
-
-function arraysEqual(arr1, arr2) {
-  for (var i = arr1.length; i--; ) {
-    if (arr1[i] !== arr2[i]) {
-      return false;
-    }
-  }
-  return true;
-}
-
-function getRandomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function bindGameKeys(socket) {
-  var directions = ["up", "down", "left", "right"];
-  var lock = false;
-  directions.forEach(function(direction) {
-    Mousetrap.bind(direction, function() {
-      if (!lock) {
-        players.ego().move(direction);
-        var msg = {
-          type: "move",
-          player: players.ego().id,
-          move: direction
-        };
-        socket.send(msg);
-      }
-      lock = true;
-      return false;
-    });
-    Mousetrap.bind(
-      direction,
-      function() {
-        lock = false;
-        return false;
-      },
-      "keyup"
-    );
-  });
-
-  Mousetrap.bind("space", function () {
-    var msg = {
-      type: "plant_food",
-      player: players.ego().id,
-      position: players.ego().position
-    };
-    socket.send(msg);
-  });
-
-  function createBinding (key) {
-    Mousetrap.bind(key[0].toLowerCase(), function () {
-      players.ego().color = PLAYER_COLORS[key];
-      var msg = {
-        type: "change_color",
-        player: players.ego().id,
-        color: PLAYER_COLORS[key]
-      };
-      socket.send(msg);
-    });
-  }
-
-  if (settings.mutable_colors) {
-    for (var key in PLAYER_COLORS) {
-      if (PLAYER_COLORS.hasOwnProperty(key)) {
-        createBinding(key);
-      }
-    }
-  }
-
-}
-
-function onChatMessage(msg) {
-  var name,
-      entry;
-
-  if (settings.pseudonyms) {
-    name = players.get(msg.player_id).name;
-  } else {
-    name = "Player " + msg.player_index;
-  }
-  entry = "<span class='name'>" + name + ":</span> " + msg.contents;
-  $("#messages").append($("<li>").html(entry));
-  $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
-}
-
-function onDonationProcessed(msg) {
-  var ego = players.ego(),
-      donor = players.get(msg.donor_id),
-      recipient = players.get(msg.recipient_id),
-      donor_name,
-      recipient_name,
-      entry;
-
-  if (donor === ego) {
-    donor_name = 'You';
-  } else {
-    donor_name = "Player " + donor.name;
-  }
-
-  if (recipient === ego) {
-    recipient_name = 'you';
-  } else {
-    recipient_name = recipient.name;
-  }
-
-  entry = donor_name + " gave " + recipient_name + " " + msg.amount;
-  if (msg.amount === 1) {
-    entry += " point.";
-  } else {
-    entry += " points.";
-  }
-  $("#messages").append($("<li>").html(entry));
-  $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
-}
-
-function onGameStateChange(msg) {
-  var ego,
-      dollars,
-      state;
-
-  // Update remaining time.
-  $("#time").html(Math.max(Math.round(msg.remaining_time), 0));
-
-  // Update round.
-  if (settings.num_rounds > 1) {
-      $("#round").html(msg.round + 1);
-  }
-
-  // Update players.
-  state = JSON.parse(msg.grid);
-  players.update(state.players);
-  ego = players.ego();
-
-  // Update food.
-  food = [];
-  for (var j = 0; j < state.food.length; j++) {
-    food.push(
-      new Food({
-        id: state.food[j].id,
-        position: state.food[j].position,
-        color: state.food[j].color
-      })
-    );
-  }
-
-  // Update walls if they haven't been created yet.
-  if (walls.length === 0) {
-    for (var k = 0; k < state.walls.length; k++) {
-      walls.push(
-        new Wall({
-          position: state.walls[k].position,
-          color: state.walls[k].color
-        })
-      );
-    }
-  }
-
-  // Update displayed score.
-  if (ego !== undefined) {
-    $("#score").html(Math.round(ego.score));
-    dollars = (ego.score * settings.dollars_per_point).toFixed(2);
-    $("#dollars").html(dollars);
-
-    window.state = msg.grid;
-    window.ego = ego.id;
-  }
-}
-
-function gameOverHandler(isSpectator, player_id) {
-  if (isSpectator) {
-    return function (msg) {
-      $("#game-over").show();
-      allow_exit();
-    };
-  }
-  return function (msg) {
-    $("#game-over").show();
-    allow_exit();
-    $("#dashboard").hide();
-    $("#instructions").hide();
-    $("#chat").hide();
-    pixels.canvas.style.display = "none";
-    window.location.href = "/questionnaire?participant_id=" + player_id;
-  };
-}
-
-$(document).ready(function() {
-  var player_id = getUrlParameter('participant_id'),
-      isSpectator = typeof player_id === 'undefined',
-      socketSettings = {
-        'endpoint': 'chat',
-        'broadcast': CHANNEL,
-        'control': CONTROL_CHANNEL,
-        'callbackMap': {
-          'chat': onChatMessage,
-          'donation_processed': onDonationProcessed,
-          'state': onGameStateChange,
-          'stop': gameOverHandler(isSpectator, player_id)
-        }
-      },
-      socket = new GUSocket(socketSettings);
-
-  socket.open().done(function () {
-      var data = {
-        type: 'connect',
-        player_id: isSpectator ? 'spectator' : player_id
-      };
-      socket.send(data);
-    }
-  );
-
-  players.ego_id = player_id;
-
-
-  // Append the canvas.
-  $("#grid").append(pixels.canvas);
-
-  // Opt out of the experiment.
-  $("#opt-out").click(function() {
-    allow_exit();
-    window.location.href = "/questionnaire?participant_id=" + player_id;
-  });
-
-  if (isSpectator) {
-    $(".for-players").hide();
-  }
-
-  // Consent to the experiment.
-  $("#go-to-experiment").click(function() {
-    allow_exit();
-    window.location.href = "/exp";
-  });
-
-  // Submit the questionnaire.
-  $("#submit-questionnaire").click(function() {
-    submitResponses();
-  });
-
-  $("#finish-reading").click(function() {
-    $("#stimulus").hide();
-    $("#response-form").show();
-    $("#submit-response").removeClass("disabled");
-    $("#submit-response").html("Submit");
-  });
-
-  $("#submit-response").click(function() {
-    $("#submit-response").addClass("disabled");
-    $("#submit-response").html("Sending...");
-
-    var response = $("#reproduction").val();
-
-    $("#reproduction").val("");
-
-    reqwest({
-      url: "/info/" + my_node_id,  // XXX my_node_id is undefined(?)
-      method: "post",
-      data: { contents: response, info_type: "Info" },
-      success: function(resp) {
-        console.log("Would call create_agent() if defined...");
-      }
-    });
-  });
-
-  if (settings.show_grid) {
-    pixels.canvas.style.display = "inline";
-  }
-
-  if (settings.show_chatroom) {
-    $("#chat").show();
-  }
-
-
-  var donateToClicked = function(amt) {
-    var row = pixels2cells(mouse[1]),
-        column = pixels2cells(mouse[0]),
-        recipient = players.nearest(row, column),
-        donor = players.ego(),
-        msg;
-
-    if (recipient.id !== donor.id) {
-      msg = {
-        type: "donation_submitted",
-        recipient_id: recipient.id,
-        donor_id: donor.id,
-        amount: amt
-      };
-      socket.send(msg);
-    }
-  };
-
-  var pixels2cells = function(pix) {
-    return Math.floor(pix / (settings.block_size + settings.padding));
-  };
-
-  $("form").submit(function() {
-    var msg = {
-      type: 'chat',
-      contents: $("#message").val(),
-      player_id: players.ego().id,
-      timestamp: Date.now() - start
-    };
-    // send directly to all clients
-    socket.broadcast(msg);
-    $("#message").val("");
-    return false;
-  });
-
-
-  if (!isSpectator) {
-    // Main game keys:
-    bindGameKeys(socket);
-    // Donation click events:
-    $(pixels.canvas).click(function(e) {
-      donateToClicked(settings.donation);
-    });
-  }
-
-});
-
-}(allow_exit, getUrlParameter, require, reqwest, settings, submitResponses));
-
-
-/***/ }),
-/* 23 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var flatten = __webpack_require__(14);
-var isarray = __webpack_require__(0);
-var isnumber = __webpack_require__(1);
-var isstring = __webpack_require__(2);
-var parse = __webpack_require__(3);
-
-function convert(data) {
-  data = isarray(data[0]) && data[0].length !== 3 ? flatten(data, 1) : data;
-
-  if (isnumber(data[0])) {
-    data = data.map(function(d) {
-      return [ d, d, d ];
-    });
-  }
-
-  if (isstring(data[0])) {
-    data = data.map(function(d) {
-      return parse(d).rgb.map(function(c) {
-        return c / 255;
-      });
-    });
-  }
-
-  return data;
-}
-
-module.exports = convert;
-
-
-/***/ }),
-/* 24 */
-/***/ (function(module, exports) {
-
-function layout(rows, columns, padding, size, aspect) {
-  var grid = [];
-
-  for (var i = 0; i < rows; i++) {
-    for (var j = 0; j < columns; j++) {
-      var x = -1 + aspect * (i * (padding + size) + padding + size / 2);
-      var y = 1 - (j * (padding + size) + padding + size / 2);
-      grid.push([ y, x ]);
-    }
-  }
-
-  return grid.reverse();
-}
-
-module.exports = layout;
 
 
 /***/ })

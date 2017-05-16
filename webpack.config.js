@@ -28,10 +28,10 @@ if (env === 'build') {
 
 module.exports = {
   entry: {
-    bundle: './static/scripts/demo.js'
+    bundle: './dlgr/griduniverse/static/scripts/demo.js'
   },
   output: {
-    path: __dirname + '/static',
+    path: __dirname + '/dlgr/griduniverse/static',
     filename: 'scripts/bundle.js'
   },
   // use jquery from separate script tag
