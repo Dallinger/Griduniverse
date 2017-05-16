@@ -37,9 +37,8 @@
 <hr/>
 {% for item in items %}
     {% set name = 'leach_' + loop.index|string %}
-    {% set group = "In-group" %}
     <fieldset id="{{ name }}">
-        {{ prompt(item, group) }}
+        {{ prompt(item, in_group) }}
         {{ multichoice(name, 7)}}
     </fieldset>
 {% endfor %}
