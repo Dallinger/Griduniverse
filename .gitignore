@@ -47,3 +47,5 @@ dlgr/griduniverse/snapshots
 
 .tox/*
 *.egg-info/*
+
+docs/build/*
