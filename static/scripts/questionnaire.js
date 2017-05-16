@@ -6,7 +6,11 @@ var DynamicIdentityFusionIndexInput = function ($el) {
 };
 
 DynamicIdentityFusionIndexInput.prototype.initializeDOM = function () {
+  var name = this.$el.attr('name');
+  this.$el.attr('name', name + '_distance');
   // this.$el.attr('type', 'hidden');
+  this.$el_overlap = $('<input type="hidden" name="' + name + '_overlap" id="' + name + '_overlap" />').insertAfter(this.$el);
+  this.$el_overlap.attr('type', null);
   this.$content = $(
 '<div class="DIFI">' +
   '<div class="DIFI-controls"></div>' +
@@ -61,14 +65,24 @@ DynamicIdentityFusionIndexInput.prototype.update = function () {
   // - left circle overlapping right circle: 0 to 100
   // - left circle contained within right circle: 100 to 125
   // - left circle at the center of right circle: 125
-  var unit = this.$me.outerWidth() / 4;
+  var R = this.$group.outerWidth() / 2;
+  var r = this.$me.outerWidth() / 2;
   var me_pos = this.outerLeft(this.$me);
   var group_pos = this.outerLeft(this.$group);
-  var x_small = (me_pos - group_pos) / unit;
-  var value = 100 + 25 * x_small;
+  var d = me_pos - group_pos;
+  var value = 100 + 50 * d / r;
+  // snap to center
+  var $range = this.$me.parent();
+  if (($range.offset().left + $range.outerWidth()) -
+      (me_pos + this.$me.outerWidth()) < 2) {
+    value = 125;
+  }
   // clip value to desired range (-100 to 125)
   value = Math.max(Math.min(Math.round(value * 1000) / 1000, 125), -100);
   this.$el.val(value);
+
+  var overlap = this.calculateOverlap(d, r, R);
+  this.$el_overlap.val(overlap);
 };
 
 DynamicIdentityFusionIndexInput.prototype.render = function () {
@@ -95,6 +109,16 @@ DynamicIdentityFusionIndexInput.prototype.nudge = function (delta) {
 
 DynamicIdentityFusionIndexInput.prototype.outerLeft = function ($el) {
   return $el.offset().left - parseInt($el.css('border-left-width'), 10);
+};
+
+DynamicIdentityFusionIndexInput.prototype.calculateOverlap = function (d, r, R) {
+  // d is the center-to-center spacing between the small and big circles.
+  // r is the radius of the small circle.
+  // R is the radius of the large circle.
+  var x = (d*d + r*r - R*R) / (2*d*r);
+  var y = (d*d + R*R - r*r) / (2*d*R);
+  var z = (-d+r+R) * (d+r-R) * (d-r+R) * (d+r+R);
+  return r*r*Math.acos(x) + R*R*Math.acos(y) - Math.sqrt(z)/2;
 };
 
 
