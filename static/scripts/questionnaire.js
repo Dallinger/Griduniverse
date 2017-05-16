@@ -10,7 +10,6 @@ DynamicIdentityFusionIndexInput.prototype.initializeDOM = function () {
   this.$el.attr('name', name + '_distance');
   this.$el.attr('type', 'hidden');
   this.$el_overlap = $('<input type="hidden" name="' + name + '_overlap" id="' + name + '_overlap" />').insertAfter(this.$el);
-  this.$el_overlap.attr('type', null);
   this.$content = $(
 '<div class="DIFI">' +
   '<div class="DIFI-controls"></div>' +
