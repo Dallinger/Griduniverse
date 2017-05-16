@@ -5,13 +5,14 @@ import operator
 import random
 import time
 
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import StaleElementReferenceException
+from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import StaleElementReferenceException
-from selenium.common.exceptions import WebDriverException
+from selenium.webdriver.support.ui import WebDriverWait
+
 
 from dallinger.bots import BotBase
 from dallinger.config import get_config
@@ -114,13 +115,18 @@ class RandomBot(BaseGridUniverseBot):
 
 
 class AdvantageSeekingBot(BaseGridUniverseBot):
-    """A bot that plays griduniverse by going towards the food it has the
-    biggest advantage over the other players at getting"""
+    """A bot that seeks an advantage.
+
+    The bot moves towards the food it has the biggest advantage over the other
+    players at getting.
+    """
 
     KEY_INTERVAL = 0.1
 
     def get_logical_targets(self):
-        """When run on a page view that has data extracted from the grid state
+        """Find a logical place to move.
+
+        When run on a page view that has data extracted from the grid state
         find the best targets for each of the players, where the best target
         is the closest item of food, excluding all food items that are the best
         target for another player. When the same item of food is the closest
@@ -165,9 +171,12 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
         return choices
 
     def get_player_spread(self, positions=None):
-        """When run after populating state data, this returns the mean
+        """Mean distance between players.
+
+        When run after populating state data, this returns the mean
         distance between all players on the board, to be used as a heuristic
-        for 'spreading out' if there are no logical targets."""
+        for 'spreading out' if there are no logical targets.
+        """
         # Allow passing positions in, to calculate the spread of a hypothetical
         # future state, rather than the current state
         if positions is None:
@@ -176,8 +185,8 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
         # Find the distances between all pairs of players
         pairs = itertools.combinations(positions, 2)
         distances = itertools.starmap(self.manhattan_distance, pairs)
-        # Calculate and return the mean. distances is an iterator, so we convert
-        # it to a tuple so we can more easily do sums on its data
+        # Calculate and return the mean. distances is an iterator, so we
+        # convert it to a tuple so we can more easily do sums on its data
         distances = tuple(distances)
         if distances:
             return float(sum(distances)) / len(distances)
@@ -187,21 +196,24 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
             return 0
 
     def get_expected_position(self, key):
-        """Given the current state of players, if we were to push the key
+        """Predict future state given an action.
+
+        Given the current state of players, if we were to push the key
         specified as a parameter, what would we expect the state to become,
-        ignoring modeling of other players' behavior"""
+        ignoring modeling of other players' behavior
+        """
         positions = self.player_positions
         my_position = positions[self.player_id]
         pad = 5
         rows = self.state['rows']
         if key == Keys.UP and my_position[0] > pad:
-            my_position = (my_position[0]-1, my_position[1])
+            my_position = (my_position[0] - 1, my_position[1])
         if key == Keys.DOWN and my_position[0] < (rows - pad):
-            my_position = (my_position[0]+1, my_position[1])
+            my_position = (my_position[0] + 1, my_position[1])
         if key == Keys.LEFT and my_position[1] > pad:
-            my_position = (my_position[0], my_position[1]-1)
+            my_position = (my_position[0], my_position[1] - 1)
         if key == Keys.RIGHT and my_position[1] < (rows - pad):
-            my_position = (my_position[0], my_position[1]+1)
+            my_position = (my_position[0], my_position[1] + 1)
         positions[self.player_id] = my_position
         return positions
 
@@ -245,9 +257,12 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
         return abs(x) + abs(y)
 
     def distances(self):
-        """Returns a dictionary keyed on player_id, with the value being another
+        """Compute distances to food.
+
+        Returns a dictionary keyed on player_id, with the value being another
         dictionary which maps the index of a food item in the positions list
-        to the distance between that player and that food item."""
+        to the distance between that player and that food item.
+        """
         distances = {}
         for player_id, position in self.player_positions.items():
             player_distances = {}
@@ -257,8 +272,11 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
         return distances
 
     def participate(self):
-        """Wait a random amount of time, then send a key according to
-        the algorithm above."""
+        """Participate in the experiment.
+
+        Wait a random amount of time, then send a key according to
+        the algorithm above.
+        """
         grid = self.wait_for_grid()
 
         # Wait for state to be available
@@ -285,10 +303,9 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
 
 
 def Bot(*args, **kwargs):
-    """Pick any bot implementation in this class based on a configuration
-    parameter.
+    """Pick a bot implementation based on a configuration parameter.
 
-    This can be set in config.txt in this directory, or by environment variable.
+    This can be set in config.txt in this directory or by environment variable.
     """
 
     bot_implementation = config.get('bot_policy', u'RandomBot')

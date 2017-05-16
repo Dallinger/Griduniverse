@@ -7,13 +7,9 @@ import random
 import time
 import uuid
 
-import gevent
 from faker import Factory
-from flask import (
-    Blueprint,
-    render_template,
-    request,
-)
+import flask
+import gevent
 from sqlalchemy import create_engine
 from sqlalchemy.orm import (
     sessionmaker,
@@ -21,10 +17,10 @@ from sqlalchemy.orm import (
 )
 
 import dallinger
-from dallinger.heroku.worker import conn as redis
 from dallinger.compat import unicode
 from dallinger.config import get_config
 from dallinger.experiment import Experiment
+from dallinger.heroku.worker import conn as redis
 
 from bots import Bot
 
@@ -658,7 +654,7 @@ def fermi(beta, p1, p2):
     return 2.0 * ((1.0 / (1 + math.exp(-beta * (p1 - p2)))) - 0.5)
 
 
-extra_routes = Blueprint(
+extra_routes = flask.Blueprint(
     'extra_routes',
     __name__,
     template_folder='templates',
@@ -667,17 +663,17 @@ extra_routes = Blueprint(
 
 @extra_routes.route('/')
 def index():
-    return render_template('index.html')
+    return flask.render_template('index.html')
 
 
 @extra_routes.route("/consent")
 def consent():
     """Return the consent form. Here for backwards-compatibility with 2.x."""
-    return render_template(
+    return flask.render_template(
         "consent.html",
-        hit_id=request.args['hit_id'],
-        assignment_id=request.args['assignment_id'],
-        worker_id=request.args['worker_id'],
+        hit_id=flask.request.args['hit_id'],
+        assignment_id=flask.request.args['assignment_id'],
+        worker_id=flask.request.args['worker_id'],
         mode=config.get('mode'),
     )
 
@@ -685,7 +681,7 @@ def consent():
 @extra_routes.route("/grid")
 def serve_grid():
     """Return the game stage."""
-    return render_template("grid.html")
+    return flask.render_template("grid.html")
 
 
 class Griduniverse(Experiment):
@@ -746,8 +742,7 @@ class Griduniverse(Experiment):
             mapping[msg['type']](msg)
 
     def send(self, raw_message):
-        """socket interface implementation, and point of entry for incoming
-        messages.
+        """Socket interface; point of entry for incoming messages.
 
         param raw_message is a string with a channel prefix, for example:
 
