@@ -44,3 +44,6 @@ snapshots/*
 
 data/*
 dlgr/griduniverse/snapshots
+
+.tox/*
+*.egg-info/*
