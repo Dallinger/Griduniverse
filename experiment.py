@@ -82,6 +82,9 @@ def extra_parameters():
         'food_planting': bool,
         'food_planting_cost': int,
         'seasonal_growth_rate': float,
+        'difi_question': bool,
+        'difi_group_label': unicode,
+        'difi_group_image': unicode,
     }
 
     for key in types:
@@ -182,6 +185,11 @@ class Gridworld(object):
         self.food_planting = kwargs.get('food_planting', False)
         self.food_planting_cost = kwargs.get('food_planting_cost', 1)
         self.seasonal_growth_rate = kwargs.get('seasonal_growth_rate', 1)
+
+        # Questionnaire
+        self.difi_question = kwargs.get('difi_question', False)
+        self.difi_group_label = kwargs.get('difi_group_label', 'Group')
+        self.difi_group_image = kwargs.get('difi_group_image', '/static/images/group.jpg')
 
         # Set some variables.
         self.players = {}
