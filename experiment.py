@@ -773,7 +773,7 @@ class Griduniverse(Experiment):
             participant = dallinger.models.Participant.query.get(player_id)
             network = self.get_network_for_participant(participant)
             if network:
-                logger.info("Found on open network. Adding participant node...")
+                logger.info("Found an open network. Adding participant node...")
                 self.create_node(participant, network)
                 logger.info("Spawning player on the grid...")
                 self.grid.spawn_player(id=player_id)
