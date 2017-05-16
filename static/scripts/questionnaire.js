@@ -81,7 +81,9 @@ DynamicIdentityFusionIndexInput.prototype.update = function () {
   value = Math.max(Math.min(Math.round(value * 1000) / 1000, 125), -100);
   this.$el.val(value);
 
-  var overlap = this.calculateOverlap(d, r, R);
+  // Compute overlap.
+  d_center_to_center = (group_pos + R) - (me_pos + r);
+  var overlap = this.calculateOverlap(d_center_to_center, r, R);
   this.$el_overlap.val(overlap);
 };
 
@@ -118,7 +120,14 @@ DynamicIdentityFusionIndexInput.prototype.calculateOverlap = function (d, r, R) 
   var x = (d*d + r*r - R*R) / (2*d*r);
   var y = (d*d + R*R - r*r) / (2*d*R);
   var z = (-d+r+R) * (d+r-R) * (d-r+R) * (d+r+R);
-  return r*r*Math.acos(x) + R*R*Math.acos(y) - Math.sqrt(z)/2;
+  overlap_area = r*r*Math.acos(x) + R*R*Math.acos(y) - Math.sqrt(z)/2;
+  if (d > r + R) {
+      return 0;
+  } else if (d < R - r) {
+      return 100;
+  } else {
+      return 100 * (overlap_area / (Math.PI*r*r));
+  }
 };
 
 
