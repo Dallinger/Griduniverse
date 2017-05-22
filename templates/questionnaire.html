@@ -58,6 +58,9 @@
         </div>
     </div>
     {% endif %}
+    {% if experiment.grid.leach_survey %}
+      {% include 'leach.html' %}
+    {% endif %}
 </form>
 <hr>
 <div>
