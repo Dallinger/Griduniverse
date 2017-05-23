@@ -3959,10 +3959,10 @@ module.exports = jQuery;
 /* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var require;/*global allow_exit, create_agent, getUrlParameter, require, settings, submitResponses */
+var require;/*global create_agent, getUrlParameter, require, settings, submitResponses */
 /*jshint esversion: 6 */
 
-(function (allow_exit, getUrlParameter, require, reqwest, settings, submitResponses) {
+(function (getUrlParameter, require, reqwest, settings, submitResponses) {
 
 var util = __webpack_require__(13);
 var grid = __webpack_require__(6);
@@ -4898,11 +4898,8 @@ function displayLeaderboards(msg, callback) {
 
 function gameOverHandler(isSpectator, player_id) {
   var callback;
-  if (isSpectator) {
-    callback = allow_exit;
-  } else {
+  if (!isSpectator) {
     callback = function () {
-      allow_exit();
       $("#dashboard").hide();
       $("#instructions").hide();
       $("#chat").hide();
@@ -4951,7 +4948,6 @@ $(document).ready(function() {
 
   // Opt out of the experiment.
   $("#opt-out").click(function() {
-    allow_exit();
     window.location.href = "/questionnaire?participant_id=" + player_id;
   });
 
@@ -4961,7 +4957,6 @@ $(document).ready(function() {
 
   // Consent to the experiment.
   $("#go-to-experiment").click(function() {
-    allow_exit();
     window.location.href = "/exp";
   });
 
@@ -5108,7 +5103,7 @@ $(document).ready(function() {
 
 });
 
-}(allow_exit, getUrlParameter, require, reqwest, settings, submitResponses));
+}(getUrlParameter, require, reqwest, settings, submitResponses));
 
 
 /***/ }),
