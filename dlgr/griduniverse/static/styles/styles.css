@@ -7,6 +7,10 @@
     display: none;
 }
 
+.loading {
+    border: 1px solid #9b4dca;
+}
+
 #dashboard { }
 
 .GroupIndicator {
