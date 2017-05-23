@@ -40,21 +40,6 @@ var pixels = grid(data, {
 
 var mouse = position(pixels.canvas);
 
-var library = {
-  donation: {
-    Frequency: {
-      Start: 734.7291558862061,
-      ChangeSpeed: 0.23966899924998872,
-      ChangeAmount: 8.440642297186233
-    },
-    Volume: {
-      Sustain: 0.09810917608846803,
-      Decay: 0.30973154812929393,
-      Punch: 0.5908451401277536
-    }
-  }
-};
-
 var start = Date.now();
 var food = [];
 var foodConsumed = [];
