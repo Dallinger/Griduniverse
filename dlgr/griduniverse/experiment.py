@@ -98,10 +98,10 @@ def extra_parameters():
 def softmax(vector, temperature=1):
     """The softmax activation function."""
     vector = [math.pow(x, temperature) for x in vector]
-    if sum(vector) != 0:
-        return [(1.0 * x) / sum(vector) for x in vector]
+    if sum(vector):
+        return [float(x) / sum(vector) for x in vector]
     else:
-        return [1.0 / len(vector) for _ in vector]
+        return [float(len(vector)) for _ in vector]
 
 
 class Gridworld(object):
