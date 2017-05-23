@@ -32,6 +32,7 @@
     settings.donation_group = {% if experiment.grid.donation_group %}true{% else %}false{% endif %};
     settings.donation_public = {% if experiment.grid.donation_public %}true{% else %}false{% endif %};
     settings.donation_type = null;
+    settings.score_visible = {% if experiment.grid.score_visible %}true{% else %}false{% endif %};
 </script>
 {% endblock %}
 
