@@ -87,10 +87,21 @@ def extra_parameters():
         'difi_group_label': unicode,
         'difi_group_image': unicode,
         'leach_survey': bool,
+        'intergroup_competition': float,
+        'intragroup_competition': float,
     }
 
     for key in types:
         config.register(key, types[key])
+
+
+def softmax(vector, temperature=1):
+    """The softmax activation function."""
+    vector = [math.pow(x, temperature) for x in vector]
+    if sum(vector):
+        return [float(x) / sum(vector) for x in vector]
+    else:
+        return [float(len(vector)) for _ in vector]
 
 
 class Gridworld(object):
@@ -173,6 +184,8 @@ class Gridworld(object):
         self.frequency_dependent_payoff_rate = kwargs.get(
             'frequency_dependent_payoff_rate', 0)
         self.donation = kwargs.get('donation', 0)
+        self.intergroup_competition = kwargs.get('intergroup_competition', 1)
+        self.intragroup_competition = kwargs.get('intragroup_competition', 1)
 
         # Food
         self.num_food = kwargs.get('num_food', 8)
@@ -558,6 +571,7 @@ class Player(object):
         self.motion_tremble_rate = kwargs.get('motion_tremble_rate', 0)
         self.grid = kwargs.get('grid', None)
         self.score = kwargs.get('score', 0)
+        self.payoff = kwargs.get('payoff', 0)
         self.pseudonym_locale = kwargs.get('pseudonym_locale', 'en_US')
 
         # Determine the player's color.
@@ -652,6 +666,7 @@ class Player(object):
             "id": self.id,
             "position": self.position,
             "score": self.score,
+            "payoff": self.payoff,
             "color": self.color,
             "motion_auto": self.motion_auto,
             "motion_direction": self.motion_direction,
@@ -957,6 +972,47 @@ class Griduniverse(Experiment):
             if self.grid.game_over:
                 return
 
+    def compute_payoffs(self):
+        """Compute payoffs from scores.
+
+        A player's payoff in the game can be expressed as the product of four
+        factors: the grand total number of points earned by all players, the
+        (softmax) proportion of the total points earned by the player's group,
+        the (softmax) proportion of the group's points earned by the player,
+        and the number of dollars per point.
+
+        Softmaxing the two proportions implements intragroup and intergroup
+        competition. When the parameters are 1, payoff is proportional to what
+        was scored and so there is no extrinsic competition. Increasing the
+        temperature introduces competition. For example, at 2, a pair of groups
+        that score in a 2:1 ratio will get payoff in a 4:1 ratio, and therefore
+        it pays to be in the highest-scoring group. The same logic applies to
+        intragroup competition: when the temperature is 2, a pair of players
+        within a group that score in a 2:1 ratio will get payoff in a 4:1
+        ratio, and therefore it pays to be a group's highest-scoring member.
+        """
+        players = self.grid.players.values()
+        group_scores = []
+        for g in range(len(Gridworld.player_colors)):
+            ingroup_players = [p for p in players if p.color_idx == g]
+            ingroup_scores = [p.score for p in ingroup_players]
+            group_scores.append(sum(ingroup_scores))
+            intra_proportions = softmax(
+                ingroup_scores,
+                temperature=self.grid.intragroup_competition,
+            )
+            for i, player in enumerate(ingroup_players):
+                player.payoff = sum([p.score for p in players])  # grand score
+                player.payoff *= intra_proportions[i]
+
+        inter_proportions = softmax(
+            group_scores,
+            temperature=self.grid.intergroup_competition,
+        )
+        for player in players:
+            player.payoff *= inter_proportions[player.color_idx]
+            player.payoff *= self.grid.dollars_per_point
+
     def game_loop(self):
         """Update the world state."""
         from dallinger.db import db_url
@@ -1041,6 +1097,7 @@ class Griduniverse(Experiment):
 
                 previous_second_timestamp = now
 
+            self.compute_payoffs()
             self.grid.check_round_completion()
 
         self.publish({'type': 'stop'})
