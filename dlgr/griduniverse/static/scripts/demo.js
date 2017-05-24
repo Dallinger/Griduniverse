@@ -77,6 +77,7 @@ var Player = function(settings) {
   this.motion_speed_limit = settings.motion_speed_limit;
   this.motion_timestamp = settings.motion_timestamp;
   this.score = settings.score;
+  this.payoff = settings.payoff;
   this.name = settings.name;
   return this;
 };
@@ -540,9 +541,7 @@ function onGameStateChange(msg) {
   // Update displayed score.
   if (ego !== undefined) {
     $("#score").html(Math.round(ego.score));
-    dollars = (ego.score * settings.dollars_per_point).toFixed(2);
-    $("#dollars").html(dollars);
-
+    $("#dollars").html(ego.payoff.toFixed(2));
     window.state = msg.grid;
     window.ego = ego.id;
   }
