@@ -283,6 +283,102 @@ class Gridworld(object):
         return [f for f in self.food
                 if f.maturity >= self.food_maturation_threshold]
 
+    @property
+    def instructions(self):
+        text = """<p>The objective of the game is to score the most points
+            before the game ends. The game is played on a {g.columns} x {g.rows}
+            grid, where each player occupies one block."""
+        if self.walls_density > 0:
+            text += """ There are walls throughout the grid, which the players
+               can not pass."""
+            if not self.walls_visible:
+                text += " However, the walls are not visible."
+        if self.num_rounds > 1:
+            text += """The game lasts {g.num_rounds} rounds, each one with a
+                duration of {g.time_per_round} seconds.</p>"""
+        else:
+            text += "The game duration is {g.time_per_round} seconds.</p>"
+        if self.num_players > 1:
+            text += """<p>There are up to {g.num_players} players participating
+                in the game."""
+            if self.num_colors > 1:
+                text += """ Each player will be one of {g.num_colors} available
+                    colors."""
+                if not self.others_visible:
+                    text += """ However, players can not see each other on the
+                        grid."""
+                if self.mutable_colors:
+                    text += " Players can change color using the 'c' key."
+                    if self.costly_colors:
+                        text += """ Changing color has a different cost in
+                            points for each color, which is random, but always
+                            the same for a given color."""
+                if self.contagion > 0:
+                    text += """ If a player is at a distance of {g.contagion}
+                        blocks or less from another player, it can be infected
+                        by that player, and if so will assume its color."""
+                    if self.contagion_hierarchy:
+                        text += """ Contagion is more likely for some colors than
+                            others, according to a random hierarchy set at the
+                            start of the game."""
+                    if self.frequency_dependence > 0:
+                        text += """ Players will get more points if they have
+                            the same color as the majority of the players."""
+        text += "</p><p>Players move around the grid using the cursor keys."
+        if self.player_overlap:
+            text += " More than one player can occupy a block at the same time."
+        else:
+            text += """ A player can not occupy a block where a player is
+                already present."""
+        if self.visibility < max(self.rows, self.columns):
+            text += """ Players can not see the whole grid, but only an area
+                {g.visibility} blocks around their current position."""
+        if self.motion_auto:
+            text += """ Once a player presses a key to move, it will continue to
+                move in the same direction automatically until another key is
+                pressed."""
+        if self.motion_cost > 0:
+            text += " Each movement costs the player {g.motion_cost} points."
+        if self.motion_tremble_rate > 0 and self.motion_tremble_rate < 0.4:
+            text += """ Some of the time, movement will not be in  the chosen
+                direction, but random."""
+        if self.motion_tremble_rate >= 0.4 and self.motion_tremble_rate < 0.7:
+            text += """ Movement will not be in  the chosen direction most of the
+                time, but random."""
+        if self.motion_tremble_rate >= 0.7:
+            text += """ Movement commands will be ignored almost all of the time,
+                and the player will move in a random direction instead."""
+        text += """</p><p>Players gain points by getting to squares that have
+            food on them. Each piece of food is worth {g.food_reward} points.
+            When the game starts there are {g.num_food} pieces of food on the
+            grid."""
+        if self.respawn_food:
+            text += " Food is automatically respawned after it is consumed."
+            if self.food_maturation_threshold > 0:
+                text += """It will not appear immediately, though, because it has
+                    a maturation period. It will show up when it is mature."""
+        if self.food_planting:
+            text += " Players can plant more food by pressing the spacebar."
+            if self.food_planting_cost > 0:
+                text += """ The cost for planting food is {g.food_planting_cost}
+                    points."""
+        text += "</p>"
+        if self.donation > 0:
+            text += """<p>Depending on the game situation, it can be helpful to
+                donate points to other players. You can donate {g.donation}
+                points to any player by clicking on their block on the grid.</p>
+                """
+        if self.show_chatroom:
+            text += """<p>A chatroom is available to send messages to the other
+                players."""
+            if self.pseudonyms:
+                text += " Player names shown on the chat window are pseudonyms."
+            text += "</p>"
+        if self.dollars_per_point > 0:
+            text += """<p>You will receive ${g.dollars_per_point} for each point
+                that you score at the end of the game.</p>"""
+        return text.format(g=self)
+
     def consume(self):
         """Players consume the food."""
         for food in self.food_mature:
