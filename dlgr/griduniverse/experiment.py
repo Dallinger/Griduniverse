@@ -268,6 +268,47 @@ class Gridworld(object):
             for player in self.players.values():
                 player.motion_timestamp = 0
 
+    def compute_payoffs(self):
+        """Compute payoffs from scores.
+
+        A player's payoff in the game can be expressed as the product of four
+        factors: the grand total number of points earned by all players, the
+        (softmax) proportion of the total points earned by the player's group,
+        the (softmax) proportion of the group's points earned by the player,
+        and the number of dollars per point.
+
+        Softmaxing the two proportions implements intragroup and intergroup
+        competition. When the parameters are 1, payoff is proportional to what
+        was scored and so there is no extrinsic competition. Increasing the
+        temperature introduces competition. For example, at 2, a pair of groups
+        that score in a 2:1 ratio will get payoff in a 4:1 ratio, and therefore
+        it pays to be in the highest-scoring group. The same logic applies to
+        intragroup competition: when the temperature is 2, a pair of players
+        within a group that score in a 2:1 ratio will get payoff in a 4:1
+        ratio, and therefore it pays to be a group's highest-scoring member.
+        """
+        players = self.players.values()
+        group_scores = []
+        for g in range(len(self.player_colors)):
+            ingroup_players = [p for p in players if p.color_idx == g]
+            ingroup_scores = [p.score for p in ingroup_players]
+            group_scores.append(sum(ingroup_scores))
+            intra_proportions = softmax(
+                ingroup_scores,
+                temperature=self.intragroup_competition,
+            )
+            for i, player in enumerate(ingroup_players):
+                player.payoff = sum([p.score for p in players])  # grand score
+                player.payoff *= intra_proportions[i]
+
+        inter_proportions = softmax(
+            group_scores,
+            temperature=self.intergroup_competition,
+        )
+        for player in players:
+            player.payoff *= inter_proportions[player.color_idx]
+            player.payoff *= self.dollars_per_point
+
     def _start_if_ready(self):
         # Don't start unless we have a least one player
         if self.players and not self.game_started:
@@ -876,47 +917,6 @@ class Griduniverse(Experiment):
             if self.grid.game_over:
                 return
 
-    def compute_payoffs(self):
-        """Compute payoffs from scores.
-
-        A player's payoff in the game can be expressed as the product of four
-        factors: the grand total number of points earned by all players, the
-        (softmax) proportion of the total points earned by the player's group,
-        the (softmax) proportion of the group's points earned by the player,
-        and the number of dollars per point.
-
-        Softmaxing the two proportions implements intragroup and intergroup
-        competition. When the parameters are 1, payoff is proportional to what
-        was scored and so there is no extrinsic competition. Increasing the
-        temperature introduces competition. For example, at 2, a pair of groups
-        that score in a 2:1 ratio will get payoff in a 4:1 ratio, and therefore
-        it pays to be in the highest-scoring group. The same logic applies to
-        intragroup competition: when the temperature is 2, a pair of players
-        within a group that score in a 2:1 ratio will get payoff in a 4:1
-        ratio, and therefore it pays to be a group's highest-scoring member.
-        """
-        players = self.grid.players.values()
-        group_scores = []
-        for g in range(len(Gridworld.player_colors)):
-            ingroup_players = [p for p in players if p.color_idx == g]
-            ingroup_scores = [p.score for p in ingroup_players]
-            group_scores.append(sum(ingroup_scores))
-            intra_proportions = softmax(
-                ingroup_scores,
-                temperature=self.grid.intragroup_competition,
-            )
-            for i, player in enumerate(ingroup_players):
-                player.payoff = sum([p.score for p in players])  # grand score
-                player.payoff *= intra_proportions[i]
-
-        inter_proportions = softmax(
-            group_scores,
-            temperature=self.grid.intergroup_competition,
-        )
-        for player in players:
-            player.payoff *= inter_proportions[player.color_idx]
-            player.payoff *= self.grid.dollars_per_point
-
     def game_loop(self):
         """Update the world state."""
         from dallinger.db import db_url
@@ -1001,7 +1001,7 @@ class Griduniverse(Experiment):
 
                 previous_second_timestamp = now
 
-            self.compute_payoffs()
+            self.grid.compute_payoffs()
             self.grid.check_round_completion()
 
         self.publish({'type': 'stop'})
