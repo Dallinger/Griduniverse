@@ -79,6 +79,7 @@ var Player = function(settings) {
   this.score = settings.score;
   this.payoff = settings.payoff;
   this.name = settings.name;
+  this.identity_visible = settings.identity_visible;
   return this;
 };
 
@@ -163,7 +164,7 @@ var playerSet = (function () {
             player.move(player.motion_direction);
           }
           idx = player.position[0] * settings.columns + player.position[1];
-          if (id == this.ego_id || settings.others_visible) {
+          if (id == this.ego_id || (settings.others_visible && player.identity_visible)) {
             grid[idx] = player.color;
           }
         }
@@ -448,6 +449,19 @@ function bindGameKeys(socket) {
         type: "change_color",
         player: players.ego().id,
         color: players.ego().color
+      };
+      socket.send(msg);
+    });
+  }
+
+  if (settings.identity_signaling) {
+    Mousetrap.bind("v", function () {
+      var ego = players.ego();
+      ego.identity_visible = !ego.identity_visible;
+      var msg = {
+        type: "toggle_visible",
+        player: ego.id,
+        identity_visible: ego.identity_visible
       };
       socket.send(msg);
     });
