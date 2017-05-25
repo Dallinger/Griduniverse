@@ -2888,7 +2888,6 @@ function onDonationProcessed(msg) {
 
 function onGameStateChange(msg) {
   var ego,
-      dollars,
       state;
 
   // Update remaining time.
