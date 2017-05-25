@@ -211,14 +211,14 @@ Amount if points to tax each player for each second on the grid. Default is
 relative_deprivation
 --------------------
 
-When food is cosumed, multiply food reward by this factor to get total reward.
+When food is consumed, multiply food reward by this factor to get total reward.
 Defaults to 1.
 
 
 frequency_dependence
 --------------------
 
-The value here is used to calculate a payoff to add to the players score
+The value here is used to calculate a payoff to add to the player's score
 according to the frequency of their color. Higher values mean higher payoff. The
 default is 0.
 
@@ -320,7 +320,8 @@ The label to use for the group when asking the DIFI question at the end.
 difi_group_image
 ----------------
 
-The group image to use when asking the DIFI question at the end. 
+URI to the group image to use when asking the DIFI question at the end. Default
+is "/static/images/group.jpg".
 
 
 leach_survey
