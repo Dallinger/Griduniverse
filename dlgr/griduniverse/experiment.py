@@ -1,5 +1,7 @@
 """The Griduniverse."""
 
+import flask
+import gevent
 import json
 import logging
 import math
@@ -7,9 +9,8 @@ import random
 import time
 import uuid
 
+from cached_property import cached_property
 from faker import Factory
-import flask
-import gevent
 from sqlalchemy import create_engine
 from sqlalchemy.orm import (
     sessionmaker,
@@ -761,6 +762,22 @@ class Griduniverse(Experiment):
         self.network_factory = config.get('network', 'FullyConnected')
 
     @property
+    def environment(self):
+        environment = self.session.query(dallinger.nodes.Environment).one()
+
+        return environment
+
+    @cached_property
+    def session(self):
+        from dallinger.db import db_url
+        engine = create_engine(db_url, pool_size=1000)
+        session = scoped_session(
+            sessionmaker(autocommit=False, autoflush=True, bind=engine)
+        )
+
+        return session
+
+    @property
     def background_tasks(self):
         return [
             self.send_state_thread,
@@ -784,6 +801,25 @@ class Griduniverse(Experiment):
 
     def recruit(self):
         self.recruiter().close_recruitment()
+
+    def bonus(self, participant):
+        """The bonus to be awarded to the given participant.
+
+        Return the value of the bonus to be paid to `participant`.
+        """
+        data = self._last_state_for_player(participant.id)
+        if not data:
+            return 0.0
+
+        return float("{0:.2f}".format(data['payoff']))
+
+    def bonus_reason(self):
+        """The reason offered to the participant for giving the bonus.
+        """
+        return (
+            "Thank for participating! You earned a bonus based on your "
+            "performance in Griduniverse!"
+        )
 
     def dispatch(self, msg):
         """Route to the appropriate method based on message type"""
@@ -919,18 +955,7 @@ class Griduniverse(Experiment):
 
     def game_loop(self):
         """Update the world state."""
-        from dallinger.db import db_url
-        engine = create_engine(db_url, pool_size=1000)
-        session = scoped_session(
-            sessionmaker(
-                autocommit=False,
-                autoflush=True,
-                bind=engine
-            )
-        )
-
         gevent.sleep(0.200)
-        environment = session.query(dallinger.nodes.Environment).one()
 
         while not self.grid.game_started:
             gevent.sleep(0.01)
@@ -939,9 +964,9 @@ class Griduniverse(Experiment):
 
         while not self.grid.game_over:
             # Record grid state to database
-            state = environment.update(self.grid.serialize())
-            session.add(state)
-            session.commit()
+            state = self.environment.update(self.grid.serialize())
+            self.session.add(state)
+            self.session.commit()
 
             gevent.sleep(0.010)
 
@@ -1015,3 +1040,10 @@ class Griduniverse(Experiment):
         players = final_state['players']
         scores = [player['score'] for player in players]
         return float(sum(scores)) / len(scores)
+
+    def _last_state_for_player(self, player_id):
+        most_recent_grid_state = self.environment.state()
+        players = json.loads(most_recent_grid_state.contents)['players']
+        id_matches = [p for p in players if int(p['id']) == player_id]
+        if id_matches:
+            return id_matches[0]
