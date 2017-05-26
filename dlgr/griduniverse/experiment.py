@@ -929,23 +929,21 @@ class Griduniverse(Experiment):
     def handle_donation(self, msg):
         """Send a donation from one player to another."""
         recipients = []
-        recipient = msg['recipient_id']
-        if recipient.startswith('group:'):
-            if self.grid.donation_group:
-                group = recipient[6:]
-                for player in self.grid.players.values():
-                    if (player.color_idx == int(group) and
-                            player.id != msg['donor_id']):
-                        recipients.append(player)
-        elif recipient == 'all':
-            if self.grid.donation_public:
-                recipients = [p for p in self.grid.players.values()
-                              if p.id != msg['donor_id']]
+        recipient_id = msg['recipient_id']
+        if recipient_id.startswith('group:') and self.grid.donation_group:
+            group = recipient_id[6:]
+            for player in self.grid.players.values():
+                if (player.color_idx == int(group) and
+                        player.id != msg['donor_id']):
+                    recipients.append(player)
+        elif recipient_id == 'all' and self.grid.donation_public:
+            recipients = [p for p in self.grid.players.values()
+                          if p.id != msg['donor_id']]
         else:
             if self.grid.donation_individual:
-                recipient_player = self.grid.players.get(recipient)
-                if recipient_player:
-                    recipients.append(recipient_player)
+                recipient = self.grid.players.get(recipient_id)
+                if recipient:
+                    recipients.append(recipient)
         donor = self.grid.players[msg['donor_id']]
         donation = msg['amount']
 

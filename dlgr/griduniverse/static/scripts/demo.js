@@ -501,7 +501,7 @@ function onChatMessage(msg) {
 function onDonationProcessed(msg) {
   var ego = players.ego(),
       donor = players.get(msg.donor_id),
-      recipient = msg.recipient_id,
+      recipient_id = msg.recipient_id,
       team_idx,
       donor_name,
       recipient_name,
@@ -513,15 +513,15 @@ function onDonationProcessed(msg) {
     donor_name = "Player " + donor.name;
   }
 
-  if (recipient === ego.id) {
+  if (recipient_id === ego.id) {
     recipient_name = 'you';
-  } else if (recipient === 'all') {
+  } else if (recipient_id === 'all') {
     recipient_name = 'all players';
-  } else if (recipient.indexOf('group:') == 0) {
-    team_idx = +recipient.substring(6);
+  } else if (recipient_id.indexOf('group:') == 0) {
+    team_idx = +recipient_id.substring(6);
     recipient_name = 'all ' + Object.keys(PLAYER_COLORS)[team_idx] + ' players';
   } else {
-    recipient_name = players.get(recipient).name;
+    recipient_name = players.get(recipient_id).name;
   }
 
   entry = donor_name + " gave " + recipient_name + " " + msg.amount;
