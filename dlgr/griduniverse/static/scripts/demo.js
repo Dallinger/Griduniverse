@@ -9,6 +9,7 @@ var Mousetrap = require("mousetrap");
 var ReconnectingWebSocket = require("reconnecting-websocket");
 var $ = require("jquery");
 var gaussian = require("gaussian");
+var Color = require('color');
 
 var data = [];
 var background = [];
@@ -166,7 +167,11 @@ var playerSet = (function () {
           }
           idx = player.position[0] * settings.columns + player.position[1];
           if (id == this.ego_id || settings.others_visible) {
-            grid[idx] = player.identity_visible ? player.color : INVISIBLE_COLOR;
+            if (player.identity_visible) {
+              grid[idx] = player.color;
+            } else {
+              grid[idx] = (id == this.ego_id) ? Color.rgb(player.color).desaturate(0.6).rgb().array() : INVISIBLE_COLOR;
+            }
           }
         }
       }
