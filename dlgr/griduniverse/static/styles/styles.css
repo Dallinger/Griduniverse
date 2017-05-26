@@ -164,3 +164,26 @@ canvas {
     transform: translate(-50%, -100%);
     white-space: nowrap;
 }
+
+#donate button {
+    padding: 0 0.5rem;
+    text-transform: uppercase;
+    font-weight: bold;
+    line-height: 2.5rem;
+    height: auto;
+}
+
+#donate label {
+    display: inline;
+    padding-right: 0.5rem;
+}
+
+button#individual-donate:not(.enabled), button#group-donate:not(.enabled) {
+    color: #9b4dca;
+    background-color: #ffffff;
+}
+
+#donate button:focus, #donate button:hover {
+    color: #ffffff;
+    background-color: #9b4dca;
+}

@@ -4479,10 +4479,10 @@ function onGameStateChange(msg) {
     window.ego = ego.id;
     if (settings.donation_amount && ego.score >= settings.donation_amount && players.count() > 1) {
       $('#donation-instructions').text(DONATION_INSTRUCTIONS[settings.donation_type]);
-      $('#public-donate, #group-donate').prop('disabled', false);
+      $('#individual-donate, #group-donate, #public-donate').prop('disabled', false);
     } else {
       $('#donation-instructions').text('');
-      $('#group-donate, #public-donate').prop('disabled', true);
+      $('#individual-donate, #group-donate, #public-donate').prop('disabled', true);
     }
   }
 }
@@ -4673,12 +4673,18 @@ $(document).ready(function() {
     });
     $('#public-donate').click(donateToAll);
     $('#group-donate').click(function () {
-      if (settings.donation_group && settings.donation_type != 'group') {
+      if (settings.donation_group) {
         settings.donation_type = 'group';
-        $(this).text('Donate to player');
-      } else if (settings.donation_individual) {
+        $(this).prop('disabled', false);
+        $(this).addClass('enabled');
+        $('#individual-donate').removeClass('enabled');
+      }
+    });
+    $('#individual-donate').click(function () {
+      if (settings.donation_individual) {
         settings.donation_type = 'individual';
-        $(this).text('Donate to group');
+        $(this).addClass('enabled');
+        $('#group-donate').removeClass('enabled');
       }
     });
   }
