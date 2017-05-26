@@ -2778,6 +2778,13 @@ function arraysEqual(arr1, arr2) {
   return true;
 }
 
+function arraySearch(arr, val) {
+    for (var i = 0; i < arr.length; i++)
+        if (arraysEqual(arr[i], val))
+            return i;
+    return false;
+}
+
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -2818,26 +2825,21 @@ function bindGameKeys(socket) {
     socket.send(msg);
   });
 
-  function createBinding (key) {
-    Mousetrap.bind(key[0].toLowerCase(), function () {
-      players.ego().color = PLAYER_COLORS[key];
+  if (settings.mutable_colors) {
+    Mousetrap.bind('c', function () {
+      keys = Object.keys(PLAYER_COLORS);
+      values = Object.values(PLAYER_COLORS);
+      index = arraySearch(values, players.ego().color);
+      nextItem = keys[(index + 1) % keys.length];
+      players.ego().color = PLAYER_COLORS[nextItem];
       var msg = {
         type: "change_color",
         player: players.ego().id,
-        color: PLAYER_COLORS[key]
+        color: players.ego().color
       };
       socket.send(msg);
     });
   }
-
-  if (settings.mutable_colors) {
-    for (var key in PLAYER_COLORS) {
-      if (PLAYER_COLORS.hasOwnProperty(key)) {
-        createBinding(key);
-      }
-    }
-  }
-
 }
 
 function onChatMessage(msg) {
