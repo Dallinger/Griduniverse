@@ -26,6 +26,7 @@ var PLAYER_COLORS = {
 };
 var GREEN = [0.51, 0.69, 0.61];
 var WHITE = [1.00, 1.00, 1.00];
+var INVISIBLE_COLOR = [0.66, 0.66, 0.66];
 var CHANNEL = "griduniverse";
 var CONTROL_CHANNEL = "griduniverse_ctrl";
 
@@ -164,8 +165,8 @@ var playerSet = (function () {
             player.move(player.motion_direction);
           }
           idx = player.position[0] * settings.columns + player.position[1];
-          if (id == this.ego_id || (settings.others_visible && player.identity_visible)) {
-            grid[idx] = player.color;
+          if (id == this.ego_id || settings.others_visible) {
+            grid[idx] = player.identity_visible ? player.color : INVISIBLE_COLOR;
           }
         }
       }
