@@ -4,6 +4,7 @@ import json
 import logging
 import math
 import random
+import string
 import time
 import uuid
 
@@ -29,6 +30,19 @@ config = get_config()
 
 # Make bot importable without triggering style warnings
 Bot = Bot
+
+
+class PluralFormatter(string.Formatter):
+    def format_field(self, value, format_spec):
+        if format_spec.startswith('plural'):
+            words = format_spec.split(',')
+            if value == 1 or value == '1' or value == 1.0:
+                return words[1]
+            else:
+                return words[2]
+        else:
+            return super(PluralFormatter, self).format_field(value, format_spec)
+formatter = PluralFormatter()
 
 
 def extra_parameters():
@@ -365,7 +379,8 @@ class Gridworld(object):
                 continue to move in the same direction automatically until
                 another key is pressed."""
         if self.motion_cost > 0:
-            text += " Each movement costs the player {g.motion_cost} points."
+            text += """ Each movement costs the player {g.motion_cost}
+                        {g.motion_cost:plural, point, points}."""
         if self.motion_tremble_rate > 0 and self.motion_tremble_rate < 0.4:
             text += """ Some of the time, movement will not be in the chosen
                 direction, but random."""
@@ -376,8 +391,9 @@ class Gridworld(object):
             text += """ Movement commands will be ignored almost all of the time,
                 and the player will move in a random direction instead."""
         text += """</p><p>Players gain points by getting to squares that have
-            food on them. Each piece of food is worth {g.food_reward} points.
-            When the game starts there are {g.num_food} pieces of food on the
+            food on them. Each piece of food is worth {g.food_reward}
+            {g.food_reward:plural, point, points}. When the game starts there
+            are {g.num_food} {g.num_food:plural, piece, pieces} of food on the
             grid. Food is represented by a green"""
         if self.food_maturation_threshold > 0:
             text += " or brown"
@@ -392,12 +408,12 @@ class Gridworld(object):
             text += " Players can plant more food by pressing the spacebar."
             if self.food_planting_cost > 0:
                 text += """ The cost for planting food is {g.food_planting_cost}
-                    points."""
+                {g.food_planting_cost:plural, point, points}."""
         text += "</p>"
         if self.donation > 0:
             text += """<p>It can be helpful to donate points to other players.
-                You can donate {g.donation} points to any player by clicking on
-                their block on the grid.</p>
+                You can donate {g.donation} {g.donation:plural, point, points}
+                to any player by clicking on their block on the grid.</p>
                 """
         if self.show_chatroom:
             text += """<p>A chatroom is available to send messages to the other
@@ -408,10 +424,11 @@ class Gridworld(object):
         if self.dollars_per_point > 0:
             text += """<p>You will receive ${g.dollars_per_point} for each point
                 that you score at the end of the game.</p>"""
-        return text.format(g=self,
-                           order=order,
-                           color_costs=color_costs,
-                           color_list=', '.join(self.player_color_names))
+        return formatter.format(text,
+                                g=self,
+                                order=order,
+                                color_costs=color_costs,
+                                color_list=', '.join(self.player_color_names))
 
     def consume(self):
         """Players consume the food."""
