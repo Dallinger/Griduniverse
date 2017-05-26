@@ -21,6 +21,8 @@
     settings.show_grid = {% if experiment.grid.show_grid %}true{% else %}false{% endif %};
     settings.visibility = {{ experiment.grid.visibility }};
     settings.others_visible = {% if experiment.grid.others_visible %}true{% else %}false{% endif %};
+    settings.identity_signaling = {% if experiment.grid.identity_signaling %}true{% else %}false{% endif %};
+    settings.identity_starts_visible = {% if experiment.grid.identity_starts_visible %}true{% else %}false{% endif %};
     settings.food_visible = {% if experiment.grid.food_visible %}true{% else %}false{% endif %};
     settings.show_chatroom = {% if experiment.grid.show_chatroom %}true{% else %}false{% endif %};
     settings.donation = {{ experiment.grid.donation }};
@@ -58,11 +60,13 @@
 
 <div id="instructions" class="for-players">
     <h1>Instructions</h1>
-    <p>You are one of the squares. Move using the arrow keys.
+    <p>You are one of the squares. Move using the arrow keys.</p>
     {% if experiment.grid.mutable_colors %}
-        Press 'b' or 'y' to switch to blue or yellow.
+        <p>Press 'b' or 'y' to switch to blue or yellow.</p>
     {% endif %}
-    </p>
+    {% if experiment.grid.identity_signaling %}
+        <p>Your group is initially {% if experiment.grid.identity_starts_visible %}visible{% else %}invisible{% endif %} to other players. Press 'v' to toggle your group visibility.</p>
+    {% endif %}
 </div>
 
 <script src="static/scripts/bundle.js"></script>

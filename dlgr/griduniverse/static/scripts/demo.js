@@ -9,6 +9,7 @@ var Mousetrap = require("mousetrap");
 var ReconnectingWebSocket = require("reconnecting-websocket");
 var $ = require("jquery");
 var gaussian = require("gaussian");
+var Color = require('color');
 
 var data = [];
 var background = [];
@@ -26,6 +27,7 @@ var PLAYER_COLORS = {
 };
 var GREEN = [0.51, 0.69, 0.61];
 var WHITE = [1.00, 1.00, 1.00];
+var INVISIBLE_COLOR = [0.66, 0.66, 0.66];
 var CHANNEL = "griduniverse";
 var CONTROL_CHANNEL = "griduniverse_ctrl";
 
@@ -79,6 +81,7 @@ var Player = function(settings) {
   this.score = settings.score;
   this.payoff = settings.payoff;
   this.name = settings.name;
+  this.identity_visible = settings.identity_visible;
   return this;
 };
 
@@ -164,7 +167,11 @@ var playerSet = (function () {
           }
           idx = player.position[0] * settings.columns + player.position[1];
           if (id == this.ego_id || settings.others_visible) {
-            grid[idx] = player.color;
+            if (player.identity_visible) {
+              grid[idx] = player.color;
+            } else {
+              grid[idx] = (id == this.ego_id) ? Color.rgb(player.color).desaturate(0.6).rgb().array() : INVISIBLE_COLOR;
+            }
           }
         }
       }
@@ -448,6 +455,19 @@ function bindGameKeys(socket) {
         type: "change_color",
         player: players.ego().id,
         color: players.ego().color
+      };
+      socket.send(msg);
+    });
+  }
+
+  if (settings.identity_signaling) {
+    Mousetrap.bind("v", function () {
+      var ego = players.ego();
+      ego.identity_visible = !ego.identity_visible;
+      var msg = {
+        type: "toggle_visible",
+        player: ego.id,
+        identity_visible: ego.identity_visible
       };
       socket.send(msg);
     });

@@ -90,6 +90,8 @@ def extra_parameters():
         'leach_survey': bool,
         'intergroup_competition': float,
         'intragroup_competition': float,
+        'identity_signaling': bool,
+        'identity_starts_visible': bool,
     }
 
     for key in types:
@@ -170,6 +172,9 @@ class Gridworld(object):
         self.pseudonyms_gender = kwargs.get('pseudonyms_gender', None)
         self.contagion = kwargs.get('contagion', 0)
         self.contagion_hierarchy = kwargs.get('contagion_hierarchy', False)
+        self.identity_signaling = kwargs.get('identity_signaling', False)
+        self.identity_starts_visible = kwargs.get('identity_starts_visible',
+                                                  False)
 
         # Walls
         self.walls_visible = kwargs.get('walls_visible', True)
@@ -387,6 +392,8 @@ class Gridworld(object):
             pseudonym_locale=self.pseudonyms_locale,
             pseudonym_gender=self.pseudonyms_gender,
             grid=self,
+            identity_visible=(not self.identity_signaling or
+                              self.identity_starts_visible),
         )
         self.players[id] = player
         self._start_if_ready()
@@ -519,6 +526,7 @@ class Player(object):
         self.score = kwargs.get('score', 0)
         self.payoff = kwargs.get('payoff', 0)
         self.pseudonym_locale = kwargs.get('pseudonym_locale', 'en_US')
+        self.identity_visible = kwargs.get('identity_visible', True)
 
         # Determine the player's color.
         if 'color' in kwargs:
@@ -619,6 +627,7 @@ class Player(object):
             "motion_speed_limit": self.motion_speed_limit,
             "motion_timestamp": self.motion_timestamp,
             "name": self.name,
+            "identity_visible": self.identity_visible,
         }
 
 
@@ -831,6 +840,7 @@ class Griduniverse(Experiment):
             'move': self.handle_move,
             'donation_submitted': self.handle_donation,
             'plant_food': self.handle_plant_food,
+            'toggle_visible': self.handle_toggle_visible,
         }
         if msg['type'] in mapping:
             mapping[msg['type']](msg)
@@ -934,6 +944,10 @@ class Griduniverse(Experiment):
         if (can_afford and not self.grid.has_food(position)):
             player.score -= self.grid.food_planting_cost
             self.grid.spawn_food(position=position)
+
+    def handle_toggle_visible(self, msg):
+        player = self.grid.players[msg['player']]
+        player.identity_visible = msg['identity_visible']
 
     def send_state_thread(self):
         """Publish the current state of the grid and game"""
