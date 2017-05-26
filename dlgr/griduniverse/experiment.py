@@ -955,13 +955,13 @@ class Griduniverse(Experiment):
                 donation = round(donation * 1.0 / len(recipients), 2)
             for recipient in recipients:
                 recipient.score += donation
-                message = {
-                    'type': 'donation_processed',
-                    'donor_id': msg['donor_id'],
-                    'recipient_id': recipient.id,
-                    'amount': donation,
-                }
-                self.publish(message)
+            message = {
+                'type': 'donation_processed',
+                'donor_id': msg['donor_id'],
+                'recipient_id': msg['recipient_id'],
+                'amount': donation,
+            }
+            self.publish(message)
 
     def handle_plant_food(self, msg):
         player = self.grid.players[msg['player']]
