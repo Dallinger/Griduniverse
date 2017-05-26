@@ -72,7 +72,10 @@ def extra_parameters():
         'relative_deprivation': float,
         'frequency_dependence': float,
         'frequency_dependent_payoff_rate': float,
-        'donation': int,
+        'donation_amount': int,
+        'donation_individual': bool,
+        'donation_group': bool,
+        'donation_public': bool,
         'num_food': int,
         'respawn_food': bool,
         'food_visible': bool,
@@ -189,7 +192,10 @@ class Gridworld(object):
         self.frequency_dependence = kwargs.get('frequency_dependence', 0)
         self.frequency_dependent_payoff_rate = kwargs.get(
             'frequency_dependent_payoff_rate', 0)
-        self.donation = kwargs.get('donation', 0)
+        self.donation_amount = kwargs.get('donation_amount', 0)
+        self.donation_individual = kwargs.get('donation_individual', False)
+        self.donation_group = kwargs.get('donation_group', False)
+        self.donation_public = kwargs.get('donation_public', False)
         self.intergroup_competition = kwargs.get('intergroup_competition', 1)
         self.intragroup_competition = kwargs.get('intragroup_competition', 1)
 
@@ -922,13 +928,29 @@ class Griduniverse(Experiment):
 
     def handle_donation(self, msg):
         """Send a donation from one player to another."""
-        recipient = self.grid.players[msg['recipient_id']]
+        recipients = []
+        recipient = msg['recipient_id']
+        if recipient.startswith('group:'):
+            if self.grid.donation_group:
+                group = recipient[6:]
+                for player in self.grid.players:
+                    if player.color_idx == int(group):
+                        recipients.append(player)
+        elif recipient == 'all':
+            if self.grid.donation_public:
+                recipients = self.grid.players
+        else:
+            if self.grid.donation_individual:
+                recipients = [self.grid.players[int(recipient)]]
         donor = self.grid.players[msg['donor_id']]
         donation = msg['amount']
 
         if donor.score >= donation:
             donor.score -= donation
-            recipient.score += donation
+            if len(recipients) > 1:
+                donation = round(donation * 1.0 / len(recipients), 2)
+            for recipient in recipients:
+                recipient.score += donation
             message = {
                 'type': 'donation_processed',
                 'donor_id': msg['donor_id'],
