@@ -25,9 +25,13 @@
     settings.identity_starts_visible = {% if experiment.grid.identity_starts_visible %}true{% else %}false{% endif %};
     settings.food_visible = {% if experiment.grid.food_visible %}true{% else %}false{% endif %};
     settings.show_chatroom = {% if experiment.grid.show_chatroom %}true{% else %}false{% endif %};
-    settings.donation = {{ experiment.grid.donation }};
     settings.pseudonyms = {% if experiment.grid.pseudonyms %}true{% else %}false{% endif %};
     settings.walls_visible = {% if experiment.grid.walls_visible %}true{% else %}false{% endif %};
+    settings.donation_amount = {{ experiment.grid.donation_amount }};
+    settings.donation_individual = {% if experiment.grid.donation_individual %}true{% else %}false{% endif %};
+    settings.donation_group = {% if experiment.grid.donation_group %}true{% else %}false{% endif %};
+    settings.donation_public = {% if experiment.grid.donation_public %}true{% else %}false{% endif %};
+    settings.donation_type = settings.donation_individual ? 'individual' : (settings.donation_group ? 'group' : null);
 </script>
 {% endblock %}
 
@@ -56,6 +60,16 @@
         <input id="message" autocomplete="off" placeholder="Message the group." />
         <button id="submit-message" class="button button-clear">Send to all</button>
     </form>
+</div>
+
+<div id="donate">
+    <p id="donation-instructions"></p>
+    {% if experiment.grid.donation_group and experiment.grid.donation_individual %}
+        <button id="group-donate">Donate to group</button>
+    {% endif %}
+    {% if experiment.grid.donation_public %}
+        <button id="public-donate">Donate to everyone</button>
+    {% endif %}
 </div>
 
 <div id="instructions" class="for-players">

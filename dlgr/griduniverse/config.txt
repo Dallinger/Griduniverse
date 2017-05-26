@@ -3,6 +3,10 @@ mode = sandbox
 auto_recruit = true
 network = FullyConnected
 max_participants = 3
+donation_amount = 1
+donation_individual = true
+donation_group = true
+donation_public = true
 
 [HIT Configuration]
 title = Griduniverse

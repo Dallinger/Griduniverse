@@ -933,19 +933,23 @@ class Griduniverse(Experiment):
         if recipient.startswith('group:'):
             if self.grid.donation_group:
                 group = recipient[6:]
-                for player in self.grid.players:
-                    if player.color_idx == int(group):
+                for player in self.grid.players.values():
+                    if (player.color_idx == int(group) and
+                            player.id != msg['donor_id']):
                         recipients.append(player)
         elif recipient == 'all':
             if self.grid.donation_public:
-                recipients = self.grid.players
+                recipients = [p for p in self.grid.players.values()
+                              if p.id != msg['donor_id']]
         else:
             if self.grid.donation_individual:
-                recipients = [self.grid.players[int(recipient)]]
+                recipient_player = self.grid.players.get(recipient)
+                if recipient_player:
+                    recipients.append(recipient_player)
         donor = self.grid.players[msg['donor_id']]
         donation = msg['amount']
 
-        if donor.score >= donation:
+        if donor.score >= donation and len(recipients):
             donor.score -= donation
             if len(recipients) > 1:
                 donation = round(donation * 1.0 / len(recipients), 2)
