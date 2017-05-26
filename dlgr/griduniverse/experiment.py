@@ -1,5 +1,7 @@
 """The Griduniverse."""
 
+import flask
+import gevent
 import json
 import logging
 import math
@@ -7,9 +9,8 @@ import random
 import time
 import uuid
 
+from cached_property import cached_property
 from faker import Factory
-import flask
-import gevent
 from sqlalchemy import create_engine
 from sqlalchemy.orm import (
     sessionmaker,
@@ -267,6 +268,47 @@ class Gridworld(object):
             self.start_timestamp = time.time()
             for player in self.players.values():
                 player.motion_timestamp = 0
+
+    def compute_payoffs(self):
+        """Compute payoffs from scores.
+
+        A player's payoff in the game can be expressed as the product of four
+        factors: the grand total number of points earned by all players, the
+        (softmax) proportion of the total points earned by the player's group,
+        the (softmax) proportion of the group's points earned by the player,
+        and the number of dollars per point.
+
+        Softmaxing the two proportions implements intragroup and intergroup
+        competition. When the parameters are 1, payoff is proportional to what
+        was scored and so there is no extrinsic competition. Increasing the
+        temperature introduces competition. For example, at 2, a pair of groups
+        that score in a 2:1 ratio will get payoff in a 4:1 ratio, and therefore
+        it pays to be in the highest-scoring group. The same logic applies to
+        intragroup competition: when the temperature is 2, a pair of players
+        within a group that score in a 2:1 ratio will get payoff in a 4:1
+        ratio, and therefore it pays to be a group's highest-scoring member.
+        """
+        players = self.players.values()
+        group_scores = []
+        for g in range(len(self.player_colors)):
+            ingroup_players = [p for p in players if p.color_idx == g]
+            ingroup_scores = [p.score for p in ingroup_players]
+            group_scores.append(sum(ingroup_scores))
+            intra_proportions = softmax(
+                ingroup_scores,
+                temperature=self.intragroup_competition,
+            )
+            for i, player in enumerate(ingroup_players):
+                player.payoff = sum([p.score for p in players])  # grand score
+                player.payoff *= intra_proportions[i]
+
+        inter_proportions = softmax(
+            group_scores,
+            temperature=self.intergroup_competition,
+        )
+        for player in players:
+            player.payoff *= inter_proportions[player.color_idx]
+            player.payoff *= self.dollars_per_point
 
     def _start_if_ready(self):
         # Don't start unless we have a least one player
@@ -720,6 +762,22 @@ class Griduniverse(Experiment):
         self.network_factory = config.get('network', 'FullyConnected')
 
     @property
+    def environment(self):
+        environment = self.session.query(dallinger.nodes.Environment).one()
+
+        return environment
+
+    @cached_property
+    def session(self):
+        from dallinger.db import db_url
+        engine = create_engine(db_url, pool_size=1000)
+        session = scoped_session(
+            sessionmaker(autocommit=False, autoflush=True, bind=engine)
+        )
+
+        return session
+
+    @property
     def background_tasks(self):
         return [
             self.send_state_thread,
@@ -743,6 +801,25 @@ class Griduniverse(Experiment):
 
     def recruit(self):
         self.recruiter().close_recruitment()
+
+    def bonus(self, participant):
+        """The bonus to be awarded to the given participant.
+
+        Return the value of the bonus to be paid to `participant`.
+        """
+        data = self._last_state_for_player(participant.id)
+        if not data:
+            return 0.0
+
+        return float("{0:.2f}".format(data['payoff']))
+
+    def bonus_reason(self):
+        """The reason offered to the participant for giving the bonus.
+        """
+        return (
+            "Thank for participating! You earned a bonus based on your "
+            "performance in Griduniverse!"
+        )
 
     def dispatch(self, msg):
         """Route to the appropriate method based on message type"""
@@ -876,61 +953,9 @@ class Griduniverse(Experiment):
             if self.grid.game_over:
                 return
 
-    def compute_payoffs(self):
-        """Compute payoffs from scores.
-
-        A player's payoff in the game can be expressed as the product of four
-        factors: the grand total number of points earned by all players, the
-        (softmax) proportion of the total points earned by the player's group,
-        the (softmax) proportion of the group's points earned by the player,
-        and the number of dollars per point.
-
-        Softmaxing the two proportions implements intragroup and intergroup
-        competition. When the parameters are 1, payoff is proportional to what
-        was scored and so there is no extrinsic competition. Increasing the
-        temperature introduces competition. For example, at 2, a pair of groups
-        that score in a 2:1 ratio will get payoff in a 4:1 ratio, and therefore
-        it pays to be in the highest-scoring group. The same logic applies to
-        intragroup competition: when the temperature is 2, a pair of players
-        within a group that score in a 2:1 ratio will get payoff in a 4:1
-        ratio, and therefore it pays to be a group's highest-scoring member.
-        """
-        players = self.grid.players.values()
-        group_scores = []
-        for g in range(len(Gridworld.player_colors)):
-            ingroup_players = [p for p in players if p.color_idx == g]
-            ingroup_scores = [p.score for p in ingroup_players]
-            group_scores.append(sum(ingroup_scores))
-            intra_proportions = softmax(
-                ingroup_scores,
-                temperature=self.grid.intragroup_competition,
-            )
-            for i, player in enumerate(ingroup_players):
-                player.payoff = sum([p.score for p in players])  # grand score
-                player.payoff *= intra_proportions[i]
-
-        inter_proportions = softmax(
-            group_scores,
-            temperature=self.grid.intergroup_competition,
-        )
-        for player in players:
-            player.payoff *= inter_proportions[player.color_idx]
-            player.payoff *= self.grid.dollars_per_point
-
     def game_loop(self):
         """Update the world state."""
-        from dallinger.db import db_url
-        engine = create_engine(db_url, pool_size=1000)
-        session = scoped_session(
-            sessionmaker(
-                autocommit=False,
-                autoflush=True,
-                bind=engine
-            )
-        )
-
         gevent.sleep(0.200)
-        environment = session.query(dallinger.nodes.Environment).one()
 
         while not self.grid.game_started:
             gevent.sleep(0.01)
@@ -939,9 +964,9 @@ class Griduniverse(Experiment):
 
         while not self.grid.game_over:
             # Record grid state to database
-            state = environment.update(self.grid.serialize())
-            session.add(state)
-            session.commit()
+            state = self.environment.update(self.grid.serialize())
+            self.session.add(state)
+            self.session.commit()
 
             gevent.sleep(0.010)
 
@@ -1001,7 +1026,7 @@ class Griduniverse(Experiment):
 
                 previous_second_timestamp = now
 
-            self.compute_payoffs()
+            self.grid.compute_payoffs()
             self.grid.check_round_completion()
 
         self.publish({'type': 'stop'})
@@ -1015,3 +1040,10 @@ class Griduniverse(Experiment):
         players = final_state['players']
         scores = [player['score'] for player in players]
         return float(sum(scores)) / len(scores)
+
+    def _last_state_for_player(self, player_id):
+        most_recent_grid_state = self.environment.state()
+        players = json.loads(most_recent_grid_state.contents)['players']
+        id_matches = [p for p in players if int(p['id']) == player_id]
+        if id_matches:
+            return id_matches[0]
