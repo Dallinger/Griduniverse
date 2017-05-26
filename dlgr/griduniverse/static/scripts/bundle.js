@@ -3926,7 +3926,6 @@ var WHITE = [1.00, 1.00, 1.00];
 var INVISIBLE_COLOR = [0.66, 0.66, 0.66];
 var CHANNEL = "griduniverse";
 var CONTROL_CHANNEL = "griduniverse_ctrl";
-var AMOUNT = settings.donation_amount === 1 ? '1 point' : settings.donation_amount + ' points';
 
 var pixels = grid(data, {
   rows: settings.rows,
@@ -4423,6 +4422,8 @@ function onDonationProcessed(msg) {
   }
   $("#messages").append($("<li>").html(entry));
   $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
+  $('#individual-donate, #group-donate').addClass('button-outline');
+  settings.donation_type = null;
 }
 
 function onGameStateChange(msg) {
