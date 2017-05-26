@@ -22,7 +22,6 @@ canvas {
 
 #chat {
     width: 100%;
-    display: none;
 }
 
 #chatlog {
@@ -50,6 +49,10 @@ canvas {
 
 #chatlog li:nth-child(odd) {
     background: #eee;
+}
+
+#chat form {
+    display: none;
 }
 
 .name {

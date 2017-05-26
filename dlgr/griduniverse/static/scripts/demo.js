@@ -686,7 +686,7 @@ $(document).ready(function() {
   }
 
   if (settings.show_chatroom) {
-    $("#chat").show();
+    $("#chat form").show();
   }
 
 
