@@ -175,12 +175,8 @@ canvas {
 
 #donate label {
     display: inline;
+    vertical-align: middle;
     padding-right: 0.5rem;
-}
-
-button#individual-donate:not(.enabled), button#group-donate:not(.enabled) {
-    color: #9b4dca;
-    background-color: #ffffff;
 }
 
 #donate button:focus, #donate button:hover {

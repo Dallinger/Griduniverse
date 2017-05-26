@@ -31,7 +31,7 @@
     settings.donation_individual = {% if experiment.grid.donation_individual %}true{% else %}false{% endif %};
     settings.donation_group = {% if experiment.grid.donation_group %}true{% else %}false{% endif %};
     settings.donation_public = {% if experiment.grid.donation_public %}true{% else %}false{% endif %};
-    settings.donation_type = settings.donation_individual ? 'individual' : (settings.donation_group ? 'group' : null);
+    settings.donation_type = null;
 </script>
 {% endblock %}
 
@@ -56,10 +56,10 @@
 <div id="donate">
     <label>Donate {{ experiment.grid.donation_amount }} point{{experiment.grid.donation_amount > 1 and 's' or ''}} to:</label>
     {% if experiment.grid.donation_individual %}
-        <button id="individual-donate">Player</button>
+        <button id="individual-donate" class="button-outline">Player</button>
     {% endif %}
     {% if experiment.grid.donation_group %}
-        <button id="group-donate">Group</button>
+        <button id="group-donate" class="button-outline">Group</button>
     {% endif %}
     {% if experiment.grid.donation_public %}
         <button id="public-donate">Everyone</button>

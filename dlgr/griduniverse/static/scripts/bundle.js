@@ -3927,11 +3927,6 @@ var INVISIBLE_COLOR = [0.66, 0.66, 0.66];
 var CHANNEL = "griduniverse";
 var CONTROL_CHANNEL = "griduniverse_ctrl";
 var AMOUNT = settings.donation_amount === 1 ? '1 point' : settings.donation_amount + ' points';
-var DONATION_INSTRUCTIONS = {
-  'individual': 'Click a player avatar to donate ' + AMOUNT + ' to the player',
-  'group': 'Click a player avatar to donate ' + AMOUNT + ' to the player\'s group',
-};
-
 
 var pixels = grid(data, {
   rows: settings.rows,
@@ -4478,7 +4473,6 @@ function onGameStateChange(msg) {
     window.state = msg.grid;
     window.ego = ego.id;
     if (settings.donation_amount && ego.score >= settings.donation_amount && players.count() > 1) {
-      $('#donation-instructions').text(DONATION_INSTRUCTIONS[settings.donation_type]);
       $('#individual-donate, #group-donate, #public-donate').prop('disabled', false);
     } else {
       $('#donation-instructions').text('');
@@ -4676,15 +4670,15 @@ $(document).ready(function() {
       if (settings.donation_group) {
         settings.donation_type = 'group';
         $(this).prop('disabled', false);
-        $(this).addClass('enabled');
-        $('#individual-donate').removeClass('enabled');
+        $(this).removeClass('button-outline');
+        $('#individual-donate').addClass('button-outline');
       }
     });
     $('#individual-donate').click(function () {
       if (settings.donation_individual) {
         settings.donation_type = 'individual';
-        $(this).addClass('enabled');
-        $('#group-donate').removeClass('enabled');
+        $(this).removeClass('button-outline');
+        $('#group-donate').addClass('button-outline');
       }
     });
   }
