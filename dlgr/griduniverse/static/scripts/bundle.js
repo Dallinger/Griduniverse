@@ -4477,7 +4477,7 @@ function onGameStateChange(msg) {
     $("#dollars").html(ego.payoff.toFixed(2));
     window.state = msg.grid;
     window.ego = ego.id;
-    if (ego.score >= settings.donation_amount && players.count() > 1) {
+    if (settings.donation_amount && ego.score >= settings.donation_amount && players.count() > 1) {
       $('#donation-instructions').text(DONATION_INSTRUCTIONS[settings.donation_type]);
       $('#public-donate, #group-donate').prop('disabled', false);
     } else {
