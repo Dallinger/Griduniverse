@@ -25,9 +25,13 @@
     settings.identity_starts_visible = {% if experiment.grid.identity_starts_visible %}true{% else %}false{% endif %};
     settings.food_visible = {% if experiment.grid.food_visible %}true{% else %}false{% endif %};
     settings.show_chatroom = {% if experiment.grid.show_chatroom %}true{% else %}false{% endif %};
-    settings.donation = {{ experiment.grid.donation }};
     settings.pseudonyms = {% if experiment.grid.pseudonyms %}true{% else %}false{% endif %};
     settings.walls_visible = {% if experiment.grid.walls_visible %}true{% else %}false{% endif %};
+    settings.donation_amount = {{ experiment.grid.donation_amount }};
+    settings.donation_individual = {% if experiment.grid.donation_individual %}true{% else %}false{% endif %};
+    settings.donation_group = {% if experiment.grid.donation_group %}true{% else %}false{% endif %};
+    settings.donation_public = {% if experiment.grid.donation_public %}true{% else %}false{% endif %};
+    settings.donation_type = null;
 </script>
 {% endblock %}
 
@@ -48,13 +52,28 @@
     <!-- Grid will be inserted here. -->
 </div>
 
+{% if experiment.grid.donation_amount %}
+<div id="donate" class="for-players">
+    <label>Give {{ experiment.grid.donation_amount }} point{{experiment.grid.donation_amount > 1 and 's' or ''}} to:</label>
+    {% if experiment.grid.donation_individual %}
+        <button id="individual-donate" class="button-outline">Player</button>
+    {% endif %}
+    {% if experiment.grid.donation_group %}
+        <button id="group-donate" class="button-outline">Group</button>
+    {% endif %}
+    {% if experiment.grid.donation_public %}
+        <button id="public-donate">Everyone</button>
+    {% endif %}
+</div>
+{% endif %}
+
 <div id="chat">
     <div id="chatlog">
         <ul id="messages"></ul>
     </div>
     <form action="" class="for-players">
         <input id="message" autocomplete="off" placeholder="Message the group." />
-        <button id="submit-message" class="button button-clear">Send to all</button>
+        <button id="submit-message" class="button button-clear">Send to everyone</button>
     </form>
 </div>
 

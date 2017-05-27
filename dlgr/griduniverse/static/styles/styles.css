@@ -22,7 +22,6 @@ canvas {
 
 #chat {
     width: 100%;
-    display: none;
 }
 
 #chatlog {
@@ -50,6 +49,10 @@ canvas {
 
 #chatlog li:nth-child(odd) {
     background: #eee;
+}
+
+#chat form {
+    display: none;
 }
 
 .name {
@@ -163,4 +166,23 @@ canvas {
     top: 0;
     transform: translate(-50%, -100%);
     white-space: nowrap;
+}
+
+#donate button {
+    padding: 0 0.5rem;
+    text-transform: uppercase;
+    font-weight: bold;
+    line-height: 2.5rem;
+    height: auto;
+}
+
+#donate label {
+    display: inline;
+    vertical-align: middle;
+    padding-right: 0.5rem;
+}
+
+#donate button:focus, #donate button:hover {
+    color: #ffffff;
+    background-color: #9b4dca;
 }

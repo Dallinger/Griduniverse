@@ -4104,6 +4104,10 @@ var playerSet = (function () {
       return this._players[id];
     };
 
+    PlayerSet.prototype.count = function () {
+      return Object.keys(this._players).length;
+    };
+
     PlayerSet.prototype.update = function (playerData) {
       var currentPlayerData,
           i;
@@ -4387,7 +4391,8 @@ function onChatMessage(msg) {
 function onDonationProcessed(msg) {
   var ego = players.ego(),
       donor = players.get(msg.donor_id),
-      recipient = players.get(msg.recipient_id),
+      recipient_id = msg.recipient_id,
+      team_idx,
       donor_name,
       recipient_name,
       entry;
@@ -4398,10 +4403,15 @@ function onDonationProcessed(msg) {
     donor_name = "Player " + donor.name;
   }
 
-  if (recipient === ego) {
+  if (recipient_id === ego.id) {
     recipient_name = 'you';
+  } else if (recipient_id === 'all') {
+    recipient_name = 'all players';
+  } else if (recipient_id.indexOf('group:') == 0) {
+    team_idx = +recipient_id.substring(6);
+    recipient_name = 'all ' + Object.keys(PLAYER_COLORS)[team_idx] + ' players';
   } else {
-    recipient_name = recipient.name;
+    recipient_name = players.get(recipient_id).name;
   }
 
   entry = donor_name + " gave " + recipient_name + " " + msg.amount;
@@ -4412,6 +4422,8 @@ function onDonationProcessed(msg) {
   }
   $("#messages").append($("<li>").html(entry));
   $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
+  $('#individual-donate, #group-donate').addClass('button-outline');
+  settings.donation_type = null;
 }
 
 function onGameStateChange(msg) {
@@ -4455,12 +4467,18 @@ function onGameStateChange(msg) {
     }
   }
 
-  // Update displayed score.
+  // Update displayed score, set donation info.
   if (ego !== undefined) {
     $("#score").html(Math.round(ego.score));
     $("#dollars").html(ego.payoff.toFixed(2));
     window.state = msg.grid;
     window.ego = ego.id;
+    if (settings.donation_amount && ego.score >= settings.donation_amount && players.count() > 1) {
+      $('#individual-donate, #group-donate, #public-donate').prop('disabled', false);
+    } else {
+      $('#donation-instructions').text('');
+      $('#individual-donate, #group-donate, #public-donate').prop('disabled', true);
+    }
   }
 }
 
@@ -4564,21 +4582,35 @@ $(document).ready(function() {
   }
 
   if (settings.show_chatroom) {
-    $("#chat").show();
+    $("#chat form").show();
   }
 
 
-  var donateToClicked = function(amt) {
+  var donateToClicked = function() {
     var row = pixels2cells(mouse[1]),
         column = pixels2cells(mouse[0]),
         recipient = players.nearest(row, column),
         donor = players.ego(),
+        amt = settings.donation_amount,
+        recipient_id,
         msg;
 
-    if (recipient.id !== donor.id) {
+    if (amt > donor.score) {
+      return;
+    }
+
+    if (settings.donation_type == 'individual') {
+      recipient_id = recipient.id;
+    } else if (settings.donation_type == 'group') {
+      recipient_id = 'group:' +  color2idx(recipient.color).toString();
+    } else {
+      return;
+    }
+
+    if (recipient_id !== donor.id) {
       msg = {
         type: "donation_submitted",
-        recipient_id: recipient.id,
+        recipient_id: recipient_id,
         donor_id: donor.id,
         amount: amt
       };
@@ -4586,8 +4618,31 @@ $(document).ready(function() {
     }
   };
 
+  var donateToAll = function() {
+    var donor = players.ego(),
+        amt = settings.donation_amount,
+        msg;
+    msg = {
+      type: "donation_submitted",
+      recipient_id: 'all',
+      donor_id: donor.id,
+      amount: amt
+    };
+    socket.send(msg);
+  }
+
   var pixels2cells = function(pix) {
     return Math.floor(pix / (settings.block_size + settings.padding));
+  };
+
+  var color2idx = function(color) {
+    var colors = Object.values(PLAYER_COLORS);
+    var value = color.join(',');
+    for (var idx=0; idx < colors.length; idx++) {
+      if (colors[idx].join(',') == value) {
+        return idx;
+      }
+    }
   };
 
   $("form").submit(function() {
@@ -4608,8 +4663,24 @@ $(document).ready(function() {
     // Main game keys:
     bindGameKeys(socket);
     // Donation click events:
-    $(pixels.canvas).click(function(e) {
-      donateToClicked(settings.donation);
+    $(pixels.canvas).click(function (e) {
+      donateToClicked();
+    });
+    $('#public-donate').click(donateToAll);
+    $('#group-donate').click(function () {
+      if (settings.donation_group) {
+        settings.donation_type = 'group';
+        $(this).prop('disabled', false);
+        $(this).removeClass('button-outline');
+        $('#individual-donate').addClass('button-outline');
+      }
+    });
+    $('#individual-donate').click(function () {
+      if (settings.donation_individual) {
+        settings.donation_type = 'individual';
+        $(this).removeClass('button-outline');
+        $('#group-donate').addClass('button-outline');
+      }
     });
   }
 
