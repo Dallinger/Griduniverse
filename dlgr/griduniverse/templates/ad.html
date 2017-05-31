@@ -8,6 +8,13 @@
 {% block title %}Participate in a psychology experiment{% endblock %}
 
 {% block body %}
+
+    {% if (mode == "sandbox") or (mode == "debug") %}
+        <p>
+            <b>Application ID:</b> {{ app_id }}.
+        </p>
+    {% endif %}
+
 {% if assignmentid == "ASSIGNMENT_ID_NOT_AVAILABLE" %}
     <h1>Call for participants</h1>
     <p>
