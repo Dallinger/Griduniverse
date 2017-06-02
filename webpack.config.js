@@ -28,11 +28,12 @@ if (env === 'build') {
 
 module.exports = {
   entry: {
-    bundle: './dlgr/griduniverse/static/scripts/demo.js'
+    bundle: './dlgr/griduniverse/static/scripts/demo.js',
+    questionnaire: './dlgr/griduniverse/static/scripts/questionnaire.js'
   },
   output: {
     path: __dirname + '/dlgr/griduniverse/static',
-    filename: 'scripts/bundle.js'
+    filename: 'scripts/dist/[name].js'
   },
   // use jquery from separate script tag
   externals: { jquery: 'jQuery' },
