@@ -974,6 +974,7 @@ class Griduniverse(Experiment):
             super(Griduniverse, self).setup()
             for net in self.networks():
                 dallinger.nodes.Environment(network=net)
+        self.node_by_player_id = {}
 
     def recruit(self):
         self.recruiter().close_recruitment()
@@ -1026,9 +1027,22 @@ class Griduniverse(Experiment):
             body = raw_message.replace(self.channel + ":", "")
             message = json.loads(body)
             self.dispatch((message))
+            if 'player_id' in message:
+                self.record_info(message['player_id'], body)
         else:
             logger.info("Received a message, but not our channel: {}".format(
                 raw_message))
+
+    def record_info(self, player_id, contents):
+        """Record an event in the Info table"""
+        session = self.session
+        if player_id:
+            node = self.node_by_player_id[player_id]
+        else:
+            node = self.environment
+        info = dallinger.models.Info(origin=node, contents=contents)
+        session.add(info)
+        session.commit()
 
     def publish(self, msg):
         """Publish a message to all griduniverse clients"""
@@ -1048,7 +1062,8 @@ class Griduniverse(Experiment):
             network = self.get_network_for_participant(participant)
             if network:
                 logger.info("Found an open network. Adding participant node...")
-                self.create_node(participant, network)
+                node = self.create_node(participant, network)
+                self.node_by_player_id[player_id] = node
                 logger.info("Spawning player on the grid...")
                 self.grid.spawn_player(id=player_id)
             else:
@@ -1068,7 +1083,7 @@ class Griduniverse(Experiment):
         self.publish(message)
 
     def handle_change_color(self, msg):
-        player = self.grid.players[msg['player']]
+        player = self.grid.players[msg['player_id']]
         color_idx = Gridworld.player_colors.index(msg['color'])
 
         if player.color_idx == color_idx:
@@ -1085,7 +1100,7 @@ class Griduniverse(Experiment):
         player.color_name = Gridworld.player_color_names[color_idx]
 
     def handle_move(self, msg):
-        player = self.grid.players[msg['player']]
+        player = self.grid.players[msg['player_id']]
         player.move(msg['move'], tremble_rate=player.motion_tremble_rate)
 
     def handle_donation(self, msg):
@@ -1127,7 +1142,7 @@ class Griduniverse(Experiment):
             self.publish(message)
 
     def handle_plant_food(self, msg):
-        player = self.grid.players[msg['player']]
+        player = self.grid.players[msg['player_id']]
         position = msg['position']
         can_afford = player.score >= self.grid.food_planting_cost
         if (can_afford and not self.grid.has_food(position)):
@@ -1135,7 +1150,7 @@ class Griduniverse(Experiment):
             self.grid.spawn_food(position=position)
 
     def handle_toggle_visible(self, msg):
-        player = self.grid.players[msg['player']]
+        player = self.grid.players[msg['player_id']]
         player.identity_visible = msg['identity_visible']
 
     def handle_build_wall(self, msg):
