@@ -25,6 +25,7 @@ from dallinger.experiment import Experiment
 from dallinger.heroku.worker import conn as redis
 
 from bots import Bot
+from models import Event
 
 logger = logging.getLogger(__file__)
 config = get_config()
@@ -1028,19 +1029,19 @@ class Griduniverse(Experiment):
             message = json.loads(body)
             self.dispatch((message))
             if 'player_id' in message:
-                self.record_info(message['player_id'], body)
+                self.record_info(message['player_id'], message)
         else:
             logger.info("Received a message, but not our channel: {}".format(
                 raw_message))
 
-    def record_info(self, player_id, contents):
+    def record_info(self, player_id, details):
         """Record an event in the Info table"""
         session = self.session
         if player_id:
             node = self.node_by_player_id[player_id]
         else:
             node = self.environment
-        info = dallinger.models.Info(origin=node, contents=contents)
+        info = Event(origin=node, details=details)
         session.add(info)
         session.commit()
 
