@@ -619,7 +619,11 @@ function onGameStateChange(msg) {
     $("#dollars").html(ego.payoff.toFixed(2));
     window.state = msg.grid;
     window.ego = ego.id;
-    if (settings.donation_amount && ego.score >= settings.donation_amount && players.count() > 1) {
+    if (settings.donation_amount &&
+        ego.score >= settings.donation_amount &&
+        players.count() > 1 &&
+        (!settings.alternate_consumption_donation || (msg.round % 2) === 1)
+    ) {
       $('#individual-donate, #group-donate, #public-donate').prop('disabled', false);
     } else {
       $('#donation-instructions').text('');
@@ -740,6 +744,10 @@ $(document).ready(function() {
         amt = settings.donation_amount,
         recipient_id,
         msg;
+
+    if (self.alternate_consumption_donation && self.round % 2) {
+      return;
+    }
 
     if (amt > donor.score) {
       return;
