@@ -155,6 +155,8 @@ class Gridworld(object):
         if hasattr(self, 'num_players'):
             return
 
+        self.log_event = kwargs.get('log_event', lambda x: None)
+
         # Players
         self.num_players = kwargs.get('max_participants', 3)
 
@@ -540,6 +542,10 @@ class Gridworld(object):
             position=position,
             maturation_speed=self.food_maturation_speed,
         ))
+        self.log_event({
+            'type': 'spawn_food',
+            'position': position,
+        })
 
     def spawn_player(self, id=None):
         """Spawn a player."""
@@ -930,7 +936,10 @@ class Griduniverse(Experiment):
         self.experiment_repeats = 1
         if session:
             self.setup()
-            self.grid = Gridworld(**config.as_dict())
+            self.grid = Gridworld(
+                log_event=self.record_event,
+                **config.as_dict()
+            )
 
     def configure(self):
         super(Griduniverse, self).configure()
@@ -1029,12 +1038,12 @@ class Griduniverse(Experiment):
             message = json.loads(body)
             self.dispatch((message))
             if 'player_id' in message:
-                self.record_info(message['player_id'], message)
+                self.record_event(message, message['player_id'])
         else:
             logger.info("Received a message, but not our channel: {}".format(
                 raw_message))
 
-    def record_info(self, player_id, details):
+    def record_event(self, details, player_id=None):
         """Record an event in the Info table"""
         session = self.session
         if player_id:
@@ -1141,6 +1150,7 @@ class Griduniverse(Experiment):
                 'amount': donation,
             }
             self.publish(message)
+            self.record_event(msg, msg['donor_id'])
 
     def handle_plant_food(self, msg):
         player = self.grid.players[msg['player_id']]
@@ -1258,7 +1268,14 @@ class Griduniverse(Experiment):
                 previous_second_timestamp = now
 
             self.grid.compute_payoffs()
+
+            round = self.grid.round
             self.grid.check_round_completion()
+            if self.grid.round != round and not self.grid.game_over:
+                self.record_event({
+                    'type': 'new_round',
+                    'round': self.grid.round
+                })
 
         self.publish({'type': 'stop'})
         return
