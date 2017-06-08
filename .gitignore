@@ -49,3 +49,4 @@ dlgr/griduniverse/snapshots
 *.egg-info/*
 
 docs/build/*
+dlgr/griduniverse/dump.rdb
