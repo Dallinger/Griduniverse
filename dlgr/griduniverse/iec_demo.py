@@ -1,8 +1,9 @@
 from dallinger.experiments import Griduniverse
+from numpy.random import choice
 from random import randint
+from bisect import bisect
 import random
 import logging
-from bisect import bisect
 
 
 logging.basicConfig(level=logging.INFO)
@@ -22,33 +23,33 @@ class Offspring(object):
     @property
     def genome(self):
         """Run genome logic"""
-        weights = self.get_weights(self.players, self.scores)
+        weights = self.get_weights(self.scores)
         options = self.weighted_rand(self.parents, weights)
         return self.mutate(options)
 
     def mutate(self, genome):
-        """Percent of failed mutation copies"""
+        """Mutates genes according to mutation_rate"""
         if random.random() <= self.mutation_rate:
             logger.info("Mutation!")
             genome['show_chatroom'] = bool(random.getrandbits(1))
         if random.random() <= self.mutation_rate:
             logger.info("Mutation!")
-            genome['num_food'] = randint(0, 9)
+            genome['num_food'] = int(random.gauss(10, 5))
         if random.random() <= self.mutation_rate:
             logger.info("Mutation!")
             genome['respawn_food'] = bool(random.getrandbits(1))
         return genome
 
-    def get_weights(self, players, scores):
-        """Generate Survival"""
+    def get_weights(self, scores):
+        """Get probability of survival"""
         logger.info("Weights are selected based on parent survival.")
-        fitness_denom = 0
         weights = []
+        fitness_denom = 0
 
-        for player, value in enumerate(parents):
+        for player, value in enumerate(self.parents):
             fitness_denom += (float(scores[player]) / self.max_score)
 
-        for player, value in enumerate(parents):
+        for player, value in enumerate(self.parents):
             score_decimal = float(scores[player]) / self.max_score
             prob_survival = float(score_decimal) / float(fitness_denom)
             logger.info("Survival %: {}".format(100.0 * float(prob_survival)))
@@ -56,7 +57,7 @@ class Offspring(object):
         return weights
 
     def weighted_rand(self, values, weights):
-        """Weighted random value based on fitness"""
+        """Get random value based on probability weights"""
         total = 0
         cum_weights = []
         for w in weights:
@@ -72,11 +73,9 @@ class Evolve(object):
 
     def __init__(self, n, m):
         self.scores = {}
-        self.participants = 1
         self.genomes = {}
         self.n = n
         self.m = m
-        self.max_score = 7.0
         self.run(n, m)
 
     def random_genome(self):
@@ -84,7 +83,7 @@ class Evolve(object):
         logger.info("Generation 1 parents are being randomly intialized.")
         return {
                 'show_chatroom': bool(random.getrandbits(1)),
-                'num_food': randint(0, 9),
+                'num_food': int(random.gauss(10, 5)),
                 'respawn_food': bool(random.getrandbits(1))
         }
 
@@ -114,8 +113,8 @@ class Evolve(object):
                     mode=u'debug',
                     recruiter=u'bots',
                     bot_policy=u"AdvantageSeekingBot",
-                    max_participants=self.participants,
-                    num_dynos_worker=self.participants,
+                    max_participants=1,
+                    num_dynos_worker=1,
                     time_per_round=5.0,
                     verbose=True,
                     show_chatroom=child.genome['show_chatroom'],
@@ -133,5 +132,4 @@ class Evolve(object):
 
 
 experiment = Griduniverse()
-participants = 1
-Evolve(2, 3)
+Evolve(1, 2)

@@ -303,11 +303,11 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
     def complete_questionnaire(self):
         """Complete the standard debriefing form."""
         difficulty = Select(self.driver.find_element_by_id('difficulty'))
-        difficulty.select_by_value(str(random.randint(1,7)))
+        difficulty.select_by_value(str(random.randint(1, 7)))
         engagement = Select(self.driver.find_element_by_id('engagement'))
-        engagement.select_by_value(str(random.randint(1,7)))
+        engagement.select_by_value(str(random.randint(1, 7)))
         fun = Select(self.driver.find_element_by_id('fun'))
-        fun.select_by_value(str(random.randint(1,7)))
+        fun.select_by_value(str(random.randint(1, 7)))
         return True
 
 
