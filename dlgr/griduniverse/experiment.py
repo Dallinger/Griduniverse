@@ -1305,3 +1305,6 @@ class Griduniverse(Experiment):
         id_matches = [p for p in players if int(p['id']) == player_id]
         if id_matches:
             return id_matches[0]
+
+    def player_feedback(self, data):
+        return self.average_score(data)
