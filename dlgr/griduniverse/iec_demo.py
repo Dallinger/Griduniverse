@@ -12,19 +12,21 @@ logger = logging.getLogger(__file__)
 class Offspring(object):
     """Generate offspring genome from parents"""
 
-    def __init__(self, id, parents, weights, rate=.3):
+    def __init__(self, id, parents, scores, mutation_rate=.3):
         self.id = id
-        self.rate = rate
+        self.mutation_rate = mutation_rate
         self.parents = parents
-        self.weights = weights
+        self.scores = scores
+        self.max_score = 7.0
 
     @property
     def genome(self):
         """Run genome logic"""
-        options = self.weighted_rand(self.parents, self.weights)
+        weights = self.get_weights(self.players, self.scores)
+        options = self.weighted_rand(self.parents, weights)
         return self.mutate(options)
 
-    def mutate(self, genome, rate=.3):
+    def mutate(self, genome):
         """Percent of failed mutation copies"""
         if random.random() <= self.rate:
             logger.info("Mutation!")
@@ -36,6 +38,22 @@ class Offspring(object):
             logger.info("Mutation!")
             genome['respawn_food'] = bool(random.getrandbits(1))
         return genome
+
+    def get_weights(self, players, scores):
+        """Generate Survival"""
+        logger.info("Weights are selected based on parent survival.")
+        fitness_denom = 0
+        weights = []
+
+        for player in xrange(players):
+            fitness_denom += (float(scores[player]) / self.max_score)
+
+        for player in xrange(players):
+            score_decimal = float(scores[player]) / self.max_score
+            prob_survival = float(score_decimal) / float(fitness_denom)
+            logger.info("Survival %: {}".format(100.0 * float(prob_survival)))
+            weights.append(prob_survival)
+        return weights
 
     def weighted_rand(self, values, weights):
         """Weighted random value based on fitness"""
@@ -70,22 +88,6 @@ class Evolve(object):
                 'respawn_food': bool(random.getrandbits(1))
         }
 
-    def get_weights(self, players):
-        """Generate a new genome"""
-        logger.info("Offspring are selected based on survival.")
-        fitness_denom = 0
-        weights = []
-
-        for player in xrange(players):
-            fitness_denom += (float(self.scores[player]) / self.max_score)
-
-        for player in xrange(players):
-            score_decimal = float(self.scores[player]) / self.max_score
-            prob_survival = float(score_decimal) / float(fitness_denom)
-            logger.info("Survival %: {}".format(100.0 * float(prob_survival)))
-            weights.append(prob_survival)
-        return weights
-
     def player_feedback(self):
         """Random feedback generator"""
         feedback = randint(1,9)
@@ -93,6 +95,7 @@ class Evolve(object):
 
     def run(self, players, generations):
         """Run evolutionary algorithm"""
+        scores = {}
         genomes = self.genomes
         for generation in xrange(generations):
             if (generation == 0):
@@ -101,16 +104,14 @@ class Evolve(object):
                                 .format(generation + 1, player + 1)
                     )
                     genomes[player] = self.random_genome()
-                    self.scores[player] = self.player_feedback()
+                    scores[player] = self.player_feedback()
                 continue
 
-            weights = self.get_weights(players)
             for player in xrange(players):
-                child = Offspring(player, genomes.values(), weights)
+                child = Offspring(player, genomes.values(), scores, mutation_rate=.1)
                 logger.info("Running generation {0} for Player {1}"
                             .format(generation + 1, player + 1)
                 )
-                genome = child.genome
                 data = experiment.run(
                 mode=u'debug',
                 recruiter=u'bots',
@@ -119,14 +120,14 @@ class Evolve(object):
                 num_dynos_worker=self.participants,
                 time_per_round=5.0,
                 verbose=True,
-                show_chatroom = genome['show_chatroom'],
-                num_food = genome['num_food'],
-                respawn_food = genome['respawn_food']
+                show_chatroom = child.genome['show_chatroom'],
+                num_food = child.genome['num_food'],
+                respawn_food = child.genome['respawn_food']
                 )
                 """Survivors is a dictionary of the current player's
                 ID as a key, along with the user feedback score"""
                 #survivors[player] = experiment.player_feedback(data)
-                self.scores[player] = self.player_feedback()
+                scores[player] = self.player_feedback()
 
         #results = experiment.analyze(data)
         results = "Done"
