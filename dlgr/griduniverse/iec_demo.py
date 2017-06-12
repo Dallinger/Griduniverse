@@ -79,16 +79,21 @@ class Evolve(object):
         self.run(n, m)
 
     def random_genome(self):
-        """Generate random genome"""
+        """Generate random genome for generation 1"""
         logger.info("Generation 1 parents are being randomly intialized.")
         return {
                 'show_chatroom': bool(random.getrandbits(1)),
                 'num_food': int(random.gauss(10, 5)),
-                'respawn_food': bool(random.getrandbits(1))
+                'respawn_food': bool(random.getrandbits(1)),
+                'columns': int(random.gauss(10, 5)),
+                'rows': int(random.gauss(10, 5)),
+                'block_size': int(random.gauss(10, 5)),
+                'visibility': int(random.gauss(10, 5)),
+                'background_animation': bool(random.getrandbits(1))
         }
 
     def player_feedback(self):
-        """Random feedback generator"""
+        """Random feedback generator for bots"""
         feedback = randint(1, 9)
         return feedback
 
@@ -121,13 +126,11 @@ class Evolve(object):
                     num_food=child.genome['num_food'],
                     respawn_food=child.genome['respawn_food']
                 )
-                """Survivors is a dictionary of the current player's
-                ID as a key, along with the user feedback score"""
                 # survivors[player] = experiment.player_feedback(data)
                 scores[player] = self.player_feedback()
 
         # results = experiment.analyze(data)
-        results = "Done"
+        results = None
         return results
 
 
