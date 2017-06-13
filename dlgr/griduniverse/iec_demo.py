@@ -13,7 +13,7 @@ logger = logging.getLogger(__file__)
 class Offspring(object):
     """Generate offspring genome from parents"""
 
-    def __init__(self, id, parents, scores, mutation_rate=.3):
+    def __init__(self, id, parents, scores, mutation_rate):
         self.id = id
         self.mutation_rate = mutation_rate
         self.parents = parents
@@ -69,13 +69,18 @@ class Offspring(object):
 
 
 class Evolve(object):
-    """Construct N x M iteractive evolutionary algorithm"""
+    """N x M iteractive evolutionary algorithm"""
 
-    def __init__(self, n, m):
+    def __init__(self, n, m, bot=False, mutation_rate=.1):
+        """Run experiment loop"""
         self.scores = {}
         self.genomes = {}
         self.n = n
         self.m = m
+        self.bot = bot
+        self.mutation_rate = mutation_rate
+        self.recruiter = u'bots' if bot else u'None'
+        self.bot_policy = u'AdvantageSeekingBot' if bot else u'None'
         self.run(n, m)
 
     def random_genome(self):
@@ -111,13 +116,13 @@ class Evolve(object):
                 continue
 
             for player in xrange(players):
-                child = Offspring(player, genomes.values(), scores, mutation_rate=.1)
+                child = Offspring(player, genomes.values(), scores, self.mutation_rate)
                 logger.info("Running generation {0} for Player {1}"
                             .format(generation + 1, player + 1))
                 data = experiment.run(
                     mode=u'debug',
-                    recruiter=u'bots',
-                    bot_policy=u"AdvantageSeekingBot",
+                    recruiter=self.recruiter,
+                    bot_policy=self.bot_policy,
                     max_participants=1,
                     num_dynos_worker=1,
                     time_per_round=5.0,
@@ -126,13 +131,14 @@ class Evolve(object):
                     num_food=child.genome['num_food'],
                     respawn_food=child.genome['respawn_food']
                 )
-                # survivors[player] = experiment.player_feedback(data)
-                scores[player] = self.player_feedback()
+                if self.bot:
+                    scores[player] = self.player_feedback()
+                else:
+                    scores[player] = experiment.analyze_questionaire(data)[2]
 
-        # results = experiment.analyze(data)
-        results = None
-        return results
-
+        results = experiment.analyze_questionaire(data)
+        print ("Engagement:{0}, Difficulty:{1}, Fun:{2}"
+                .format(results[0], results[1], results[2]))
 
 experiment = Griduniverse()
-Evolve(1, 2)
+Evolve(1, 3, bot=False, mutation_rate=.25)
