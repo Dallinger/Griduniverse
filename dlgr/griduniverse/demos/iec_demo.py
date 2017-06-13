@@ -136,7 +136,7 @@ class Evolve(object):
                 else:
                     scores[player] = experiment.player_feedback(data)[2]
 
-        results = experiment.player_feedback(data)
+        results = experiment.analyze_questionaire(data)
         print ("Engagement:{0}, Difficulty:{1}, Fun:{2}"
                 .format(results[0], results[1], results[2]))
 
