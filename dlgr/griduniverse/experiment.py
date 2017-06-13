@@ -1290,7 +1290,7 @@ class Griduniverse(Experiment):
         return
 
 
-    def analyze_questionaire(self, data):
+    def player_feedback(self, data):
         engagement = int(json.loads(data.questions.list[-1][-1])['engagement'])
         difficulty = int(json.loads(data.questions.list[-1][-1])['difficulty'])
         fun = int(json.loads(data.questions.list[-1][-1])['fun'])
@@ -1308,6 +1308,3 @@ class Griduniverse(Experiment):
         id_matches = [p for p in players if int(p['id']) == player_id]
         if id_matches:
             return id_matches[0]
-
-    def player_feedback(self, data):
-        return self.average_score(data)
