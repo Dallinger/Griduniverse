@@ -23,9 +23,25 @@ class Offspring(object):
     @property
     def genome(self):
         """Run genome logic"""
-        weights = self.get_weights(self.scores)
-        options = self.weighted_rand(self.parents, weights)
-        return self.mutate(options)
+        if bool(self.parents):
+            weights = self.get_weights(self.scores)
+            options = self.weighted_rand(self.parents, weights)
+            return self.mutate(options)
+        return self.randomize_genome()
+
+    def randomize_genome(self):
+        """Generate random genome for generation 1"""
+        logger.info("Generation 1 parents are being randomly intialized.")
+        return {
+                'show_chatroom': bool(random.getrandbits(1)),
+                'num_food': int(random.gauss(10, 5)),
+                'respawn_food': bool(random.getrandbits(1)),
+                'columns': int(random.gauss(10, 5)),
+                'rows': int(random.gauss(10, 5)),
+                'block_size': int(random.gauss(10, 5)),
+                'visibility': int(random.gauss(10, 5)),
+                'background_animation': bool(random.getrandbits(1))
+        }
 
     def mutate(self, genome):
         """Mutates genes according to mutation_rate"""
@@ -83,20 +99,6 @@ class Evolve(object):
         self.bot_policy = u'AdvantageSeekingBot' if bot else u'None'
         self.run(n, m)
 
-    def random_genome(self):
-        """Generate random genome for generation 1"""
-        logger.info("Generation 1 parents are being randomly intialized.")
-        return {
-                'show_chatroom': bool(random.getrandbits(1)),
-                'num_food': int(random.gauss(10, 5)),
-                'respawn_food': bool(random.getrandbits(1)),
-                'columns': int(random.gauss(10, 5)),
-                'rows': int(random.gauss(10, 5)),
-                'block_size': int(random.gauss(10, 5)),
-                'visibility': int(random.gauss(10, 5)),
-                'background_animation': bool(random.getrandbits(1))
-        }
-
     def player_feedback(self):
         """Random feedback generator for bots"""
         feedback = randint(1, 9)
@@ -107,16 +109,9 @@ class Evolve(object):
         scores = {}
         genomes = self.genomes
         for generation in xrange(generations):
-            if generation == 0:
-                for player in xrange(players):
-                    logger.info("Running generation {0} for Player {1}"
-                                .format(generation + 1, player + 1))
-                    genomes[player] = self.random_genome()
-                    scores[player] = 1
-                continue
-
             for player in xrange(players):
-                child = Offspring(player, genomes.values(), scores, self.mutation_rate)
+                spawn = Offspring(player, genomes.values(), scores, self.mutation_rate)
+                genomes[player] = spawn.genome
                 logger.info("Running generation {0} for Player {1}"
                             .format(generation + 1, player + 1))
                 data = experiment.run(
@@ -127,16 +122,16 @@ class Evolve(object):
                     num_dynos_worker=1,
                     time_per_round=5.0,
                     verbose=True,
-                    show_chatroom=child.genome['show_chatroom'],
-                    num_food=child.genome['num_food'],
-                    respawn_food=child.genome['respawn_food']
+                    show_chatroom=spawn.genome['show_chatroom'],
+                    num_food=spawn.genome['num_food'],
+                    respawn_food=spawn.genome['respawn_food']
                 )
                 if self.bot:
                     scores[player] = self.player_feedback()
                 else:
                     scores[player] = experiment.player_feedback(data)[2]
 
-        results = experiment.analyze_questionaire(data)
+        results = experiment.player_feedback(data)
         print ("Engagement:{0}, Difficulty:{1}, Fun:{2}"
                 .format(results[0], results[1], results[2]))
 
