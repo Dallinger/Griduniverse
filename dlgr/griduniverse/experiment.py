@@ -23,7 +23,6 @@ from dallinger.compat import unicode
 from dallinger.config import get_config
 from dallinger.experiment import Experiment
 from dallinger.heroku.worker import conn as redis
-
 from bots import Bot
 from models import Event
 
@@ -1290,8 +1289,12 @@ class Griduniverse(Experiment):
         self.publish({'type': 'stop'})
         return
 
-    def analyze(self, data):
-        return self.average_score(data)
+
+    def analyze_questionaire(self, data):
+        engagement = int(json.loads(data.questions.list[-1][-1])['engagement'])
+        difficulty = int(json.loads(data.questions.list[-1][-1])['difficulty'])
+        fun = int(json.loads(data.questions.list[-1][-1])['fun'])
+        return engagement, difficulty, fun
 
     def average_score(self, data):
         final_state = json.loads(data.infos.list[-1][-1])
