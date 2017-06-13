@@ -107,7 +107,7 @@ class Evolve(object):
         scores = {}
         genomes = self.genomes
         for generation in xrange(generations):
-            if (generation == 0):
+            if generation == 0:
                 for player in xrange(players):
                     logger.info("Running generation {0} for Player {1}"
                                 .format(generation + 1, player + 1))
@@ -134,7 +134,7 @@ class Evolve(object):
                 if self.bot:
                     scores[player] = self.player_feedback()
                 else:
-                    scores[player] = experiment.analyze_questionaire(data)[2]
+                    scores[player] = experiment.player_feedback(data)[2]
 
         results = experiment.analyze_questionaire(data)
         print ("Engagement:{0}, Difficulty:{1}, Fun:{2}"
