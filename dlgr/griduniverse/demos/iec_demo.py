@@ -11,7 +11,7 @@ logger = logging.getLogger(__file__)
 
 
 class Offspring(object):
-    """Generate offspring genome from parents"""
+    """Generate genome from M-1 generation."""
     max_score = 7.0
 
     def __init__(self, id, parents, scores, mutation_rate):
@@ -24,40 +24,40 @@ class Offspring(object):
     def genome(self):
         """Run genome logic"""
         if bool(self.parents):
-            weights = self.get_weights(self.scores)
+            weights = self.generate_weights(self.scores)
             options = self.weighted_rand(self.parents, weights)
             return self.mutate(options)
         return self.randomize_genome()
 
     def randomize_genome(self):
         """Generate random genome for generation 1"""
-        logger.info("Generation 1 parents are being randomly intialized.")
+        logger.info("Generation 1 is being randomly intialized.")
         return {
                 'show_chatroom': bool(random.getrandbits(1)),
-                'num_food': int(random.gauss(10, 5)),
+                'num_food': int(random.gauss(10, 2)),
                 'respawn_food': bool(random.getrandbits(1)),
-                'columns': int(random.gauss(10, 5)),
-                'rows': int(random.gauss(10, 5)),
-                'block_size': int(random.gauss(10, 5)),
-                'visibility': int(random.gauss(10, 5)),
+                'columns': int(random.gauss(25, 15)),
+                'rows': int(random.gauss(25, 15)),
+                'block_size': int(random.gauss(10, 2)),
+                'visibility': int(random.gauss(10, 2)),
                 'background_animation': bool(random.getrandbits(1))
         }
 
     def mutate(self, genome):
-        """Mutates genes according to mutation_rate"""
-        if random.random() <= self.mutation_rate:
-            logger.info("Mutation!")
-            genome['show_chatroom'] = bool(random.getrandbits(1))
-        if random.random() <= self.mutation_rate:
-            logger.info("Mutation!")
-            genome['num_food'] = int(random.gauss(10, 5))
-        if random.random() <= self.mutation_rate:
-            logger.info("Mutation!")
-            genome['respawn_food'] = bool(random.getrandbits(1))
+        """Mutate genes according to mutation_rate"""
+        for gene in genome.keys():
+            if random.random() <= self.mutation_rate:
+                logger.info("Mutation!")
+                if type(genome[gene]) is bool:
+                    genome[gene] = bool(random.getrandbits(1))
+                elif genome[gene]=='rows' or genome[gene]=='columns':
+                    int(random.gauss(25, 15))
+                elif type(genome[gene]) is int:
+                    int(random.gauss(10, 2))
         return genome
 
-    def get_weights(self, scores):
-        """Get probability of survival"""
+    def generate_weights(self, scores):
+        """Generate probability of survival"""
         logger.info("Weights are selected based on parent survival.")
         weights = []
         fitness_denom = 0
@@ -73,7 +73,7 @@ class Offspring(object):
         return weights
 
     def weighted_rand(self, values, weights):
-        """Get random value based on probability weights"""
+        """Generate random value using weighted probabilities"""
         total = 0
         cum_weights = []
         for w in weights:
@@ -91,6 +91,8 @@ class Evolve(object):
 
     def __init__(self, n, m, bot=False, mutation_rate=.1):
         """Run experiment loop"""
+        logger.info("Begin {0} x {1} experiment, bot={2}, mutation_rate={3}."
+                    .format(n, m, bot, mutation_rate))
         self.n = n
         self.m = m
         self.bot = bot
@@ -110,10 +112,10 @@ class Evolve(object):
         genomes = self.genomes
         for generation in xrange(generations):
             for player in xrange(players):
-                spawn = Offspring(player, genomes.values(), scores, self.mutation_rate)
-                genomes[player] = spawn.genome
-                logger.info("Running generation {0} for Player {1}"
-                            .format(generation + 1, player + 1))
+                child = Offspring(player, genomes.values(), scores, self.mutation_rate)
+                genomes[player] = child.genome
+                logger.info("Running generation {0} for Player {1}."
+                            .format(generation+1, player+1))
                 data = experiment.run(
                     mode=u'debug',
                     recruiter=self.recruiter,
@@ -122,9 +124,9 @@ class Evolve(object):
                     num_dynos_worker=1,
                     time_per_round=5.0,
                     verbose=True,
-                    show_chatroom=spawn.genome['show_chatroom'],
-                    num_food=spawn.genome['num_food'],
-                    respawn_food=spawn.genome['respawn_food']
+                    show_chatroom=child.genome['show_chatroom'],
+                    num_food=child.genome['num_food'],
+                    respawn_food=child.genome['respawn_food']
                 )
                 if self.bot:
                     scores[player] = self.player_feedback()
@@ -133,7 +135,7 @@ class Evolve(object):
 
         results = experiment.player_feedback(data)
         print ("Engagement:{0}, Difficulty:{1}, Fun:{2}"
-                .format(results[0], results[1], results[2]))
+               .format(results[0], results[1], results[2]))
 
 experiment = Griduniverse()
-Evolve(1, 3, bot=True, mutation_rate=.25)
+Evolve(1, 3, bot=False, mutation_rate=.40)
