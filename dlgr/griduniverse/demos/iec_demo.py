@@ -38,7 +38,7 @@ class Offspring(object):
                 'rows': int(random.gauss(40, 5)),
                 'columns': int(random.gauss(40, 5)),
                 'block_size': int(random.gauss(5, 3)),
-                'background_animation': bool(random.getrandbits(1))
+                'background_animation': bool(random.getrandbits(1)),
         }
 
     def mutate(self, genome):
@@ -56,6 +56,8 @@ class Offspring(object):
                     int(random.gauss(5, 3))
                 elif type(genome[gene]) is int:
                     int(random.gauss(10, 2))
+            else:
+                logger.info("Copied {} successfully".format(gene))
         return genome
 
     def generate_weights(self, scores):
@@ -114,11 +116,10 @@ class Evolve(object):
         genomes = self.genomes
         for generation in xrange(generations):
             for player in xrange(players):
-                print scores
                 child = Offspring(player, genomes.values(), scores, self.mutation_rate)
                 genomes[player] = child.genome
-                logger.info("Running generation {0} for Player {1}."
-                            .format(generation+1, player+1))
+                logger.info("Running player {0} for generation {1}."
+                            .format(player+1, generation+1))
                 data = experiment.run(
                     mode=u'debug',
                     recruiter=self.recruiter,
@@ -127,13 +128,13 @@ class Evolve(object):
                     num_dynos_worker=1,
                     time_per_round=5.0,
                     verbose=True,
-                    show_chatroom=child.genome['show_chatroom'],
-                    num_food=child.genome['num_food'],
-                    respawn_food=child.genome['respawn_food'],
-                    columns=child.genome['columns'],
-                    rows=child.genome['rows'],
-                    block_size=child.genome['block_size'],
-                    background_animation=child.genome['background_animation']
+                    show_chatroom=genomes[player]['show_chatroom'],
+                    num_food=genomes[player]['num_food'],
+                    respawn_food=genomes[player]['respawn_food'],
+                    columns=genomes[player]['columns'],
+                    rows=genomes[player]['rows'],
+                    block_size=genomes[player]['block_size'],
+                    background_animation=genomes[player]['background_animation'],
                 )
                 if self.bot:
                     scores[player] = self.player_feedback()
@@ -142,7 +143,7 @@ class Evolve(object):
 
         results = experiment.player_feedback(data)
         logger.info("Engagement:{0}, Difficulty:{1}, Fun:{2}"
-               .format(results[0], results[1], results[2]))
+                    .format(results[0], results[1], results[2]))
 
 experiment = Griduniverse()
 Evolve(2, 3, bot=True, mutation_rate=.2)
