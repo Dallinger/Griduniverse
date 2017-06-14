@@ -5,14 +5,13 @@ from bisect import bisect
 import random
 import logging
 
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__file__)
 
 
 class Offspring(object):
     """Generate genome from M-1 generation."""
-    max_score = 7.0
+    MAX_SCORE = 7.0
 
     def __init__(self, id, parents, scores, mutation_rate):
         self.id = id
@@ -31,15 +30,14 @@ class Offspring(object):
 
     def randomize_genome(self):
         """Generate random genome for generation 1"""
-        logger.info("Generation 1 is being randomly intialized.")
         return {
+                'time_per_round': int(random.gauss(100, 15)),
                 'show_chatroom': bool(random.getrandbits(1)),
                 'num_food': int(random.gauss(10, 2)),
                 'respawn_food': bool(random.getrandbits(1)),
-                'columns': int(random.gauss(25, 15)),
-                'rows': int(random.gauss(25, 15)),
-                'block_size': int(random.gauss(10, 2)),
-                'visibility': int(random.gauss(10, 2)),
+                'rows': int(random.gauss(40, 5)),
+                'columns': int(random.gauss(40, 5)),
+                'block_size': int(random.gauss(5, 3)),
                 'background_animation': bool(random.getrandbits(1))
         }
 
@@ -47,11 +45,15 @@ class Offspring(object):
         """Mutate genes according to mutation_rate"""
         for gene in genome.keys():
             if random.random() <= self.mutation_rate:
-                logger.info("Mutation!")
+                logger.info("Mutation! Changing {}".format(gene))
                 if type(genome[gene]) is bool:
                     genome[gene] = bool(random.getrandbits(1))
-                elif genome[gene]=='rows' or genome[gene]=='columns':
-                    int(random.gauss(25, 15))
+                elif genome[gene] == 'time_per_round':
+                    int(random.gauss(5, 3))
+                elif genome[gene] == 'rows' or genome[gene] == 'columns':
+                    int(random.gauss(40, 5))
+                elif genome[gene] == 'block_size':
+                    int(random.gauss(5, 3))
                 elif type(genome[gene]) is int:
                     int(random.gauss(10, 2))
         return genome
@@ -63,10 +65,10 @@ class Offspring(object):
         fitness_denom = 0
 
         for player, value in enumerate(self.parents):
-            fitness_denom += (float(scores[player]) / self.max_score)
+            fitness_denom += (float(scores[player]) / self.MAX_SCORE)
 
         for player, value in enumerate(self.parents):
-            score_decimal = float(scores[player]) / self.max_score
+            score_decimal = float(scores[player]) / self.MAX_SCORE
             prob_survival = float(score_decimal) / float(fitness_denom)
             logger.info("Survival %: {}".format(100.0 * float(prob_survival)))
             weights.append(prob_survival)
@@ -75,13 +77,13 @@ class Offspring(object):
     def weighted_rand(self, values, weights):
         """Generate random value using weighted probabilities"""
         total = 0
-        cum_weights = []
-        for w in weights:
-            total += w
-            cum_weights.append(total)
-        x = random.random() * total
-        i = bisect(cum_weights, x)
-        return values[i]
+        weightList = []
+        for weight in weights:
+            total += weight
+            weightList.append(total)
+        randomPoint = random.random() * total
+        randomWeight = bisect(weightList, randomPoint)
+        return values[randomWeight]
 
 
 class Evolve(object):
@@ -103,7 +105,7 @@ class Evolve(object):
 
     def player_feedback(self):
         """Random feedback generator for bots"""
-        feedback = randint(1, 9)
+        feedback = randint(1, 7)
         return feedback
 
     def run(self, players, generations):
@@ -112,6 +114,7 @@ class Evolve(object):
         genomes = self.genomes
         for generation in xrange(generations):
             for player in xrange(players):
+                print scores
                 child = Offspring(player, genomes.values(), scores, self.mutation_rate)
                 genomes[player] = child.genome
                 logger.info("Running generation {0} for Player {1}."
@@ -126,7 +129,11 @@ class Evolve(object):
                     verbose=True,
                     show_chatroom=child.genome['show_chatroom'],
                     num_food=child.genome['num_food'],
-                    respawn_food=child.genome['respawn_food']
+                    respawn_food=child.genome['respawn_food'],
+                    columns=child.genome['columns'],
+                    rows=child.genome['rows'],
+                    block_size=child.genome['block_size'],
+                    background_animation=child.genome['background_animation']
                 )
                 if self.bot:
                     scores[player] = self.player_feedback()
@@ -134,8 +141,8 @@ class Evolve(object):
                     scores[player] = experiment.player_feedback(data)[2]
 
         results = experiment.player_feedback(data)
-        print ("Engagement:{0}, Difficulty:{1}, Fun:{2}"
+        logger.info("Engagement:{0}, Difficulty:{1}, Fun:{2}"
                .format(results[0], results[1], results[2]))
 
 experiment = Griduniverse()
-Evolve(1, 3, bot=False, mutation_rate=.40)
+Evolve(2, 3, bot=True, mutation_rate=.2)
