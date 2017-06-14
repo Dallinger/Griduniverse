@@ -84,8 +84,8 @@ class Offspring(object):
             total += weight
             weightList.append(total)
         randomPoint = random.random() * total
-        randomWeight = bisect(weightList, randomPoint)
-        return values[randomWeight]
+        randomIndex = bisect(weightList, randomPoint)
+        return values[randomIndex]
 
 
 class Evolve(object):
