@@ -90,6 +90,7 @@ class Offspring(object):
 
 class Evolve(object):
     """N x M iteractive evolutionary algorithm"""
+    TIME_PER_ROUND = 5.00
     scores = {}
     genomes = {}
 
@@ -105,15 +106,30 @@ class Evolve(object):
         self.bot_policy = u'AdvantageSeekingBot' if bot else u'None'
         self.run(n, m)
 
-    def player_feedback(self):
-        """Random feedback generator for bots"""
-        feedback = randint(1, 7)
-        return feedback
+    def player_feedback(self, currPay, lastPay, feedback):
+        """Generate feedback based on dollars earned."""
+        low = .05 * self.TIME_PER_ROUND
+        high = .25 * self.TIME_PER_ROUND
+        if lastPay == 0:
+            if currPay <= low:
+                return 1
+            elif currPay >= high:
+                return 5
+            else:
+                return 3
+        if (currPay - lastPay) >= .50:
+            return feedback + 1
+        elif abs(currPay - lastPay) <= .25:
+            return feedback
+        else:
+            return feedback - 1
 
     def run(self, players, generations):
         """Run evolutionary algorithm"""
-        scores = {}
+        scores = self.scores
         genomes = self.genomes
+        lastPay = 0
+        feedback = 0
         for generation in xrange(generations):
             for player in xrange(players):
                 child = Offspring(player, genomes.values(), scores, self.mutation_rate)
@@ -126,7 +142,7 @@ class Evolve(object):
                     bot_policy=self.bot_policy,
                     max_participants=1,
                     num_dynos_worker=1,
-                    time_per_round=5.0,
+                    time_per_round=self.TIME_PER_ROUND,
                     verbose=True,
                     show_chatroom=genomes[player]['show_chatroom'],
                     num_food=genomes[player]['num_food'],
@@ -137,7 +153,12 @@ class Evolve(object):
                     background_animation=genomes[player]['background_animation'],
                 )
                 if self.bot:
-                    scores[player] = self.player_feedback()
+                    if player-1 in scores:
+                        feedback = scores[player-1]
+                    currPay = experiment.average_score(data)
+                    scores[player] = self.player_feedback(
+                                    currPay, lastPay, feedback)
+                    last = currPay
                 else:
                     scores[player] = experiment.player_feedback(data)[2]
 
