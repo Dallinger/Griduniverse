@@ -43,7 +43,7 @@ class Offspring(object):
                 'respawn_food': bool(random.getrandbits(1)),
                 'rows': int(random.gauss(40, 5)),
                 'columns': int(random.gauss(40, 5)),
-                'block_size': int(random.gauss(5, 3)),
+                'block_size': int(random.gauss(7, 3)),
                 'background_animation': bool(random.getrandbits(1)),
         }
 
@@ -119,11 +119,14 @@ class Evolve(object):
         This requires a check to see how fun the game is based on
         fixed amounts of money in the beginning, relative to the
         time_per_round variable. After that, the comparison becomes
-        relative to the last round's fun rating.
+        relative to a percentage of the last round's fun rating. The
+        stepRate variable is the percent required to bump up a rating.
         """
-
-        low = .05 * self.TIME_PER_ROUND
-        high = .25 * self.TIME_PER_ROUND
+        logger.info("Current Pay: {0}. Last Payout {1}."
+                    .format(currPay, lastPay))
+        low = .01 * self.TIME_PER_ROUND
+        high = .05 * self.TIME_PER_ROUND
+        stepRate = .2
         if lastPay == 0:
             if currPay <= low:
                 return 1
@@ -131,9 +134,9 @@ class Evolve(object):
                 return 5
             else:
                 return 3
-        if (currPay - lastPay) >= .50:
+        if (currPay / lastPay) - 1 >= stepRate:
             return feedback + 1
-        elif abs(currPay - lastPay) <= .25:
+        elif abs(currPay - lastPay) / lastPay < stepRate:
             return feedback
         else:
             return feedback - 1
@@ -169,16 +172,15 @@ class Evolve(object):
                 if self.bot:
                     if player-1 in scores:
                         feedback = scores[player-1]
-                    currPay = experiment.average_score(data)
+                    currPay = experiment.average_pay_off(data)
                     scores[player] = self.player_feedback(
                                     currPay, lastPay, feedback)
-                    last = currPay
+                    lastPay = currPay
                 else:
                     scores[player] = experiment.player_feedback(data)[2]
-
+                logger.info("Fun rating: {}.".format(scores[player]))
         results = experiment.player_feedback(data)
-        logger.info("Engagement:{0}, Difficulty:{1}, Fun:{2}"
-                    .format(results[0], results[1], results[2]))
+
 
 experiment = Griduniverse()
 Evolve(2, 3, bot=True, mutation_rate=.2)

@@ -306,8 +306,7 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
         difficulty.select_by_value(str(random.randint(1, 7)))
         engagement = Select(self.driver.find_element_by_id('engagement'))
         engagement.select_by_value(str(random.randint(1, 7)))
-        fun = Select(self.driver.find_element_by_id('fun'))
-        fun.select_by_value(str(random.randint(1, 7)))
+        # Fun gets filled out in the demo script.
         return True
 
 
