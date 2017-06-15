@@ -1210,6 +1210,12 @@ class Griduniverse(Experiment):
         fun = int(json.loads(data.questions.list[-1][-1])['fun'])
         return engagement, difficulty, fun
 
+    def average_pay_off(self, data):
+        final_state = json.loads(data.infos.list[-1][-1])
+        players = final_state['players']
+        payoff = [player['payoff'] for player in players]
+        return float(sum(payoff)) / len(payoff)
+
     def average_score(self, data):
         final_state = json.loads(data.infos.list[-1][-1])
         players = final_state['players']
