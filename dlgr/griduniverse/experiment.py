@@ -23,6 +23,7 @@ from dallinger.compat import unicode
 from dallinger.config import get_config
 from dallinger.experiment import Experiment
 from dallinger.heroku.worker import conn as redis
+
 from bots import Bot
 
 logger = logging.getLogger(__file__)
