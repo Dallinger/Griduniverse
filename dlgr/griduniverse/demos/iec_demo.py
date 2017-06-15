@@ -10,7 +10,13 @@ logger = logging.getLogger(__file__)
 
 
 class Offspring(object):
-    """Generate genome from M-1 generation."""
+    """Generate genome from the last generation.
+
+    If there is no last generation (M==0), the genome is
+    generated using random methods tailored to the
+    types of variables we are randomizing.
+    """
+
     MAX_SCORE = 7.0
 
     def __init__(self, id, parents, scores, mutation_rate):
@@ -42,7 +48,7 @@ class Offspring(object):
         }
 
     def mutate(self, genome):
-        """Mutate genes according to mutation_rate"""
+        """Mutate genes based on the mutation_rate"""
         for gene in genome.keys():
             if random.random() <= self.mutation_rate:
                 logger.info("Mutation! Changing {}".format(gene))
@@ -90,6 +96,7 @@ class Offspring(object):
 
 class Evolve(object):
     """N x M iteractive evolutionary algorithm"""
+
     TIME_PER_ROUND = 5.00
     scores = {}
     genomes = {}
@@ -107,7 +114,14 @@ class Evolve(object):
         self.run(n, m)
 
     def player_feedback(self, currPay, lastPay, feedback):
-        """Generate feedback based on dollars earned."""
+        """Generate feedback based on dollars earned.
+
+        This requires a check to see how fun the game is based on
+        fixed amounts of money in the beginning, relative to the
+        time_per_round variable. After that, the comparison becomes
+        relative to the last round's fun rating.
+        """
+
         low = .05 * self.TIME_PER_ROUND
         high = .25 * self.TIME_PER_ROUND
         if lastPay == 0:
