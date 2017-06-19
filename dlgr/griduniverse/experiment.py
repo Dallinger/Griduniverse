@@ -1269,9 +1269,9 @@ class Griduniverse(Experiment):
 
             self.grid.compute_payoffs()
 
-            round = self.grid.round
+            game_round = self.grid.round
             self.grid.check_round_completion()
-            if self.grid.round != round and not self.grid.game_over:
+            if self.grid.round != game_round and not self.grid.game_over:
                 self.record_event({
                     'type': 'new_round',
                     'round': self.grid.round
