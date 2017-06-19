@@ -44,3 +44,16 @@ This updates the `yarn.lock` file, which records the specific
 releases which were used. Other developers will get those
 releases when they run `yarn`. Updates to `yarn.lock`
 should be committed to version control.
+
+## Running Bots
+
+See [documentation](http://docs.dallinger.io/en/latest/running_bots.html) for
+instructions on running bots in Dallinger. We recommend using the Chrome
+web driver, needed to render the WebGL components. In `config.txt`, set:
+
+```
+webdriver_type = chrome
+```
+
+Use the classes in bot.py as an example of how to create your own bot. You can
+create a class, then change the `bot_policy` option in `demo.py` to your class.
