@@ -47,10 +47,13 @@ should be committed to version control.
 
 ## Running Bots
 
-### OSX Instructions
-1. The `dallinger bot` option requires you install phantom.js. You can install it on Mac with `brew install phantomjs`
-2. Run the bot by running the sandbox first using `dallinger sandbox`. Next, use the assigned app ID with `dallinger bot --app YOUR_APP_NAME`
-3. If you run into errors with your bot detecting .html elements, we recommend you run the bots with Chrome. Set your local Griduniverse `dlgr/griduniverse/config.txt` to include `webdriver_type = chrome.`
-4. Next you need to install Chromedriver. You can manually install or run `brew install chromedriver`
-5. Chromedriver will search for the Chrome Application's binary in the `HOME/Applications/Google\ Chrome/` package on OSX.
-6. After this, repeat step 2. Use the classes in bot.py as an example of how to create your own bot. You can create a class, then change the `bot_policy` option in `demo.py` to your class name in order to run the bot.
+See [documentation](http://docs.dallinger.io/en/latest/running_bots.html) for
+instructions on running bots in Dallinger. We recommend using the Chrome
+web driver, needed to render the WebGL components. In `config.txt`, set:
+
+```
+webdriver_type = chrome
+```
+
+Use the classes in bot.py as an example of how to create your own bot. You can
+create a class, then change the `bot_policy` option in `demo.py` to your class.
