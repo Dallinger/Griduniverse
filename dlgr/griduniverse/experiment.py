@@ -110,6 +110,7 @@ def extra_parameters():
         'identity_signaling': bool,
         'identity_starts_visible': bool,
         'score_visible': bool,
+        'alternate_consumption_donation': bool,
     }
 
     for key in types:
@@ -207,6 +208,10 @@ class Gridworld(object):
         self.frequency_dependence = kwargs.get('frequency_dependence', 0)
         self.frequency_dependent_payoff_rate = kwargs.get(
             'frequency_dependent_payoff_rate', 0)
+        self.intergroup_competition = kwargs.get('intergroup_competition', 1)
+        self.intragroup_competition = kwargs.get('intragroup_competition', 1)
+
+        # Donations
         self.donation_amount = kwargs.get('donation_amount', 0)
         self.donation_individual = kwargs.get('donation_individual', False)
         self.donation_group = kwargs.get('donation_group', False)
@@ -214,6 +219,8 @@ class Gridworld(object):
         self.intergroup_competition = kwargs.get('intergroup_competition', 1)
         self.intragroup_competition = kwargs.get('intragroup_competition', 1)
         self.score_visible = kwargs.get('score_visible', False)
+        self.alternate_consumption_donation = config.get(
+            'alternate_consumption_donation', False)
 
         # Food
         self.num_food = kwargs.get('num_food', 8)
@@ -295,6 +302,7 @@ class Gridworld(object):
             self.start_timestamp = time.time()
             for player in self.players.values():
                 player.motion_timestamp = 0
+
 
     def compute_payoffs(self):
         """Compute payoffs from scores.
@@ -1064,6 +1072,9 @@ class Griduniverse(Experiment):
 
     def handle_donation(self, msg):
         """Send a donation from one player to another."""
+        if self.grid.alternate_consumption_donation and self.grid.round % 2:
+            return
+
         recipients = []
         recipient_id = msg['recipient_id']
         if recipient_id.startswith('group:') and self.grid.donation_group:
@@ -1152,7 +1163,11 @@ class Griduniverse(Experiment):
                     player.move(player.motion_direction, tremble_rate=0)
 
             # Consume the food.
-            self.grid.consume()
+            if (
+                not self.grid.alternate_consumption_donation or
+                not self.grid.round % 2
+            ):
+                self.grid.consume()
 
             # Spread through contagion.
             if self.grid.contagion > 0:
