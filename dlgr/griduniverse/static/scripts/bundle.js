@@ -68,10 +68,165 @@
 /************************************************************************/
 /******/ ([
 /* 0 */
+/***/ (function(module, exports) {
+
+module.exports = {
+	"aliceblue": [240, 248, 255],
+	"antiquewhite": [250, 235, 215],
+	"aqua": [0, 255, 255],
+	"aquamarine": [127, 255, 212],
+	"azure": [240, 255, 255],
+	"beige": [245, 245, 220],
+	"bisque": [255, 228, 196],
+	"black": [0, 0, 0],
+	"blanchedalmond": [255, 235, 205],
+	"blue": [0, 0, 255],
+	"blueviolet": [138, 43, 226],
+	"brown": [165, 42, 42],
+	"burlywood": [222, 184, 135],
+	"cadetblue": [95, 158, 160],
+	"chartreuse": [127, 255, 0],
+	"chocolate": [210, 105, 30],
+	"coral": [255, 127, 80],
+	"cornflowerblue": [100, 149, 237],
+	"cornsilk": [255, 248, 220],
+	"crimson": [220, 20, 60],
+	"cyan": [0, 255, 255],
+	"darkblue": [0, 0, 139],
+	"darkcyan": [0, 139, 139],
+	"darkgoldenrod": [184, 134, 11],
+	"darkgray": [169, 169, 169],
+	"darkgreen": [0, 100, 0],
+	"darkgrey": [169, 169, 169],
+	"darkkhaki": [189, 183, 107],
+	"darkmagenta": [139, 0, 139],
+	"darkolivegreen": [85, 107, 47],
+	"darkorange": [255, 140, 0],
+	"darkorchid": [153, 50, 204],
+	"darkred": [139, 0, 0],
+	"darksalmon": [233, 150, 122],
+	"darkseagreen": [143, 188, 143],
+	"darkslateblue": [72, 61, 139],
+	"darkslategray": [47, 79, 79],
+	"darkslategrey": [47, 79, 79],
+	"darkturquoise": [0, 206, 209],
+	"darkviolet": [148, 0, 211],
+	"deeppink": [255, 20, 147],
+	"deepskyblue": [0, 191, 255],
+	"dimgray": [105, 105, 105],
+	"dimgrey": [105, 105, 105],
+	"dodgerblue": [30, 144, 255],
+	"firebrick": [178, 34, 34],
+	"floralwhite": [255, 250, 240],
+	"forestgreen": [34, 139, 34],
+	"fuchsia": [255, 0, 255],
+	"gainsboro": [220, 220, 220],
+	"ghostwhite": [248, 248, 255],
+	"gold": [255, 215, 0],
+	"goldenrod": [218, 165, 32],
+	"gray": [128, 128, 128],
+	"green": [0, 128, 0],
+	"greenyellow": [173, 255, 47],
+	"grey": [128, 128, 128],
+	"honeydew": [240, 255, 240],
+	"hotpink": [255, 105, 180],
+	"indianred": [205, 92, 92],
+	"indigo": [75, 0, 130],
+	"ivory": [255, 255, 240],
+	"khaki": [240, 230, 140],
+	"lavender": [230, 230, 250],
+	"lavenderblush": [255, 240, 245],
+	"lawngreen": [124, 252, 0],
+	"lemonchiffon": [255, 250, 205],
+	"lightblue": [173, 216, 230],
+	"lightcoral": [240, 128, 128],
+	"lightcyan": [224, 255, 255],
+	"lightgoldenrodyellow": [250, 250, 210],
+	"lightgray": [211, 211, 211],
+	"lightgreen": [144, 238, 144],
+	"lightgrey": [211, 211, 211],
+	"lightpink": [255, 182, 193],
+	"lightsalmon": [255, 160, 122],
+	"lightseagreen": [32, 178, 170],
+	"lightskyblue": [135, 206, 250],
+	"lightslategray": [119, 136, 153],
+	"lightslategrey": [119, 136, 153],
+	"lightsteelblue": [176, 196, 222],
+	"lightyellow": [255, 255, 224],
+	"lime": [0, 255, 0],
+	"limegreen": [50, 205, 50],
+	"linen": [250, 240, 230],
+	"magenta": [255, 0, 255],
+	"maroon": [128, 0, 0],
+	"mediumaquamarine": [102, 205, 170],
+	"mediumblue": [0, 0, 205],
+	"mediumorchid": [186, 85, 211],
+	"mediumpurple": [147, 112, 219],
+	"mediumseagreen": [60, 179, 113],
+	"mediumslateblue": [123, 104, 238],
+	"mediumspringgreen": [0, 250, 154],
+	"mediumturquoise": [72, 209, 204],
+	"mediumvioletred": [199, 21, 133],
+	"midnightblue": [25, 25, 112],
+	"mintcream": [245, 255, 250],
+	"mistyrose": [255, 228, 225],
+	"moccasin": [255, 228, 181],
+	"navajowhite": [255, 222, 173],
+	"navy": [0, 0, 128],
+	"oldlace": [253, 245, 230],
+	"olive": [128, 128, 0],
+	"olivedrab": [107, 142, 35],
+	"orange": [255, 165, 0],
+	"orangered": [255, 69, 0],
+	"orchid": [218, 112, 214],
+	"palegoldenrod": [238, 232, 170],
+	"palegreen": [152, 251, 152],
+	"paleturquoise": [175, 238, 238],
+	"palevioletred": [219, 112, 147],
+	"papayawhip": [255, 239, 213],
+	"peachpuff": [255, 218, 185],
+	"peru": [205, 133, 63],
+	"pink": [255, 192, 203],
+	"plum": [221, 160, 221],
+	"powderblue": [176, 224, 230],
+	"purple": [128, 0, 128],
+	"rebeccapurple": [102, 51, 153],
+	"red": [255, 0, 0],
+	"rosybrown": [188, 143, 143],
+	"royalblue": [65, 105, 225],
+	"saddlebrown": [139, 69, 19],
+	"salmon": [250, 128, 114],
+	"sandybrown": [244, 164, 96],
+	"seagreen": [46, 139, 87],
+	"seashell": [255, 245, 238],
+	"sienna": [160, 82, 45],
+	"silver": [192, 192, 192],
+	"skyblue": [135, 206, 235],
+	"slateblue": [106, 90, 205],
+	"slategray": [112, 128, 144],
+	"slategrey": [112, 128, 144],
+	"snow": [255, 250, 250],
+	"springgreen": [0, 255, 127],
+	"steelblue": [70, 130, 180],
+	"tan": [210, 180, 140],
+	"teal": [0, 128, 128],
+	"thistle": [216, 191, 216],
+	"tomato": [255, 99, 71],
+	"turquoise": [64, 224, 208],
+	"violet": [238, 130, 238],
+	"wheat": [245, 222, 179],
+	"white": [255, 255, 255],
+	"whitesmoke": [245, 245, 245],
+	"yellow": [255, 255, 0],
+	"yellowgreen": [154, 205, 50]
+};
+
+/***/ }),
+/* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* MIT license */
-var cssKeywords = __webpack_require__(1);
+var cssKeywords = __webpack_require__(0);
 
 // NOTE: conversions should only return primitive values (i.e. arrays, or
 //       values that give correct `typeof` results).
@@ -934,161 +1089,6 @@ convert.rgb.gray = function (rgb) {
 
 
 /***/ }),
-/* 1 */
-/***/ (function(module, exports) {
-
-module.exports = {
-	"aliceblue": [240, 248, 255],
-	"antiquewhite": [250, 235, 215],
-	"aqua": [0, 255, 255],
-	"aquamarine": [127, 255, 212],
-	"azure": [240, 255, 255],
-	"beige": [245, 245, 220],
-	"bisque": [255, 228, 196],
-	"black": [0, 0, 0],
-	"blanchedalmond": [255, 235, 205],
-	"blue": [0, 0, 255],
-	"blueviolet": [138, 43, 226],
-	"brown": [165, 42, 42],
-	"burlywood": [222, 184, 135],
-	"cadetblue": [95, 158, 160],
-	"chartreuse": [127, 255, 0],
-	"chocolate": [210, 105, 30],
-	"coral": [255, 127, 80],
-	"cornflowerblue": [100, 149, 237],
-	"cornsilk": [255, 248, 220],
-	"crimson": [220, 20, 60],
-	"cyan": [0, 255, 255],
-	"darkblue": [0, 0, 139],
-	"darkcyan": [0, 139, 139],
-	"darkgoldenrod": [184, 134, 11],
-	"darkgray": [169, 169, 169],
-	"darkgreen": [0, 100, 0],
-	"darkgrey": [169, 169, 169],
-	"darkkhaki": [189, 183, 107],
-	"darkmagenta": [139, 0, 139],
-	"darkolivegreen": [85, 107, 47],
-	"darkorange": [255, 140, 0],
-	"darkorchid": [153, 50, 204],
-	"darkred": [139, 0, 0],
-	"darksalmon": [233, 150, 122],
-	"darkseagreen": [143, 188, 143],
-	"darkslateblue": [72, 61, 139],
-	"darkslategray": [47, 79, 79],
-	"darkslategrey": [47, 79, 79],
-	"darkturquoise": [0, 206, 209],
-	"darkviolet": [148, 0, 211],
-	"deeppink": [255, 20, 147],
-	"deepskyblue": [0, 191, 255],
-	"dimgray": [105, 105, 105],
-	"dimgrey": [105, 105, 105],
-	"dodgerblue": [30, 144, 255],
-	"firebrick": [178, 34, 34],
-	"floralwhite": [255, 250, 240],
-	"forestgreen": [34, 139, 34],
-	"fuchsia": [255, 0, 255],
-	"gainsboro": [220, 220, 220],
-	"ghostwhite": [248, 248, 255],
-	"gold": [255, 215, 0],
-	"goldenrod": [218, 165, 32],
-	"gray": [128, 128, 128],
-	"green": [0, 128, 0],
-	"greenyellow": [173, 255, 47],
-	"grey": [128, 128, 128],
-	"honeydew": [240, 255, 240],
-	"hotpink": [255, 105, 180],
-	"indianred": [205, 92, 92],
-	"indigo": [75, 0, 130],
-	"ivory": [255, 255, 240],
-	"khaki": [240, 230, 140],
-	"lavender": [230, 230, 250],
-	"lavenderblush": [255, 240, 245],
-	"lawngreen": [124, 252, 0],
-	"lemonchiffon": [255, 250, 205],
-	"lightblue": [173, 216, 230],
-	"lightcoral": [240, 128, 128],
-	"lightcyan": [224, 255, 255],
-	"lightgoldenrodyellow": [250, 250, 210],
-	"lightgray": [211, 211, 211],
-	"lightgreen": [144, 238, 144],
-	"lightgrey": [211, 211, 211],
-	"lightpink": [255, 182, 193],
-	"lightsalmon": [255, 160, 122],
-	"lightseagreen": [32, 178, 170],
-	"lightskyblue": [135, 206, 250],
-	"lightslategray": [119, 136, 153],
-	"lightslategrey": [119, 136, 153],
-	"lightsteelblue": [176, 196, 222],
-	"lightyellow": [255, 255, 224],
-	"lime": [0, 255, 0],
-	"limegreen": [50, 205, 50],
-	"linen": [250, 240, 230],
-	"magenta": [255, 0, 255],
-	"maroon": [128, 0, 0],
-	"mediumaquamarine": [102, 205, 170],
-	"mediumblue": [0, 0, 205],
-	"mediumorchid": [186, 85, 211],
-	"mediumpurple": [147, 112, 219],
-	"mediumseagreen": [60, 179, 113],
-	"mediumslateblue": [123, 104, 238],
-	"mediumspringgreen": [0, 250, 154],
-	"mediumturquoise": [72, 209, 204],
-	"mediumvioletred": [199, 21, 133],
-	"midnightblue": [25, 25, 112],
-	"mintcream": [245, 255, 250],
-	"mistyrose": [255, 228, 225],
-	"moccasin": [255, 228, 181],
-	"navajowhite": [255, 222, 173],
-	"navy": [0, 0, 128],
-	"oldlace": [253, 245, 230],
-	"olive": [128, 128, 0],
-	"olivedrab": [107, 142, 35],
-	"orange": [255, 165, 0],
-	"orangered": [255, 69, 0],
-	"orchid": [218, 112, 214],
-	"palegoldenrod": [238, 232, 170],
-	"palegreen": [152, 251, 152],
-	"paleturquoise": [175, 238, 238],
-	"palevioletred": [219, 112, 147],
-	"papayawhip": [255, 239, 213],
-	"peachpuff": [255, 218, 185],
-	"peru": [205, 133, 63],
-	"pink": [255, 192, 203],
-	"plum": [221, 160, 221],
-	"powderblue": [176, 224, 230],
-	"purple": [128, 0, 128],
-	"rebeccapurple": [102, 51, 153],
-	"red": [255, 0, 0],
-	"rosybrown": [188, 143, 143],
-	"royalblue": [65, 105, 225],
-	"saddlebrown": [139, 69, 19],
-	"salmon": [250, 128, 114],
-	"sandybrown": [244, 164, 96],
-	"seagreen": [46, 139, 87],
-	"seashell": [255, 245, 238],
-	"sienna": [160, 82, 45],
-	"silver": [192, 192, 192],
-	"skyblue": [135, 206, 235],
-	"slateblue": [106, 90, 205],
-	"slategray": [112, 128, 144],
-	"slategrey": [112, 128, 144],
-	"snow": [255, 250, 250],
-	"springgreen": [0, 255, 127],
-	"steelblue": [70, 130, 180],
-	"tan": [210, 180, 140],
-	"teal": [0, 128, 128],
-	"thistle": [216, 191, 216],
-	"tomato": [255, 99, 71],
-	"turquoise": [64, 224, 208],
-	"violet": [238, 130, 238],
-	"wheat": [245, 222, 179],
-	"white": [255, 255, 255],
-	"whitesmoke": [245, 245, 245],
-	"yellow": [255, 255, 0],
-	"yellowgreen": [154, 205, 50]
-};
-
-/***/ }),
 /* 2 */
 /***/ (function(module, exports) {
 
@@ -1141,7 +1141,7 @@ module.exports = isArray || function (val) {
 
 
 
-var typeOf = __webpack_require__(24);
+var typeOf = __webpack_require__(25);
 
 module.exports = function isNumber(num) {
   var type = typeOf(num);
@@ -1184,7 +1184,7 @@ module.exports = function isString(value) {
 /* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var convert = __webpack_require__(26);
+var convert = __webpack_require__(18);
 
 module.exports = function (cstr) {
     var m, conv, parts, alpha;
@@ -1321,7 +1321,7 @@ function Pixels(data, opts) {
     width / height
   );
 
-  var regl = __webpack_require__(28)(canvas);
+  var regl = __webpack_require__(27)(canvas);
 
   var squares = regl({
     vert: `
@@ -1380,7 +1380,7 @@ module.exports = Pixels;
 
 
 var colorString = __webpack_require__(19);
-var convert = __webpack_require__(17);
+var convert = __webpack_require__(20);
 
 var _slice = [].slice;
 
@@ -1981,7 +1981,7 @@ module.exports = Color;
 /* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Emitter = __webpack_require__(20)
+var Emitter = __webpack_require__(22)
 
 module.exports = attach
 
@@ -3882,7 +3882,7 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(32), __webpack_require__(27)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(32), __webpack_require__(26)))
 
 /***/ }),
 /* 13 */
@@ -4053,7 +4053,15 @@ var playerSet = (function () {
       var positions = [],
           idx,
           player,
-          id;
+          id,
+          minScore,
+          maxScore,
+          d,
+          color;
+      if (settings.score_visible) {
+        minScore = this.minScore();
+        maxScore = this.maxScore();
+      }
 
       for (id in this._players) {
         if (this._players.hasOwnProperty(id)) {
@@ -4063,11 +4071,23 @@ var playerSet = (function () {
           }
           idx = player.position[0] * settings.columns + player.position[1];
           if (id == this.ego_id || settings.others_visible) {
+
             if (player.identity_visible) {
-              grid[idx] = player.color;
+              color = player.color;
             } else {
-              grid[idx] = (id == this.ego_id) ? Color.rgb(player.color).desaturate(0.6).rgb().array() : INVISIBLE_COLOR;
+              color = (id == this.ego_id) ? Color.rgb(player.color).desaturate(0.6).rgb().array() : INVISIBLE_COLOR;
             }
+            if (settings.score_visible) {
+              if (maxScore-minScore > 0) {
+                d = 0.75 * (1 - (player.score-minScore)/(maxScore-minScore));
+              } else {
+                d = 0.375;
+              }
+              color = Color.rgb(player.color).desaturate(d).rgb().array();
+            } else {
+              color = player.color;
+            }
+            grid[idx] = color;
           }
         }
       }
@@ -4116,6 +4136,28 @@ var playerSet = (function () {
         currentPlayerData = playerData[i];
         this._players[currentPlayerData.id] = new Player(currentPlayerData);
       }
+    };
+
+    PlayerSet.prototype.maxScore = function () {
+        var id;
+        maxScore = 0;
+        for (id in this._players) {
+            if (this._players[id].score > maxScore) {
+                maxScore = this._players[id].score;
+            }
+        }
+        return maxScore;
+    };
+
+    PlayerSet.prototype.minScore = function () {
+        var id;
+        minScore = Infinity;
+        for (id in this._players) {
+            if (this._players[id].score < minScore) {
+                minScore = this._players[id].score;
+            }
+        }
+        return minScore;
     };
 
     return PlayerSet;
@@ -4693,7 +4735,7 @@ $(document).ready(function() {
 /* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var flatten = __webpack_require__(21);
+var flatten = __webpack_require__(23);
 var isarray = __webpack_require__(2);
 var isnumber = __webpack_require__(3);
 var isstring = __webpack_require__(4);
@@ -4745,937 +4787,6 @@ module.exports = layout;
 
 /***/ }),
 /* 17 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var conversions = __webpack_require__(0);
-var route = __webpack_require__(18);
-
-var convert = {};
-
-var models = Object.keys(conversions);
-
-function wrapRaw(fn) {
-	var wrappedFn = function (args) {
-		if (args === undefined || args === null) {
-			return args;
-		}
-
-		if (arguments.length > 1) {
-			args = Array.prototype.slice.call(arguments);
-		}
-
-		return fn(args);
-	};
-
-	// preserve .conversion property if there is one
-	if ('conversion' in fn) {
-		wrappedFn.conversion = fn.conversion;
-	}
-
-	return wrappedFn;
-}
-
-function wrapRounded(fn) {
-	var wrappedFn = function (args) {
-		if (args === undefined || args === null) {
-			return args;
-		}
-
-		if (arguments.length > 1) {
-			args = Array.prototype.slice.call(arguments);
-		}
-
-		var result = fn(args);
-
-		// we're assuming the result is an array here.
-		// see notice in conversions.js; don't use box types
-		// in conversion functions.
-		if (typeof result === 'object') {
-			for (var len = result.length, i = 0; i < len; i++) {
-				result[i] = Math.round(result[i]);
-			}
-		}
-
-		return result;
-	};
-
-	// preserve .conversion property if there is one
-	if ('conversion' in fn) {
-		wrappedFn.conversion = fn.conversion;
-	}
-
-	return wrappedFn;
-}
-
-models.forEach(function (fromModel) {
-	convert[fromModel] = {};
-
-	Object.defineProperty(convert[fromModel], 'channels', {value: conversions[fromModel].channels});
-	Object.defineProperty(convert[fromModel], 'labels', {value: conversions[fromModel].labels});
-
-	var routes = route(fromModel);
-	var routeModels = Object.keys(routes);
-
-	routeModels.forEach(function (toModel) {
-		var fn = routes[toModel];
-
-		convert[fromModel][toModel] = wrapRounded(fn);
-		convert[fromModel][toModel].raw = wrapRaw(fn);
-	});
-});
-
-module.exports = convert;
-
-
-/***/ }),
-/* 18 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var conversions = __webpack_require__(0);
-
-/*
-	this function routes a model to all other models.
-
-	all functions that are routed have a property `.conversion` attached
-	to the returned synthetic function. This property is an array
-	of strings, each with the steps in between the 'from' and 'to'
-	color models (inclusive).
-
-	conversions that are not possible simply are not included.
-*/
-
-// https://jsperf.com/object-keys-vs-for-in-with-closure/3
-var models = Object.keys(conversions);
-
-function buildGraph() {
-	var graph = {};
-
-	for (var len = models.length, i = 0; i < len; i++) {
-		graph[models[i]] = {
-			// http://jsperf.com/1-vs-infinity
-			// micro-opt, but this is simple.
-			distance: -1,
-			parent: null
-		};
-	}
-
-	return graph;
-}
-
-// https://en.wikipedia.org/wiki/Breadth-first_search
-function deriveBFS(fromModel) {
-	var graph = buildGraph();
-	var queue = [fromModel]; // unshift -> queue -> pop
-
-	graph[fromModel].distance = 0;
-
-	while (queue.length) {
-		var current = queue.pop();
-		var adjacents = Object.keys(conversions[current]);
-
-		for (var len = adjacents.length, i = 0; i < len; i++) {
-			var adjacent = adjacents[i];
-			var node = graph[adjacent];
-
-			if (node.distance === -1) {
-				node.distance = graph[current].distance + 1;
-				node.parent = current;
-				queue.unshift(adjacent);
-			}
-		}
-	}
-
-	return graph;
-}
-
-function link(from, to) {
-	return function (args) {
-		return to(from(args));
-	};
-}
-
-function wrapConversion(toModel, graph) {
-	var path = [graph[toModel].parent, toModel];
-	var fn = conversions[graph[toModel].parent][toModel];
-
-	var cur = graph[toModel].parent;
-	while (graph[cur].parent) {
-		path.unshift(graph[cur].parent);
-		fn = link(conversions[graph[cur].parent][cur], fn);
-		cur = graph[cur].parent;
-	}
-
-	fn.conversion = path;
-	return fn;
-}
-
-module.exports = function (fromModel) {
-	var graph = deriveBFS(fromModel);
-	var conversion = {};
-
-	var models = Object.keys(graph);
-	for (var len = models.length, i = 0; i < len; i++) {
-		var toModel = models[i];
-		var node = graph[toModel];
-
-		if (node.parent === null) {
-			// no possible conversion, or this node is the source model.
-			continue;
-		}
-
-		conversion[toModel] = wrapConversion(toModel, graph);
-	}
-
-	return conversion;
-};
-
-
-
-/***/ }),
-/* 19 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* MIT license */
-var colorNames = __webpack_require__(1);
-var swizzle = __webpack_require__(29);
-
-var reverseNames = {};
-
-// create a list of reverse color names
-for (var name in colorNames) {
-	if (colorNames.hasOwnProperty(name)) {
-		reverseNames[colorNames[name]] = name;
-	}
-}
-
-var cs = module.exports = {
-	to: {}
-};
-
-cs.get = function (string) {
-	var prefix = string.substring(0, 3).toLowerCase();
-	var val;
-	var model;
-	switch (prefix) {
-		case 'hsl':
-			val = cs.get.hsl(string);
-			model = 'hsl';
-			break;
-		case 'hwb':
-			val = cs.get.hwb(string);
-			model = 'hwb';
-			break;
-		default:
-			val = cs.get.rgb(string);
-			model = 'rgb';
-			break;
-	}
-
-	if (!val) {
-		return null;
-	}
-
-	return {model: model, value: val};
-};
-
-cs.get.rgb = function (string) {
-	if (!string) {
-		return null;
-	}
-
-	var abbr = /^#([a-f0-9]{3,4})$/i;
-	var hex = /^#([a-f0-9]{6})([a-f0-9]{2})?$/i;
-	var rgba = /^rgba?\(\s*([+-]?\d+)\s*,\s*([+-]?\d+)\s*,\s*([+-]?\d+)\s*(?:,\s*([+-]?[\d\.]+)\s*)?\)$/;
-	var per = /^rgba?\(\s*([+-]?[\d\.]+)\%\s*,\s*([+-]?[\d\.]+)\%\s*,\s*([+-]?[\d\.]+)\%\s*(?:,\s*([+-]?[\d\.]+)\s*)?\)$/;
-	var keyword = /(\D+)/;
-
-	var rgb = [0, 0, 0, 1];
-	var match;
-	var i;
-	var hexAlpha;
-
-	if (match = string.match(hex)) {
-		hexAlpha = match[2];
-		match = match[1];
-
-		for (i = 0; i < 3; i++) {
-			// https://jsperf.com/slice-vs-substr-vs-substring-methods-long-string/19
-			var i2 = i * 2;
-			rgb[i] = parseInt(match.slice(i2, i2 + 2), 16);
-		}
-
-		if (hexAlpha) {
-			rgb[3] = Math.round((parseInt(hexAlpha, 16) / 255) * 100) / 100;
-		}
-	} else if (match = string.match(abbr)) {
-		match = match[1];
-		hexAlpha = match[3];
-
-		for (i = 0; i < 3; i++) {
-			rgb[i] = parseInt(match[i] + match[i], 16);
-		}
-
-		if (hexAlpha) {
-			rgb[3] = Math.round((parseInt(hexAlpha + hexAlpha, 16) / 255) * 100) / 100;
-		}
-	} else if (match = string.match(rgba)) {
-		for (i = 0; i < 3; i++) {
-			rgb[i] = parseInt(match[i + 1], 0);
-		}
-
-		if (match[4]) {
-			rgb[3] = parseFloat(match[4]);
-		}
-	} else if (match = string.match(per)) {
-		for (i = 0; i < 3; i++) {
-			rgb[i] = Math.round(parseFloat(match[i + 1]) * 2.55);
-		}
-
-		if (match[4]) {
-			rgb[3] = parseFloat(match[4]);
-		}
-	} else if (match = string.match(keyword)) {
-		if (match[1] === 'transparent') {
-			return [0, 0, 0, 0];
-		}
-
-		rgb = colorNames[match[1]];
-
-		if (!rgb) {
-			return null;
-		}
-
-		rgb[3] = 1;
-
-		return rgb;
-	} else {
-		return null;
-	}
-
-	for (i = 0; i < 3; i++) {
-		rgb[i] = clamp(rgb[i], 0, 255);
-	}
-	rgb[3] = clamp(rgb[3], 0, 1);
-
-	return rgb;
-};
-
-cs.get.hsl = function (string) {
-	if (!string) {
-		return null;
-	}
-
-	var hsl = /^hsla?\(\s*([+-]?\d*[\.]?\d+)(?:deg)?\s*,\s*([+-]?[\d\.]+)%\s*,\s*([+-]?[\d\.]+)%\s*(?:,\s*([+-]?[\d\.]+)\s*)?\)$/;
-	var match = string.match(hsl);
-
-	if (match) {
-		var alpha = parseFloat(match[4]);
-		var h = ((parseFloat(match[1]) % 360) + 360) % 360;
-		var s = clamp(parseFloat(match[2]), 0, 100);
-		var l = clamp(parseFloat(match[3]), 0, 100);
-		var a = clamp(isNaN(alpha) ? 1 : alpha, 0, 1);
-
-		return [h, s, l, a];
-	}
-
-	return null;
-};
-
-cs.get.hwb = function (string) {
-	if (!string) {
-		return null;
-	}
-
-	var hwb = /^hwb\(\s*([+-]?\d*[\.]?\d+)(?:deg)?\s*,\s*([+-]?[\d\.]+)%\s*,\s*([+-]?[\d\.]+)%\s*(?:,\s*([+-]?[\d\.]+)\s*)?\)$/;
-	var match = string.match(hwb);
-
-	if (match) {
-		var alpha = parseFloat(match[4]);
-		var h = ((parseFloat(match[1]) % 360) + 360) % 360;
-		var w = clamp(parseFloat(match[2]), 0, 100);
-		var b = clamp(parseFloat(match[3]), 0, 100);
-		var a = clamp(isNaN(alpha) ? 1 : alpha, 0, 1);
-		return [h, w, b, a];
-	}
-
-	return null;
-};
-
-cs.to.hex = function () {
-	var rgba = swizzle(arguments);
-
-	return (
-		'#' +
-		hexDouble(rgba[0]) +
-		hexDouble(rgba[1]) +
-		hexDouble(rgba[2]) +
-		(rgba[3] < 1
-			? (hexDouble(Math.round(rgba[3] * 255)))
-			: '')
-	);
-};
-
-cs.to.rgb = function () {
-	var rgba = swizzle(arguments);
-
-	return rgba.length < 4 || rgba[3] === 1
-		? 'rgb(' + Math.round(rgba[0]) + ', ' + Math.round(rgba[1]) + ', ' + Math.round(rgba[2]) + ')'
-		: 'rgba(' + Math.round(rgba[0]) + ', ' + Math.round(rgba[1]) + ', ' + Math.round(rgba[2]) + ', ' + rgba[3] + ')';
-};
-
-cs.to.rgb.percent = function () {
-	var rgba = swizzle(arguments);
-
-	var r = Math.round(rgba[0] / 255 * 100);
-	var g = Math.round(rgba[1] / 255 * 100);
-	var b = Math.round(rgba[2] / 255 * 100);
-
-	return rgba.length < 4 || rgba[3] === 1
-		? 'rgb(' + r + '%, ' + g + '%, ' + b + '%)'
-		: 'rgba(' + r + '%, ' + g + '%, ' + b + '%, ' + rgba[3] + ')';
-};
-
-cs.to.hsl = function () {
-	var hsla = swizzle(arguments);
-	return hsla.length < 4 || hsla[3] === 1
-		? 'hsl(' + hsla[0] + ', ' + hsla[1] + '%, ' + hsla[2] + '%)'
-		: 'hsla(' + hsla[0] + ', ' + hsla[1] + '%, ' + hsla[2] + '%, ' + hsla[3] + ')';
-};
-
-// hwb is a bit different than rgb(a) & hsl(a) since there is no alpha specific syntax
-// (hwb have alpha optional & 1 is default value)
-cs.to.hwb = function () {
-	var hwba = swizzle(arguments);
-
-	var a = '';
-	if (hwba.length >= 4 && hwba[3] !== 1) {
-		a = ', ' + hwba[3];
-	}
-
-	return 'hwb(' + hwba[0] + ', ' + hwba[1] + '%, ' + hwba[2] + '%' + a + ')';
-};
-
-cs.to.keyword = function (rgb) {
-	return reverseNames[rgb.slice(0, 3)];
-};
-
-// helpers
-function clamp(num, min, max) {
-	return Math.min(Math.max(min, num), max);
-}
-
-function hexDouble(num) {
-	var str = num.toString(16).toUpperCase();
-	return (str.length < 2) ? '0' + str : str;
-}
-
-
-/***/ }),
-/* 20 */
-/***/ (function(module, exports) {
-
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-function EventEmitter() {
-  this._events = this._events || {};
-  this._maxListeners = this._maxListeners || undefined;
-}
-module.exports = EventEmitter;
-
-// Backwards-compat with node 0.10.x
-EventEmitter.EventEmitter = EventEmitter;
-
-EventEmitter.prototype._events = undefined;
-EventEmitter.prototype._maxListeners = undefined;
-
-// By default EventEmitters will print a warning if more than 10 listeners are
-// added to it. This is a useful default which helps finding memory leaks.
-EventEmitter.defaultMaxListeners = 10;
-
-// Obviously not all Emitters should be limited to 10. This function allows
-// that to be increased. Set to zero for unlimited.
-EventEmitter.prototype.setMaxListeners = function(n) {
-  if (!isNumber(n) || n < 0 || isNaN(n))
-    throw TypeError('n must be a positive number');
-  this._maxListeners = n;
-  return this;
-};
-
-EventEmitter.prototype.emit = function(type) {
-  var er, handler, len, args, i, listeners;
-
-  if (!this._events)
-    this._events = {};
-
-  // If there is no 'error' event listener then throw.
-  if (type === 'error') {
-    if (!this._events.error ||
-        (isObject(this._events.error) && !this._events.error.length)) {
-      er = arguments[1];
-      if (er instanceof Error) {
-        throw er; // Unhandled 'error' event
-      } else {
-        // At least give some kind of context to the user
-        var err = new Error('Uncaught, unspecified "error" event. (' + er + ')');
-        err.context = er;
-        throw err;
-      }
-    }
-  }
-
-  handler = this._events[type];
-
-  if (isUndefined(handler))
-    return false;
-
-  if (isFunction(handler)) {
-    switch (arguments.length) {
-      // fast cases
-      case 1:
-        handler.call(this);
-        break;
-      case 2:
-        handler.call(this, arguments[1]);
-        break;
-      case 3:
-        handler.call(this, arguments[1], arguments[2]);
-        break;
-      // slower
-      default:
-        args = Array.prototype.slice.call(arguments, 1);
-        handler.apply(this, args);
-    }
-  } else if (isObject(handler)) {
-    args = Array.prototype.slice.call(arguments, 1);
-    listeners = handler.slice();
-    len = listeners.length;
-    for (i = 0; i < len; i++)
-      listeners[i].apply(this, args);
-  }
-
-  return true;
-};
-
-EventEmitter.prototype.addListener = function(type, listener) {
-  var m;
-
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
-
-  if (!this._events)
-    this._events = {};
-
-  // To avoid recursion in the case that type === "newListener"! Before
-  // adding it to the listeners, first emit "newListener".
-  if (this._events.newListener)
-    this.emit('newListener', type,
-              isFunction(listener.listener) ?
-              listener.listener : listener);
-
-  if (!this._events[type])
-    // Optimize the case of one listener. Don't need the extra array object.
-    this._events[type] = listener;
-  else if (isObject(this._events[type]))
-    // If we've already got an array, just append.
-    this._events[type].push(listener);
-  else
-    // Adding the second element, need to change to array.
-    this._events[type] = [this._events[type], listener];
-
-  // Check for listener leak
-  if (isObject(this._events[type]) && !this._events[type].warned) {
-    if (!isUndefined(this._maxListeners)) {
-      m = this._maxListeners;
-    } else {
-      m = EventEmitter.defaultMaxListeners;
-    }
-
-    if (m && m > 0 && this._events[type].length > m) {
-      this._events[type].warned = true;
-      console.error('(node) warning: possible EventEmitter memory ' +
-                    'leak detected. %d listeners added. ' +
-                    'Use emitter.setMaxListeners() to increase limit.',
-                    this._events[type].length);
-      if (typeof console.trace === 'function') {
-        // not supported in IE 10
-        console.trace();
-      }
-    }
-  }
-
-  return this;
-};
-
-EventEmitter.prototype.on = EventEmitter.prototype.addListener;
-
-EventEmitter.prototype.once = function(type, listener) {
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
-
-  var fired = false;
-
-  function g() {
-    this.removeListener(type, g);
-
-    if (!fired) {
-      fired = true;
-      listener.apply(this, arguments);
-    }
-  }
-
-  g.listener = listener;
-  this.on(type, g);
-
-  return this;
-};
-
-// emits a 'removeListener' event iff the listener was removed
-EventEmitter.prototype.removeListener = function(type, listener) {
-  var list, position, length, i;
-
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
-
-  if (!this._events || !this._events[type])
-    return this;
-
-  list = this._events[type];
-  length = list.length;
-  position = -1;
-
-  if (list === listener ||
-      (isFunction(list.listener) && list.listener === listener)) {
-    delete this._events[type];
-    if (this._events.removeListener)
-      this.emit('removeListener', type, listener);
-
-  } else if (isObject(list)) {
-    for (i = length; i-- > 0;) {
-      if (list[i] === listener ||
-          (list[i].listener && list[i].listener === listener)) {
-        position = i;
-        break;
-      }
-    }
-
-    if (position < 0)
-      return this;
-
-    if (list.length === 1) {
-      list.length = 0;
-      delete this._events[type];
-    } else {
-      list.splice(position, 1);
-    }
-
-    if (this._events.removeListener)
-      this.emit('removeListener', type, listener);
-  }
-
-  return this;
-};
-
-EventEmitter.prototype.removeAllListeners = function(type) {
-  var key, listeners;
-
-  if (!this._events)
-    return this;
-
-  // not listening for removeListener, no need to emit
-  if (!this._events.removeListener) {
-    if (arguments.length === 0)
-      this._events = {};
-    else if (this._events[type])
-      delete this._events[type];
-    return this;
-  }
-
-  // emit removeListener for all listeners on all events
-  if (arguments.length === 0) {
-    for (key in this._events) {
-      if (key === 'removeListener') continue;
-      this.removeAllListeners(key);
-    }
-    this.removeAllListeners('removeListener');
-    this._events = {};
-    return this;
-  }
-
-  listeners = this._events[type];
-
-  if (isFunction(listeners)) {
-    this.removeListener(type, listeners);
-  } else if (listeners) {
-    // LIFO order
-    while (listeners.length)
-      this.removeListener(type, listeners[listeners.length - 1]);
-  }
-  delete this._events[type];
-
-  return this;
-};
-
-EventEmitter.prototype.listeners = function(type) {
-  var ret;
-  if (!this._events || !this._events[type])
-    ret = [];
-  else if (isFunction(this._events[type]))
-    ret = [this._events[type]];
-  else
-    ret = this._events[type].slice();
-  return ret;
-};
-
-EventEmitter.prototype.listenerCount = function(type) {
-  if (this._events) {
-    var evlistener = this._events[type];
-
-    if (isFunction(evlistener))
-      return 1;
-    else if (evlistener)
-      return evlistener.length;
-  }
-  return 0;
-};
-
-EventEmitter.listenerCount = function(emitter, type) {
-  return emitter.listenerCount(type);
-};
-
-function isFunction(arg) {
-  return typeof arg === 'function';
-}
-
-function isNumber(arg) {
-  return typeof arg === 'number';
-}
-
-function isObject(arg) {
-  return typeof arg === 'object' && arg !== null;
-}
-
-function isUndefined(arg) {
-  return arg === void 0;
-}
-
-
-/***/ }),
-/* 21 */
-/***/ (function(module, exports) {
-
-module.exports = function flatten(list, depth) {
-  depth = (typeof depth == 'number') ? depth : Infinity;
-
-  if (!depth) {
-    if (Array.isArray(list)) {
-      return list.map(function(i) { return i; });
-    }
-    return list;
-  }
-
-  return _flatten(list, 1);
-
-  function _flatten(list, d) {
-    return list.reduce(function (acc, item) {
-      if (Array.isArray(item) && d < depth) {
-        return acc.concat(_flatten(item, d + 1));
-      }
-      else {
-        return acc.concat(item);
-      }
-    }, []);
-  }
-};
-
-
-/***/ }),
-/* 22 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-module.exports = function isArrayish(obj) {
-	if (!obj || typeof obj === 'string') {
-		return false;
-	}
-
-	return obj instanceof Array || Array.isArray(obj) ||
-		(obj.length >= 0 && (obj.splice instanceof Function ||
-			(Object.getOwnPropertyDescriptor(obj, (obj.length - 1)) && obj.constructor.name !== 'String')));
-};
-
-
-/***/ }),
-/* 23 */
-/***/ (function(module, exports) {
-
-/*!
- * Determine if an object is a Buffer
- *
- * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
- * @license  MIT
- */
-
-// The _isBuffer check is for Safari 5-7 support, because it's missing
-// Object.prototype.constructor. Remove this eventually
-module.exports = function (obj) {
-  return obj != null && (isBuffer(obj) || isSlowBuffer(obj) || !!obj._isBuffer)
-}
-
-function isBuffer (obj) {
-  return !!obj.constructor && typeof obj.constructor.isBuffer === 'function' && obj.constructor.isBuffer(obj)
-}
-
-// For Node v0.10 support. Remove this eventually.
-function isSlowBuffer (obj) {
-  return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
-}
-
-
-/***/ }),
-/* 24 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var isBuffer = __webpack_require__(23);
-var toString = Object.prototype.toString;
-
-/**
- * Get the native `typeof` a value.
- *
- * @param  {*} `val`
- * @return {*} Native javascript type
- */
-
-module.exports = function kindOf(val) {
-  // primitivies
-  if (typeof val === 'undefined') {
-    return 'undefined';
-  }
-  if (val === null) {
-    return 'null';
-  }
-  if (val === true || val === false || val instanceof Boolean) {
-    return 'boolean';
-  }
-  if (typeof val === 'string' || val instanceof String) {
-    return 'string';
-  }
-  if (typeof val === 'number' || val instanceof Number) {
-    return 'number';
-  }
-
-  // functions
-  if (typeof val === 'function' || val instanceof Function) {
-    return 'function';
-  }
-
-  // array
-  if (typeof Array.isArray !== 'undefined' && Array.isArray(val)) {
-    return 'array';
-  }
-
-  // check for instances of RegExp and Date before calling `toString`
-  if (val instanceof RegExp) {
-    return 'regexp';
-  }
-  if (val instanceof Date) {
-    return 'date';
-  }
-
-  // other objects
-  var type = toString.call(val);
-
-  if (type === '[object RegExp]') {
-    return 'regexp';
-  }
-  if (type === '[object Date]') {
-    return 'date';
-  }
-  if (type === '[object Arguments]') {
-    return 'arguments';
-  }
-  if (type === '[object Error]') {
-    return 'error';
-  }
-
-  // buffer
-  if (isBuffer(val)) {
-    return 'buffer';
-  }
-
-  // es6: Map, WeakMap, Set, WeakSet
-  if (type === '[object Set]') {
-    return 'set';
-  }
-  if (type === '[object WeakSet]') {
-    return 'weakset';
-  }
-  if (type === '[object Map]') {
-    return 'map';
-  }
-  if (type === '[object WeakMap]') {
-    return 'weakmap';
-  }
-  if (type === '[object Symbol]') {
-    return 'symbol';
-  }
-
-  // typed arrays
-  if (type === '[object Int8Array]') {
-    return 'int8array';
-  }
-  if (type === '[object Uint8Array]') {
-    return 'uint8array';
-  }
-  if (type === '[object Uint8ClampedArray]') {
-    return 'uint8clampedarray';
-  }
-  if (type === '[object Int16Array]') {
-    return 'int16array';
-  }
-  if (type === '[object Uint16Array]') {
-    return 'uint16array';
-  }
-  if (type === '[object Int32Array]') {
-    return 'int32array';
-  }
-  if (type === '[object Uint32Array]') {
-    return 'uint32array';
-  }
-  if (type === '[object Float32Array]') {
-    return 'float32array';
-  }
-  if (type === '[object Float64Array]') {
-    return 'float64array';
-  }
-
-  // must be a plain object
-  return 'object';
-};
-
-
-/***/ }),
-/* 25 */
 /***/ (function(module, exports) {
 
 /* MIT license */
@@ -6379,10 +5490,10 @@ for (var key in cssKeywords) {
 
 
 /***/ }),
-/* 26 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var conversions = __webpack_require__(25);
+var conversions = __webpack_require__(17);
 
 var convert = function() {
    return new Converter();
@@ -6476,7 +5587,920 @@ Converter.prototype.getValues = function(space) {
 module.exports = convert;
 
 /***/ }),
-/* 27 */
+/* 19 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* MIT license */
+var colorNames = __webpack_require__(0);
+var swizzle = __webpack_require__(28);
+
+var reverseNames = {};
+
+// create a list of reverse color names
+for (var name in colorNames) {
+	if (colorNames.hasOwnProperty(name)) {
+		reverseNames[colorNames[name]] = name;
+	}
+}
+
+var cs = module.exports = {
+	to: {}
+};
+
+cs.get = function (string) {
+	var prefix = string.substring(0, 3).toLowerCase();
+	var val;
+	var model;
+	switch (prefix) {
+		case 'hsl':
+			val = cs.get.hsl(string);
+			model = 'hsl';
+			break;
+		case 'hwb':
+			val = cs.get.hwb(string);
+			model = 'hwb';
+			break;
+		default:
+			val = cs.get.rgb(string);
+			model = 'rgb';
+			break;
+	}
+
+	if (!val) {
+		return null;
+	}
+
+	return {model: model, value: val};
+};
+
+cs.get.rgb = function (string) {
+	if (!string) {
+		return null;
+	}
+
+	var abbr = /^#([a-f0-9]{3,4})$/i;
+	var hex = /^#([a-f0-9]{6})([a-f0-9]{2})?$/i;
+	var rgba = /^rgba?\(\s*([+-]?\d+)\s*,\s*([+-]?\d+)\s*,\s*([+-]?\d+)\s*(?:,\s*([+-]?[\d\.]+)\s*)?\)$/;
+	var per = /^rgba?\(\s*([+-]?[\d\.]+)\%\s*,\s*([+-]?[\d\.]+)\%\s*,\s*([+-]?[\d\.]+)\%\s*(?:,\s*([+-]?[\d\.]+)\s*)?\)$/;
+	var keyword = /(\D+)/;
+
+	var rgb = [0, 0, 0, 1];
+	var match;
+	var i;
+	var hexAlpha;
+
+	if (match = string.match(hex)) {
+		hexAlpha = match[2];
+		match = match[1];
+
+		for (i = 0; i < 3; i++) {
+			// https://jsperf.com/slice-vs-substr-vs-substring-methods-long-string/19
+			var i2 = i * 2;
+			rgb[i] = parseInt(match.slice(i2, i2 + 2), 16);
+		}
+
+		if (hexAlpha) {
+			rgb[3] = Math.round((parseInt(hexAlpha, 16) / 255) * 100) / 100;
+		}
+	} else if (match = string.match(abbr)) {
+		match = match[1];
+		hexAlpha = match[3];
+
+		for (i = 0; i < 3; i++) {
+			rgb[i] = parseInt(match[i] + match[i], 16);
+		}
+
+		if (hexAlpha) {
+			rgb[3] = Math.round((parseInt(hexAlpha + hexAlpha, 16) / 255) * 100) / 100;
+		}
+	} else if (match = string.match(rgba)) {
+		for (i = 0; i < 3; i++) {
+			rgb[i] = parseInt(match[i + 1], 0);
+		}
+
+		if (match[4]) {
+			rgb[3] = parseFloat(match[4]);
+		}
+	} else if (match = string.match(per)) {
+		for (i = 0; i < 3; i++) {
+			rgb[i] = Math.round(parseFloat(match[i + 1]) * 2.55);
+		}
+
+		if (match[4]) {
+			rgb[3] = parseFloat(match[4]);
+		}
+	} else if (match = string.match(keyword)) {
+		if (match[1] === 'transparent') {
+			return [0, 0, 0, 0];
+		}
+
+		rgb = colorNames[match[1]];
+
+		if (!rgb) {
+			return null;
+		}
+
+		rgb[3] = 1;
+
+		return rgb;
+	} else {
+		return null;
+	}
+
+	for (i = 0; i < 3; i++) {
+		rgb[i] = clamp(rgb[i], 0, 255);
+	}
+	rgb[3] = clamp(rgb[3], 0, 1);
+
+	return rgb;
+};
+
+cs.get.hsl = function (string) {
+	if (!string) {
+		return null;
+	}
+
+	var hsl = /^hsla?\(\s*([+-]?\d*[\.]?\d+)(?:deg)?\s*,\s*([+-]?[\d\.]+)%\s*,\s*([+-]?[\d\.]+)%\s*(?:,\s*([+-]?[\d\.]+)\s*)?\)$/;
+	var match = string.match(hsl);
+
+	if (match) {
+		var alpha = parseFloat(match[4]);
+		var h = ((parseFloat(match[1]) % 360) + 360) % 360;
+		var s = clamp(parseFloat(match[2]), 0, 100);
+		var l = clamp(parseFloat(match[3]), 0, 100);
+		var a = clamp(isNaN(alpha) ? 1 : alpha, 0, 1);
+
+		return [h, s, l, a];
+	}
+
+	return null;
+};
+
+cs.get.hwb = function (string) {
+	if (!string) {
+		return null;
+	}
+
+	var hwb = /^hwb\(\s*([+-]?\d*[\.]?\d+)(?:deg)?\s*,\s*([+-]?[\d\.]+)%\s*,\s*([+-]?[\d\.]+)%\s*(?:,\s*([+-]?[\d\.]+)\s*)?\)$/;
+	var match = string.match(hwb);
+
+	if (match) {
+		var alpha = parseFloat(match[4]);
+		var h = ((parseFloat(match[1]) % 360) + 360) % 360;
+		var w = clamp(parseFloat(match[2]), 0, 100);
+		var b = clamp(parseFloat(match[3]), 0, 100);
+		var a = clamp(isNaN(alpha) ? 1 : alpha, 0, 1);
+		return [h, w, b, a];
+	}
+
+	return null;
+};
+
+cs.to.hex = function () {
+	var rgba = swizzle(arguments);
+
+	return (
+		'#' +
+		hexDouble(rgba[0]) +
+		hexDouble(rgba[1]) +
+		hexDouble(rgba[2]) +
+		(rgba[3] < 1
+			? (hexDouble(Math.round(rgba[3] * 255)))
+			: '')
+	);
+};
+
+cs.to.rgb = function () {
+	var rgba = swizzle(arguments);
+
+	return rgba.length < 4 || rgba[3] === 1
+		? 'rgb(' + Math.round(rgba[0]) + ', ' + Math.round(rgba[1]) + ', ' + Math.round(rgba[2]) + ')'
+		: 'rgba(' + Math.round(rgba[0]) + ', ' + Math.round(rgba[1]) + ', ' + Math.round(rgba[2]) + ', ' + rgba[3] + ')';
+};
+
+cs.to.rgb.percent = function () {
+	var rgba = swizzle(arguments);
+
+	var r = Math.round(rgba[0] / 255 * 100);
+	var g = Math.round(rgba[1] / 255 * 100);
+	var b = Math.round(rgba[2] / 255 * 100);
+
+	return rgba.length < 4 || rgba[3] === 1
+		? 'rgb(' + r + '%, ' + g + '%, ' + b + '%)'
+		: 'rgba(' + r + '%, ' + g + '%, ' + b + '%, ' + rgba[3] + ')';
+};
+
+cs.to.hsl = function () {
+	var hsla = swizzle(arguments);
+	return hsla.length < 4 || hsla[3] === 1
+		? 'hsl(' + hsla[0] + ', ' + hsla[1] + '%, ' + hsla[2] + '%)'
+		: 'hsla(' + hsla[0] + ', ' + hsla[1] + '%, ' + hsla[2] + '%, ' + hsla[3] + ')';
+};
+
+// hwb is a bit different than rgb(a) & hsl(a) since there is no alpha specific syntax
+// (hwb have alpha optional & 1 is default value)
+cs.to.hwb = function () {
+	var hwba = swizzle(arguments);
+
+	var a = '';
+	if (hwba.length >= 4 && hwba[3] !== 1) {
+		a = ', ' + hwba[3];
+	}
+
+	return 'hwb(' + hwba[0] + ', ' + hwba[1] + '%, ' + hwba[2] + '%' + a + ')';
+};
+
+cs.to.keyword = function (rgb) {
+	return reverseNames[rgb.slice(0, 3)];
+};
+
+// helpers
+function clamp(num, min, max) {
+	return Math.min(Math.max(min, num), max);
+}
+
+function hexDouble(num) {
+	var str = num.toString(16).toUpperCase();
+	return (str.length < 2) ? '0' + str : str;
+}
+
+
+/***/ }),
+/* 20 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var conversions = __webpack_require__(1);
+var route = __webpack_require__(21);
+
+var convert = {};
+
+var models = Object.keys(conversions);
+
+function wrapRaw(fn) {
+	var wrappedFn = function (args) {
+		if (args === undefined || args === null) {
+			return args;
+		}
+
+		if (arguments.length > 1) {
+			args = Array.prototype.slice.call(arguments);
+		}
+
+		return fn(args);
+	};
+
+	// preserve .conversion property if there is one
+	if ('conversion' in fn) {
+		wrappedFn.conversion = fn.conversion;
+	}
+
+	return wrappedFn;
+}
+
+function wrapRounded(fn) {
+	var wrappedFn = function (args) {
+		if (args === undefined || args === null) {
+			return args;
+		}
+
+		if (arguments.length > 1) {
+			args = Array.prototype.slice.call(arguments);
+		}
+
+		var result = fn(args);
+
+		// we're assuming the result is an array here.
+		// see notice in conversions.js; don't use box types
+		// in conversion functions.
+		if (typeof result === 'object') {
+			for (var len = result.length, i = 0; i < len; i++) {
+				result[i] = Math.round(result[i]);
+			}
+		}
+
+		return result;
+	};
+
+	// preserve .conversion property if there is one
+	if ('conversion' in fn) {
+		wrappedFn.conversion = fn.conversion;
+	}
+
+	return wrappedFn;
+}
+
+models.forEach(function (fromModel) {
+	convert[fromModel] = {};
+
+	Object.defineProperty(convert[fromModel], 'channels', {value: conversions[fromModel].channels});
+	Object.defineProperty(convert[fromModel], 'labels', {value: conversions[fromModel].labels});
+
+	var routes = route(fromModel);
+	var routeModels = Object.keys(routes);
+
+	routeModels.forEach(function (toModel) {
+		var fn = routes[toModel];
+
+		convert[fromModel][toModel] = wrapRounded(fn);
+		convert[fromModel][toModel].raw = wrapRaw(fn);
+	});
+});
+
+module.exports = convert;
+
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var conversions = __webpack_require__(1);
+
+/*
+	this function routes a model to all other models.
+
+	all functions that are routed have a property `.conversion` attached
+	to the returned synthetic function. This property is an array
+	of strings, each with the steps in between the 'from' and 'to'
+	color models (inclusive).
+
+	conversions that are not possible simply are not included.
+*/
+
+// https://jsperf.com/object-keys-vs-for-in-with-closure/3
+var models = Object.keys(conversions);
+
+function buildGraph() {
+	var graph = {};
+
+	for (var len = models.length, i = 0; i < len; i++) {
+		graph[models[i]] = {
+			// http://jsperf.com/1-vs-infinity
+			// micro-opt, but this is simple.
+			distance: -1,
+			parent: null
+		};
+	}
+
+	return graph;
+}
+
+// https://en.wikipedia.org/wiki/Breadth-first_search
+function deriveBFS(fromModel) {
+	var graph = buildGraph();
+	var queue = [fromModel]; // unshift -> queue -> pop
+
+	graph[fromModel].distance = 0;
+
+	while (queue.length) {
+		var current = queue.pop();
+		var adjacents = Object.keys(conversions[current]);
+
+		for (var len = adjacents.length, i = 0; i < len; i++) {
+			var adjacent = adjacents[i];
+			var node = graph[adjacent];
+
+			if (node.distance === -1) {
+				node.distance = graph[current].distance + 1;
+				node.parent = current;
+				queue.unshift(adjacent);
+			}
+		}
+	}
+
+	return graph;
+}
+
+function link(from, to) {
+	return function (args) {
+		return to(from(args));
+	};
+}
+
+function wrapConversion(toModel, graph) {
+	var path = [graph[toModel].parent, toModel];
+	var fn = conversions[graph[toModel].parent][toModel];
+
+	var cur = graph[toModel].parent;
+	while (graph[cur].parent) {
+		path.unshift(graph[cur].parent);
+		fn = link(conversions[graph[cur].parent][cur], fn);
+		cur = graph[cur].parent;
+	}
+
+	fn.conversion = path;
+	return fn;
+}
+
+module.exports = function (fromModel) {
+	var graph = deriveBFS(fromModel);
+	var conversion = {};
+
+	var models = Object.keys(graph);
+	for (var len = models.length, i = 0; i < len; i++) {
+		var toModel = models[i];
+		var node = graph[toModel];
+
+		if (node.parent === null) {
+			// no possible conversion, or this node is the source model.
+			continue;
+		}
+
+		conversion[toModel] = wrapConversion(toModel, graph);
+	}
+
+	return conversion;
+};
+
+
+
+/***/ }),
+/* 22 */
+/***/ (function(module, exports) {
+
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+function EventEmitter() {
+  this._events = this._events || {};
+  this._maxListeners = this._maxListeners || undefined;
+}
+module.exports = EventEmitter;
+
+// Backwards-compat with node 0.10.x
+EventEmitter.EventEmitter = EventEmitter;
+
+EventEmitter.prototype._events = undefined;
+EventEmitter.prototype._maxListeners = undefined;
+
+// By default EventEmitters will print a warning if more than 10 listeners are
+// added to it. This is a useful default which helps finding memory leaks.
+EventEmitter.defaultMaxListeners = 10;
+
+// Obviously not all Emitters should be limited to 10. This function allows
+// that to be increased. Set to zero for unlimited.
+EventEmitter.prototype.setMaxListeners = function(n) {
+  if (!isNumber(n) || n < 0 || isNaN(n))
+    throw TypeError('n must be a positive number');
+  this._maxListeners = n;
+  return this;
+};
+
+EventEmitter.prototype.emit = function(type) {
+  var er, handler, len, args, i, listeners;
+
+  if (!this._events)
+    this._events = {};
+
+  // If there is no 'error' event listener then throw.
+  if (type === 'error') {
+    if (!this._events.error ||
+        (isObject(this._events.error) && !this._events.error.length)) {
+      er = arguments[1];
+      if (er instanceof Error) {
+        throw er; // Unhandled 'error' event
+      } else {
+        // At least give some kind of context to the user
+        var err = new Error('Uncaught, unspecified "error" event. (' + er + ')');
+        err.context = er;
+        throw err;
+      }
+    }
+  }
+
+  handler = this._events[type];
+
+  if (isUndefined(handler))
+    return false;
+
+  if (isFunction(handler)) {
+    switch (arguments.length) {
+      // fast cases
+      case 1:
+        handler.call(this);
+        break;
+      case 2:
+        handler.call(this, arguments[1]);
+        break;
+      case 3:
+        handler.call(this, arguments[1], arguments[2]);
+        break;
+      // slower
+      default:
+        args = Array.prototype.slice.call(arguments, 1);
+        handler.apply(this, args);
+    }
+  } else if (isObject(handler)) {
+    args = Array.prototype.slice.call(arguments, 1);
+    listeners = handler.slice();
+    len = listeners.length;
+    for (i = 0; i < len; i++)
+      listeners[i].apply(this, args);
+  }
+
+  return true;
+};
+
+EventEmitter.prototype.addListener = function(type, listener) {
+  var m;
+
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  if (!this._events)
+    this._events = {};
+
+  // To avoid recursion in the case that type === "newListener"! Before
+  // adding it to the listeners, first emit "newListener".
+  if (this._events.newListener)
+    this.emit('newListener', type,
+              isFunction(listener.listener) ?
+              listener.listener : listener);
+
+  if (!this._events[type])
+    // Optimize the case of one listener. Don't need the extra array object.
+    this._events[type] = listener;
+  else if (isObject(this._events[type]))
+    // If we've already got an array, just append.
+    this._events[type].push(listener);
+  else
+    // Adding the second element, need to change to array.
+    this._events[type] = [this._events[type], listener];
+
+  // Check for listener leak
+  if (isObject(this._events[type]) && !this._events[type].warned) {
+    if (!isUndefined(this._maxListeners)) {
+      m = this._maxListeners;
+    } else {
+      m = EventEmitter.defaultMaxListeners;
+    }
+
+    if (m && m > 0 && this._events[type].length > m) {
+      this._events[type].warned = true;
+      console.error('(node) warning: possible EventEmitter memory ' +
+                    'leak detected. %d listeners added. ' +
+                    'Use emitter.setMaxListeners() to increase limit.',
+                    this._events[type].length);
+      if (typeof console.trace === 'function') {
+        // not supported in IE 10
+        console.trace();
+      }
+    }
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+
+EventEmitter.prototype.once = function(type, listener) {
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  var fired = false;
+
+  function g() {
+    this.removeListener(type, g);
+
+    if (!fired) {
+      fired = true;
+      listener.apply(this, arguments);
+    }
+  }
+
+  g.listener = listener;
+  this.on(type, g);
+
+  return this;
+};
+
+// emits a 'removeListener' event iff the listener was removed
+EventEmitter.prototype.removeListener = function(type, listener) {
+  var list, position, length, i;
+
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  if (!this._events || !this._events[type])
+    return this;
+
+  list = this._events[type];
+  length = list.length;
+  position = -1;
+
+  if (list === listener ||
+      (isFunction(list.listener) && list.listener === listener)) {
+    delete this._events[type];
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
+
+  } else if (isObject(list)) {
+    for (i = length; i-- > 0;) {
+      if (list[i] === listener ||
+          (list[i].listener && list[i].listener === listener)) {
+        position = i;
+        break;
+      }
+    }
+
+    if (position < 0)
+      return this;
+
+    if (list.length === 1) {
+      list.length = 0;
+      delete this._events[type];
+    } else {
+      list.splice(position, 1);
+    }
+
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.removeAllListeners = function(type) {
+  var key, listeners;
+
+  if (!this._events)
+    return this;
+
+  // not listening for removeListener, no need to emit
+  if (!this._events.removeListener) {
+    if (arguments.length === 0)
+      this._events = {};
+    else if (this._events[type])
+      delete this._events[type];
+    return this;
+  }
+
+  // emit removeListener for all listeners on all events
+  if (arguments.length === 0) {
+    for (key in this._events) {
+      if (key === 'removeListener') continue;
+      this.removeAllListeners(key);
+    }
+    this.removeAllListeners('removeListener');
+    this._events = {};
+    return this;
+  }
+
+  listeners = this._events[type];
+
+  if (isFunction(listeners)) {
+    this.removeListener(type, listeners);
+  } else if (listeners) {
+    // LIFO order
+    while (listeners.length)
+      this.removeListener(type, listeners[listeners.length - 1]);
+  }
+  delete this._events[type];
+
+  return this;
+};
+
+EventEmitter.prototype.listeners = function(type) {
+  var ret;
+  if (!this._events || !this._events[type])
+    ret = [];
+  else if (isFunction(this._events[type]))
+    ret = [this._events[type]];
+  else
+    ret = this._events[type].slice();
+  return ret;
+};
+
+EventEmitter.prototype.listenerCount = function(type) {
+  if (this._events) {
+    var evlistener = this._events[type];
+
+    if (isFunction(evlistener))
+      return 1;
+    else if (evlistener)
+      return evlistener.length;
+  }
+  return 0;
+};
+
+EventEmitter.listenerCount = function(emitter, type) {
+  return emitter.listenerCount(type);
+};
+
+function isFunction(arg) {
+  return typeof arg === 'function';
+}
+
+function isNumber(arg) {
+  return typeof arg === 'number';
+}
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
+
+function isUndefined(arg) {
+  return arg === void 0;
+}
+
+
+/***/ }),
+/* 23 */
+/***/ (function(module, exports) {
+
+module.exports = function flatten(list, depth) {
+  depth = (typeof depth == 'number') ? depth : Infinity;
+
+  if (!depth) {
+    if (Array.isArray(list)) {
+      return list.map(function(i) { return i; });
+    }
+    return list;
+  }
+
+  return _flatten(list, 1);
+
+  function _flatten(list, d) {
+    return list.reduce(function (acc, item) {
+      if (Array.isArray(item) && d < depth) {
+        return acc.concat(_flatten(item, d + 1));
+      }
+      else {
+        return acc.concat(item);
+      }
+    }, []);
+  }
+};
+
+
+/***/ }),
+/* 24 */
+/***/ (function(module, exports) {
+
+/*!
+ * Determine if an object is a Buffer
+ *
+ * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
+ * @license  MIT
+ */
+
+// The _isBuffer check is for Safari 5-7 support, because it's missing
+// Object.prototype.constructor. Remove this eventually
+module.exports = function (obj) {
+  return obj != null && (isBuffer(obj) || isSlowBuffer(obj) || !!obj._isBuffer)
+}
+
+function isBuffer (obj) {
+  return !!obj.constructor && typeof obj.constructor.isBuffer === 'function' && obj.constructor.isBuffer(obj)
+}
+
+// For Node v0.10 support. Remove this eventually.
+function isSlowBuffer (obj) {
+  return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
+}
+
+
+/***/ }),
+/* 25 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var isBuffer = __webpack_require__(24);
+var toString = Object.prototype.toString;
+
+/**
+ * Get the native `typeof` a value.
+ *
+ * @param  {*} `val`
+ * @return {*} Native javascript type
+ */
+
+module.exports = function kindOf(val) {
+  // primitivies
+  if (typeof val === 'undefined') {
+    return 'undefined';
+  }
+  if (val === null) {
+    return 'null';
+  }
+  if (val === true || val === false || val instanceof Boolean) {
+    return 'boolean';
+  }
+  if (typeof val === 'string' || val instanceof String) {
+    return 'string';
+  }
+  if (typeof val === 'number' || val instanceof Number) {
+    return 'number';
+  }
+
+  // functions
+  if (typeof val === 'function' || val instanceof Function) {
+    return 'function';
+  }
+
+  // array
+  if (typeof Array.isArray !== 'undefined' && Array.isArray(val)) {
+    return 'array';
+  }
+
+  // check for instances of RegExp and Date before calling `toString`
+  if (val instanceof RegExp) {
+    return 'regexp';
+  }
+  if (val instanceof Date) {
+    return 'date';
+  }
+
+  // other objects
+  var type = toString.call(val);
+
+  if (type === '[object RegExp]') {
+    return 'regexp';
+  }
+  if (type === '[object Date]') {
+    return 'date';
+  }
+  if (type === '[object Arguments]') {
+    return 'arguments';
+  }
+  if (type === '[object Error]') {
+    return 'error';
+  }
+
+  // buffer
+  if (isBuffer(val)) {
+    return 'buffer';
+  }
+
+  // es6: Map, WeakMap, Set, WeakSet
+  if (type === '[object Set]') {
+    return 'set';
+  }
+  if (type === '[object WeakSet]') {
+    return 'weakset';
+  }
+  if (type === '[object Map]') {
+    return 'map';
+  }
+  if (type === '[object WeakMap]') {
+    return 'weakmap';
+  }
+  if (type === '[object Symbol]') {
+    return 'symbol';
+  }
+
+  // typed arrays
+  if (type === '[object Int8Array]') {
+    return 'int8array';
+  }
+  if (type === '[object Uint8Array]') {
+    return 'uint8array';
+  }
+  if (type === '[object Uint8ClampedArray]') {
+    return 'uint8clampedarray';
+  }
+  if (type === '[object Int16Array]') {
+    return 'int16array';
+  }
+  if (type === '[object Uint16Array]') {
+    return 'uint16array';
+  }
+  if (type === '[object Int32Array]') {
+    return 'int32array';
+  }
+  if (type === '[object Uint32Array]') {
+    return 'uint32array';
+  }
+  if (type === '[object Float32Array]') {
+    return 'float32array';
+  }
+  if (type === '[object Float64Array]') {
+    return 'float64array';
+  }
+
+  // must be a plain object
+  return 'object';
+};
+
+
+/***/ }),
+/* 26 */
 /***/ (function(module, exports) {
 
 // shim for using process in browser
@@ -6662,7 +6686,7 @@ process.umask = function() { return 0; };
 
 
 /***/ }),
-/* 28 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function (global, factory) {
@@ -16171,13 +16195,13 @@ return wrapREGL;
 
 
 /***/ }),
-/* 29 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var isArrayish = __webpack_require__(22);
+var isArrayish = __webpack_require__(29);
 
 var concat = Array.prototype.concat;
 var slice = Array.prototype.slice;
@@ -16203,6 +16227,24 @@ swizzle.wrap = function (fn) {
 	return function () {
 		return fn(swizzle(arguments));
 	};
+};
+
+
+/***/ }),
+/* 29 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+module.exports = function isArrayish(obj) {
+	if (!obj || typeof obj === 'string') {
+		return false;
+	}
+
+	return obj instanceof Array || Array.isArray(obj) ||
+		(obj.length >= 0 && (obj.splice instanceof Function ||
+			(Object.getOwnPropertyDescriptor(obj, (obj.length - 1)) && obj.constructor.name !== 'String')));
 };
 
 

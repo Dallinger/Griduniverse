@@ -109,6 +109,7 @@ def extra_parameters():
         'intragroup_competition': float,
         'identity_signaling': bool,
         'identity_starts_visible': bool,
+        'score_visible': bool,
     }
 
     for key in types:
@@ -212,6 +213,7 @@ class Gridworld(object):
         self.donation_public = kwargs.get('donation_public', False)
         self.intergroup_competition = kwargs.get('intergroup_competition', 1)
         self.intragroup_competition = kwargs.get('intragroup_competition', 1)
+        self.score_visible = kwargs.get('score_visible', False)
 
         # Food
         self.num_food = kwargs.get('num_food', 8)

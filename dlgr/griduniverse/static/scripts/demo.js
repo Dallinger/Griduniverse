@@ -157,7 +157,15 @@ var playerSet = (function () {
       var positions = [],
           idx,
           player,
-          id;
+          id,
+          minScore,
+          maxScore,
+          d,
+          color;
+      if (settings.score_visible) {
+        minScore = this.minScore();
+        maxScore = this.maxScore();
+      }
 
       for (id in this._players) {
         if (this._players.hasOwnProperty(id)) {
@@ -166,12 +174,24 @@ var playerSet = (function () {
             player.move(player.motion_direction);
           }
           idx = player.position[0] * settings.columns + player.position[1];
-          if (id == this.ego_id || settings.others_visible) {
+          if (id === this.ego_id || settings.others_visible) {
+
             if (player.identity_visible) {
-              grid[idx] = player.color;
+              color = player.color;
             } else {
-              grid[idx] = (id == this.ego_id) ? Color.rgb(player.color).desaturate(0.6).rgb().array() : INVISIBLE_COLOR;
+              color = (id === this.ego_id) ? Color.rgb(player.color).desaturate(0.6).rgb().array() : INVISIBLE_COLOR;
             }
+            if (settings.score_visible) {
+              if (maxScore-minScore > 0) {
+                d = 0.75 * (1 - (player.score-minScore)/(maxScore-minScore));
+              } else {
+                d = 0.375;
+              }
+              color = Color.rgb(player.color).desaturate(d).rgb().array();
+            } else {
+              color = player.color;
+            }
+            grid[idx] = color;
           }
         }
       }
@@ -220,6 +240,28 @@ var playerSet = (function () {
         currentPlayerData = playerData[i];
         this._players[currentPlayerData.id] = new Player(currentPlayerData);
       }
+    };
+
+    PlayerSet.prototype.maxScore = function () {
+        var id;
+        maxScore = 0;
+        for (id in this._players) {
+            if (this._players[id].score > maxScore) {
+                maxScore = this._players[id].score;
+            }
+        }
+        return maxScore;
+    };
+
+    PlayerSet.prototype.minScore = function () {
+        var id;
+        minScore = Infinity;
+        for (id in this._players) {
+            if (this._players[id].score < minScore) {
+                minScore = this._players[id].score;
+            }
+        }
+        return minScore;
     };
 
     return PlayerSet;
