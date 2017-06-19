@@ -174,12 +174,12 @@ var playerSet = (function () {
             player.move(player.motion_direction);
           }
           idx = player.position[0] * settings.columns + player.position[1];
-          if (id == this.ego_id || settings.others_visible) {
+          if (id === this.ego_id || settings.others_visible) {
 
             if (player.identity_visible) {
               color = player.color;
             } else {
-              color = (id == this.ego_id) ? Color.rgb(player.color).desaturate(0.6).rgb().array() : INVISIBLE_COLOR;
+              color = (id === this.ego_id) ? Color.rgb(player.color).desaturate(0.6).rgb().array() : INVISIBLE_COLOR;
             }
             if (settings.score_visible) {
               if (maxScore-minScore > 0) {
