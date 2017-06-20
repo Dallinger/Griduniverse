@@ -11,6 +11,8 @@
     settings.dollars_per_point = {{ experiment.grid.dollars_per_point }};
     settings.rows = {{ experiment.grid.rows }};
     settings.columns = {{ experiment.grid.columns }};
+    settings.window_width = {{ experiment.grid.window_width }};
+    settings.window_height = {{ experiment.grid.window_height }};
     settings.mutable_colors = {% if experiment.grid.mutable_colors %}true{% else %}false{% endif %};
     settings.player_overlap = {% if experiment.grid.player_overlap %}true{% else %}false{% endif %};
     settings.background_animation = {% if experiment.grid.background_animation %}true{% else %}false{% endif %};

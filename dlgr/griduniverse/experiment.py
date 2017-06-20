@@ -58,6 +58,8 @@ def extra_parameters():
         'instruct': bool,
         'columns': int,
         'rows': int,
+        'window_width': int,
+        'window_height': int,
         'block_size': int,
         'padding': int,
         'visibility': int,
@@ -170,6 +172,8 @@ class Gridworld(object):
         # Grid
         self.columns = kwargs.get('columns', 25)
         self.rows = kwargs.get('rows', 25)
+        self.window_width = kwargs.get('window_width', min(self.columns, 25))
+        self.window_height = kwargs.get('window_height', min(self.rows, 25))
         self.block_size = kwargs.get('block_size', 10)
         self.padding = kwargs.get('padding', 1)
         self.visibility = kwargs.get('visibility', 1000)

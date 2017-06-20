@@ -11,12 +11,16 @@ var $ = require("jquery");
 var gaussian = require("gaussian");
 var Color = require('color');
 
-var data = [];
 var background = [];
 for (var i = 0; i < settings.rows; i++) {
   for (var j = 0; j < settings.columns; j++) {
-    data.push([0, 0, 0]);
     background.push([0, 0, 0]);
+  }
+}
+var data = [];
+for (i = 0; i < settings.window_height; i++) {
+  for (j = 0; j < settings.window_width; j++) {
+    data.push([0, 0, 0]);
   }
 }
 
@@ -32,8 +36,8 @@ var CHANNEL = "griduniverse";
 var CONTROL_CHANNEL = "griduniverse_ctrl";
 
 var pixels = grid(data, {
-  rows: settings.rows,
-  columns: settings.columns,
+  rows: settings.window_height,
+  columns: settings.window_width,
   size: settings.block_size,
   padding: settings.padding,
   background: [0.1, 0.1, 0.1],
@@ -367,7 +371,8 @@ pixels.frame(function() {
       limitVisibility,
       dimness,
       rescaling,
-      idx, i, j, x, y;
+      idx, i, j, x, y,
+      windowData, left, top;
 
   for (i = 0; i < data.length; i++) {
     if (settings.background_animation) {
@@ -427,8 +432,30 @@ pixels.frame(function() {
     }
   }
 
-  pixels.update(data);
+  // Get just the data within the visible window
+  left = top = 0;
+  if (typeof ego !== 'undefined') {
+    left = clamp(
+      ego.position[0] - Math.floor(settings.window_width / 2),
+      0, settings.columns - settings.window_width);
+    top = clamp(
+      ego.position[1] - Math.floor(settings.window_height / 2),
+      0, settings.rows - settings.window_height);
+  }
+  windowData = [];
+  for (i = left; i < left + settings.window_width; i++) {
+    for (j = top; j < top + settings.window_height; j++) {
+      idx = i * settings.columns + j;
+      windowData.push(data[idx]);
+    }
+  }
+
+  pixels.update(windowData);
 });
+
+function clamp(val, min, max) {
+  return Math.max(min, Math.min(max, val));
+}
 
 function distance(x, y, xx, yy) {
   return Math.sqrt((xx - x) * (xx - x) + (yy - y) * (yy - y));
