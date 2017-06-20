@@ -6,6 +6,8 @@ before being served by a web server.
 
 ## Installing dev tools
 
+Make sure you have Node.js >= version 6.
+
 First [install `yarn`](https://yarnpkg.com/en/docs/install).
 (`yarn` is similar to `npm` but better,
 and uses the same package repository.)
