@@ -155,6 +155,7 @@ class Evolve(object):
                             .format(player+1, generation+1))
                 data = experiment.run(
                     mode=u'debug',
+                    webdriver_type = u'chrome',
                     recruiter=self.recruiter,
                     bot_policy=self.bot_policy,
                     max_participants=1,
@@ -166,7 +167,6 @@ class Evolve(object):
                     respawn_food=genomes[player]['respawn_food'],
                     columns=genomes[player]['columns'],
                     rows=genomes[player]['rows'],
-                    block_size=genomes[player]['block_size'],
                     background_animation=genomes[player]['background_animation'],
                 )
                 if self.bot:
@@ -183,4 +183,4 @@ class Evolve(object):
 
 
 experiment = Griduniverse()
-Evolve(2, 3, bot=True, mutation_rate=.2)
+Evolve(4, 4, bot=True, mutation_rate=.1)
