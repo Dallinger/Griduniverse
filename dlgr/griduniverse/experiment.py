@@ -391,6 +391,10 @@ class Gridworld(object):
         text = """<p>The objective of the game is to maximize your final payoff.
             The game is played on a {g.columns} x {g.rows} grid, where each
             player occupies one block."""
+        if self.window_width < self.columns or self.window_height < self.rows:
+            text += """ The grid is viewed through a
+                {g.window_width} x {g.window_height} window
+                that moves along with your player."""
         if self.walls_density > 0:
             text += """ There are walls throughout the grid, which the players
                cannot pass through."""
