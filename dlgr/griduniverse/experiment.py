@@ -767,6 +767,7 @@ class Player(object):
             self.position = new_position
             self.motion_timestamp = elapsed_time
             self.score -= self.motion_cost
+            return direction
 
             # now that player moved, check if wall needs to be built
             if self.add_wall is not None:
@@ -1111,7 +1112,8 @@ class Griduniverse(Experiment):
 
     def handle_move(self, msg):
         player = self.grid.players[msg['player_id']]
-        player.move(msg['move'], tremble_rate=player.motion_tremble_rate)
+        msg['actual'] = player.move(
+            msg['move'], tremble_rate=player.motion_tremble_rate)
 
     def handle_donation(self, msg):
         """Send a donation from one player to another."""
