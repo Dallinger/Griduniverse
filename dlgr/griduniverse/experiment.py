@@ -1167,9 +1167,10 @@ class Griduniverse(Experiment):
         player.identity_visible = msg['identity_visible']
 
     def handle_build_wall(self, msg):
-        player = self.grid.players[msg['player']]
+        player = self.grid.players[msg['player_id']]
         position = msg['position']
         can_afford = player.score >= self.grid.wall_building_cost
+        msg['success'] = can_afford
         if can_afford:
             player.score -= self.grid.wall_building_cost
             player.add_wall = position

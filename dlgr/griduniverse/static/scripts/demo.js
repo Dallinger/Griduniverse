@@ -523,7 +523,7 @@ function bindGameKeys(socket) {
     Mousetrap.bind("w", function () {
       var msg = {
         type: "build_wall",
-        player: players.ego().id,
+        player_id: players.ego().id,
         position: players.ego().position
       };
       socket.send(msg);
