@@ -384,7 +384,6 @@ class Gridworld(object):
         return [f for f in self.food
                 if f.maturity >= self.food_maturation_threshold]
 
-    @property
     def instructions(self):
         color_costs = ''
         order = ''
@@ -495,9 +494,9 @@ class Gridworld(object):
                 text += """ The cost for planting food is {g.food_planting_cost}
                 {g.food_planting_cost:plural, point, points}."""
         text += "</p>"
-        if self.donation > 0:
+        if self.donation_amount > 0:
             text += """<p>It can be helpful to donate points to other players.
-                You can donate {g.donation} {g.donation:plural, point, points}
+                You can donate {g.donation_amount} {g.donation_amount:plural, point, points}
                 to any player by clicking on their block on the grid.</p>
                 """
         if self.show_chatroom:
