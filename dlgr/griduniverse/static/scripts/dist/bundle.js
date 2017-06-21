@@ -4331,17 +4331,10 @@ pixels.frame(function() {
 
   // Get just the data within the visible window
   left = top = 0;
-  if (typeof ego !== 'undefined') {
-    left = clamp(
-      ego.position[0] - Math.floor(settings.window_width / 2),
-      0, settings.columns - settings.window_width);
-    top = clamp(
-      ego.position[1] - Math.floor(settings.window_height / 2),
-      0, settings.rows - settings.window_height);
-  }
+  var w = getWindowPosition();
   windowData = [];
-  for (i = left; i < left + settings.window_width; i++) {
-    for (j = top; j < top + settings.window_height; j++) {
+  for (i = w.left; i < w.left + w.width; i++) {
+    for (j = w.top; j < w.top + w.height; j++) {
       idx = i * settings.columns + j;
       windowData.push(data[idx]);
     }
@@ -4376,6 +4369,25 @@ function arraySearch(arr, val) {
 
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function getWindowPosition() {
+  var ego = players.ego();
+  var w = {
+    left: 0,
+    top: 0,
+    width: settings.window_width,
+    height: settings.window_height
+  }
+  if (typeof ego !== 'undefined') {
+    w.left = clamp(
+      ego.position[0] - Math.floor(settings.window_width / 2),
+      0, settings.columns - settings.window_width);
+    w.top = clamp(
+      ego.position[1] - Math.floor(settings.window_height / 2),
+      0, settings.rows - settings.window_height);
+  }
+  return w;
 }
 
 function bindGameKeys(socket) {
@@ -4684,8 +4696,9 @@ $(document).ready(function() {
 
 
   var donateToClicked = function() {
-    var row = pixels2cells(mouse[1]),
-        column = pixels2cells(mouse[0]),
+    var w = getWindowPosition(),
+        row = w.top + pixels2cells(mouse[1]),
+        column = w.left + pixels2cells(mouse[0]),
         recipient = players.nearest(row, column),
         donor = players.ego(),
         amt = settings.donation_amount,
