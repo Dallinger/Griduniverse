@@ -27,6 +27,8 @@
     settings.show_chatroom = {% if experiment.grid.show_chatroom %}true{% else %}false{% endif %};
     settings.pseudonyms = {% if experiment.grid.pseudonyms %}true{% else %}false{% endif %};
     settings.walls_visible = {% if experiment.grid.walls_visible %}true{% else %}false{% endif %};
+    settings.build_walls = {% if experiment.grid.build_walls %}true{% else %}false{% endif %};
+    settings.wall_building_cost = {{ experiment.grid.wall_building_cost }};
     settings.donation_amount = {{ experiment.grid.donation_amount }};
     settings.donation_individual = {% if experiment.grid.donation_individual %}true{% else %}false{% endif %};
     settings.donation_group = {% if experiment.grid.donation_group %}true{% else %}false{% endif %};

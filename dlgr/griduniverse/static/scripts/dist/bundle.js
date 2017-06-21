@@ -4415,6 +4415,17 @@ function bindGameKeys(socket) {
       socket.send(msg);
     });
   }
+
+  if (settings.build_walls) {
+    Mousetrap.bind("w", function () {
+      var msg = {
+        type: "build_wall",
+        player: players.ego().id,
+        position: players.ego().position
+      };
+      socket.send(msg);
+    });
+  }
 }
 
 function onChatMessage(msg) {
@@ -4501,6 +4512,18 @@ function onGameStateChange(msg) {
   // Update walls if they haven't been created yet.
   if (walls.length === 0) {
     for (var k = 0; k < state.walls.length; k++) {
+      walls.push(
+        new Wall({
+          position: state.walls[k].position,
+          color: state.walls[k].color
+        })
+      );
+    }
+  }
+
+  // If new walls have been added, draw them
+  if (walls.length != state.walls.length) {
+    for (var k = walls.length; k < state.walls.length; k++) {
       walls.push(
         new Wall({
           position: state.walls[k].position,
