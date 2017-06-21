@@ -111,6 +111,8 @@ def extra_parameters():
         'identity_starts_visible': bool,
         'score_visible': bool,
         'alternate_consumption_donation': bool,
+        'build_walls': bool,
+        'wall_building_cost': int,
     }
 
     for key in types:
@@ -199,6 +201,8 @@ class Gridworld(object):
         self.walls_visible = kwargs.get('walls_visible', True)
         self.walls_density = kwargs.get('walls_density', 0.0)
         self.walls_contiguity = kwargs.get('walls_contiguity', 1.0)
+        self.build_walls = kwargs.get('build_walls', False)
+        self.wall_building_cost = kwargs.get('wall_building_cost', 0)
 
         # Payoffs
         self.initial_score = kwargs.get('initial_score', 0)
@@ -385,6 +389,13 @@ class Gridworld(object):
                cannot pass through."""
             if not self.walls_visible:
                 text += " However, the walls are not visible."
+        if self.build_walls:
+            text += """ Players can build walls at their current position using
+                the 'w' key. The wall will not appear until the player has moved
+                away from that position."""
+            if self.wall_building_cost > 0:
+                text += """ Building a wall has a cost of {g.wall_building_cost}
+                    points."""
         if self.num_rounds > 1:
             text += """ The game has {g.num_rounds} rounds, each lasting
                 {g.time_per_round} seconds.</p>"""
@@ -677,6 +688,7 @@ class Player(object):
         self.payoff = kwargs.get('payoff', 0)
         self.pseudonym_locale = kwargs.get('pseudonym_locale', 'en_US')
         self.identity_visible = kwargs.get('identity_visible', True)
+        self.add_wall = None
 
         # Determine the player's color.
         if 'color' in kwargs:
@@ -748,6 +760,11 @@ class Player(object):
             self.position = new_position
             self.motion_timestamp = elapsed_time
             self.score -= self.motion_cost
+
+            # now that player moved, check if wall needs to be built
+            if self.add_wall is not None:
+                self.grid.walls.append(Wall(position=self.add_wall))
+                self.add_wall = None
 
     def is_neighbor(self, player, d=1):
         """Determine whether other player is adjacent."""
@@ -991,6 +1008,7 @@ class Griduniverse(Experiment):
             'donation_submitted': self.handle_donation,
             'plant_food': self.handle_plant_food,
             'toggle_visible': self.handle_toggle_visible,
+            'build_wall': self.handle_build_wall,
         }
         if msg['type'] in mapping:
             mapping[msg['type']](msg)
@@ -1119,6 +1137,14 @@ class Griduniverse(Experiment):
     def handle_toggle_visible(self, msg):
         player = self.grid.players[msg['player']]
         player.identity_visible = msg['identity_visible']
+
+    def handle_build_wall(self, msg):
+        player = self.grid.players[msg['player']]
+        position = msg['position']
+        can_afford = player.score >= self.grid.wall_building_cost
+        if can_afford:
+            player.score -= self.grid.wall_building_cost
+            player.add_wall = position
 
     def send_state_thread(self):
         """Publish the current state of the grid and game"""
