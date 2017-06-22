@@ -21,7 +21,7 @@ if (env === 'build') {
     },
     serveStatic: [{
       route: '/static',
-      dir: 'static'
+      dir: 'dlgr/griduniverse/static'
     }]
   }));
 }

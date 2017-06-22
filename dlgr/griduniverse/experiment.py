@@ -58,8 +58,8 @@ def extra_parameters():
         'instruct': bool,
         'columns': int,
         'rows': int,
-        'window_width': int,
-        'window_height': int,
+        'window_columns': int,
+        'window_rows': int,
         'block_size': int,
         'padding': int,
         'visibility': int,
@@ -172,8 +172,8 @@ class Gridworld(object):
         # Grid
         self.columns = kwargs.get('columns', 25)
         self.rows = kwargs.get('rows', 25)
-        self.window_width = kwargs.get('window_width', min(self.columns, 25))
-        self.window_height = kwargs.get('window_height', min(self.rows, 25))
+        self.window_columns = kwargs.get('window_columns', min(self.columns, 25))
+        self.window_rows = kwargs.get('window_rows', min(self.rows, 25))
         self.block_size = kwargs.get('block_size', 10)
         self.padding = kwargs.get('padding', 1)
         self.visibility = kwargs.get('visibility', 1000)
@@ -390,9 +390,9 @@ class Gridworld(object):
         text = """<p>The objective of the game is to maximize your final payoff.
             The game is played on a {g.columns} x {g.rows} grid, where each
             player occupies one block."""
-        if self.window_width < self.columns or self.window_height < self.rows:
+        if self.window_columns < self.columns or self.window_rows < self.rows:
             text += """ The grid is viewed through a
-                {g.window_width} x {g.window_height} window
+                {g.window_columns} x {g.window_rows} window
                 that moves along with your player."""
         if self.walls_density > 0:
             text += """ There are walls throughout the grid, which the players
