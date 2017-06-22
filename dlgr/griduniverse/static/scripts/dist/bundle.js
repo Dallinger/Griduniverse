@@ -4360,7 +4360,7 @@ function bindGameKeys(socket) {
         players.ego().move(direction);
         var msg = {
           type: "move",
-          player: players.ego().id,
+          player_id: players.ego().id,
           move: direction
         };
         socket.send(msg);
@@ -4381,7 +4381,7 @@ function bindGameKeys(socket) {
   Mousetrap.bind("space", function () {
     var msg = {
       type: "plant_food",
-      player: players.ego().id,
+      player_id: players.ego().id,
       position: players.ego().position
     };
     socket.send(msg);
@@ -4396,7 +4396,7 @@ function bindGameKeys(socket) {
       players.ego().color = PLAYER_COLORS[nextItem];
       var msg = {
         type: "change_color",
-        player: players.ego().id,
+        player_id: players.ego().id,
         color: players.ego().color
       };
       socket.send(msg);
@@ -4409,7 +4409,7 @@ function bindGameKeys(socket) {
       ego.identity_visible = !ego.identity_visible;
       var msg = {
         type: "toggle_visible",
-        player: ego.id,
+        player_id: ego.id,
         identity_visible: ego.identity_visible
       };
       socket.send(msg);
@@ -4420,7 +4420,7 @@ function bindGameKeys(socket) {
     Mousetrap.bind("w", function () {
       var msg = {
         type: "build_wall",
-        player: players.ego().id,
+        player_id: players.ego().id,
         position: players.ego().position
       };
       socket.send(msg);

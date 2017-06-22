@@ -25,6 +25,7 @@ from dallinger.experiment import Experiment
 from dallinger.heroku.worker import conn as redis
 
 from bots import Bot
+from models import Event
 
 logger = logging.getLogger(__file__)
 config = get_config()
@@ -153,6 +154,8 @@ class Gridworld(object):
         # If Singleton is already initialized, do nothing
         if hasattr(self, 'num_players'):
             return
+
+        self.log_event = kwargs.get('log_event', lambda x: None)
 
         # Players
         self.num_players = kwargs.get('max_participants', 3)
@@ -539,6 +542,10 @@ class Gridworld(object):
             position=position,
             maturation_speed=self.food_maturation_speed,
         ))
+        self.log_event({
+            'type': 'spawn_food',
+            'position': position,
+        })
 
     def spawn_player(self, id=None):
         """Spawn a player."""
@@ -760,6 +767,7 @@ class Player(object):
             self.position = new_position
             self.motion_timestamp = elapsed_time
             self.score -= self.motion_cost
+            return direction
 
             # now that player moved, check if wall needs to be built
             if self.add_wall is not None:
@@ -929,7 +937,10 @@ class Griduniverse(Experiment):
         self.experiment_repeats = 1
         if session:
             self.setup()
-            self.grid = Gridworld(**config.as_dict())
+            self.grid = Gridworld(
+                log_event=self.record_event,
+                **config.as_dict()
+            )
 
     def configure(self):
         super(Griduniverse, self).configure()
@@ -974,6 +985,7 @@ class Griduniverse(Experiment):
             super(Griduniverse, self).setup()
             for net in self.networks():
                 dallinger.nodes.Environment(network=net)
+        self.node_by_player_id = {}
 
     def recruit(self):
         self.recruiter().close_recruitment()
@@ -1026,9 +1038,22 @@ class Griduniverse(Experiment):
             body = raw_message.replace(self.channel + ":", "")
             message = json.loads(body)
             self.dispatch((message))
+            if 'player_id' in message:
+                self.record_event(message, message['player_id'])
         else:
             logger.info("Received a message, but not our channel: {}".format(
                 raw_message))
+
+    def record_event(self, details, player_id=None):
+        """Record an event in the Info table"""
+        session = self.session
+        if player_id:
+            node = self.node_by_player_id[player_id]
+        else:
+            node = self.environment
+        info = Event(origin=node, details=details)
+        session.add(info)
+        session.commit()
 
     def publish(self, msg):
         """Publish a message to all griduniverse clients"""
@@ -1048,7 +1073,8 @@ class Griduniverse(Experiment):
             network = self.get_network_for_participant(participant)
             if network:
                 logger.info("Found an open network. Adding participant node...")
-                self.create_node(participant, network)
+                node = self.create_node(participant, network)
+                self.node_by_player_id[player_id] = node
                 logger.info("Spawning player on the grid...")
                 self.grid.spawn_player(id=player_id)
             else:
@@ -1068,7 +1094,7 @@ class Griduniverse(Experiment):
         self.publish(message)
 
     def handle_change_color(self, msg):
-        player = self.grid.players[msg['player']]
+        player = self.grid.players[msg['player_id']]
         color_idx = Gridworld.player_colors.index(msg['color'])
 
         if player.color_idx == color_idx:
@@ -1085,8 +1111,9 @@ class Griduniverse(Experiment):
         player.color_name = Gridworld.player_color_names[color_idx]
 
     def handle_move(self, msg):
-        player = self.grid.players[msg['player']]
-        player.move(msg['move'], tremble_rate=player.motion_tremble_rate)
+        player = self.grid.players[msg['player_id']]
+        msg['actual'] = player.move(
+            msg['move'], tremble_rate=player.motion_tremble_rate)
 
     def handle_donation(self, msg):
         """Send a donation from one player to another."""
@@ -1125,9 +1152,10 @@ class Griduniverse(Experiment):
                 'amount': donation,
             }
             self.publish(message)
+            self.record_event(msg, msg['donor_id'])
 
     def handle_plant_food(self, msg):
-        player = self.grid.players[msg['player']]
+        player = self.grid.players[msg['player_id']]
         position = msg['position']
         can_afford = player.score >= self.grid.food_planting_cost
         if (can_afford and not self.grid.has_food(position)):
@@ -1135,13 +1163,14 @@ class Griduniverse(Experiment):
             self.grid.spawn_food(position=position)
 
     def handle_toggle_visible(self, msg):
-        player = self.grid.players[msg['player']]
+        player = self.grid.players[msg['player_id']]
         player.identity_visible = msg['identity_visible']
 
     def handle_build_wall(self, msg):
-        player = self.grid.players[msg['player']]
+        player = self.grid.players[msg['player_id']]
         position = msg['position']
         can_afford = player.score >= self.grid.wall_building_cost
+        msg['success'] = can_afford
         if can_afford:
             player.score -= self.grid.wall_building_cost
             player.add_wall = position
@@ -1242,7 +1271,14 @@ class Griduniverse(Experiment):
                 previous_second_timestamp = now
 
             self.grid.compute_payoffs()
+
+            game_round = self.grid.round
             self.grid.check_round_completion()
+            if self.grid.round != game_round and not self.grid.game_over:
+                self.record_event({
+                    'type': 'new_round',
+                    'round': self.grid.round
+                })
 
         self.publish({'type': 'stop'})
         return
