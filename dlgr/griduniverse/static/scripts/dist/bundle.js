@@ -3953,7 +3953,8 @@ class Section {
   }
 
   plot(x, y, color) {
-    // Set color at position (x, y) in full-grid coordinates
+    // Set color at position (x, y) in full-grid coordinates.
+    background[coordsToIdx(x, y, settings.columns)] = color;
     if (x >= this.left && x < this.left + this.columns) {
       if (y >= this.top && y < this.top + this.rows) {
         this.data[this.gridCoordsToSectionIdx(x, y)] = color;
