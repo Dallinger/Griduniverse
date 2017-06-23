@@ -58,6 +58,8 @@ def extra_parameters():
         'instruct': bool,
         'columns': int,
         'rows': int,
+        'window_columns': int,
+        'window_rows': int,
         'block_size': int,
         'padding': int,
         'visibility': int,
@@ -170,6 +172,8 @@ class Gridworld(object):
         # Grid
         self.columns = kwargs.get('columns', 25)
         self.rows = kwargs.get('rows', 25)
+        self.window_columns = kwargs.get('window_columns', min(self.columns, 25))
+        self.window_rows = kwargs.get('window_rows', min(self.rows, 25))
         self.block_size = kwargs.get('block_size', 10)
         self.padding = kwargs.get('padding', 1)
         self.visibility = kwargs.get('visibility', 1000)
@@ -380,13 +384,16 @@ class Gridworld(object):
         return [f for f in self.food
                 if f.maturity >= self.food_maturation_threshold]
 
-    @property
     def instructions(self):
         color_costs = ''
         order = ''
         text = """<p>The objective of the game is to maximize your final payoff.
             The game is played on a {g.columns} x {g.rows} grid, where each
             player occupies one block."""
+        if self.window_columns < self.columns or self.window_rows < self.rows:
+            text += """ The grid is viewed through a
+                {g.window_columns} x {g.window_rows} window
+                that moves along with your player."""
         if self.walls_density > 0:
             text += """ There are walls throughout the grid, which the players
                cannot pass through."""
@@ -487,9 +494,9 @@ class Gridworld(object):
                 text += """ The cost for planting food is {g.food_planting_cost}
                 {g.food_planting_cost:plural, point, points}."""
         text += "</p>"
-        if self.donation > 0:
+        if self.donation_amount > 0:
             text += """<p>It can be helpful to donate points to other players.
-                You can donate {g.donation} {g.donation:plural, point, points}
+                You can donate {g.donation_amount} {g.donation_amount:plural, point, points}
                 to any player by clicking on their block on the grid.</p>
                 """
         if self.show_chatroom:

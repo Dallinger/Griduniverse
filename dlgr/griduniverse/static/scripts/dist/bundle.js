@@ -3908,14 +3908,83 @@ var $ = __webpack_require__(14);
 var gaussian = __webpack_require__(8);
 var Color = __webpack_require__(7);
 
-var data = [];
-var background = [];
-for (var i = 0; i < settings.rows; i++) {
-  for (var j = 0; j < settings.columns; j++) {
-    data.push([0, 0, 0]);
-    background.push([0, 0, 0]);
+function coordsToIdx(x, y, columns) {
+  return y * columns + x;
+}
+
+function animateColor(color) {
+  if (settings.background_animation) {
+    rand = Math.random() * 0.02;
+  } else {
+    rand = 0.01;
+  }
+  return [
+    color[0] * 0.95 + rand,
+    color[1] * 0.95 + rand,
+    color[2] * 0.95 + rand
+  ];
+}
+
+class Section {
+  // Represents the currently visible section (window) of the grid
+
+  constructor(data, left, top) {
+    this.left = left;
+    this.top = top;
+    this.columns = settings.window_columns;
+    this.rows = settings.window_rows;
+    this.data = [];
+    // build data array for just this section
+    for (var j = 0; j < this.rows; j++) {
+      for (var i = 0; i < this.columns; i++) {
+        this.data.push(data[this.sectionCoordsToGridIdx(i, j)]);
+      }
+    }
+  }
+
+  gridCoordsToSectionIdx(x, y) {
+    // Convert grid coordinates to section data array index
+    return (y - this.top) * this.columns + (x - this.left);
+  }
+
+  sectionCoordsToGridIdx(x, y) {
+    // Convert section coordinates to grid data array index
+    return coordsToIdx(this.left + x, this.top + y, settings.columns);
+  }
+
+  plot(x, y, color) {
+    // Set color at position (x, y) in full-grid coordinates.
+    if (x >= this.left && x < this.left + this.columns) {
+      if (y >= this.top && y < this.top + this.rows) {
+        this.data[this.gridCoordsToSectionIdx(x, y)] = color;
+        background[coordsToIdx(x, y, settings.columns)] = color;
+      }
+    }
+  }
+
+  map(func) {
+    // For each cell, call func with (x, y, color) to get the new color
+    for (var j = 0; j < this.rows; j++) {
+      for (var i = 0; i < this.columns; i++) {
+        var idx = coordsToIdx(i, j, this.columns);
+        this.data[idx] = Reflect.apply(
+          func, this, [this.left + i, this.top + j, this.data[idx]]);
+      }
+    }
   }
 }
+
+var background = [];
+for (var j = 0; j < settings.rows; j++) {
+  for (var i = 0; i < settings.columns; i++) {
+    var color = [0, 0, 0];
+    for (var k = 0; k < 15; k++) {
+      color = animateColor(color);
+    }
+    background.push(color);
+  }
+}
+var initialSection = new Section(background, 0, 0);
 
 var PLAYER_COLORS = {
   "BLUE": [0.50, 0.86, 1.00],
@@ -3928,9 +3997,9 @@ var INVISIBLE_COLOR = [0.66, 0.66, 0.66];
 var CHANNEL = "griduniverse";
 var CONTROL_CHANNEL = "griduniverse_ctrl";
 
-var pixels = grid(data, {
-  rows: settings.rows,
-  columns: settings.columns,
+var pixels = grid(initialSection.data, {
+  rows: settings.window_rows,
+  columns: settings.window_columns,
   size: settings.block_size,
   padding: settings.padding,
   background: [0.1, 0.1, 0.1],
@@ -4070,7 +4139,6 @@ var playerSet = (function () {
           if (player.motion_auto) {
             player.move(player.motion_direction);
           }
-          idx = player.position[0] * settings.columns + player.position[1];
           if (id === this.ego_id || settings.others_visible) {
 
             if (player.identity_visible) {
@@ -4088,7 +4156,7 @@ var playerSet = (function () {
             } else {
               color = player.color;
             }
-            grid[idx] = color;
+            grid.plot(player.position[1], player.position[0], color);
           }
         }
       }
@@ -4257,29 +4325,23 @@ pixels.canvas.style.marginTop = window.innerHeight * 0.04 / 2 + "px";
 document.body.style.transition = "0.3s all";
 document.body.style.background = "#ffffff";
 
-
 pixels.frame(function() {
   // Update the background.
   var ego = players.ego(),
+      w = getWindowPosition(),
       limitVisibility,
       dimness,
       rescaling,
-      idx, i, j, x, y;
+      i, j, x, y;
 
-  for (i = 0; i < data.length; i++) {
-    if (settings.background_animation) {
-      rand = Math.random() * 0.02;
-    } else {
-      rand = 0.01;
-    }
-    background[i] = [
-      background[i][0] * 0.95 + rand,
-      background[i][1] * 0.95 + rand,
-      background[i][2] * 0.95 + rand
-    ];
-  }
+  var section = new Section(background, w.left, w.top);
 
-  data = background;
+  // Animate background for each visible cell
+  section.map(function(x, y, color) {
+    var newColor = animateColor(color);
+    background[coordsToIdx(x, y, settings.columns)] = newColor;
+    return newColor;
+  })
 
   for (i = 0; i < food.length; i++) {
     // Players digest the food.
@@ -4287,19 +4349,18 @@ pixels.frame(function() {
       foodConsumed.push(food.splice(i, 1));
     } else {
       if (settings.food_visible) {
-        idx = food[i].position[0] * settings.columns + food[i].position[1];
-        data[idx] = food[i].color;
+        section.plot(food[i].position[1], food[i].position[0], food[i].color);
       }
     }
   }
 
   // Draw the players:
-  players.drawToGrid(data);
+  players.drawToGrid(section);
 
   // Draw the walls.
   if (settings.walls_visible) {
     walls.forEach(function(w) {
-      data[w.position[0] * settings.columns + w.position[1]] = w.color;
+      section.plot(w.position[1], w.position[0], w.color);
     });
   }
 
@@ -4309,23 +4370,25 @@ pixels.frame(function() {
   if (limitVisibility && typeof ego !== "undefined") {
     var g = gaussian(0, Math.pow(settings.visibility, 2));
     rescaling = 1 / g.pdf(0);
-    for (i = 0; i < settings.columns; i++) {
-      for (j = 0; j < settings.rows; j++) {
-        x = ego.position[0];
-        y = ego.position[1];
-        dimness = g.pdf(distance(x, y, i, j)) * rescaling;
-        idx = i * settings.columns + j;
-        data[idx] = [
-          data[idx][0] * dimness,
-          data[idx][1] * dimness,
-          data[idx][2] * dimness
-        ];
-      }
-    }
+    x = ego.position[1];
+    y = ego.position[0];
+    section.map(function(i, j, color) {
+      dimness = g.pdf(distance(x, y, i, j)) * rescaling;
+      var newColor = [
+        color[0] * dimness,
+        color[1] * dimness,
+        color[2] * dimness
+      ];
+      return newColor;
+    });
   }
 
-  pixels.update(data);
+  pixels.update(section.data);
 });
+
+function clamp(val, min, max) {
+  return Math.max(min, Math.min(max, val));
+}
 
 function distance(x, y, xx, yy) {
   return Math.sqrt((xx - x) * (xx - x) + (yy - y) * (yy - y));
@@ -4349,6 +4412,25 @@ function arraySearch(arr, val) {
 
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function getWindowPosition() {
+  var ego = players.ego();
+  var w = {
+    left: 0,
+    top: 0,
+    columns: settings.window_columns,
+    rows: settings.window_rows
+  }
+  if (typeof ego !== 'undefined') {
+    w.left = clamp(
+      ego.position[1] - Math.floor(settings.window_columns / 2),
+      0, settings.columns - settings.window_columns);
+    w.top = clamp(
+      ego.position[0] - Math.floor(settings.window_rows / 2),
+      0, settings.rows - settings.window_rows);
+  }
+  return w;
 }
 
 function bindGameKeys(socket) {
@@ -4657,8 +4739,9 @@ $(document).ready(function() {
 
 
   var donateToClicked = function() {
-    var row = pixels2cells(mouse[1]),
-        column = pixels2cells(mouse[0]),
+    var w = getWindowPosition(),
+        row = w.top + pixels2cells(mouse[1]),
+        column = w.left + pixels2cells(mouse[0]),
         recipient = players.nearest(row, column),
         donor = players.ego(),
         amt = settings.donation_amount,
