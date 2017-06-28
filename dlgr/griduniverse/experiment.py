@@ -1292,9 +1292,6 @@ class Griduniverse(Experiment):
         self.publish({'type': 'stop'})
         return
 
-    def analyze(self, data):
-        return self.average_score(data)
-
     def player_feedback(self, data):
         engagement = int(json.loads(data.questions.list[-1][-1])['engagement'])
         difficulty = int(json.loads(data.questions.list[-1][-1])['difficulty'])
