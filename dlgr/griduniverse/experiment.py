@@ -1052,12 +1052,16 @@ class Griduniverse(Experiment):
                 raw_message))
 
     def record_event(self, details, player_id=None):
-        """Record an event in the Info table"""
+        """Record an event in the Info table."""
         session = self.session
-        if player_id:
+
+        if player_id == 'spectator':
+            return
+        elif player_id:
             node = self.node_by_player_id[player_id]
         else:
             node = self.environment
+
         info = Event(origin=node, details=details)
         session.add(info)
         session.commit()
