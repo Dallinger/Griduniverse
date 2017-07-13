@@ -50,3 +50,5 @@ dlgr/griduniverse/snapshots
 
 docs/build/*
 dlgr/griduniverse/dump.rdb
+
+*.DS_Store
