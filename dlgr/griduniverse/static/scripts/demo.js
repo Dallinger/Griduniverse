@@ -508,6 +508,8 @@ pixels.canvas.style.marginTop = window.innerHeight * 0.04 / 2 + "px";
 document.body.style.transition = "0.3s all";
 document.body.style.background = "#ffffff";
 
+var startTime = Date.now();
+
 pixels.frame(function() {
   // Update the background.
   var ego = players.ego(),
@@ -551,7 +553,13 @@ pixels.frame(function() {
   limitVisibility = settings.visibility <
     Math.max(settings.columns, settings.rows);
   if (limitVisibility && typeof ego !== "undefined") {
-    var g = gaussian(0, Math.pow(settings.visibility, 2));
+    var elapsedTime = Date.now() - startTime;
+    var visibilityNow = clamp(
+      (settings.visibility * elapsedTime) / (1000 * settings.visibility_ramp),
+      3,
+      settings.visibility
+    );
+    var g = gaussian(0, Math.pow(visibilityNow, 2));
     rescaling = 1 / g.pdf(0);
     x = ego.position[1];
     y = ego.position[0];
