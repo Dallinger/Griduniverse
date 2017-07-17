@@ -1021,7 +1021,6 @@ $(document).ready(function() {
     $("#chat form").show();
   }
 
-
   var donateToClicked = function() {
     var w = getWindowPosition(),
         row = w.top + pixels2cells(mouse[1]),
