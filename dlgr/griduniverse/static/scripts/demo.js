@@ -559,6 +559,9 @@ pixels.frame(function() {
       3,
       settings.visibility
     );
+    if (settings.highlightEgo) {
+      visibilityNow = Math.min(visibilityNow, 4);
+    }
     var g = gaussian(0, Math.pow(visibilityNow, 2));
     rescaling = 1 / g.pdf(0);
 
@@ -638,7 +641,9 @@ function bindGameKeys(socket) {
   var directions = ["up", "down", "left", "right"],
       repeatDelayMS = 1000 / settings.motion_speed_limit,
       lastDirection = null,
-      repeatIntervalId = null;
+      repeatIntervalId = null,
+      lock = false,
+      highlightEgo = false;
 
   function moveInDir(direction) {
     players.ego().move(direction);
@@ -734,6 +739,10 @@ function bindGameKeys(socket) {
       socket.send(msg);
     });
   }
+
+  Mousetrap.bind("h", function () {
+      settings.highlightEgo = !settings.highlightEgo;
+  });
 }
 
 function onChatMessage(msg) {
