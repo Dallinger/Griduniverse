@@ -557,7 +557,6 @@ function getWindowPosition() {
 
 function bindGameKeys(socket) {
   var directions = ["up", "down", "left", "right"];
-  var lock = false;
   directions.forEach(function(direction) {
     Mousetrap.bind(direction, function() {
       players.ego().move(direction);
