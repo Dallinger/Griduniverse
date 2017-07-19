@@ -4457,19 +4457,14 @@ function bindGameKeys(socket) {
   var lock = false;
   directions.forEach(function(direction) {
     Mousetrap.bind(direction, function() {
-        players.ego().move(direction);
-        var msg = {
-          type: "move",
-          player_id: players.ego().id,
-          move: direction
-        };
-        socket.send(msg);
-
-      lock = true;
-      return false;
-      },
-      "keydown"
-    );
+      players.ego().move(direction);
+      var msg = {
+        type: "move",
+        player_id: players.ego().id,
+        move: direction
+      };
+      socket.send(msg);
+    });
   });
 
   Mousetrap.bind("space", function () {
