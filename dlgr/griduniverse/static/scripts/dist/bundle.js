@@ -4457,7 +4457,6 @@ function bindGameKeys(socket) {
   var lock = false;
   directions.forEach(function(direction) {
     Mousetrap.bind(direction, function() {
-      if (!lock) {
         players.ego().move(direction);
         var msg = {
           type: "move",
@@ -4465,17 +4464,11 @@ function bindGameKeys(socket) {
           move: direction
         };
         socket.send(msg);
-      }
+
       lock = true;
       return false;
-    });
-    Mousetrap.bind(
-      direction,
-      function() {
-        lock = false;
-        return false;
       },
-      "keyup"
+      "keydown"
     );
   });
 
