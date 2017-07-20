@@ -44,6 +44,8 @@ class PluralFormatter(string.Formatter):
                 return words[2]
         else:
             return super(PluralFormatter, self).format_field(value, format_spec)
+
+
 formatter = PluralFormatter()
 
 
@@ -313,7 +315,6 @@ class Gridworld(object):
             self.start_timestamp = time.time()
             for player in self.players.values():
                 player.motion_timestamp = 0
-
 
     def compute_payoffs(self):
         """Compute payoffs from scores.
@@ -958,7 +959,6 @@ class Griduniverse(Experiment):
     @property
     def environment(self):
         environment = self.session.query(dallinger.nodes.Environment).one()
-
         return environment
 
     @cached_property

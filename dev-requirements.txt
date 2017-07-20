@@ -9,4 +9,5 @@ recommonmark==0.4.0
 Sphinx==1.5.3
 sphinxcontrib-spelling==2.3.0
 tox==2.6.0
+mock==2.0.0
 -r requirements.txt
