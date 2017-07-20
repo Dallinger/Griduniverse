@@ -107,6 +107,7 @@ def extra_parameters():
         'difi_question': bool,
         'difi_group_label': unicode,
         'difi_group_image': unicode,
+        'fun_survey': bool,
         'leach_survey': bool,
         'intergroup_competition': float,
         'intragroup_competition': float,
@@ -251,6 +252,7 @@ class Gridworld(object):
         self.difi_question = kwargs.get('difi_question', False)
         self.difi_group_label = kwargs.get('difi_group_label', 'Group')
         self.difi_group_image = kwargs.get('difi_group_image', '/static/images/group.jpg')
+        self.fun_survey = kwargs.get('fun_survey', True)
         self.leach_survey = kwargs.get('leach_survey', False)
 
         # Set some variables.
@@ -1052,16 +1054,12 @@ class Griduniverse(Experiment):
                 raw_message))
 
     def record_event(self, details, player_id=None):
-        """Record an event in the Info table."""
+        """Record an event in the Info table"""
         session = self.session
-
-        if player_id == 'spectator':
-            return
-        elif player_id:
+        if player_id:
             node = self.node_by_player_id[player_id]
         else:
             node = self.environment
-
         info = Event(origin=node, details=details)
         session.add(info)
         session.commit()
@@ -1294,10 +1292,21 @@ class Griduniverse(Experiment):
         self.publish({'type': 'stop'})
         return
 
-    def analyze(self, data):
-        return self.average_score(data)
+    def player_feedback(self, data):
+        engagement = int(json.loads(data.questions.list[-1][-1])['engagement'])
+        difficulty = int(json.loads(data.questions.list[-1][-1])['difficulty'])
+        fun = int(json.loads(data.questions.list[-1][-1])['fun'])
+        return engagement, difficulty, fun
+
+    def average_pay_off(self, data):
+        print data.infos.list
+        final_state = json.loads(data.infos.list[-1][-1])
+        players = final_state['players']
+        payoff = [player['payoff'] for player in players]
+        return float(sum(payoff)) / len(payoff)
 
     def average_score(self, data):
+        print data.infos.list
         final_state = json.loads(data.infos.list[-1][-1])
         players = final_state['players']
         scores = [player['score'] for player in players]
