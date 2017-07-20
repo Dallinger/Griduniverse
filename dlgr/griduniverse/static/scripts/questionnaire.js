@@ -1,17 +1,7 @@
+/*global Dallinger, submitAssignment */
+
 import { DIFIInput } from 'identityfusion';
 
-
-var opts = {scale: 3};
-var spinner = new Spinner(opts);
-
-var freezeForm = function ($toDisable) {
-  console.log("Running spinner.");
-  var target = document.getElementById('spinner');
-  $toDisable.forEach(function ($element) {
-    $element.attr("disabled", true);
-  });
-  spinner.spin(target);
-};
 
 $(document).ready(function() {
 
@@ -27,10 +17,13 @@ $(document).ready(function() {
     );
   }
 
+  var spinner = Dallinger.BusyForm();
+
   // Submit the questionnaire.
   $("#submit-questionnaire").click(function() {
     console.log("Submitting questionnaire.");
-    freezeForm([$("form :input"), $("#submit-questionnaire")]);
+    var $elements = [$("form :input"), $(this)];
+    spinner.freeze($elements);
     Dallinger.submitQuestionnaire("questionnaire", submitAssignment);
   });
 
