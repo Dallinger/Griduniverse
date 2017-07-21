@@ -906,16 +906,21 @@ $(document).ready(function() {
   };
 
   $("form").submit(function() {
-    var msg = {
-      type: 'chat',
-      contents: $("#message").val(),
-      player_id: players.ego().id,
-      timestamp: Date.now() - start
-    };
-    // send directly to all clients
-    socket.broadcast(msg);
-    $("#message").val("");
-    return false;
+    try {
+      var msg = {
+        type: 'chat',
+        contents: $("#message").val(),
+        player_id: players.ego().id,
+        timestamp: Date.now() - start
+      };
+      // send directly to all clients
+      socket.broadcast(msg);
+    } catch(err) {
+      console.error(err);
+    } finally {
+      $("#message").val("");
+      return false;
+    }
   });
 
 
