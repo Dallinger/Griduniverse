@@ -622,8 +622,8 @@ function onChatMessage(msg) {
   } else {
     name = "Player " + msg.player_index;
   }
-  entry = "<span class='name'>" + name + ":</span> " + msg.contents;
-  $("#messages").append($("<li>").html(entry));
+  entry = "<span class='name'>" + name + ":</span> ";
+  $("#messages").append(($("<li>").text(msg.contents)).prepend(entry));
   $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
 }
 
