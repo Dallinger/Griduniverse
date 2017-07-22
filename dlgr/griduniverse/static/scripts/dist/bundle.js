@@ -4520,7 +4520,7 @@ function onChatMessage(msg) {
     name = "Player " + msg.player_index;
   }
   entry = "<span class='name'>" + name + ":</span> ";
-  $("#messages").append($("<li>").text(msg.contents).prepend(entry));
+  $("#messages").append(($("<li>").text(msg.contents)).prepend(entry));
   $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
 }
 
@@ -4559,6 +4559,7 @@ function onDonationProcessed(msg) {
   $("#messages").append($("<li>").html(entry));
   $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
   $('#individual-donate, #group-donate').addClass('button-outline');
+  $('#donate label').text($('#donate label').data('orig-text'));
   settings.donation_type = null;
 }
 
@@ -4570,6 +4571,7 @@ function onGameStateChange(msg) {
   $("#time").html(Math.max(Math.round(msg.remaining_time), 0));
 
   // Update round.
+  settings.round = msg.round;
   if (settings.num_rounds > 1) {
       $("#round").html(msg.round + 1);
   }
@@ -4678,7 +4680,7 @@ $(document).ready(function() {
   );
 
   players.ego_id = player_id;
-
+  $('#donate label').data('orig-text', $('#donate label').text());
 
   // Append the canvas.
   $("#grid").append(pixels.canvas);
@@ -4748,7 +4750,7 @@ $(document).ready(function() {
         recipient_id,
         msg;
 
-    if (self.alternate_consumption_donation && self.round % 2) {
+    if (settings.alternate_consumption_donation && settings.round % 2) {
       return;
     }
 
@@ -4803,16 +4805,21 @@ $(document).ready(function() {
   };
 
   $("form").submit(function() {
-    var msg = {
-      type: 'chat',
-      contents: $("#message").val(),
-      player_id: players.ego().id,
-      timestamp: Date.now() - start
-    };
-    // send directly to all clients
-    socket.broadcast(msg);
-    $("#message").val("");
-    return false;
+    try {
+      var msg = {
+        type: 'chat',
+        contents: $("#message").val(),
+        player_id: players.ego().id,
+        timestamp: Date.now() - start
+      };
+      // send directly to all clients
+      socket.broadcast(msg);
+    } catch(err) {
+      console.error(err);
+    } finally {
+      $("#message").val("");
+      return false;
+    }
   });
 
 
@@ -4826,6 +4833,7 @@ $(document).ready(function() {
     $('#public-donate').click(donateToAll);
     $('#group-donate').click(function () {
       if (settings.donation_group) {
+        $('#donate label').text('Click on a color');
         settings.donation_type = 'group';
         $(this).prop('disabled', false);
         $(this).removeClass('button-outline');
@@ -4834,6 +4842,7 @@ $(document).ready(function() {
     });
     $('#individual-donate').click(function () {
       if (settings.donation_individual) {
+        $('#donate label').text('Click on a player');
         settings.donation_type = 'individual';
         $(this).removeClass('button-outline');
         $('#group-donate').addClass('button-outline');
