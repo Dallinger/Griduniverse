@@ -662,6 +662,7 @@ function onDonationProcessed(msg) {
   $("#messages").append($("<li>").html(entry));
   $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
   $('#individual-donate, #group-donate').addClass('button-outline');
+  $('#donate label').text($('#donate label').data('orig-text'));
   settings.donation_type = null;
 }
 
@@ -782,7 +783,7 @@ $(document).ready(function() {
   );
 
   players.ego_id = player_id;
-
+  $('#donate label').data('orig-text', $('#donate label').text());
 
   // Append the canvas.
   $("#grid").append(pixels.canvas);
@@ -935,6 +936,7 @@ $(document).ready(function() {
     $('#public-donate').click(donateToAll);
     $('#group-donate').click(function () {
       if (settings.donation_group) {
+        $('#donate label').text('Click on a color');
         settings.donation_type = 'group';
         $(this).prop('disabled', false);
         $(this).removeClass('button-outline');
@@ -943,6 +945,7 @@ $(document).ready(function() {
     });
     $('#individual-donate').click(function () {
       if (settings.donation_individual) {
+        $('#donate label').text('Click on a player');
         settings.donation_type = 'individual';
         $(this).removeClass('button-outline');
         $('#group-donate').addClass('button-outline');

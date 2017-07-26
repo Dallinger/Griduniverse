@@ -182,7 +182,12 @@ canvas {
     padding-right: 0.5rem;
 }
 
-#donate button:focus, #donate button:hover {
+#donate button#public-donate:active, #donate button#public-donate:focus {
+    color: #9b4dca;
+    background-color: #ffffff;
+}
+
+#donate button:focus, #donate button:hover, #donate button#public-donate:hover {
     color: #ffffff;
     background-color: #9b4dca;
 }
