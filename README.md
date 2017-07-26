@@ -1,6 +1,8 @@
 # Griduniverse
 
 [![Build Status](https://travis-ci.org/Dallinger/Griduniverse.svg?branch=master)](https://travis-ci.org/Dallinger/Griduniverse)
+[![Greenkeeper badge](https://badges.greenkeeper.io/Dallinger/Griduniverse.svg)](https://greenkeeper.io/)
+
 
 Reinforcement learning is an area of machine learning that considers the problem faced by a decision-maker in a setting partly under control of the environment. To illustrate the complexities of learning in even simple scenarios, researchers often turn to so-called “Gridworlds”, toy problems that nonetheless capture the rich difficulties that arise when learning in an uncertain world. By adjusting the state space (i.e., the grid), the set of actions available to the decision maker, the reward function, and the mapping between actions and states, a richly structured array of reinforcement learning problems can be generated — a Griduniverse, one might say. To design a successful reinforcement learning AI system, then, is to develop an algorithm that learns well across many such Gridworlds. Indeed, state-of-the-art reinforcement learning algorithms such as deep Q-networks, for example, have achieved professional-level performance across tens of video games from raw pixel input.  
 
