@@ -18,7 +18,7 @@
     settings.background_animation = {% if experiment.grid.background_animation %}true{% else %}false{% endif %};
     settings.time_per_round = {{ experiment.grid.time_per_round }};
     settings.num_rounds = {{ experiment.grid.num_rounds }};
-    settings.round = {{ experiment.grid.round }};  // Will be updated by onGameStateChange()
+    settings.round = {{ experiment.grid.round }};
     settings.tax = {{ experiment.grid.tax }};
     settings.walls = "{{ experiment.grid.wall_type }}";
     settings.show_grid = {% if experiment.grid.show_grid %}true{% else %}false{% endif %};
@@ -36,6 +36,7 @@
     settings.donation_individual = {% if experiment.grid.donation_individual %}true{% else %}false{% endif %};
     settings.donation_group = {% if experiment.grid.donation_group %}true{% else %}false{% endif %};
     settings.donation_public = {% if experiment.grid.donation_public %}true{% else %}false{% endif %};
+    settings.donation_active = {% if experiment.grid.donation_active %}true{% else %}false{% endif %};
     settings.donation_type = null;
     settings.score_visible = {% if experiment.grid.score_visible %}true{% else %}false{% endif %};
     settings.alternate_consumption_donation = {% if experiment.grid.alternate_consumption_donation %}true{% else %}false{% endif %};

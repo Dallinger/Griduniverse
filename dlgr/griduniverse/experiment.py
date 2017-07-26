@@ -301,6 +301,20 @@ class Gridworld(object):
 
         return max(0, raw_remaining)
 
+    @property
+    def donation_active(self):
+        """Donation is enabled on odd-numbered rounds if
+        alternate_consumption_donation is set to True.
+        """
+        return bool(not self.alternate_consumption_donation or self.round % 2)
+
+    @property
+    def consumption_active(self):
+        """Food consumption is enabled on even-numbered rounds if
+        alternate_consumption_donation is set to True.
+        """
+        return bool(not self.alternate_consumption_donation or not self.round % 2)
+
     def check_round_completion(self):
         if not self.game_started:
             return
@@ -313,7 +327,6 @@ class Gridworld(object):
             self.start_timestamp = time.time()
             for player in self.players.values():
                 player.motion_timestamp = 0
-
 
     def compute_payoffs(self):
         """Compute payoffs from scores.
@@ -375,6 +388,7 @@ class Gridworld(object):
             "food": [food.serialize() for food in self.food],
             "walls": [wall.serialize() for wall in self.walls],
             "round": self.round,
+            "donation_active": self.donation_active,
             "rows": self.rows,
             "columns": self.columns,
         })
@@ -1128,7 +1142,7 @@ class Griduniverse(Experiment):
 
     def handle_donation(self, msg):
         """Send a donation from one player to another."""
-        if self.grid.alternate_consumption_donation and self.grid.round % 2:
+        if not self.grid.donation_active:
             return
 
         recipients = []
@@ -1229,10 +1243,7 @@ class Griduniverse(Experiment):
                     player.move(player.motion_direction, tremble_rate=0)
 
             # Consume the food.
-            if (
-                not self.grid.alternate_consumption_donation or
-                not self.grid.round % 2
-            ):
+            if self.grid.consumption_active:
                 self.grid.consume()
 
             # Spread through contagion.

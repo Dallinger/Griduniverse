@@ -673,7 +673,6 @@ function onGameStateChange(msg) {
   $("#time").html(Math.max(Math.round(msg.remaining_time), 0));
 
   // Update round.
-  settings.round = msg.round;
   if (settings.num_rounds > 1) {
       $("#round").html(msg.round + 1);
   }
@@ -682,6 +681,9 @@ function onGameStateChange(msg) {
   state = JSON.parse(msg.grid);
   players.update(state.players);
   ego = players.ego();
+
+  // Update donation status
+  settings.donation_active = state.donation_active;
 
   // Update food.
   food = [];
@@ -728,7 +730,7 @@ function onGameStateChange(msg) {
     if (settings.donation_amount &&
         ego.score >= settings.donation_amount &&
         players.count() > 1 &&
-        (!settings.alternate_consumption_donation || (msg.round % 2) === 1)
+        settings.donation_active
     ) {
       $('#individual-donate, #group-donate, #public-donate').prop('disabled', false);
     } else {
@@ -852,7 +854,7 @@ $(document).ready(function() {
         recipient_id,
         msg;
 
-    if (settings.alternate_consumption_donation && settings.round % 2) {
+    if (!settings.donation_active) {
       return;
     }
 
