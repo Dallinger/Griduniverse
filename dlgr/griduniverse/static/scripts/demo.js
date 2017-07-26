@@ -673,6 +673,7 @@ function onGameStateChange(msg) {
   $("#time").html(Math.max(Math.round(msg.remaining_time), 0));
 
   // Update round.
+  settings.round = msg.round;
   if (settings.num_rounds > 1) {
       $("#round").html(msg.round + 1);
   }
@@ -851,7 +852,7 @@ $(document).ready(function() {
         recipient_id,
         msg;
 
-    if (self.alternate_consumption_donation && self.round % 2) {
+    if (settings.alternate_consumption_donation && settings.round % 2) {
       return;
     }
 
