@@ -18,7 +18,6 @@
     settings.background_animation = {% if experiment.grid.background_animation %}true{% else %}false{% endif %};
     settings.time_per_round = {{ experiment.grid.time_per_round }};
     settings.num_rounds = {{ experiment.grid.num_rounds }};
-    settings.round = {{ experiment.grid.round }};
     settings.tax = {{ experiment.grid.tax }};
     settings.walls = "{{ experiment.grid.wall_type }}";
     settings.show_grid = {% if experiment.grid.show_grid %}true{% else %}false{% endif %};
