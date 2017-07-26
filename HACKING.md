@@ -27,7 +27,7 @@ To watch for changes and rebuild bundle.js whenever you save:
     $ yarn run dev
 
 While running the dev command, you can start the experiment in debug mode
-with Dallinger and then adjust the URL in your browser to port 6000.
+with Dallinger and then adjust the URL in your browser to port 6001.
 This proxies the Dallinger webserver (port 5000) for everything except `/static`,
 where it serves the current contents of the `static` directory.
 It also automatically reloads whenever the bundle is updated.
