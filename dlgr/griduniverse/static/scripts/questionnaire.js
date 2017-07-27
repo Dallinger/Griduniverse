@@ -1,4 +1,7 @@
+/*global Dallinger, submitAssignment */
+
 import { DIFIInput } from 'identityfusion';
+
 
 $(document).ready(function() {
 
@@ -14,9 +17,14 @@ $(document).ready(function() {
     );
   }
 
+  var spinner = Dallinger.BusyForm();
+
   // Submit the questionnaire.
   $("#submit-questionnaire").click(function() {
     console.log("Submitting questionnaire.");
+    var $elements = [$("form :input"), $(this)];
+    spinner.freeze($elements);
     Dallinger.submitQuestionnaire("questionnaire", submitAssignment);
   });
+
 });
