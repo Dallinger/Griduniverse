@@ -4341,7 +4341,7 @@ pixels.frame(function() {
     var newColor = animateColor(color);
     background[coordsToIdx(x, y, settings.columns)] = newColor;
     return newColor;
-  })
+  });
 
   for (i = 0; i < food.length; i++) {
     // Players digest the food.
@@ -4404,9 +4404,11 @@ function arraysEqual(arr1, arr2) {
 }
 
 function arraySearch(arr, val) {
-    for (var i = 0; i < arr.length; i++)
-        if (arraysEqual(arr[i], val))
-            return i;
+    for (var i = 0; i < arr.length; i++) {
+      if (arraysEqual(arr[i], val)) {
+        return i;
+      }
+    }
     return false;
 }
 
@@ -4415,13 +4417,14 @@ function getRandomInt(min, max) {
 }
 
 function getWindowPosition() {
-  var ego = players.ego();
-  var w = {
-    left: 0,
-    top: 0,
-    columns: settings.window_columns,
-    rows: settings.window_rows
-  }
+  var ego = players.ego(),
+      w = {
+        left: 0,
+        top: 0,
+        columns: settings.window_columns,
+        rows: settings.window_rows
+      };
+
   if (typeof ego !== 'undefined') {
     w.left = clamp(
       ego.position[1] - Math.floor(settings.window_columns / 2),
@@ -4543,7 +4546,7 @@ function onDonationProcessed(msg) {
     recipient_name = 'you';
   } else if (recipient_id === 'all') {
     recipient_name = 'all players';
-  } else if (recipient_id.indexOf('group:') == 0) {
+  } else if (recipient_id.indexOf('group:') === 0) {
     team_idx = +recipient_id.substring(6);
     recipient_name = 'all ' + Object.keys(PLAYER_COLORS)[team_idx] + ' players';
   } else {
@@ -4571,7 +4574,6 @@ function onGameStateChange(msg) {
   $("#time").html(Math.max(Math.round(msg.remaining_time), 0));
 
   // Update round.
-  settings.round = msg.round;
   if (settings.num_rounds > 1) {
       $("#round").html(msg.round + 1);
   }
@@ -4580,6 +4582,9 @@ function onGameStateChange(msg) {
   state = JSON.parse(msg.grid);
   players.update(state.players);
   ego = players.ego();
+
+  // Update donation status
+  settings.donation_active = state.donation_active;
 
   // Update food.
   food = [];
@@ -4626,7 +4631,7 @@ function onGameStateChange(msg) {
     if (settings.donation_amount &&
         ego.score >= settings.donation_amount &&
         players.count() > 1 &&
-        (!settings.alternate_consumption_donation || (msg.round % 2) === 1)
+        settings.donation_active
     ) {
       $('#individual-donate, #group-donate, #public-donate').prop('disabled', false);
     } else {
@@ -4750,7 +4755,7 @@ $(document).ready(function() {
         recipient_id,
         msg;
 
-    if (settings.alternate_consumption_donation && settings.round % 2) {
+    if (!settings.donation_active) {
       return;
     }
 
@@ -4758,9 +4763,9 @@ $(document).ready(function() {
       return;
     }
 
-    if (settings.donation_type == 'individual') {
+    if (settings.donation_type === 'individual') {
       recipient_id = recipient.id;
-    } else if (settings.donation_type == 'group') {
+    } else if (settings.donation_type === 'group') {
       recipient_id = 'group:' +  color2idx(recipient.color).toString();
     } else {
       return;
@@ -4788,7 +4793,7 @@ $(document).ready(function() {
       amount: amt
     };
     socket.send(msg);
-  }
+  };
 
   var pixels2cells = function(pix) {
     return Math.floor(pix / (settings.block_size + settings.padding));
@@ -4798,7 +4803,7 @@ $(document).ready(function() {
     var colors = Object.values(PLAYER_COLORS);
     var value = color.join(',');
     for (var idx=0; idx < colors.length; idx++) {
-      if (colors[idx].join(',') == value) {
+      if (colors[idx].join(',') === value) {
         return idx;
       }
     }
