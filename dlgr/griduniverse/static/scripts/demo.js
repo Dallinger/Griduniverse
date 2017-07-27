@@ -558,33 +558,35 @@ function getWindowPosition() {
 function bindGameKeys(socket) {
   var directions = ["up", "down", "left", "right"];
   var lastDirection = null;
-  function moveInterval(direction) {
-    players.ego().move(direction);
-    var msg = {
-      type: "move",
-      player_id: players.ego().id,
-      move: direction
-    };
-    socket.send(msg);
-    direction = lastDirection;
-  };
 
   directions.forEach(function(direction) {
     Mousetrap.bind(direction, function() {
-      if (direction!=lastDirection) {
-            moving = setInterval(moveInterval(direction), 150);
+      if (direction != lastDirection) {
+            moving = setInterval(function (direction) {
+            players.ego().move(direction);
+            var msg = {
+              type: "move",
+              player_id: players.ego().id,
+              move: direction
+            };
+            socket.send(msg);
+            lastDirection = direction;
+          }, 2000);
         };
       return false;
     });
-
+/*
     Mousetrap.bind(
       direction,
       function() {
-        clearInterval(moving);
+        if (direction) {
+          clearInterval(moving);
+        }
         return false;
       },
       "keyup"
     );
+*/
   });
 
   Mousetrap.bind("space", function () {
