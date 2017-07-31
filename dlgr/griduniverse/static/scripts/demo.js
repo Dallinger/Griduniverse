@@ -569,7 +569,6 @@ function bindGameKeys(socket) {
       move: direction
     };
     socket.send(msg);
-    lastDirection = direction;
   }
 
   directions.forEach(function(direction) {
@@ -587,9 +586,9 @@ function bindGameKeys(socket) {
         }
 
         moveInDir(direction); // Move once immediately so there's no lag
+        lastDirection = direction;
         repeatIntervalId = setInterval(moveInDir, repeatDelayMS, direction);
         console.log("Repeating new direction: " + direction + " (" + repeatIntervalId + ")");
-        lastDirection = direction;
       },
       'keydown'
     );
