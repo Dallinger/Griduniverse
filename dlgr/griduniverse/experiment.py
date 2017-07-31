@@ -8,6 +8,7 @@ import math
 import random
 import string
 import time
+import os
 import uuid
 
 from cached_property import cached_property
@@ -1054,17 +1055,18 @@ class Griduniverse(Experiment):
 
             'griduniverse:{"type":"move","player":0,"move":"left"}'
         """
+        dyno = os.environ.get('DYNO', 'Unknown')
         if raw_message.startswith(self.channel + ":"):
-            logger.info("We received a message for our channel: {}".format(
-                raw_message))
+            logger.info("We received a message for our channel from dyno {}: {}".format(
+                dyno, raw_message))
             body = raw_message.replace(self.channel + ":", "")
             message = json.loads(body)
             self.dispatch((message))
             if 'player_id' in message:
                 self.record_event(message, message['player_id'])
         else:
-            logger.info("Received a message, but not our channel: {}".format(
-                raw_message))
+            logger.info("Received a message from dyno {}, but not our channel: {}".format(
+                dyno, raw_message))
 
     def record_event(self, details, player_id=None):
         """Record an event in the Info table."""
