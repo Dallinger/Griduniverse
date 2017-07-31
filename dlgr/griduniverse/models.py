@@ -10,8 +10,8 @@ class Event(Info):
         "polymorphic_identity": "event"
     }
 
-    details = Column(JSONB)
+    #details = Column(JSONB)
 
     def __init__(self, origin, details):
         super(Event, self).__init__(origin)
-        self.details = details
+        #self.details = details
