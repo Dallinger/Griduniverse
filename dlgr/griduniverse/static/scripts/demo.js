@@ -556,37 +556,56 @@ function getWindowPosition() {
 }
 
 function bindGameKeys(socket) {
-  var directions = ["up", "down", "left", "right"];
-  var lastDirection = null;
+  var directions = ["up", "down", "left", "right"],
+      repeatDelayMS = 125,
+      lastDirection = null,
+      repeatIntervalId = null;
+
+  function moveInDir(direction) {
+    players.ego().move(direction);
+    var msg = {
+      type: "move",
+      player_id: players.ego().id,
+      move: direction
+    };
+    socket.send(msg);
+    lastDirection = direction;
+  }
 
   directions.forEach(function(direction) {
-    Mousetrap.bind(direction, function() {
-      if (direction != lastDirection) {
-            moving = setInterval(function (direction) {
-            players.ego().move(direction);
-            var msg = {
-              type: "move",
-              player_id: players.ego().id,
-              move: direction
-            };
-            socket.send(msg);
-            lastDirection = direction;
-          }, 2000);
-        };
-      return false;
-    });
-/*
+    Mousetrap.bind(
+      direction,
+      function() {
+        if (direction === lastDirection) {
+          return;
+        }
+
+        // New direction may be pressed before previous dir key is released
+        if (repeatIntervalId) {
+          console.log("Clearing interval for new keydown");
+          clearInterval(repeatIntervalId);
+        }
+
+        moveInDir(direction); // Move once immediately so there's no lag
+        repeatIntervalId = setInterval(moveInDir, repeatDelayMS, direction);
+        console.log("Repeating new direction: " + direction + " (" + repeatIntervalId + ")");
+        lastDirection = direction;
+      },
+      'keydown'
+    );
+
     Mousetrap.bind(
       direction,
       function() {
         if (direction) {
-          clearInterval(moving);
+          console.log("Calling clearInterval() for " + direction + " (" + repeatIntervalId + ")");
+          clearInterval(repeatIntervalId);
+          lastDirection = null;
         }
-        return false;
       },
       "keyup"
     );
-*/
+
   });
 
   Mousetrap.bind("space", function () {
