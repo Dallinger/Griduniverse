@@ -1745,8 +1745,8 @@ Color.prototype = {
 	mix: function (mixinColor, weight) {
 		// ported from sass implementation in C
 		// https://github.com/sass/libsass/blob/0e6b4a2850092356aa3ece07c6b249f0221caced/functions.cpp#L209
-		var color1 = this.rgb();
-		var color2 = mixinColor.rgb();
+		var color1 = mixinColor.rgb();
+		var color2 = this.rgb();
 		var p = weight === undefined ? 0.5 : weight;
 
 		var w = 2 * p - 1;
@@ -4453,37 +4453,55 @@ function getWindowPosition() {
 }
 
 function bindGameKeys(socket) {
-  var directions = ["up", "down", "left", "right"];
-  var lastDirection = null;
+  var directions = ["up", "down", "left", "right"],
+      repeatDelayMS = 1000 / settings.motion_speed_limit,
+      lastDirection = null,
+      repeatIntervalId = null;
+
+  function moveInDir(direction) {
+    players.ego().move(direction);
+    var msg = {
+      type: "move",
+      player_id: players.ego().id,
+      move: direction
+    };
+    socket.send(msg);
+  }
 
   directions.forEach(function(direction) {
-    Mousetrap.bind(direction, function() {
-      if (direction != lastDirection) {
-            moving = setInterval(function (direction) {
-            players.ego().move(direction);
-            var msg = {
-              type: "move",
-              player_id: players.ego().id,
-              move: direction
-            };
-            socket.send(msg);
-            lastDirection = direction;
-          }, 2000);
-        };
-      return false;
-    });
-/*
+    Mousetrap.bind(
+      direction,
+      function() {
+        if (direction === lastDirection) {
+          return;
+        }
+
+        // New direction may be pressed before previous dir key is released
+        if (repeatIntervalId) {
+          console.log("Clearing interval for new keydown");
+          clearInterval(repeatIntervalId);
+        }
+
+        moveInDir(direction); // Move once immediately so there's no lag
+        lastDirection = direction;
+        repeatIntervalId = setInterval(moveInDir, repeatDelayMS, direction);
+        console.log("Repeating new direction: " + direction + " (" + repeatIntervalId + ")");
+      },
+      'keydown'
+    );
+
     Mousetrap.bind(
       direction,
       function() {
         if (direction) {
-          clearInterval(moving);
+          console.log("Calling clearInterval() for " + direction + " (" + repeatIntervalId + ")");
+          clearInterval(repeatIntervalId);
+          lastDirection = null;
         }
-        return false;
       },
       "keyup"
     );
-*/
+
   });
 
   Mousetrap.bind("space", function () {
