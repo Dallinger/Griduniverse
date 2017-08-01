@@ -1322,8 +1322,7 @@ class Griduniverse(Experiment):
         df = data.infos.df
         engagement = int(json.loads(df.questions.list[-1][-1])['engagement'])
         difficulty = int(json.loads(df.questions.list[-1][-1])['difficulty'])
-        fun = int(json.loads(df.questions.list[-1][-1])['fun'])
-        return engagement, difficulty, fun
+        return engagement, difficulty
 
     def average_pay_off(self, data):
         df = data.infos.df
