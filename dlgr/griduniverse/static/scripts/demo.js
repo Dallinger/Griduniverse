@@ -557,7 +557,7 @@ function getWindowPosition() {
 
 function bindGameKeys(socket) {
   var directions = ["up", "down", "left", "right"],
-      repeatDelayMS = 125,
+      repeatDelayMS = 1000 / settings.motion_speed_limit,
       lastDirection = null,
       repeatIntervalId = null;
 

@@ -25,6 +25,7 @@
     settings.others_visible = {% if experiment.grid.others_visible %}true{% else %}false{% endif %};
     settings.identity_signaling = {% if experiment.grid.identity_signaling %}true{% else %}false{% endif %};
     settings.identity_starts_visible = {% if experiment.grid.identity_starts_visible %}true{% else %}false{% endif %};
+    settings.motion_speed_limit = {{ experiment.grid.motion_speed_limit }};
     settings.food_visible = {% if experiment.grid.food_visible %}true{% else %}false{% endif %};
     settings.show_chatroom = {% if experiment.grid.show_chatroom %}true{% else %}false{% endif %};
     settings.pseudonyms = {% if experiment.grid.pseudonyms %}true{% else %}false{% endif %};
