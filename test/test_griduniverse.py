@@ -8,6 +8,7 @@ import pytest
 import shutil
 import sys
 import tempfile
+from dallinger.experiments import Griduniverse
 
 
 @pytest.fixture
@@ -52,7 +53,19 @@ class TestGriduniverse(object):
     def setup_class(cls):
         pass
 
-    def test_something(self):
+    def test_api(self):
+        self.experiment = Griduniverse()
+        data = self.experiment.run(
+                mode=u'debug',
+                recruiter=u'bots',
+                bot_policy=u"AdvantageSeekingBot",
+                max_participants=1,
+                num_dynos_worker=1,
+            )
+        results = self.experiment.average_score(data)
+        assert results > 0
+
+    def test_bot_score(self):
         pass
 
     @classmethod
