@@ -2,12 +2,13 @@
 
 language: python
 dist: trusty
-sudo: false
+sudo: required
 
 python:
   - "2.7"
 
 addons:
+  chrome: stable
   postgresql: "9.4"
   apt:
     sources:
@@ -18,22 +19,27 @@ addons:
 services:
   - redis-server
 
-before_install:  
-   - export CHROME_BIN=/usr/bin/google-chrome
-   - export DISPLAY=:99.0
-   - sh -e /etc/init.d/xvfb start
-   - sudo apt-get update
-   - sudo apt-get install -y libappindicator1 fonts-liberation chromedriver
-   - wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-   - sudo dpkg -i google-chrome*.deb
+before_install:
+  - # start your web application and listen on `localhost`
+  - google-chrome-stable --headless --disable-gpu --remote-debugging-port=9222 http://localhost:5000 &
 
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install: 
   - pip install -r requirements.txt
   - python setup.py develop
+  - pip install odo google-compute-engine
+  - wget -N http://chromedriver.storage.googleapis.com/2.30/chromedriver_linux64.zip -P ~/
+  - unzip ~/chromedriver_linux64.zip -d ~/
+  - rm ~/chromedriver_linux64.zip
+  - sudo mv -f ~/chromedriver /usr/local/share/
+  - sudo chmod +x /usr/local/share/chromedriver
+  - sudo ln -s /usr/local/share/chromedriver /usr/local/bin/chromedriver
 
 before_script:
   - createdb dallinger -U postgres
+  - "export DISPLAY=:99.0"
+  - "sh -e /etc/init.d/xvfb start"
+  - sleep 3 # give xvfb some time to start
 
 env:
   global:
@@ -41,4 +47,9 @@ env:
 
 # command to run tests, e.g. python setup.py test
 script:
-  - py.test
+  - Xvfb :99 -ac -screen 0 1280x1024x24 &
+  - export DISPLAY=:99
+  - nice -n 10 x11vnc 2>&1 &
+  - whereis chromedriver
+  - python dlgr/griduniverse/demo.py 
+
