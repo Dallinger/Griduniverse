@@ -4710,7 +4710,7 @@ $(document).ready(function() {
         'endpoint': 'chat',
         'broadcast': CHANNEL,
         'control': CONTROL_CHANNEL,
-        'lagTolerance': 0.0,
+        'lagTolerance': 0.001,
         'callbackMap': {
           'chat': onChatMessage,
           'donation_processed': onDonationProcessed,
