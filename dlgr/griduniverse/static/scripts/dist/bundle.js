@@ -1745,8 +1745,8 @@ Color.prototype = {
 	mix: function (mixinColor, weight) {
 		// ported from sass implementation in C
 		// https://github.com/sass/libsass/blob/0e6b4a2850092356aa3ece07c6b249f0221caced/functions.cpp#L209
-		var color1 = mixinColor.rgb();
-		var color2 = this.rgb();
+		var color1 = this.rgb();
+		var color2 = mixinColor.rgb();
 		var p = weight === undefined ? 0.5 : weight;
 
 		var w = 2 * p - 1;
@@ -4250,13 +4250,13 @@ var playerSet = (function () {
 
 var GUSocket = (function () {
 
-    var makeSocket = function (endpoint, channel) {
+    var makeSocket = function (endpoint, channel, tolerance) {
       var ws_scheme = (window.location.protocol === "https:") ? 'wss://' : 'ws://',
           app_root = ws_scheme + location.host + '/',
           socket;
 
       socket = new ReconnectingWebSocket(
-        app_root + endpoint + "?channel=" + channel
+        app_root + endpoint + "?channel=" + channel + "&tolerance=" + tolerance
       );
       socket.debug = true;
 
@@ -4290,13 +4290,16 @@ var GUSocket = (function () {
         }
 
         var self = this,
-            isOpen = $.Deferred();
+            isOpen = $.Deferred(),
+            tolerance = typeof(settings.lagTolerance) !== 'undefined' ? settings.lagTolerance : 0.1;
 
         this.broadcastChannel = settings.broadcast;
         this.controlChannel = settings.control;
         this.callbackMap = settings.callbackMap;
 
-        this.socket = makeSocket(settings.endpoint, this.broadcastChannel);
+
+        this.socket = makeSocket(
+          settings.endpoint, this.broadcastChannel, tolerance);
 
         this.socket.onmessage = function (event) {
           dispatch(self, event);
@@ -4707,6 +4710,7 @@ $(document).ready(function() {
         'endpoint': 'chat',
         'broadcast': CHANNEL,
         'control': CONTROL_CHANNEL,
+        'lagTolerance': 0.0,
         'callbackMap': {
           'chat': onChatMessage,
           'donation_processed': onDonationProcessed,
