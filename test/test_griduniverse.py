@@ -57,14 +57,18 @@ class TestGriduniverse(object):
         self.experiment = Griduniverse()
         data = self.experiment.run(
                 mode=u'debug',
+                webdriver_type=u'chrome',
+                verbose=u'verbose',
                 recruiter=u'bots',
                 bot_policy=u"AdvantageSeekingBot",
                 max_participants=1,
                 num_dynos_worker=1,
                 time_per_round=15.0,
             )
+        print ('done')
         results = self.experiment.average_score(data)
-        assert (results > 0)
+        print results
+        assert results > 0
 
     @classmethod
     def teardown_class(cls):
