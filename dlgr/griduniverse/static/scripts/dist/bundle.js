@@ -4052,6 +4052,25 @@ var Player = function(settings) {
 };
 
 Player.prototype.move = function(direction) {
+
+  function _hasWall(position) {
+    for (var i = 0; i < walls.length; i++) {
+      if (position == walls[i].position) {
+         return false;
+      }
+    }
+    return true;
+  }
+
+  function _hasPlayer(position) {
+    for (var i = 0; i < players.length; i++) {
+      if (position == players[i].position) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   this.motion_direction = direction;
 
   var ts = Date.now() - start,
@@ -4088,7 +4107,13 @@ Player.prototype.move = function(direction) {
       default:
         console.log("Direction not recognized.");
     }
-    this.motion_timestamp = ts;
+    if (
+      settings.player_overlap ||
+      !_hasPlayer(newPosition) & !_hasWall(newPosition)
+    ) {
+      this.position = newPosition;
+      this.motion_timestamp = ts;
+    }
   }
 };
 
