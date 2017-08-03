@@ -4731,17 +4731,13 @@ function displayLeaderboards(msg, callback) {
   $board_overlay.empty();
   if (settings.leaderboard_group) {
     players.each(function (i, player) {
-      if (settings.leaderboard_group) {
-        var color_name = color2name(player.color);
-        var cur_score = group_scores[color_name] || 0;
-        group_scores[color_name] = cur_score + Math.round(player.score);
-      }
+      var color_name = color2name(player.color);
+      var cur_score = group_scores[color_name] || 0;
+      group_scores[color_name] = cur_score + Math.round(player.score);
     });
     group_order = Object.keys(group_scores).sort(function (a, b) {
       return group_scores[a] > group_scores[b] ? -1 : (group_scores[a] < group_scores[b] ? 1 : 0);
     });
-  }
-  if (settings.leaderboard_group) {
     var $group_leaderboard = $('<div id="group-leaderboard"><h4>Group Leaderboard</h4><ul></ul></div>');
     $score_list = $group_leaderboard.find('ul');
     var rgb_map = function (e) { return Math.round(e * 255); };
