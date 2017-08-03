@@ -1,8 +1,8 @@
 $(document).ready(function() {
   // Begin the experiment.
-  $("#begin-experiment").click(function() {    
+  $("#begin-experiment").click(function() {
     allow_exit();
-    window.location.href = "/grid?participant_id=" + participant_id;
+    window.location.href = "/waiting";
   });
 
   // Opt out of the experiment.
