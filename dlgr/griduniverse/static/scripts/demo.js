@@ -165,15 +165,6 @@ Player.prototype.move = function(direction) {
     return true;
   }
 
-  function _hasPlayer(position) {
-    for (var i = 0; i < players.length; i++) {
-      if (position == players[i].position) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   this.motion_direction = direction;
 
   var ts = Date.now() - start,
@@ -211,8 +202,8 @@ Player.prototype.move = function(direction) {
         console.log("Direction not recognized.");
     }
     if (
-      settings.player_overlap ||
-      !_hasPlayer(newPosition) & !_hasWall(newPosition)
+      !_hasWall(newPosition) &
+      (!players.isPlayerAt(position) || settings.player_overlap)
     ) {
       this.position = newPosition;
       this.motion_timestamp = ts;
