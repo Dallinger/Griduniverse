@@ -353,13 +353,13 @@ var playerSet = (function () {
 
 var GUSocket = (function () {
 
-    var makeSocket = function (endpoint, channel) {
+    var makeSocket = function (endpoint, channel, tolerance) {
       var ws_scheme = (window.location.protocol === "https:") ? 'wss://' : 'ws://',
           app_root = ws_scheme + location.host + '/',
           socket;
 
       socket = new ReconnectingWebSocket(
-        app_root + endpoint + "?channel=" + channel
+        app_root + endpoint + "?channel=" + channel + "&tolerance=" + tolerance
       );
       socket.debug = true;
 
@@ -393,13 +393,16 @@ var GUSocket = (function () {
         }
 
         var self = this,
-            isOpen = $.Deferred();
+            isOpen = $.Deferred(),
+            tolerance = typeof(settings.lagTolerance) !== 'undefined' ? settings.lagTolerance : 0.1;
 
         this.broadcastChannel = settings.broadcast;
         this.controlChannel = settings.control;
         this.callbackMap = settings.callbackMap;
 
-        this.socket = makeSocket(settings.endpoint, this.broadcastChannel);
+
+        this.socket = makeSocket(
+          settings.endpoint, this.broadcastChannel, tolerance);
 
         this.socket.onmessage = function (event) {
           dispatch(self, event);
@@ -556,30 +559,55 @@ function getWindowPosition() {
 }
 
 function bindGameKeys(socket) {
-  var directions = ["up", "down", "left", "right"];
-  var lock = false;
+  var directions = ["up", "down", "left", "right"],
+      repeatDelayMS = 1000 / settings.motion_speed_limit,
+      lastDirection = null,
+      repeatIntervalId = null;
+
+  function moveInDir(direction) {
+    players.ego().move(direction);
+    var msg = {
+      type: "move",
+      player_id: players.ego().id,
+      move: direction
+    };
+    socket.send(msg);
+  }
+
   directions.forEach(function(direction) {
-    Mousetrap.bind(direction, function() {
-      if (!lock) {
-        players.ego().move(direction);
-        var msg = {
-          type: "move",
-          player_id: players.ego().id,
-          move: direction
-        };
-        socket.send(msg);
-      }
-      lock = true;
-      return false;
-    });
     Mousetrap.bind(
       direction,
       function() {
-        lock = false;
-        return false;
+        if (direction === lastDirection) {
+          return;
+        }
+
+        // New direction may be pressed before previous dir key is released
+        if (repeatIntervalId) {
+          console.log("Clearing interval for new keydown");
+          clearInterval(repeatIntervalId);
+        }
+
+        moveInDir(direction); // Move once immediately so there's no lag
+        lastDirection = direction;
+        repeatIntervalId = setInterval(moveInDir, repeatDelayMS, direction);
+        console.log("Repeating new direction: " + direction + " (" + repeatIntervalId + ")");
+      },
+      'keydown'
+    );
+
+    Mousetrap.bind(
+      direction,
+      function() {
+        if (direction) {
+          console.log("Calling clearInterval() for " + direction + " (" + repeatIntervalId + ")");
+          clearInterval(repeatIntervalId);
+          lastDirection = null;
+        }
       },
       "keyup"
     );
+
   });
 
   Mousetrap.bind("space", function () {
@@ -785,6 +813,7 @@ $(document).ready(function() {
         'endpoint': 'chat',
         'broadcast': CHANNEL,
         'control': CONTROL_CHANNEL,
+        'lagTolerance': 0.001,
         'callbackMap': {
           'chat': onChatMessage,
           'donation_processed': onDonationProcessed,
