@@ -67,6 +67,9 @@ def extra_parameters():
         'visibility': int,
         'background_animation': bool,
         'player_overlap': bool,
+        'leaderboard_group': bool,
+        'leaderboard_individual': bool,
+        'leaderboard_time': int,
         'motion_speed_limit': float,
         'motion_auto': bool,
         'motion_cost': float,
@@ -222,7 +225,9 @@ class Gridworld(object):
         self.frequency_dependent_payoff_rate = kwargs.get(
             'frequency_dependent_payoff_rate', 0)
         self.intergroup_competition = kwargs.get('intergroup_competition', 1)
-        self.intragroup_competition = kwargs.get('intragroup_competition', 1)
+        self.leaderboard_group = kwargs.get('leaderboard_group', False)
+        self.leaderboard_individual = kwargs.get('leaderboard_individual', False)
+        self.leaderboard_time = kwargs.get('leaderboard_time', 10)
 
         # Donations
         self.donation_amount = kwargs.get('donation_amount', 0)
@@ -327,6 +332,9 @@ class Gridworld(object):
                 return
 
             self.start_timestamp = time.time()
+            # Delay round for leaderboard display
+            if self.leaderboard_individual or self.leaderboard_group:
+                self.start_timestamp += self.leaderboard_time
             for player in self.players.values():
                 player.motion_timestamp = 0
 
@@ -1298,6 +1306,7 @@ class Griduniverse(Experiment):
             game_round = self.grid.round
             self.grid.check_round_completion()
             if self.grid.round != game_round and not self.grid.game_over:
+                self.publish({'type': 'new_round'})
                 self.record_event({
                     'type': 'new_round',
                     'round': self.grid.round

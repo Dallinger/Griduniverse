@@ -9,6 +9,33 @@
 
 #dashboard { }
 
+#leaderboard {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100;
+    border: 1px solid #333333;
+    border-radius: 10px;
+    box-shadow: -10px -10px 20px #888888;
+    padding: 30px;
+    min-width: 60%;
+    background-color: white;
+    text-align: center;
+}
+
+#leaderboard ul {
+    list-style: none;
+}
+
+#leaderboard .GroupIndicator {
+    display: inline-block;
+    height: 10px;
+    width: 10px;
+    margin-right: 10px;
+}
+
 #ad-logo {
     width: 100px;
 }

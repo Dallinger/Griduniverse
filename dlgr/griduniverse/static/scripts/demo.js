@@ -117,6 +117,24 @@ var foodConsumed = [];
 var walls = [];
 var row, column, rand, color;
 
+var color2idx = function(color) {
+  var colors = Object.values(PLAYER_COLORS);
+  var value = color.join(',');
+  for (var idx=0; idx < colors.length; idx++) {
+    if (colors[idx].join(',') === value) {
+      return idx;
+    }
+  }
+};
+
+var color2name = function(color) {
+  for (var name in PLAYER_COLORS) {
+    if (PLAYER_COLORS.hasOwnProperty(name) && PLAYER_COLORS[name].join(',') == color) {
+      return name;
+    }
+  }
+};
+
 var Food = function(settings) {
   if (!(this instanceof Food)) {
     return new Food();
@@ -347,6 +365,16 @@ var playerSet = (function () {
         }
         return minScore;
     };
+
+    PlayerSet.prototype.each = function (callback) {
+      var i = 0;
+      for (var id in this._players) {
+        if (this._players.hasOwnProperty(id)) {
+          callback(i, this._players[id]);
+          i++;
+        }
+      }
+    }
 
     return PlayerSet;
 }());
@@ -717,6 +745,10 @@ function onGameStateChange(msg) {
   var ego,
       state;
 
+  if ($('#leaderboard').is(':visible')) {
+    return;
+  }
+
   // Update remaining time.
   $("#time").html(Math.max(Math.round(msg.remaining_time), 0));
 
@@ -788,6 +820,67 @@ function onGameStateChange(msg) {
   }
 }
 
+function displayLeaderboards(msg, callback) {
+  if (!settings.leaderboard_group && !settings.leaderboard_group) {
+    if (callback) {
+      callback();
+    }
+    return;
+  }
+  var $score_list;
+  var $board_overlay = $('#leaderboard');
+  var group_scores = {};
+  var group_order = [];
+  $board_overlay.empty();
+  if (settings.leaderboard_group) {
+    players.each(function (i, player) {
+      if (settings.leaderboard_group) {
+        var color_name = color2name(player.color);
+        var cur_score = group_scores[color_name] || 0;
+        group_scores[color_name] = cur_score + Math.round(player.score);
+      }
+    });
+    group_order = Object.keys(group_scores).sort(function (a, b) {
+      return group_scores[a] > group_scores[b] ? -1 : (group_scores[a] < group_scores[b] ? 1 : 0);
+    });
+  }
+  if (settings.leaderboard_group) {
+    var $group_leaderboard = $('<div id="group-leaderboard"><h4>Group Leaderboard</h4><ul></ul></div>');
+    $score_list = $group_leaderboard.find('ul');
+    var rgb_map = function (e) { return Math.round(e * 255); };
+    for (var i = 0; i <  group_order.length; i++) {
+      var color_name = group_order[i];
+      var color = PLAYER_COLORS[color_name].map(rgb_map);
+      $score_list.append($('<li><span class="GroupIndicator" style="background-color:' + Color.rgb(color).string() +';"></span>: <span class="GroupScore">' + group_scores[color_name] + '</span></li>'));
+    }
+    $board_overlay.append($group_leaderboard);
+  }
+  if (settings.leaderboard_individual) {
+    var $individual_leaderboard = $('<div id="individual-leaderboard"><h4>Individual Leaderboard</h4><ul></ul></div>');
+    $score_list = $individual_leaderboard.find('ul');
+    var player_order = [];
+    players.each(function(i, player) {
+      player_order.push([player.name, player.score]);
+    });
+    player_order = player_order.sort(function (a, b) {
+      return a[1] > b[1] ? -1 : (a[1] < b[1] ? 1 : 0);
+    });
+    for (var i = 0; i < player_order.length; i++) {
+      var player_name = player_order[i][0];
+      var player_score = player_order[i][1] || 0;
+      $score_list.append($('<li><span class="PlayerName">' + player_name + '</span>: <span class="PlayerScore">' + Math.round(player_score) + '</span></li>'));
+    }
+    $board_overlay.append($individual_leaderboard);
+  }
+  $board_overlay.show();
+
+  setTimeout(function () {
+    $board_overlay.hide();
+    callback();
+  }, 1000 * settings.leaderboard_time);
+
+}
+
 function gameOverHandler(isSpectator, player_id) {
   if (isSpectator) {
     return function (msg) {
@@ -796,13 +889,15 @@ function gameOverHandler(isSpectator, player_id) {
     };
   }
   return function (msg) {
+    displayLeaderboards(msg, function () {
+      window.location.href = "/questionnaire?participant_id=" + player_id;
+    });
     $("#game-over").show();
     allow_exit();
     $("#dashboard").hide();
     $("#instructions").hide();
     $("#chat").hide();
     pixels.canvas.style.display = "none";
-    window.location.href = "/questionnaire?participant_id=" + player_id;
   };
 }
 
@@ -818,6 +913,7 @@ $(document).ready(function() {
           'chat': onChatMessage,
           'donation_processed': onDonationProcessed,
           'state': onGameStateChange,
+          'new_round': displayLeaderboards,
           'stop': gameOverHandler(isSpectator, player_id)
         }
       },
@@ -945,16 +1041,6 @@ $(document).ready(function() {
 
   var pixels2cells = function(pix) {
     return Math.floor(pix / (settings.block_size + settings.padding));
-  };
-
-  var color2idx = function(color) {
-    var colors = Object.values(PLAYER_COLORS);
-    var value = color.join(',');
-    for (var idx=0; idx < colors.length; idx++) {
-      if (colors[idx].join(',') === value) {
-        return idx;
-      }
-    }
   };
 
   $("form").submit(function() {
