@@ -4718,7 +4718,7 @@ function onGameStateChange(msg) {
 }
 
 function displayLeaderboards(msg, callback) {
-  if (!settings.leaderboard_group && !settings.leaderboard_group) {
+  if (!settings.leaderboard_group && !settings.leaderboard_individual) {
     if (callback) {
       callback();
     }
