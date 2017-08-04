@@ -68,8 +68,8 @@ function Pixels(data, opts) {
     }
     `,
     attributes: { position: regl.prop("position"), color: regl.prop("color") },
-    primitive: "points",
-    count: colors.length
+    primitive: "triangles",
+    count: colors.length * 6,
   });
 
   var buffer = { position: regl.buffer(positions), color: regl.buffer(colors) };
