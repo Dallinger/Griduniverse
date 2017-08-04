@@ -6,6 +6,8 @@ var convert = require("./util/convert");
 var layout = require("./util/layout");
 var texcoord = require("./util/texcoord");
 var range = require("./util/range");
+var pixdenticon = require("./util/pixdenticon");
+var md5 = require("./util/md5");
 
 function Pixels(data, textures, opts) {
   if (!(this instanceof Pixels)) return new Pixels(data, textures, opts);
@@ -66,6 +68,10 @@ function Pixels(data, textures, opts) {
       ]
     })
   ]
+  var salt = $("#grid").data("identicon-salt");
+  for (var i=0;i<100;i++) {
+    all_textures.push(regl.texture(new pixdenticon(md5(salt + i)).render().buffer));
+  }
 
   var texture_uniforms = {};
   for (var i=0;i<all_textures.length;i++) {

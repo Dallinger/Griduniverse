@@ -264,7 +264,11 @@ var playerSet = (function () {
             } else {
               color = player.color;
             }
-            grid.plot(player.position[1], player.position[0], color);
+            var texture = 0;
+            if (settings.use_identicons) {
+              texture = id;
+            }
+            grid.plot(player.position[1], player.position[0], color, texture);
           }
         }
       }

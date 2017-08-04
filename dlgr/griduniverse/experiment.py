@@ -116,6 +116,7 @@ def extra_parameters():
         'identity_starts_visible': bool,
         'score_visible': bool,
         'alternate_consumption_donation': bool,
+        'use_identicons': bool,
         'build_walls': bool,
         'wall_building_cost': int,
     }
@@ -205,6 +206,7 @@ class Gridworld(object):
         self.identity_signaling = kwargs.get('identity_signaling', False)
         self.identity_starts_visible = kwargs.get('identity_starts_visible',
                                                   False)
+        self.use_identicons = kwargs.get('use_identicons', False)
 
         # Walls
         self.walls_visible = kwargs.get('walls_visible', True)
@@ -947,7 +949,9 @@ def consent():
 @extra_routes.route("/grid")
 def serve_grid():
     """Return the game stage."""
-    return flask.render_template("grid.html")
+    return flask.render_template("grid.html",
+        app_id = config.get('id')
+    )
 
 
 class Griduniverse(Experiment):
