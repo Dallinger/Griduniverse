@@ -968,6 +968,7 @@ class Griduniverse(Experiment):
     def configure(self):
         super(Griduniverse, self).configure()
         self.num_participants = config.get('max_participants', 3)
+        self.quorum = self.num_participants
         self.initial_recruitment_size = config.get('max_participants', 3)
         self.network_factory = config.get('network', 'FullyConnected')
 
