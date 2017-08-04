@@ -37,10 +37,12 @@ class Section {
     this.columns = settings.window_columns;
     this.rows = settings.window_rows;
     this.data = [];
+    this.textures = [];
     // build data array for just this section
     for (var j = 0; j < this.rows; j++) {
       for (var i = 0; i < this.columns; i++) {
         this.data.push(data[this.sectionCoordsToGridIdx(i, j)]);
+        this.textures.push(0);
       }
     }
   }
@@ -55,11 +57,14 @@ class Section {
     return coordsToIdx(this.left + x, this.top + y, settings.columns);
   }
 
-  plot(x, y, color) {
+  plot(x, y, color, texture) {
     // Set color at position (x, y) in full-grid coordinates.
     if (x >= this.left && x < this.left + this.columns) {
       if (y >= this.top && y < this.top + this.rows) {
         this.data[this.gridCoordsToSectionIdx(x, y)] = color;
+        if (texture !== undefined ){
+          this.textures[this.gridCoordsToSectionIdx(x, y)] = texture;
+        }
         background[coordsToIdx(x, y, settings.columns)] = color;
       }
     }
@@ -100,7 +105,7 @@ var INVISIBLE_COLOR = [0.66, 0.66, 0.66];
 var CHANNEL = "griduniverse";
 var CONTROL_CHANNEL = "griduniverse_ctrl";
 
-var pixels = grid(initialSection.data, {
+var pixels = grid(initialSection.data, initialSection.textures, {
   rows: settings.window_rows,
   columns: settings.window_columns,
   size: settings.block_size,
@@ -486,7 +491,7 @@ pixels.frame(function() {
     });
   }
 
-  pixels.update(section.data);
+  pixels.update(section.data, section.textures);
 });
 
 function clamp(val, min, max) {
