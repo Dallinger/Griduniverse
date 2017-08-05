@@ -1306,7 +1306,7 @@ class Griduniverse(Experiment):
             game_round = self.grid.round
             self.grid.check_round_completion()
             if self.grid.round != game_round and not self.grid.game_over:
-                self.publish({'type': 'new_round'})
+                self.publish({'type': 'new_round', 'round': self.grid.round})
                 self.record_event({
                     'type': 'new_round',
                     'round': self.grid.round

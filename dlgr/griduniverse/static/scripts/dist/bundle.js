@@ -4273,6 +4273,38 @@ var playerSet = (function () {
       }
     }
 
+    PlayerSet.prototype.group_scores = function () {
+      var group_scores = {};
+
+      this.each(function (i, player) {
+        var color_name = color2name(player.color);
+        var cur_score = group_scores[color_name] || 0;
+        group_scores[color_name] = cur_score + Math.round(player.score);
+      });
+
+      var group_order = Object.keys(group_scores).sort(function (a, b) {
+        return group_scores[a] > group_scores[b] ? -1 : (group_scores[a] < group_scores[b] ? 1 : 0);
+      });
+
+      return group_order.map(function(color_name) {
+        return {name: color_name, score: group_scores[color_name]};
+      });
+    };
+
+    PlayerSet.prototype.player_scores = function () {
+      var player_order = [];
+
+      this.each(function(i, player) {
+        player_order.push({id: player.id, name: player.name, score:player.score});
+      });
+
+      player_order = player_order.sort(function (a, b) {
+        return a.score > b.score ? -1 : (a.score < b.score ? 1 : 0);
+      });
+
+      return player_order;
+    };
+
     return PlayerSet;
 }());
 
@@ -4642,7 +4674,8 @@ function onGameStateChange(msg) {
   var ego,
       state;
 
-  if ($('#leaderboard').is(':visible')) {
+  if (settings.paused_game) {
+    $("#time").html(0);
     return;
   }
 
@@ -4717,61 +4750,56 @@ function onGameStateChange(msg) {
   }
 }
 
+function pushMessage(html) {
+  $("#messages").append(($("<li>").html(html)));
+  $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
+}
+
 function displayLeaderboards(msg, callback) {
   if (!settings.leaderboard_group && !settings.leaderboard_individual) {
-    if (callback) {
-      callback();
-    }
+    if (callback) callback();
     return;
   }
-  var $score_list;
-  var $board_overlay = $('#leaderboard');
-  var group_scores = {};
-  var group_order = [];
-  $board_overlay.empty();
+  var i;
+  if (msg.type == 'new_round') {
+    pushMessage('<h3>Round ' + msg.round + ' Standings</h3>');
+  } else {
+    pushMessage('<h3>Final Standings</h3>');
+  }
   if (settings.leaderboard_group) {
-    players.each(function (i, player) {
-      var color_name = color2name(player.color);
-      var cur_score = group_scores[color_name] || 0;
-      group_scores[color_name] = cur_score + Math.round(player.score);
-    });
-    group_order = Object.keys(group_scores).sort(function (a, b) {
-      return group_scores[a] > group_scores[b] ? -1 : (group_scores[a] < group_scores[b] ? 1 : 0);
-    });
-    var $group_leaderboard = $('<div id="group-leaderboard"><h4>Group Leaderboard</h4><ul></ul></div>');
-    $score_list = $group_leaderboard.find('ul');
-    var rgb_map = function (e) { return Math.round(e * 255); };
-    for (var i = 0; i <  group_order.length; i++) {
-      var color_name = group_order[i];
-      var color = PLAYER_COLORS[color_name].map(rgb_map);
-      $score_list.append($('<li><span class="GroupIndicator" style="background-color:' + Color.rgb(color).string() +';"></span>: <span class="GroupScore">' + group_scores[color_name] + '</span></li>'));
+    if (settings.leaderboard_individual) {
+      pushMessage('<h4>Group Leaderboard</h4>');
     }
-    $board_overlay.append($group_leaderboard);
+    var group_scores = players.group_scores();
+    var rgb_map = function (e) { return Math.round(e * 255); };
+    for (i = 0; i < group_scores.length; i++) {
+      var group = group_scores[i];
+      var color = PLAYER_COLORS[group.name].map(rgb_map);
+      pushMessage('<span class="GroupIndicator" style="background-color:' + Color.rgb(color).string() +';"></span>: <span class="GroupScore">' + group.score + '</span>');
+    }
   }
   if (settings.leaderboard_individual) {
-    var $individual_leaderboard = $('<div id="individual-leaderboard"><h4>Individual Leaderboard</h4><ul></ul></div>');
-    $score_list = $individual_leaderboard.find('ul');
-    var player_order = [];
-    players.each(function(i, player) {
-      player_order.push([player.name, player.score]);
-    });
-    player_order = player_order.sort(function (a, b) {
-      return a[1] > b[1] ? -1 : (a[1] < b[1] ? 1 : 0);
-    });
-    for (var i = 0; i < player_order.length; i++) {
-      var player_name = player_order[i][0];
-      var player_score = player_order[i][1] || 0;
-      $score_list.append($('<li><span class="PlayerName">' + player_name + '</span>: <span class="PlayerScore">' + Math.round(player_score) + '</span></li>'));
+    if (settings.leaderboard_group) {
+      pushMessage('<h4>Individual Leaderboard</h4>');
     }
-    $board_overlay.append($individual_leaderboard);
+    var player_scores = players.player_scores();
+    var ego_id = players.ego_id;
+    for (i = 0; i < player_scores.length; i++) {
+      var player = player_scores[i];
+      var player_name = player.name;
+      if (ego_id == player.id) {
+        player_name = '<strong>' + player_name + ' (You)</strong>';
+      }
+      pushMessage('<span class="PlayerName">' + player_name + '</span>: <span class="PlayerScore">' + Math.round(player.score) + '</span>');
+    }
   }
-  $board_overlay.show();
-
-  setTimeout(function () {
-    $board_overlay.hide();
-    callback();
-  }, 1000 * settings.leaderboard_time);
-
+  if (settings.leaderboard_time) {
+    settings.paused_game = true;
+    setTimeout(function () {
+        settings.paused_game = false;
+        if (callback) callback();
+      }, 1000 * settings.leaderboard_time);
+  } else if (callback) callback();
 }
 
 function gameOverHandler(isSpectator, player_id) {
@@ -4783,13 +4811,13 @@ function gameOverHandler(isSpectator, player_id) {
   }
   return function (msg) {
     displayLeaderboards(msg, function () {
+      $("#game-over").show();
+      allow_exit();
+      $("#dashboard").hide();
+      $("#instructions").hide();
+      $("#chat").hide();
       window.location.href = "/questionnaire?participant_id=" + player_id;
     });
-    $("#game-over").show();
-    allow_exit();
-    $("#dashboard").hide();
-    $("#instructions").hide();
-    $("#chat").hide();
     pixels.canvas.style.display = "none";
   };
 }
