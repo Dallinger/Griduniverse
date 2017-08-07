@@ -1,4 +1,5 @@
 /*global allow_exit, create_agent, getUrlParameter, require, settings, submitResponses */
+/*jshint esversion: 6 */
 
 (function (allow_exit, getUrlParameter, require, reqwest, settings, submitResponses) {
 
@@ -116,6 +117,24 @@ var food = [];
 var foodConsumed = [];
 var walls = [];
 var row, column, rand, color;
+
+var color2idx = function(color) {
+  var colors = Object.values(PLAYER_COLORS);
+  var value = color.join(',');
+  for (var idx=0; idx < colors.length; idx++) {
+    if (colors[idx].join(',') === value) {
+      return idx;
+    }
+  }
+};
+
+var color2name = function(color) {
+  for (var name in PLAYER_COLORS) {
+    if (PLAYER_COLORS.hasOwnProperty(name) && PLAYER_COLORS[name].join(',') == color) {
+      return name;
+    }
+  }
+};
 
 var Food = function(settings) {
   if (!(this instanceof Food)) {
@@ -346,6 +365,48 @@ var playerSet = (function () {
             }
         }
         return minScore;
+    };
+
+    PlayerSet.prototype.each = function (callback) {
+      var i = 0;
+      for (var id in this._players) {
+        if (this._players.hasOwnProperty(id)) {
+          callback(i, this._players[id]);
+          i++;
+        }
+      }
+    };
+
+    PlayerSet.prototype.group_scores = function () {
+      var group_scores = {};
+
+      this.each(function (i, player) {
+        var color_name = color2name(player.color);
+        var cur_score = group_scores[color_name] || 0;
+        group_scores[color_name] = cur_score + Math.round(player.score);
+      });
+
+      var group_order = Object.keys(group_scores).sort(function (a, b) {
+        return group_scores[a] > group_scores[b] ? -1 : (group_scores[a] < group_scores[b] ? 1 : 0);
+      });
+
+      return group_order.map(function(color_name) {
+        return {name: color_name, score: group_scores[color_name]};
+      });
+    };
+
+    PlayerSet.prototype.player_scores = function () {
+      var player_order = [];
+
+      this.each(function(i, player) {
+        player_order.push({id: player.id, name: player.name, score:player.score});
+      });
+
+      player_order = player_order.sort(function (a, b) {
+        return a.score > b.score ? -1 : (a.score < b.score ? 1 : 0);
+      });
+
+      return player_order;
     };
 
     return PlayerSet;
@@ -717,6 +778,11 @@ function onGameStateChange(msg) {
   var ego,
       state;
 
+  if (settings.paused_game) {
+    $("#time").html(0);
+    return;
+  }
+
   // Update remaining time.
   $("#time").html(Math.max(Math.round(msg.remaining_time), 0));
 
@@ -788,6 +854,58 @@ function onGameStateChange(msg) {
   }
 }
 
+function pushMessage(html) {
+  $("#messages").append(($("<li>").html(html)));
+  $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
+}
+
+function displayLeaderboards(msg, callback) {
+  if (!settings.leaderboard_group && !settings.leaderboard_individual) {
+    if (callback) callback();
+    return;
+  }
+  var i;
+  if (msg.type == 'new_round') {
+    pushMessage("<span class='name'>Moderator:</span> the round " + msg.round + ' standings are&hellip;');
+  } else {
+    pushMessage("<span class='name'>Moderator:</span> the final standings are &hellip;");
+  }
+  if (settings.leaderboard_group) {
+    if (settings.leaderboard_individual) {
+      pushMessage('<em>Group</em>');
+    }
+    var group_scores = players.group_scores();
+    var rgb_map = function (e) { return Math.round(e * 255); };
+    for (i = 0; i < group_scores.length; i++) {
+      var group = group_scores[i];
+      var color = PLAYER_COLORS[group.name].map(rgb_map);
+      pushMessage('<span class="GroupScore">' + group.score + '</span><span class="GroupIndicator" style="background-color:' + Color.rgb(color).string() +';"></span>');
+    }
+  }
+  if (settings.leaderboard_individual) {
+    if (settings.leaderboard_group) {
+      pushMessage('<em>Individual</em>');
+    }
+    var player_scores = players.player_scores();
+    var ego_id = players.ego_id;
+    for (i = 0; i < player_scores.length; i++) {
+      var player = player_scores[i];
+      var player_name = player.name;
+      if (ego_id == player.id) {
+        player_name = '<em>' + player_name + ' (You)</em>';
+      }
+      pushMessage('<span class="PlayerScore">' + Math.round(player.score) + '</span><span class="PlayerName">' + player_name + '</span>');
+    }
+  }
+  if (settings.leaderboard_time) {
+    settings.paused_game = true;
+    setTimeout(function () {
+        settings.paused_game = false;
+        if (callback) callback();
+      }, 1000 * settings.leaderboard_time);
+  } else if (callback) callback();
+}
+
 function gameOverHandler(isSpectator, player_id) {
   if (isSpectator) {
     return function (msg) {
@@ -796,13 +914,15 @@ function gameOverHandler(isSpectator, player_id) {
     };
   }
   return function (msg) {
-    $("#game-over").show();
-    allow_exit();
-    $("#dashboard").hide();
-    $("#instructions").hide();
-    $("#chat").hide();
+    displayLeaderboards(msg, function () {
+      $("#game-over").show();
+      allow_exit();
+      $("#dashboard").hide();
+      $("#instructions").hide();
+      $("#chat").hide();
+      window.location.href = "/questionnaire?participant_id=" + player_id;
+    });
     pixels.canvas.style.display = "none";
-    window.location.href = "/questionnaire?participant_id=" + player_id;
   };
 }
 
@@ -818,6 +938,7 @@ $(document).ready(function() {
           'chat': onChatMessage,
           'donation_processed': onDonationProcessed,
           'state': onGameStateChange,
+          'new_round': displayLeaderboards,
           'stop': gameOverHandler(isSpectator, player_id)
         }
       },
@@ -945,16 +1066,6 @@ $(document).ready(function() {
 
   var pixels2cells = function(pix) {
     return Math.floor(pix / (settings.block_size + settings.padding));
-  };
-
-  var color2idx = function(color) {
-    var colors = Object.values(PLAYER_COLORS);
-    var value = color.join(',');
-    for (var idx=0; idx < colors.length; idx++) {
-      if (colors[idx].join(',') === value) {
-        return idx;
-      }
-    }
   };
 
   $("form").submit(function() {
