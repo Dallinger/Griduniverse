@@ -22,6 +22,7 @@
     settings.walls = "{{ experiment.grid.wall_type }}";
     settings.show_grid = {% if experiment.grid.show_grid %}true{% else %}false{% endif %};
     settings.visibility = {{ experiment.grid.visibility }};
+    settings.visibility_ramp_time = {{ experiment.grid.visibility_ramp_time }};
     settings.others_visible = {% if experiment.grid.others_visible %}true{% else %}false{% endif %};
     settings.identity_signaling = {% if experiment.grid.identity_signaling %}true{% else %}false{% endif %};
     settings.identity_starts_visible = {% if experiment.grid.identity_starts_visible %}true{% else %}false{% endif %};

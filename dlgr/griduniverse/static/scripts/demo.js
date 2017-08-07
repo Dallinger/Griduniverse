@@ -112,7 +112,7 @@ var pixels = grid(initialSection.data, {
 
 var mouse = position(pixels.canvas);
 
-var start = Date.now();
+var start = performance.now();
 var food = [];
 var foodConsumed = [];
 var walls = [];
@@ -186,7 +186,7 @@ Player.prototype.move = function(direction) {
 
   this.motion_direction = direction;
 
-  var ts = Date.now() - start,
+  var ts = performance.now() - start,
       waitTime = 1000 / this.motion_speed_limit;
 
   if (ts > this.motion_timestamp + waitTime) {
@@ -508,6 +508,8 @@ pixels.canvas.style.marginTop = window.innerHeight * 0.04 / 2 + "px";
 document.body.style.transition = "0.3s all";
 document.body.style.background = "#ffffff";
 
+var startTime = performance.now();
+
 pixels.frame(function() {
   // Update the background.
   var ego = players.ego(),
@@ -548,24 +550,35 @@ pixels.frame(function() {
   }
 
   // Add the Gaussian mask.
-  limitVisibility = settings.visibility <
-    Math.max(settings.columns, settings.rows);
-  if (limitVisibility && typeof ego !== "undefined") {
-    var g = gaussian(0, Math.pow(settings.visibility, 2));
-    rescaling = 1 / g.pdf(0);
+  var elapsedTime = performance.now() - startTime;
+  var visibilityNow = clamp(
+    (settings.visibility * elapsedTime) / (1000 * settings.visibility_ramp_time),
+    3,
+    settings.visibility
+  );
+  if (settings.highlightEgo) {
+    visibilityNow = Math.min(visibilityNow, 4);
+  }
+  var g = gaussian(0, Math.pow(visibilityNow, 2));
+  rescaling = 1 / g.pdf(0);
+
+  if (typeof ego !== "undefined") {
     x = ego.position[1];
     y = ego.position[0];
-    section.map(function(i, j, color) {
-      dimness = g.pdf(distance(x, y, i, j)) * rescaling;
-      var newColor = [
-        color[0] * dimness,
-        color[1] * dimness,
-        color[2] * dimness
-      ];
-      return newColor;
-    });
+  } else {
+    x = 1e100;
+    y = 1e100;
   }
 
+  section.map(function(i, j, color) {
+    dimness = g.pdf(distance(x, y, i, j)) * rescaling;
+    var newColor = [
+      color[0] * dimness,
+      color[1] * dimness,
+      color[2] * dimness
+    ];
+    return newColor;
+  });
   pixels.update(section.data);
 });
 
@@ -623,7 +636,8 @@ function bindGameKeys(socket) {
   var directions = ["up", "down", "left", "right"],
       repeatDelayMS = 1000 / settings.motion_speed_limit,
       lastDirection = null,
-      repeatIntervalId = null;
+      repeatIntervalId = null,
+      highlightEgo = false;
 
   function moveInDir(direction) {
     players.ego().move(direction);
@@ -719,6 +733,10 @@ function bindGameKeys(socket) {
       socket.send(msg);
     });
   }
+
+  Mousetrap.bind("h", function () {
+      settings.highlightEgo = !settings.highlightEgo;
+  });
 }
 
 function onChatMessage(msg) {
@@ -1013,7 +1031,6 @@ $(document).ready(function() {
     $("#chat form").show();
   }
 
-
   var donateToClicked = function() {
     var w = getWindowPosition(),
         row = w.top + pixels2cells(mouse[1]),
@@ -1074,7 +1091,7 @@ $(document).ready(function() {
         type: 'chat',
         contents: $("#message").val(),
         player_id: players.ego().id,
-        timestamp: Date.now() - start
+        timestamp: performance.now() - start
       };
       // send directly to all clients
       socket.broadcast(msg);

@@ -65,6 +65,7 @@ def extra_parameters():
         'block_size': int,
         'padding': int,
         'visibility': int,
+        'visibility_ramp_time': int,
         'background_animation': bool,
         'player_overlap': bool,
         'leaderboard_group': bool,
@@ -181,7 +182,8 @@ class Gridworld(object):
         self.window_rows = kwargs.get('window_rows', min(self.rows, 25))
         self.block_size = kwargs.get('block_size', 10)
         self.padding = kwargs.get('padding', 1)
-        self.visibility = kwargs.get('visibility', 1000)
+        self.visibility = kwargs.get('visibility', 40)
+        self.visibility_ramp_time = kwargs.get('visibility_ramp_time', 4)
         self.background_animation = kwargs.get('background_animation', True)
         self.player_overlap = kwargs.get('player_overlap', False)
 
@@ -482,6 +484,7 @@ class Gridworld(object):
             text += """ Players cannot see the whole grid, but only an area
                 approximately {g.visibility} blocks around their current
                 position."""
+        text += "<p>Press 'h' to toggle highlighting of your player.</p>"
         if self.motion_auto:
             text += """ Once a player presses a key to move, the player will
                 continue to move in the same direction automatically until
