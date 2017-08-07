@@ -484,6 +484,7 @@ class Gridworld(object):
             text += """ Players cannot see the whole grid, but only an area
                 approximately {g.visibility} blocks around their current
                 position."""
+        text += "<p>Press 'h' to toggle highlighting of your player.</p>"
         if self.motion_auto:
             text += """ Once a player presses a key to move, the player will
                 continue to move in the same direction automatically until
