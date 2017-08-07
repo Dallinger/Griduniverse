@@ -4534,7 +4534,6 @@ function bindGameKeys(socket) {
       repeatDelayMS = 1000 / settings.motion_speed_limit,
       lastDirection = null,
       repeatIntervalId = null,
-      lock = false,
       highlightEgo = false;
 
   function moveInDir(direction) {
