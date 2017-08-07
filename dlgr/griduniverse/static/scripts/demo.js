@@ -550,40 +550,35 @@ pixels.frame(function() {
   }
 
   // Add the Gaussian mask.
-  limitVisibility = settings.visibility <
-    Math.max(settings.columns, settings.rows);
-  if (limitVisibility) {
-    var elapsedTime = performance.now() - startTime;
-    var visibilityNow = clamp(
-      (settings.visibility * elapsedTime) / (1000 * settings.visibility_ramp_time),
-      3,
-      settings.visibility
-    );
-    if (settings.highlightEgo) {
-      visibilityNow = Math.min(visibilityNow, 4);
-    }
-    var g = gaussian(0, Math.pow(visibilityNow, 2));
-    rescaling = 1 / g.pdf(0);
+  var elapsedTime = performance.now() - startTime;
+  var visibilityNow = clamp(
+    (settings.visibility * elapsedTime) / (1000 * settings.visibility_ramp_time),
+    3,
+    settings.visibility
+  );
+  if (settings.highlightEgo) {
+    visibilityNow = Math.min(visibilityNow, 4);
+  }
+  var g = gaussian(0, Math.pow(visibilityNow, 2));
+  rescaling = 1 / g.pdf(0);
 
-    if (typeof ego !== "undefined") {
-      x = ego.position[1];
-      y = ego.position[0];
-    } else {
-      x = 1e100;
-      y = 1e100;
-    }
-
-    section.map(function(i, j, color) {
-      dimness = g.pdf(distance(x, y, i, j)) * rescaling;
-      var newColor = [
-        color[0] * dimness,
-        color[1] * dimness,
-        color[2] * dimness
-      ];
-      return newColor;
-    });
+  if (typeof ego !== "undefined") {
+    x = ego.position[1];
+    y = ego.position[0];
+  } else {
+    x = 1e100;
+    y = 1e100;
   }
 
+  section.map(function(i, j, color) {
+    dimness = g.pdf(distance(x, y, i, j)) * rescaling;
+    var newColor = [
+      color[0] * dimness,
+      color[1] * dimness,
+      color[2] * dimness
+    ];
+    return newColor;
+  });
   pixels.update(section.data);
 });
 
