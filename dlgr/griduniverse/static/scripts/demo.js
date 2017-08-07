@@ -1,4 +1,5 @@
 /*global allow_exit, create_agent, getUrlParameter, require, settings, submitResponses */
+/*jshint esversion: 6 */
 
 (function (allow_exit, getUrlParameter, require, reqwest, settings, submitResponses) {
 
@@ -374,7 +375,7 @@ var playerSet = (function () {
           i++;
         }
       }
-    }
+    };
 
     PlayerSet.prototype.group_scores = function () {
       var group_scores = {};
