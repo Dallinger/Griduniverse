@@ -3,10 +3,8 @@ Tests for `dlgr.griduniverse` module.
 """
 import mock
 import os
-import pexpect
 import pytest
 import shutil
-import sys
 import tempfile
 
 
