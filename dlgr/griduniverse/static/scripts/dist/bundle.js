@@ -4009,7 +4009,7 @@ var pixels = grid(initialSection.data, {
 
 var mouse = position(pixels.canvas);
 
-var start = Date.now();
+var start = performance.now();
 var food = [];
 var foodConsumed = [];
 var walls = [];
@@ -4083,7 +4083,7 @@ Player.prototype.move = function(direction) {
 
   this.motion_direction = direction;
 
-  var ts = Date.now() - start,
+  var ts = performance.now() - start,
       waitTime = 1000 / this.motion_speed_limit;
 
   if (ts > this.motion_timestamp + waitTime) {
@@ -4405,7 +4405,7 @@ pixels.canvas.style.marginTop = window.innerHeight * 0.04 / 2 + "px";
 document.body.style.transition = "0.3s all";
 document.body.style.background = "#ffffff";
 
-var startTime = Date.now();
+var startTime = performance.now();
 
 pixels.frame(function() {
   // Update the background.
@@ -4450,7 +4450,7 @@ pixels.frame(function() {
   limitVisibility = settings.visibility <
     Math.max(settings.columns, settings.rows);
   if (limitVisibility) {
-    var elapsedTime = Date.now() - startTime;
+    var elapsedTime = performance.now() - startTime;
     var visibilityNow = clamp(
       (settings.visibility * elapsedTime) / (1000 * settings.visibility_ramp),
       3,
@@ -4994,7 +4994,7 @@ $(document).ready(function() {
         type: 'chat',
         contents: $("#message").val(),
         player_id: players.ego().id,
-        timestamp: Date.now() - start
+        timestamp: performance.now() - start
       };
       // send directly to all clients
       socket.broadcast(msg);
