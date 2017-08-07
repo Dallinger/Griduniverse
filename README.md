@@ -13,7 +13,7 @@ Here, we create a Griduniverse for the study of human social behavior — a para
 ### Grid
 
 A Gridworld contains a grid (GRID_HEIGHT, GRID_WIDTH). For example, Fig. 2 shows two players on a 20 × 20 grid.
- 
+
 Fig. 2. Two players on a 20 × 20 grid.
 
 ### Players
@@ -67,7 +67,7 @@ Braains is a game in the popular zombie genre, inspired by horror films, B movie
 
 Braains is an interesting case study in human social behavior and collective identity because of the rich array of behavior exhibited in the game. For example, a social dilemma often arises during the initial phase of the game. Players can collaborate to barricade rooms in such a way that they are inpenetrable by zombies (Fig. 4). Some rooms, however, can only be successfully barricaded by someone outside the room. That person pays the cost of helping but, by nature of the barricade, is prevented from receiving its benefits. This is a Volunteer’s Dilemma, as described by Schelling (1971). Later in the game, players begin to become infected by zombies. At the moment of infection, a player’s outward identity changes instantaneously. They are immediately stigmatized by their group, who runs from them. How do perceptions of identity change at this moment? When does a player come to feel a sense of belonging to the zombies? There are many questions that can be asked.
 
-A minimal version of Braains is one world in the Griduniverse. 
+A minimal version of Braains is one world in the Griduniverse.
 
 
 Fig. 4. Screenshot of the Braains game. A group of humans act collectively to prevent intrusion from zombies, who similarly take collective action, but with opposite intentions.
@@ -121,7 +121,7 @@ Space between blocks, in pixels. Default is 1.
 ### visibility
 
 The standard deviation (in blocks) of a gaussian visibility window centered on the
-player. Default is 1000, so all grid is visible.
+player. Default is 40.
 
 
 ### background_animation
@@ -170,7 +170,7 @@ Show the grid in the UI. Defaults to True.
 
 ### others_visible
 
-Whether other players are visible on the grid. Deafult is True.
+Whether other players are visible on the grid. Default is True.
 
 
 ### num_colors
