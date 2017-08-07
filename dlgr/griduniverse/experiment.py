@@ -65,7 +65,7 @@ def extra_parameters():
         'block_size': int,
         'padding': int,
         'visibility': int,
-        'visibility_ramp': int,
+        'visibility_ramp_time': int,
         'background_animation': bool,
         'player_overlap': bool,
         'leaderboard_group': bool,
@@ -183,7 +183,7 @@ class Gridworld(object):
         self.block_size = kwargs.get('block_size', 10)
         self.padding = kwargs.get('padding', 1)
         self.visibility = kwargs.get('visibility', 1000)
-        self.visibility_ramp = kwargs.get('visibility_ramp', 4)
+        self.visibility_ramp_time = kwargs.get('visibility_ramp_time', 4)
         self.background_animation = kwargs.get('background_animation', True)
         self.player_overlap = kwargs.get('player_overlap', False)
 

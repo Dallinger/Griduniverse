@@ -555,7 +555,7 @@ pixels.frame(function() {
   if (limitVisibility) {
     var elapsedTime = performance.now() - startTime;
     var visibilityNow = clamp(
-      (settings.visibility * elapsedTime) / (1000 * settings.visibility_ramp),
+      (settings.visibility * elapsedTime) / (1000 * settings.visibility_ramp_time),
       3,
       settings.visibility
     );
