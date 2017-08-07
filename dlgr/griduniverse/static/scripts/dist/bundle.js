@@ -4763,25 +4763,25 @@ function displayLeaderboards(msg, callback) {
   }
   var i;
   if (msg.type == 'new_round') {
-    pushMessage('<h3>Round ' + msg.round + ' Standings</h3>');
+    pushMessage("<span class='name'>Moderator:</span> the round " + msg.round + ' standings are&hellip;');
   } else {
-    pushMessage('<h3>Final Standings</h3>');
+    pushMessage("<span class='name'>Moderator:</span> the final standings are &hellip;");
   }
   if (settings.leaderboard_group) {
     if (settings.leaderboard_individual) {
-      pushMessage('<h4>Group Leaderboard</h4>');
+      pushMessage('<em>Group</em>');
     }
     var group_scores = players.group_scores();
     var rgb_map = function (e) { return Math.round(e * 255); };
     for (i = 0; i < group_scores.length; i++) {
       var group = group_scores[i];
       var color = PLAYER_COLORS[group.name].map(rgb_map);
-      pushMessage('<span class="GroupIndicator" style="background-color:' + Color.rgb(color).string() +';"></span>: <span class="GroupScore">' + group.score + '</span>');
+      pushMessage('<span class="GroupScore">' + group.score + '</span><span class="GroupIndicator" style="background-color:' + Color.rgb(color).string() +';"></span>');
     }
   }
   if (settings.leaderboard_individual) {
     if (settings.leaderboard_group) {
-      pushMessage('<h4>Individual Leaderboard</h4>');
+      pushMessage('<em>Individual</em>');
     }
     var player_scores = players.player_scores();
     var ego_id = players.ego_id;
@@ -4789,9 +4789,9 @@ function displayLeaderboards(msg, callback) {
       var player = player_scores[i];
       var player_name = player.name;
       if (ego_id == player.id) {
-        player_name = '<strong>' + player_name + ' (You)</strong>';
+        player_name = '<em>' + player_name + ' (You)</em>';
       }
-      pushMessage('<span class="PlayerName">' + player_name + '</span>: <span class="PlayerScore">' + Math.round(player.score) + '</span>');
+      pushMessage('<span class="PlayerScore">' + Math.round(player.score) + '</span><span class="PlayerName">' + player_name + '</span>');
     }
   }
   if (settings.leaderboard_time) {
