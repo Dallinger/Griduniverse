@@ -4009,6 +4009,7 @@ var pixels = grid(initialSection.data, {
 
 var mouse = position(pixels.canvas);
 
+var isSpectator = false;
 var start = performance.now();
 var food = [];
 var foodConsumed = [];
@@ -4459,23 +4460,24 @@ pixels.frame(function() {
   var g = gaussian(0, Math.pow(visibilityNow, 2));
   rescaling = 1 / g.pdf(0);
 
-  if (typeof ego !== "undefined") {
-    x = ego.position[1];
-    y = ego.position[0];
-  } else {
-    x = 1e100;
-    y = 1e100;
+  if (!isSpectator) {
+    if (typeof ego !== "undefined") {
+      x = ego.position[1];
+      y = ego.position[0];
+    } else {
+      x = 1e100;
+      y = 1e100;
+    }
+    section.map(function(i, j, color) {
+      dimness = g.pdf(distance(x, y, i, j)) * rescaling;
+      var newColor = [
+        color[0] * dimness,
+        color[1] * dimness,
+        color[2] * dimness
+      ];
+      return newColor;
+    });
   }
-
-  section.map(function(i, j, color) {
-    dimness = g.pdf(distance(x, y, i, j)) * rescaling;
-    var newColor = [
-      color[0] * dimness,
-      color[1] * dimness,
-      color[2] * dimness
-    ];
-    return newColor;
-  });
   pixels.update(section.data);
 });
 
@@ -4843,7 +4845,6 @@ function gameOverHandler(isSpectator, player_id) {
 
 $(document).ready(function() {
   var player_id = getUrlParameter('participant_id'),
-      isSpectator = typeof player_id === 'undefined',
       socketSettings = {
         'endpoint': 'chat',
         'broadcast': CHANNEL,
@@ -4858,6 +4859,8 @@ $(document).ready(function() {
         }
       },
       socket = new GUSocket(socketSettings);
+
+  isSpectator = typeof player_id === 'undefined';
 
   socket.open().done(function () {
       var data = {
