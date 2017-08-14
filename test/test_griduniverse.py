@@ -54,20 +54,18 @@ class TestGriduniverse(object):
         pass
 
     def test_bot_api(self):
+        """Run bots using headless chrome and collect data."""
         self.experiment = Griduniverse()
         data = self.experiment.run(
                 mode=u'debug',
                 webdriver_type=u'chrome',
-                verbose=u'verbose',
                 recruiter=u'bots',
                 bot_policy=u"AdvantageSeekingBot",
                 max_participants=1,
                 num_dynos_worker=1,
-                time_per_round=10.0,
+                time_per_round=30.0,
            )
-        print ('done')
-        results = self.experiment.average_pay_off(data)
-        print results
+        results = self.experiment.average_score(data)
         assert results > 0
 
     @classmethod

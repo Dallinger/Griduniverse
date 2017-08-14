@@ -20,10 +20,8 @@ services:
   - redis-server
 
 before_install:
-  - # start your web application and listen on `localhost`
   - google-chrome-stable --headless --disable-gpu --remote-debugging-port=9222 http://localhost:5000 &
 
-# command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install: 
   - pip install -r requirements.txt
   - python setup.py develop
@@ -48,4 +46,3 @@ env:
 # command to run tests, e.g. python setup.py test
 script:
   - py.test
-

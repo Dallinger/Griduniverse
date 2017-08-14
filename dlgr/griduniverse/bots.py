@@ -301,12 +301,11 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
                 return True
 
     def complete_questionnaire(self):
-        """Complete the standard debriefing form."""
+        """Complete the standard debriefing form randomly."""
         difficulty = Select(self.driver.find_element_by_id('difficulty'))
         difficulty.select_by_value(str(random.randint(1, 7)))
         engagement = Select(self.driver.find_element_by_id('engagement'))
         engagement.select_by_value(str(random.randint(1, 7)))
-        # Fun is generated in the demo script based on feedback
         return True
 
 
