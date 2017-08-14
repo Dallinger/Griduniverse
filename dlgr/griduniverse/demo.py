@@ -13,6 +13,6 @@ data = experiment.run(
     time_per_round=10.0,
 )
 
-results = experiment.analyze(data)
+results = experiment.average_pay_off(data)
 
 print(results)
