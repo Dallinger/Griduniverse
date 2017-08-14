@@ -47,9 +47,5 @@ env:
 
 # command to run tests, e.g. python setup.py test
 script:
-  - Xvfb :99 -ac -screen 0 1280x1024x24 &
-  - export DISPLAY=:99
-  - nice -n 10 x11vnc 2>&1 &
-  - whereis chromedriver
-  - python dlgr/griduniverse/demo.py 
+  - py.test
 
