@@ -1318,13 +1318,13 @@ class Griduniverse(Experiment):
         self.publish({'type': 'stop'})
         return
 
-    def player_feedback(self, data):
-        df = data.infos.df
-        engagement = int(json.loads(df.questions.list[-1][-1])['engagement'])
-        difficulty = int(json.loads(df.questions.list[-1][-1])['difficulty'])
-        return engagement, difficulty
+    def analyze(self, data):
+        return json.dumps({
+            "average_payoff": self.average_payoff(data),
+            "average_score": self.average_score(data),
+        })
 
-    def average_pay_off(self, data):
+    def average_payoff(self, data):
         df = data.infos.df
         dataState = df.loc[df['type']=='state']
         final_state = json.loads(dataState.iloc[-1][-2])

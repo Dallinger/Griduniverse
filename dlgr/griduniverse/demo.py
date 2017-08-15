@@ -11,6 +11,6 @@ data = experiment.run(
     num_dynos_worker=participants,
 )
 
-results = experiment.average_score(data)
+results = experiment.analyze(data)
 
 print(results)
