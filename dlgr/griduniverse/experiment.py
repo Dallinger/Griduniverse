@@ -1319,10 +1319,23 @@ class Griduniverse(Experiment):
         return
 
     def analyze(self, data):
-        return self.average_score(data)
+        return json.dumps({
+            "average_payoff": self.average_payoff(data),
+            "average_score": self.average_score(data),
+        })
+
+    def average_payoff(self, data):
+        df = data.infos.df
+        dataState = df.loc[df['type']=='state']
+        final_state = json.loads(dataState.iloc[-1][-2])
+        players = final_state['players']
+        payoff = [player['payoff'] for player in players]
+        return float(sum(payoff)) / len(payoff)
 
     def average_score(self, data):
-        final_state = json.loads(data.infos.list[-1][-1])
+        df = data.infos.df
+        dataState = df.loc[df['type']=='state']
+        final_state = json.loads(dataState.iloc[-1][-2])
         players = final_state['players']
         scores = [player['score'] for player in players]
         return float(sum(scores)) / len(scores)
