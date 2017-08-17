@@ -13,6 +13,7 @@ import uuid
 from cached_property import cached_property
 from faker import Factory
 from sqlalchemy import create_engine
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import (
     sessionmaker,
     scoped_session,
@@ -282,8 +283,9 @@ class Gridworld(object):
             (self.food_reward * self.food_pg_multiplier) / self.num_players
         )
 
-        for i in range(self.num_food):
-            self.spawn_food()
+        if not kwargs.get('replay', False):
+            for i in range(self.num_food):
+                self.spawn_food()
 
         if self.contagion_hierarchy:
             self.contagion_hierarchy = range(self.num_colors)
@@ -968,6 +970,8 @@ def serve_grid():
 class Griduniverse(Experiment):
     """Define the structure of the experiment."""
     channel = 'griduniverse_ctrl'
+    state_count = 0
+    replay_path = '/grid'
 
     def __init__(self, session=None):
         """Initialize the experiment."""
@@ -1003,6 +1007,8 @@ class Griduniverse(Experiment):
 
     @property
     def background_tasks(self):
+        if config.get('replay', False):
+            return []
         return [
             self.send_state_thread,
             self.game_loop,
@@ -1051,14 +1057,19 @@ class Griduniverse(Experiment):
         mapping = {
             'connect': self.handle_connect,
             'disconnect': self.handle_disconnect,
-            'message': self.handle_chat_message,
-            'change_color': self.handle_change_color,
-            'move': self.handle_move,
-            'donation_submitted': self.handle_donation,
-            'plant_food': self.handle_plant_food,
-            'toggle_visible': self.handle_toggle_visible,
-            'build_wall': self.handle_build_wall,
         }
+        if not config.get('replay', False):
+            # Ignore these events in replay mode
+            mapping.update({
+                'chat': self.handle_chat_message,
+                'change_color': self.handle_change_color,
+                'move': self.handle_move,
+                'donation_submitted': self.handle_donation,
+                'plant_food': self.handle_plant_food,
+                'toggle_visible': self.handle_toggle_visible,
+                'build_wall': self.handle_build_wall,
+            })
+
         if msg['type'] in mapping:
             mapping[msg['type']](msg)
 
@@ -1101,6 +1112,11 @@ class Griduniverse(Experiment):
         redis.publish('griduniverse', json.dumps(msg))
 
     def handle_connect(self, msg):
+        if config.get('replay', False):
+            # Force all participants to be specatators
+            msg['player_id'] = 'spectator'
+            if not self.grid.start_timestamp:
+                self.grid.start_timestamp = time.time()
         player_id = msg['player_id']
         if player_id == 'spectator':
             logger.info('A spectator has connected.')
@@ -1132,7 +1148,9 @@ class Griduniverse(Experiment):
             'type': 'chat',
             'message': msg,
         }
-        self.publish(message)
+        # We only publish if it wasn't already broadcast
+        if not msg.get('broadcast', False):
+            self.publish(message)
 
     def handle_change_color(self, msg):
         player = self.grid.players[msg['player_id']]
@@ -1321,6 +1339,42 @@ class Griduniverse(Experiment):
 
         self.publish({'type': 'stop'})
         return
+
+    def replay_started(self):
+        return self.grid.game_started
+
+    def events_for_replay(self):
+        info_cls = dallinger.models.Info
+        from models import Event
+        events = super(Griduniverse, self).events_for_replay()
+        event_types = {'chat', 'new_round', 'donation_processed'}
+        return events.filter(
+            or_(info_cls.type == 'state',
+                and_(info_cls.type == 'event',
+                     or_(*[Event.details['type'].astext == t for t in event_types]))
+                )
+        )
+
+    def replay_event(self, event):
+        if event.type == 'event':
+            self.publish(event.details)
+            if event.details.get('type') == 'new_round':
+                self.grid.check_round_completion()
+
+        if event.type == 'state':
+            self.state_count += 1
+            state = json.loads(event.contents)
+            msg = {
+                'type': 'state',
+                'grid': event.contents,
+                'count': self.state_count,
+                'remaining_time': self.grid.remaining_round_time,
+                'round': state['round'],
+            }
+            self.publish(msg)
+
+    def replay_finish(self):
+        self.publish({'type': 'stop'})
 
     def analyze(self, data):
         return json.dumps({

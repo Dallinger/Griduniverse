@@ -4897,26 +4897,27 @@ function displayLeaderboards(msg, callback) {
 }
 
 function gameOverHandler(isSpectator, player_id) {
+  var callback;
   if (isSpectator) {
-    return function (msg) {
-      $("#game-over").show();
-      allow_exit();
-    };
-  }
-  return function (msg) {
-    displayLeaderboards(msg, function () {
-      $("#game-over").show();
+    callback = allow_exit;
+  } else {
+    callback = function () {
       allow_exit();
       $("#dashboard").hide();
       $("#instructions").hide();
       $("#chat").hide();
-      window.location.href = "/questionnaire?participant_id=" + player_id;
-    });
+      if (player_id) window.location.href = "/questionnaire?participant_id=" + player_id;
+    };
     pixels.canvas.style.display = "none";
+  }
+  return function (msg) {
+    $("#game-over").show();
+    return displayLeaderboards(msg, callback);
   };
 }
 
 $(document).ready(function() {
+  isSpectator = typeof player_id === 'undefined';
   var player_id = getUrlParameter('participant_id'),
       socketSettings = {
         'endpoint': 'chat',
@@ -4932,8 +4933,6 @@ $(document).ready(function() {
         }
       },
       socket = new GUSocket(socketSettings);
-
-  isSpectator = typeof player_id === 'undefined';
 
   socket.open().done(function () {
       var data = {
@@ -5064,10 +5063,13 @@ $(document).ready(function() {
         type: 'chat',
         contents: $("#message").val(),
         player_id: players.ego().id,
-        timestamp: performance.now() - start
+        timestamp: performance.now() - start,
+        broadcast: true
       };
       // send directly to all clients
       socket.broadcast(msg);
+      // send to the server for recording
+      socket.send(msg);
     } catch(err) {
       console.error(err);
     } finally {
