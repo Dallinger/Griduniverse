@@ -21,4 +21,5 @@ function layout(rows, columns, padding, size, aspect) {
   return grid.reverse();
 }
 
+
 module.exports = layout;

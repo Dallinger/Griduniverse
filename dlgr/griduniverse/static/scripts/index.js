@@ -13,6 +13,8 @@ function Pixels(data, textures, opts) {
   if (!(this instanceof Pixels)) return new Pixels(data, textures, opts);
   var self = this;
   opts = opts || {};
+  this.opts = opts;
+  var num_identicons = 100;
 
   opts.background = opts.background || [ 0.5, 0.5, 0.5 ];
   opts.size = isnumber(opts.size) ? opts.size : 10;
@@ -44,9 +46,8 @@ function Pixels(data, textures, opts) {
   var texcoords = texcoord(
     opts.rows,
     opts.columns,
-    2 * opts.padding / width,
-    2 * opts.size / width,
-    width / height
+    textures,
+    num_identicons
   );
 
   var positions = layout(
@@ -59,73 +60,72 @@ function Pixels(data, textures, opts) {
 
   var regl = require("regl")(canvas);
 
-  var all_textures = [
-    regl.texture({
-      width: 1,
-      height: 1,
-      data: [
-        255, 255, 255, 255,
-      ]
-    })
-  ]
+  var initial_texture = [];
+  for (row=0; row < opts.size; row++) {
+    rowdata = []
+    for (col=0; col < opts.size; col++) {
+      rowdata.push([255, 255, 255]);
+    }
+    initial_texture.push(rowdata);
+  }
   var salt = $("#grid").data("identicon-salt");
-  for (var i=0;i<100;i++) {
-    all_textures.push(regl.texture(new pixdenticon(md5(salt + i)).render().buffer));
+  for (var i=0;i<num_identicons;i++) {
+    texture = new pixdenticon(md5(salt + i), opts.size).render().buffer;
+    for (row=0; row < opts.size; row++) {
+      initial_texture.push(texture[row]);
+    }
   }
 
-  var texture_uniforms = {};
-  for (var i=0;i<all_textures.length;i++) {
-    texture_uniforms[`vtexture[${i}]`]=all_textures[i];
-  }
 
-  var texture_ids = range(0, all_textures.length-1);
+  var texture = regl.texture(initial_texture);
+
   var squares = regl({
     vert: `
     precision mediump float;
     attribute vec2 position;
     attribute vec2 texcoords;
     attribute vec3 color;
-    attribute float textureIndex;
     varying vec3 vcolor;
     varying vec2 v_texcoords;
-    varying float v_textureIndex;
     void main() {
       gl_PointSize = float(${opts.size});
       gl_Position = vec4(position.x, position.y, 0.0, 1.0);
       v_texcoords = texcoords;
       vcolor = color;
-      v_textureIndex = textureIndex;
     }
     `,
     frag: `
     precision mediump float;
     varying vec3 vcolor;
     varying vec2 v_texcoords;
-    varying float v_textureIndex;
-    uniform sampler2D vtexture[${all_textures.length}];
+    uniform sampler2D vtexture;
     void main() {
       vec4 texture;
-      int textureIndex = int(v_textureIndex);
-      ${texture_ids.map(id => `if (textureIndex == ${id}) {
-        texture = texture2D(vtexture[${id}], v_texcoords);
-      }`).join('')}
+      texture = texture2D(vtexture, v_texcoords);
       gl_FragColor = texture * vec4(vcolor.r, vcolor.g, vcolor.b, 1.0);
     }
     `,
-    attributes: { position: regl.prop("position"), texcoords: regl.prop("texcoords"), color: regl.prop("color"), textureIndex: regl.prop("textureIndex")},
+    attributes: { position: regl.prop("position"), texcoords: regl.prop("texcoords"), color: regl.prop("color")},
     primitive: "triangles",
     count: colors.length * 6,
-    uniforms: texture_uniforms
+    uniforms: { vtexture: texture }
   });
 
-  var buffer = { position: regl.buffer(positions), texcoords: regl.buffer(texcoords), color: regl.buffer(colors), textureIndex: regl.buffer(textures)  };
+  var expanded_colors = [];
+  for(var i = 0; i< colors.length;++i){
+    for(var n = 0; n<6;++n) {
+      expanded_colors.push(colors[i]);
+    }
+  }
 
-  var draw = function(positions, texcoords, colors, textureIndex) {
+  var buffer = { position: regl.buffer(positions), texcoords: regl.buffer(texcoords), color: regl.buffer(expanded_colors)};
+
+  var draw = function(positions, texcoords, colors) {
     regl.clear({ color: opts.background.concat([ 1 ]) });
-    squares({ position: positions, texcoords: texcoords, color: colors, textureIndex: textureIndex });
+    squares({ position: positions, texcoords: texcoords, color: colors });
   };
 
-  draw(buffer.position, buffer.texcoords, buffer.color, buffer.textureIndex);
+  draw(buffer.position, buffer.texcoords, buffer.color);
 
   self._buffer = buffer;
   self._draw = draw;
@@ -138,15 +138,24 @@ Pixels.prototype.update = function(data, textures) {
   var self = this;
   var colors = self._formatted ? data : convert(data);
   var expanded_colors = [];
-  var expanded_textures = []
 
   for(var i = 0; i< colors.length;++i){
     for(var n = 0; n<6;++n) {
       expanded_colors.push(colors[i]);
-      expanded_textures.push(textures[i]);
     }
   }
-  self._draw(self._buffer.position, self._buffer.texcoords, self._buffer.color(expanded_colors), self._buffer.textureIndex(expanded_textures));
+
+  var opts = this.opts;
+  var num_identicons = 100;
+
+  var texcoords = texcoord(
+    opts.rows,
+    opts.columns,
+    textures,
+    num_identicons
+  );
+
+  self._draw(self._buffer.position, self._buffer.texcoords(texcoords), self._buffer.color(expanded_colors));
 };
 
 module.exports = Pixels;

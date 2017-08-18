@@ -8,7 +8,7 @@
  */
 
 
-var Identicon = function(hash, options){
+var Identicon = function(hash, size, options){
     if (typeof(hash) !== 'string' || hash.length < 15) {
         throw 'A hash of at least 15 characters is required.';
     }
@@ -25,9 +25,9 @@ var Identicon = function(hash, options){
     this.options = typeof(options) === 'object' ? options : this.defaults;
 
     this.hash        = hash
-    this.background  = [  0,   0,   0];
+    this.background  = [128, 128, 128];
     this.foreground  = [255, 255, 255];
-    this.size        = 5;
+    this.size        = size;
 };
 
 Identicon.prototype = {
