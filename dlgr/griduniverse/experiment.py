@@ -65,8 +65,12 @@ def extra_parameters():
         'block_size': int,
         'padding': int,
         'visibility': int,
+        'visibility_ramp_time': int,
         'background_animation': bool,
         'player_overlap': bool,
+        'leaderboard_group': bool,
+        'leaderboard_individual': bool,
+        'leaderboard_time': int,
         'motion_speed_limit': float,
         'motion_auto': bool,
         'motion_cost': float,
@@ -179,7 +183,8 @@ class Gridworld(object):
         self.window_rows = kwargs.get('window_rows', min(self.rows, 25))
         self.block_size = kwargs.get('block_size', 10)
         self.padding = kwargs.get('padding', 1)
-        self.visibility = kwargs.get('visibility', 1000)
+        self.visibility = kwargs.get('visibility', 40)
+        self.visibility_ramp_time = kwargs.get('visibility_ramp_time', 4)
         self.background_animation = kwargs.get('background_animation', True)
         self.player_overlap = kwargs.get('player_overlap', False)
 
@@ -218,13 +223,15 @@ class Gridworld(object):
         # Payoffs
         self.initial_score = kwargs.get('initial_score', 0)
         self.dollars_per_point = kwargs.get('dollars_per_point', 0.02)
-        self.tax = kwargs.get('tax', 0.01)
+        self.tax = kwargs.get('tax', 0.00)
         self.relative_deprivation = kwargs.get('relative_deprivation', 1)
         self.frequency_dependence = kwargs.get('frequency_dependence', 0)
         self.frequency_dependent_payoff_rate = kwargs.get(
             'frequency_dependent_payoff_rate', 0)
         self.intergroup_competition = kwargs.get('intergroup_competition', 1)
-        self.intragroup_competition = kwargs.get('intragroup_competition', 1)
+        self.leaderboard_group = kwargs.get('leaderboard_group', False)
+        self.leaderboard_individual = kwargs.get('leaderboard_individual', False)
+        self.leaderboard_time = kwargs.get('leaderboard_time', 10)
 
         # Donations
         self.donation_amount = kwargs.get('donation_amount', 0)
@@ -329,6 +336,9 @@ class Gridworld(object):
                 return
 
             self.start_timestamp = time.time()
+            # Delay round for leaderboard display
+            if self.leaderboard_individual or self.leaderboard_group:
+                self.start_timestamp += self.leaderboard_time
             for player in self.players.values():
                 player.motion_timestamp = 0
 
@@ -476,6 +486,7 @@ class Gridworld(object):
             text += """ Players cannot see the whole grid, but only an area
                 approximately {g.visibility} blocks around their current
                 position."""
+        text += "<p>Press 'h' to toggle highlighting of your player.</p>"
         if self.motion_auto:
             text += """ Once a player presses a key to move, the player will
                 continue to move in the same direction automatically until
@@ -1302,6 +1313,7 @@ class Griduniverse(Experiment):
             game_round = self.grid.round
             self.grid.check_round_completion()
             if self.grid.round != game_round and not self.grid.game_over:
+                self.publish({'type': 'new_round', 'round': self.grid.round})
                 self.record_event({
                     'type': 'new_round',
                     'round': self.grid.round
@@ -1311,10 +1323,23 @@ class Griduniverse(Experiment):
         return
 
     def analyze(self, data):
-        return self.average_score(data)
+        return json.dumps({
+            "average_payoff": self.average_payoff(data),
+            "average_score": self.average_score(data),
+        })
+
+    def average_payoff(self, data):
+        df = data.infos.df
+        dataState = df.loc[df['type']=='state']
+        final_state = json.loads(dataState.iloc[-1][-2])
+        players = final_state['players']
+        payoff = [player['payoff'] for player in players]
+        return float(sum(payoff)) / len(payoff)
 
     def average_score(self, data):
-        final_state = json.loads(data.infos.list[-1][-1])
+        df = data.infos.df
+        dataState = df.loc[df['type']=='state']
+        final_state = json.loads(dataState.iloc[-1][-2])
         players = final_state['players']
         scores = [player['score'] for player in players]
         return float(sum(scores)) / len(scores)

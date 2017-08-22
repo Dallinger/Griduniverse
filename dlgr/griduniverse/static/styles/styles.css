@@ -9,8 +9,21 @@
 
 #dashboard { }
 
+.GroupIndicator {
+    display: inline-block;
+    height: 10px;
+    width: 10px;
+    margin-right: 10px;
+}
+
 #ad-logo {
     width: 100px;
+}
+
+.PlayerScore, .GroupScore {
+  display: inline-block;
+  width: 40px;
+  padding-left: 10px;
 }
 
 canvas {

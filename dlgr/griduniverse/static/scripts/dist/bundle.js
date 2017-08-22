@@ -1141,7 +1141,7 @@ module.exports = isArray || function (val) {
 
 
 
-var typeOf = __webpack_require__(26);
+var typeOf = __webpack_require__(30);
 
 module.exports = function isNumber(num) {
   var type = typeOf(num);
@@ -1184,7 +1184,7 @@ module.exports = function isString(value) {
 /* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var convert = __webpack_require__(28);
+var convert = __webpack_require__(32);
 
 module.exports = function (cstr) {
     var m, conv, parts, alpha;
@@ -1279,11 +1279,17 @@ var isstring = __webpack_require__(4);
 var isarray = __webpack_require__(2);
 var convert = __webpack_require__(17);
 var layout = __webpack_require__(18);
+var texcoord = __webpack_require__(22);
+var range = __webpack_require__(21);
+var pixdenticon = __webpack_require__(20);
+var md5 = __webpack_require__(19);
 
-function Pixels(data, opts) {
-  if (!(this instanceof Pixels)) return new Pixels(data, opts);
+function Pixels(data, textures, opts) {
+  if (!(this instanceof Pixels)) return new Pixels(data, textures, opts);
   var self = this;
   opts = opts || {};
+  this.opts = opts;
+  var num_identicons = 100;
 
   opts.background = opts.background || [ 0.5, 0.5, 0.5 ];
   opts.size = isnumber(opts.size) ? opts.size : 10;
@@ -1312,6 +1318,12 @@ function Pixels(data, opts) {
   if (opts.root) opts.root.appendChild(canvas);
 
   var colors = opts.formatted ? data : convert(data);
+  var texcoords = texcoord(
+    opts.rows,
+    opts.columns,
+    textures,
+    num_identicons
+  );
 
   var positions = layout(
     opts.rows,
@@ -1321,40 +1333,74 @@ function Pixels(data, opts) {
     width / height
   );
 
-  var regl = __webpack_require__(30)(canvas);
+  var regl = __webpack_require__(34)(canvas);
+
+  var initial_texture = [];
+  for (row=0; row < opts.size; row++) {
+    rowdata = []
+    for (col=0; col < opts.size; col++) {
+      rowdata.push([255, 255, 255]);
+    }
+    initial_texture.push(rowdata);
+  }
+  var salt = $("#grid").data("identicon-salt");
+  for (var i=0;i<num_identicons;i++) {
+    texture = new pixdenticon(md5(salt + i), opts.size).render().buffer;
+    for (row=0; row < opts.size; row++) {
+      initial_texture.push(texture[row]);
+    }
+  }
+
+
+  var texture = regl.texture(initial_texture);
 
   var squares = regl({
     vert: `
     precision mediump float;
     attribute vec2 position;
+    attribute vec2 texcoords;
     attribute vec3 color;
     varying vec3 vcolor;
+    varying vec2 v_texcoords;
     void main() {
       gl_PointSize = float(${opts.size});
       gl_Position = vec4(position.x, position.y, 0.0, 1.0);
+      v_texcoords = texcoords;
       vcolor = color;
     }
     `,
     frag: `
     precision mediump float;
     varying vec3 vcolor;
+    varying vec2 v_texcoords;
+    uniform sampler2D vtexture;
     void main() {
-      gl_FragColor = vec4(vcolor, 1.0);
+      vec4 texture;
+      texture = texture2D(vtexture, v_texcoords);
+      gl_FragColor = texture * vec4(vcolor.r, vcolor.g, vcolor.b, 1.0);
     }
     `,
-    attributes: { position: regl.prop("position"), color: regl.prop("color") },
-    primitive: "points",
-    count: colors.length
+    attributes: { position: regl.prop("position"), texcoords: regl.prop("texcoords"), color: regl.prop("color")},
+    primitive: "triangles",
+    count: colors.length * 6,
+    uniforms: { vtexture: texture }
   });
 
-  var buffer = { position: regl.buffer(positions), color: regl.buffer(colors) };
+  var expanded_colors = [];
+  for(var i = 0; i< colors.length;++i){
+    for(var n = 0; n<6;++n) {
+      expanded_colors.push(colors[i]);
+    }
+  }
 
-  var draw = function(positions, colors) {
+  var buffer = { position: regl.buffer(positions), texcoords: regl.buffer(texcoords), color: regl.buffer(expanded_colors)};
+
+  var draw = function(positions, texcoords, colors) {
     regl.clear({ color: opts.background.concat([ 1 ]) });
-    squares({ position: positions, color: colors });
+    squares({ position: positions, texcoords: texcoords, color: colors });
   };
 
-  draw(buffer.position, buffer.color);
+  draw(buffer.position, buffer.texcoords, buffer.color);
 
   self._buffer = buffer;
   self._draw = draw;
@@ -1363,10 +1409,28 @@ function Pixels(data, opts) {
   self.frame = regl.frame;
 }
 
-Pixels.prototype.update = function(data) {
+Pixels.prototype.update = function(data, textures) {
   var self = this;
   var colors = self._formatted ? data : convert(data);
-  self._draw(self._buffer.position, self._buffer.color(colors));
+  var expanded_colors = [];
+
+  for(var i = 0; i< colors.length;++i){
+    for(var n = 0; n<6;++n) {
+      expanded_colors.push(colors[i]);
+    }
+  }
+
+  var opts = this.opts;
+  var num_identicons = 100;
+
+  var texcoords = texcoord(
+    opts.rows,
+    opts.columns,
+    textures,
+    num_identicons
+  );
+
+  self._draw(self._buffer.position, self._buffer.texcoords(texcoords), self._buffer.color(expanded_colors));
 };
 
 module.exports = Pixels;
@@ -1379,8 +1443,8 @@ module.exports = Pixels;
 "use strict";
 
 
-var colorString = __webpack_require__(21);
-var convert = __webpack_require__(19);
+var colorString = __webpack_require__(25);
+var convert = __webpack_require__(23);
 
 var _slice = [].slice;
 
@@ -1982,7 +2046,7 @@ module.exports = Color;
 /* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Emitter = __webpack_require__(22)
+var Emitter = __webpack_require__(26)
 
 module.exports = attach
 
@@ -3821,7 +3885,7 @@ function isPrimitive(arg) {
 }
 exports.isPrimitive = isPrimitive;
 
-exports.isBuffer = __webpack_require__(33);
+exports.isBuffer = __webpack_require__(37);
 
 function objectToString(o) {
   return Object.prototype.toString.call(o);
@@ -3865,7 +3929,7 @@ exports.log = function() {
  *     prototype.
  * @param {function} superCtor Constructor function to inherit prototype from.
  */
-exports.inherits = __webpack_require__(32);
+exports.inherits = __webpack_require__(36);
 
 exports._extend = function(origin, add) {
   // Don't do anything if add isn't an object
@@ -3883,7 +3947,7 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(34), __webpack_require__(29)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(38), __webpack_require__(33)))
 
 /***/ }),
 /* 14 */
@@ -3896,6 +3960,7 @@ module.exports = jQuery;
 /***/ (function(module, exports, __webpack_require__) {
 
 var require;/*global allow_exit, create_agent, getUrlParameter, require, settings, submitResponses */
+/*jshint esversion: 6 */
 
 (function (allow_exit, getUrlParameter, require, reqwest, settings, submitResponses) {
 
@@ -3934,10 +3999,12 @@ class Section {
     this.columns = settings.window_columns;
     this.rows = settings.window_rows;
     this.data = [];
+    this.textures = [];
     // build data array for just this section
     for (var j = 0; j < this.rows; j++) {
       for (var i = 0; i < this.columns; i++) {
         this.data.push(data[this.sectionCoordsToGridIdx(i, j)]);
+        this.textures.push(0);
       }
     }
   }
@@ -3952,11 +4019,14 @@ class Section {
     return coordsToIdx(this.left + x, this.top + y, settings.columns);
   }
 
-  plot(x, y, color) {
+  plot(x, y, color, texture) {
     // Set color at position (x, y) in full-grid coordinates.
     if (x >= this.left && x < this.left + this.columns) {
       if (y >= this.top && y < this.top + this.rows) {
         this.data[this.gridCoordsToSectionIdx(x, y)] = color;
+        if (texture !== undefined ){
+          this.textures[this.gridCoordsToSectionIdx(x, y)] = texture;
+        }
         background[coordsToIdx(x, y, settings.columns)] = color;
       }
     }
@@ -3997,7 +4067,7 @@ var INVISIBLE_COLOR = [0.66, 0.66, 0.66];
 var CHANNEL = "griduniverse";
 var CONTROL_CHANNEL = "griduniverse_ctrl";
 
-var pixels = grid(initialSection.data, {
+var pixels = grid(initialSection.data, initialSection.textures, {
   rows: settings.window_rows,
   columns: settings.window_columns,
   size: settings.block_size,
@@ -4008,11 +4078,30 @@ var pixels = grid(initialSection.data, {
 
 var mouse = position(pixels.canvas);
 
-var start = Date.now();
+var isSpectator = false;
+var start = performance.now();
 var food = [];
 var foodConsumed = [];
 var walls = [];
 var row, column, rand, color;
+
+var color2idx = function(color) {
+  var colors = Object.values(PLAYER_COLORS);
+  var value = color.join(',');
+  for (var idx=0; idx < colors.length; idx++) {
+    if (colors[idx].join(',') === value) {
+      return idx;
+    }
+  }
+};
+
+var color2name = function(color) {
+  for (var name in PLAYER_COLORS) {
+    if (PLAYER_COLORS.hasOwnProperty(name) && PLAYER_COLORS[name].join(',') == color) {
+      return name;
+    }
+  }
+};
 
 var Food = function(settings) {
   if (!(this instanceof Food)) {
@@ -4052,9 +4141,19 @@ var Player = function(settings) {
 };
 
 Player.prototype.move = function(direction) {
+
+  function _hasWall(position) {
+    for (var i = 0; i < walls.length; i++) {
+      if (position == walls[i].position) {
+         return false;
+      }
+    }
+    return true;
+  }
+
   this.motion_direction = direction;
 
-  var ts = Date.now() - start,
+  var ts = performance.now() - start,
       waitTime = 1000 / this.motion_speed_limit;
 
   if (ts > this.motion_timestamp + waitTime) {
@@ -4088,7 +4187,13 @@ Player.prototype.move = function(direction) {
       default:
         console.log("Direction not recognized.");
     }
-    this.motion_timestamp = ts;
+    if (
+      !_hasWall(newPosition) &
+      (!players.isPlayerAt(position) || settings.player_overlap)
+    ) {
+      this.position = newPosition;
+      this.motion_timestamp = ts;
+    }
   }
 };
 
@@ -4156,7 +4261,11 @@ var playerSet = (function () {
             } else {
               color = player.color;
             }
-            grid.plot(player.position[1], player.position[0], color);
+            var texture = 0;
+            if (settings.use_identicons) {
+              texture = parseInt(id);
+            }
+            grid.plot(player.position[1], player.position[0], color, texture);
           }
         }
       }
@@ -4229,18 +4338,60 @@ var playerSet = (function () {
         return minScore;
     };
 
+    PlayerSet.prototype.each = function (callback) {
+      var i = 0;
+      for (var id in this._players) {
+        if (this._players.hasOwnProperty(id)) {
+          callback(i, this._players[id]);
+          i++;
+        }
+      }
+    };
+
+    PlayerSet.prototype.group_scores = function () {
+      var group_scores = {};
+
+      this.each(function (i, player) {
+        var color_name = color2name(player.color);
+        var cur_score = group_scores[color_name] || 0;
+        group_scores[color_name] = cur_score + Math.round(player.score);
+      });
+
+      var group_order = Object.keys(group_scores).sort(function (a, b) {
+        return group_scores[a] > group_scores[b] ? -1 : (group_scores[a] < group_scores[b] ? 1 : 0);
+      });
+
+      return group_order.map(function(color_name) {
+        return {name: color_name, score: group_scores[color_name]};
+      });
+    };
+
+    PlayerSet.prototype.player_scores = function () {
+      var player_order = [];
+
+      this.each(function(i, player) {
+        player_order.push({id: player.id, name: player.name, score:player.score});
+      });
+
+      player_order = player_order.sort(function (a, b) {
+        return a.score > b.score ? -1 : (a.score < b.score ? 1 : 0);
+      });
+
+      return player_order;
+    };
+
     return PlayerSet;
 }());
 
 var GUSocket = (function () {
 
-    var makeSocket = function (endpoint, channel) {
+    var makeSocket = function (endpoint, channel, tolerance) {
       var ws_scheme = (window.location.protocol === "https:") ? 'wss://' : 'ws://',
           app_root = ws_scheme + location.host + '/',
           socket;
 
       socket = new ReconnectingWebSocket(
-        app_root + endpoint + "?channel=" + channel
+        app_root + endpoint + "?channel=" + channel + "&tolerance=" + tolerance
       );
       socket.debug = true;
 
@@ -4274,13 +4425,16 @@ var GUSocket = (function () {
         }
 
         var self = this,
-            isOpen = $.Deferred();
+            isOpen = $.Deferred(),
+            tolerance = typeof(settings.lagTolerance) !== 'undefined' ? settings.lagTolerance : 0.1;
 
         this.broadcastChannel = settings.broadcast;
         this.controlChannel = settings.control;
         this.callbackMap = settings.callbackMap;
 
-        this.socket = makeSocket(settings.endpoint, this.broadcastChannel);
+
+        this.socket = makeSocket(
+          settings.endpoint, this.broadcastChannel, tolerance);
 
         this.socket.onmessage = function (event) {
           dispatch(self, event);
@@ -4325,6 +4479,8 @@ pixels.canvas.style.marginTop = window.innerHeight * 0.04 / 2 + "px";
 document.body.style.transition = "0.3s all";
 document.body.style.background = "#ffffff";
 
+var startTime = performance.now();
+
 pixels.frame(function() {
   // Update the background.
   var ego = players.ego(),
@@ -4365,13 +4521,26 @@ pixels.frame(function() {
   }
 
   // Add the Gaussian mask.
-  limitVisibility = settings.visibility <
-    Math.max(settings.columns, settings.rows);
-  if (limitVisibility && typeof ego !== "undefined") {
-    var g = gaussian(0, Math.pow(settings.visibility, 2));
-    rescaling = 1 / g.pdf(0);
-    x = ego.position[1];
-    y = ego.position[0];
+  var elapsedTime = performance.now() - startTime;
+  var visibilityNow = clamp(
+    (settings.visibility * elapsedTime) / (1000 * settings.visibility_ramp_time),
+    3,
+    settings.visibility
+  );
+  if (settings.highlightEgo) {
+    visibilityNow = Math.min(visibilityNow, 4);
+  }
+  var g = gaussian(0, Math.pow(visibilityNow, 2));
+  rescaling = 1 / g.pdf(0);
+
+  if (!isSpectator) {
+    if (typeof ego !== "undefined") {
+      x = ego.position[1];
+      y = ego.position[0];
+    } else {
+      x = 1e100;
+      y = 1e100;
+    }
     section.map(function(i, j, color) {
       dimness = g.pdf(distance(x, y, i, j)) * rescaling;
       var newColor = [
@@ -4382,8 +4551,7 @@ pixels.frame(function() {
       return newColor;
     });
   }
-
-  pixels.update(section.data);
+  pixels.update(section.data, section.textures);
 });
 
 function clamp(val, min, max) {
@@ -4437,30 +4605,56 @@ function getWindowPosition() {
 }
 
 function bindGameKeys(socket) {
-  var directions = ["up", "down", "left", "right"];
-  var lock = false;
+  var directions = ["up", "down", "left", "right"],
+      repeatDelayMS = 1000 / settings.motion_speed_limit,
+      lastDirection = null,
+      repeatIntervalId = null,
+      highlightEgo = false;
+
+  function moveInDir(direction) {
+    players.ego().move(direction);
+    var msg = {
+      type: "move",
+      player_id: players.ego().id,
+      move: direction
+    };
+    socket.send(msg);
+  }
+
   directions.forEach(function(direction) {
-    Mousetrap.bind(direction, function() {
-      if (!lock) {
-        players.ego().move(direction);
-        var msg = {
-          type: "move",
-          player_id: players.ego().id,
-          move: direction
-        };
-        socket.send(msg);
-      }
-      lock = true;
-      return false;
-    });
     Mousetrap.bind(
       direction,
       function() {
-        lock = false;
-        return false;
+        if (direction === lastDirection) {
+          return;
+        }
+
+        // New direction may be pressed before previous dir key is released
+        if (repeatIntervalId) {
+          console.log("Clearing interval for new keydown");
+          clearInterval(repeatIntervalId);
+        }
+
+        moveInDir(direction); // Move once immediately so there's no lag
+        lastDirection = direction;
+        repeatIntervalId = setInterval(moveInDir, repeatDelayMS, direction);
+        console.log("Repeating new direction: " + direction + " (" + repeatIntervalId + ")");
+      },
+      'keydown'
+    );
+
+    Mousetrap.bind(
+      direction,
+      function() {
+        if (direction) {
+          console.log("Calling clearInterval() for " + direction + " (" + repeatIntervalId + ")");
+          clearInterval(repeatIntervalId);
+          lastDirection = null;
+        }
       },
       "keyup"
     );
+
   });
 
   Mousetrap.bind("space", function () {
@@ -4511,6 +4705,10 @@ function bindGameKeys(socket) {
       socket.send(msg);
     });
   }
+
+  Mousetrap.bind("h", function () {
+      settings.highlightEgo = !settings.highlightEgo;
+  });
 }
 
 function onChatMessage(msg) {
@@ -4569,6 +4767,11 @@ function onDonationProcessed(msg) {
 function onGameStateChange(msg) {
   var ego,
       state;
+
+  if (settings.paused_game) {
+    $("#time").html(0);
+    return;
+  }
 
   // Update remaining time.
   $("#time").html(Math.max(Math.round(msg.remaining_time), 0));
@@ -4641,6 +4844,58 @@ function onGameStateChange(msg) {
   }
 }
 
+function pushMessage(html) {
+  $("#messages").append(($("<li>").html(html)));
+  $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
+}
+
+function displayLeaderboards(msg, callback) {
+  if (!settings.leaderboard_group && !settings.leaderboard_individual) {
+    if (callback) callback();
+    return;
+  }
+  var i;
+  if (msg.type == 'new_round') {
+    pushMessage("<span class='name'>Moderator:</span> the round " + msg.round + ' standings are&hellip;');
+  } else {
+    pushMessage("<span class='name'>Moderator:</span> the final standings are &hellip;");
+  }
+  if (settings.leaderboard_group) {
+    if (settings.leaderboard_individual) {
+      pushMessage('<em>Group</em>');
+    }
+    var group_scores = players.group_scores();
+    var rgb_map = function (e) { return Math.round(e * 255); };
+    for (i = 0; i < group_scores.length; i++) {
+      var group = group_scores[i];
+      var color = PLAYER_COLORS[group.name].map(rgb_map);
+      pushMessage('<span class="GroupScore">' + group.score + '</span><span class="GroupIndicator" style="background-color:' + Color.rgb(color).string() +';"></span>');
+    }
+  }
+  if (settings.leaderboard_individual) {
+    if (settings.leaderboard_group) {
+      pushMessage('<em>Individual</em>');
+    }
+    var player_scores = players.player_scores();
+    var ego_id = players.ego_id;
+    for (i = 0; i < player_scores.length; i++) {
+      var player = player_scores[i];
+      var player_name = player.name;
+      if (ego_id == player.id) {
+        player_name = '<em>' + player_name + ' (You)</em>';
+      }
+      pushMessage('<span class="PlayerScore">' + Math.round(player.score) + '</span><span class="PlayerName">' + player_name + '</span>');
+    }
+  }
+  if (settings.leaderboard_time) {
+    settings.paused_game = true;
+    setTimeout(function () {
+        settings.paused_game = false;
+        if (callback) callback();
+      }, 1000 * settings.leaderboard_time);
+  } else if (callback) callback();
+}
+
 function gameOverHandler(isSpectator, player_id) {
   if (isSpectator) {
     return function (msg) {
@@ -4649,31 +4904,36 @@ function gameOverHandler(isSpectator, player_id) {
     };
   }
   return function (msg) {
-    $("#game-over").show();
-    allow_exit();
-    $("#dashboard").hide();
-    $("#instructions").hide();
-    $("#chat").hide();
+    displayLeaderboards(msg, function () {
+      $("#game-over").show();
+      allow_exit();
+      $("#dashboard").hide();
+      $("#instructions").hide();
+      $("#chat").hide();
+      window.location.href = "/questionnaire?participant_id=" + player_id;
+    });
     pixels.canvas.style.display = "none";
-    window.location.href = "/questionnaire?participant_id=" + player_id;
   };
 }
 
 $(document).ready(function() {
   var player_id = getUrlParameter('participant_id'),
-      isSpectator = typeof player_id === 'undefined',
       socketSettings = {
         'endpoint': 'chat',
         'broadcast': CHANNEL,
         'control': CONTROL_CHANNEL,
+        'lagTolerance': 0.001,
         'callbackMap': {
           'chat': onChatMessage,
           'donation_processed': onDonationProcessed,
           'state': onGameStateChange,
+          'new_round': displayLeaderboards,
           'stop': gameOverHandler(isSpectator, player_id)
         }
       },
       socket = new GUSocket(socketSettings);
+
+  isSpectator = typeof player_id === 'undefined';
 
   socket.open().done(function () {
       var data = {
@@ -4744,7 +5004,6 @@ $(document).ready(function() {
     $("#chat form").show();
   }
 
-
   var donateToClicked = function() {
     var w = getWindowPosition(),
         row = w.top + pixels2cells(mouse[1]),
@@ -4799,23 +5058,13 @@ $(document).ready(function() {
     return Math.floor(pix / (settings.block_size + settings.padding));
   };
 
-  var color2idx = function(color) {
-    var colors = Object.values(PLAYER_COLORS);
-    var value = color.join(',');
-    for (var idx=0; idx < colors.length; idx++) {
-      if (colors[idx].join(',') === value) {
-        return idx;
-      }
-    }
-  };
-
   $("form").submit(function() {
     try {
       var msg = {
         type: 'chat',
         contents: $("#message").val(),
         player_id: players.ego().id,
-        timestamp: Date.now() - start
+        timestamp: performance.now() - start
       };
       // send directly to all clients
       socket.broadcast(msg);
@@ -4865,7 +5114,7 @@ $(document).ready(function() {
 /* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var flatten = __webpack_require__(23);
+var flatten = __webpack_require__(27);
 var isarray = __webpack_require__(2);
 var isnumber = __webpack_require__(3);
 var isstring = __webpack_require__(4);
@@ -4903,14 +5152,24 @@ function layout(rows, columns, padding, size, aspect) {
 
   for (var i = 0; i < rows; i++) {
     for (var j = 0; j < columns; j++) {
-      var x = -1 + aspect * (i * (padding + size) + padding + size / 2);
-      var y = 1 - (j * (padding + size) + padding + size / 2);
+      var x = -1 + aspect * (i * (padding + size) + padding);
+      var y = 1 - (j * (padding + size) + padding);
       grid.push([ y, x ]);
+      var x_next = x + size - padding;
+      grid.push([ y, x_next ]);
+      var y_next = y - size + padding;
+      grid.push([ y_next, x ]);
+
+      grid.push([ y_next, x ]);
+      grid.push([ y, x_next ]);
+      grid.push([ y_next, x_next ]);
+
     }
   }
 
   return grid.reverse();
 }
+
 
 module.exports = layout;
 
@@ -4919,8 +5178,450 @@ module.exports = layout;
 /* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
+var __WEBPACK_AMD_DEFINE_RESULT__;/*
+ * JavaScript MD5
+ * https://github.com/blueimp/JavaScript-MD5
+ *
+ * Copyright 2011, Sebastian Tschan
+ * https://blueimp.net
+ *
+ * Licensed under the MIT license:
+ * https://opensource.org/licenses/MIT
+ *
+ * Based on
+ * A JavaScript implementation of the RSA Data Security, Inc. MD5 Message
+ * Digest Algorithm, as defined in RFC 1321.
+ * Version 2.2 Copyright (C) Paul Johnston 1999 - 2009
+ * Other contributors: Greg Holt, Andrew Kepert, Ydnar, Lostinet
+ * Distributed under the BSD License
+ * See http://pajhome.org.uk/crypt/md5 for more info.
+ */
+
+/* global define */
+
+;(function ($) {
+  'use strict'
+
+  /*
+  * Add integers, wrapping at 2^32. This uses 16-bit operations internally
+  * to work around bugs in some JS interpreters.
+  */
+  function safeAdd (x, y) {
+    var lsw = (x & 0xFFFF) + (y & 0xFFFF)
+    var msw = (x >> 16) + (y >> 16) + (lsw >> 16)
+    return (msw << 16) | (lsw & 0xFFFF)
+  }
+
+  /*
+  * Bitwise rotate a 32-bit number to the left.
+  */
+  function bitRotateLeft (num, cnt) {
+    return (num << cnt) | (num >>> (32 - cnt))
+  }
+
+  /*
+  * These functions implement the four basic operations the algorithm uses.
+  */
+  function md5cmn (q, a, b, x, s, t) {
+    return safeAdd(bitRotateLeft(safeAdd(safeAdd(a, q), safeAdd(x, t)), s), b)
+  }
+  function md5ff (a, b, c, d, x, s, t) {
+    return md5cmn((b & c) | ((~b) & d), a, b, x, s, t)
+  }
+  function md5gg (a, b, c, d, x, s, t) {
+    return md5cmn((b & d) | (c & (~d)), a, b, x, s, t)
+  }
+  function md5hh (a, b, c, d, x, s, t) {
+    return md5cmn(b ^ c ^ d, a, b, x, s, t)
+  }
+  function md5ii (a, b, c, d, x, s, t) {
+    return md5cmn(c ^ (b | (~d)), a, b, x, s, t)
+  }
+
+  /*
+  * Calculate the MD5 of an array of little-endian words, and a bit length.
+  */
+  function binlMD5 (x, len) {
+    /* append padding */
+    x[len >> 5] |= 0x80 << (len % 32)
+    x[(((len + 64) >>> 9) << 4) + 14] = len
+
+    var i
+    var olda
+    var oldb
+    var oldc
+    var oldd
+    var a = 1732584193
+    var b = -271733879
+    var c = -1732584194
+    var d = 271733878
+
+    for (i = 0; i < x.length; i += 16) {
+      olda = a
+      oldb = b
+      oldc = c
+      oldd = d
+
+      a = md5ff(a, b, c, d, x[i], 7, -680876936)
+      d = md5ff(d, a, b, c, x[i + 1], 12, -389564586)
+      c = md5ff(c, d, a, b, x[i + 2], 17, 606105819)
+      b = md5ff(b, c, d, a, x[i + 3], 22, -1044525330)
+      a = md5ff(a, b, c, d, x[i + 4], 7, -176418897)
+      d = md5ff(d, a, b, c, x[i + 5], 12, 1200080426)
+      c = md5ff(c, d, a, b, x[i + 6], 17, -1473231341)
+      b = md5ff(b, c, d, a, x[i + 7], 22, -45705983)
+      a = md5ff(a, b, c, d, x[i + 8], 7, 1770035416)
+      d = md5ff(d, a, b, c, x[i + 9], 12, -1958414417)
+      c = md5ff(c, d, a, b, x[i + 10], 17, -42063)
+      b = md5ff(b, c, d, a, x[i + 11], 22, -1990404162)
+      a = md5ff(a, b, c, d, x[i + 12], 7, 1804603682)
+      d = md5ff(d, a, b, c, x[i + 13], 12, -40341101)
+      c = md5ff(c, d, a, b, x[i + 14], 17, -1502002290)
+      b = md5ff(b, c, d, a, x[i + 15], 22, 1236535329)
+
+      a = md5gg(a, b, c, d, x[i + 1], 5, -165796510)
+      d = md5gg(d, a, b, c, x[i + 6], 9, -1069501632)
+      c = md5gg(c, d, a, b, x[i + 11], 14, 643717713)
+      b = md5gg(b, c, d, a, x[i], 20, -373897302)
+      a = md5gg(a, b, c, d, x[i + 5], 5, -701558691)
+      d = md5gg(d, a, b, c, x[i + 10], 9, 38016083)
+      c = md5gg(c, d, a, b, x[i + 15], 14, -660478335)
+      b = md5gg(b, c, d, a, x[i + 4], 20, -405537848)
+      a = md5gg(a, b, c, d, x[i + 9], 5, 568446438)
+      d = md5gg(d, a, b, c, x[i + 14], 9, -1019803690)
+      c = md5gg(c, d, a, b, x[i + 3], 14, -187363961)
+      b = md5gg(b, c, d, a, x[i + 8], 20, 1163531501)
+      a = md5gg(a, b, c, d, x[i + 13], 5, -1444681467)
+      d = md5gg(d, a, b, c, x[i + 2], 9, -51403784)
+      c = md5gg(c, d, a, b, x[i + 7], 14, 1735328473)
+      b = md5gg(b, c, d, a, x[i + 12], 20, -1926607734)
+
+      a = md5hh(a, b, c, d, x[i + 5], 4, -378558)
+      d = md5hh(d, a, b, c, x[i + 8], 11, -2022574463)
+      c = md5hh(c, d, a, b, x[i + 11], 16, 1839030562)
+      b = md5hh(b, c, d, a, x[i + 14], 23, -35309556)
+      a = md5hh(a, b, c, d, x[i + 1], 4, -1530992060)
+      d = md5hh(d, a, b, c, x[i + 4], 11, 1272893353)
+      c = md5hh(c, d, a, b, x[i + 7], 16, -155497632)
+      b = md5hh(b, c, d, a, x[i + 10], 23, -1094730640)
+      a = md5hh(a, b, c, d, x[i + 13], 4, 681279174)
+      d = md5hh(d, a, b, c, x[i], 11, -358537222)
+      c = md5hh(c, d, a, b, x[i + 3], 16, -722521979)
+      b = md5hh(b, c, d, a, x[i + 6], 23, 76029189)
+      a = md5hh(a, b, c, d, x[i + 9], 4, -640364487)
+      d = md5hh(d, a, b, c, x[i + 12], 11, -421815835)
+      c = md5hh(c, d, a, b, x[i + 15], 16, 530742520)
+      b = md5hh(b, c, d, a, x[i + 2], 23, -995338651)
+
+      a = md5ii(a, b, c, d, x[i], 6, -198630844)
+      d = md5ii(d, a, b, c, x[i + 7], 10, 1126891415)
+      c = md5ii(c, d, a, b, x[i + 14], 15, -1416354905)
+      b = md5ii(b, c, d, a, x[i + 5], 21, -57434055)
+      a = md5ii(a, b, c, d, x[i + 12], 6, 1700485571)
+      d = md5ii(d, a, b, c, x[i + 3], 10, -1894986606)
+      c = md5ii(c, d, a, b, x[i + 10], 15, -1051523)
+      b = md5ii(b, c, d, a, x[i + 1], 21, -2054922799)
+      a = md5ii(a, b, c, d, x[i + 8], 6, 1873313359)
+      d = md5ii(d, a, b, c, x[i + 15], 10, -30611744)
+      c = md5ii(c, d, a, b, x[i + 6], 15, -1560198380)
+      b = md5ii(b, c, d, a, x[i + 13], 21, 1309151649)
+      a = md5ii(a, b, c, d, x[i + 4], 6, -145523070)
+      d = md5ii(d, a, b, c, x[i + 11], 10, -1120210379)
+      c = md5ii(c, d, a, b, x[i + 2], 15, 718787259)
+      b = md5ii(b, c, d, a, x[i + 9], 21, -343485551)
+
+      a = safeAdd(a, olda)
+      b = safeAdd(b, oldb)
+      c = safeAdd(c, oldc)
+      d = safeAdd(d, oldd)
+    }
+    return [a, b, c, d]
+  }
+
+  /*
+  * Convert an array of little-endian words to a string
+  */
+  function binl2rstr (input) {
+    var i
+    var output = ''
+    var length32 = input.length * 32
+    for (i = 0; i < length32; i += 8) {
+      output += String.fromCharCode((input[i >> 5] >>> (i % 32)) & 0xFF)
+    }
+    return output
+  }
+
+  /*
+  * Convert a raw string to an array of little-endian words
+  * Characters >255 have their high-byte silently ignored.
+  */
+  function rstr2binl (input) {
+    var i
+    var output = []
+    output[(input.length >> 2) - 1] = undefined
+    for (i = 0; i < output.length; i += 1) {
+      output[i] = 0
+    }
+    var length8 = input.length * 8
+    for (i = 0; i < length8; i += 8) {
+      output[i >> 5] |= (input.charCodeAt(i / 8) & 0xFF) << (i % 32)
+    }
+    return output
+  }
+
+  /*
+  * Calculate the MD5 of a raw string
+  */
+  function rstrMD5 (s) {
+    return binl2rstr(binlMD5(rstr2binl(s), s.length * 8))
+  }
+
+  /*
+  * Calculate the HMAC-MD5, of a key and some data (raw strings)
+  */
+  function rstrHMACMD5 (key, data) {
+    var i
+    var bkey = rstr2binl(key)
+    var ipad = []
+    var opad = []
+    var hash
+    ipad[15] = opad[15] = undefined
+    if (bkey.length > 16) {
+      bkey = binlMD5(bkey, key.length * 8)
+    }
+    for (i = 0; i < 16; i += 1) {
+      ipad[i] = bkey[i] ^ 0x36363636
+      opad[i] = bkey[i] ^ 0x5C5C5C5C
+    }
+    hash = binlMD5(ipad.concat(rstr2binl(data)), 512 + data.length * 8)
+    return binl2rstr(binlMD5(opad.concat(hash), 512 + 128))
+  }
+
+  /*
+  * Convert a raw string to a hex string
+  */
+  function rstr2hex (input) {
+    var hexTab = '0123456789abcdef'
+    var output = ''
+    var x
+    var i
+    for (i = 0; i < input.length; i += 1) {
+      x = input.charCodeAt(i)
+      output += hexTab.charAt((x >>> 4) & 0x0F) +
+      hexTab.charAt(x & 0x0F)
+    }
+    return output
+  }
+
+  /*
+  * Encode a string as utf-8
+  */
+  function str2rstrUTF8 (input) {
+    return unescape(encodeURIComponent(input))
+  }
+
+  /*
+  * Take string arguments and return either raw or hex encoded strings
+  */
+  function rawMD5 (s) {
+    return rstrMD5(str2rstrUTF8(s))
+  }
+  function hexMD5 (s) {
+    return rstr2hex(rawMD5(s))
+  }
+  function rawHMACMD5 (k, d) {
+    return rstrHMACMD5(str2rstrUTF8(k), str2rstrUTF8(d))
+  }
+  function hexHMACMD5 (k, d) {
+    return rstr2hex(rawHMACMD5(k, d))
+  }
+
+  function md5 (string, key, raw) {
+    if (!key) {
+      if (!raw) {
+        return hexMD5(string)
+      }
+      return rawMD5(string)
+    }
+    if (!raw) {
+      return hexHMACMD5(key, string)
+    }
+    return rawHMACMD5(key, string)
+  }
+
+  if (true) {
+    !(__WEBPACK_AMD_DEFINE_RESULT__ = function () {
+      return md5
+    }.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__))
+  } else if (typeof module === 'object' && module.exports) {
+    module.exports = md5
+  } else {
+    $.md5 = md5
+  }
+}(this))
+
+/***/ }),
+/* 20 */
+/***/ (function(module, exports) {
+
+/**
+ * Derived from Identicon.js 2.3.1
+ * http://github.com/stewartlord/identicon.js
+ *
+ * Copyright 2017, Stewart Lord and Dallinger Contributors
+ * Released under the BSD license
+ * http://www.opensource.org/licenses/bsd-license.php
+ */
+
+
+var Identicon = function(hash, size, options){
+    if (typeof(hash) !== 'string' || hash.length < 15) {
+        throw 'A hash of at least 15 characters is required.';
+    }
+
+    this.defaults = {
+        background: [240, 240, 240, 255],
+        margin:     0.08,
+        size:       64,
+        saturation: 0.7,
+        brightness: 0.5,
+        format:     'pixels'
+    };
+
+    this.options = typeof(options) === 'object' ? options : this.defaults;
+
+    this.hash        = hash
+    this.background  = [128, 128, 128];
+    this.foreground  = [255, 255, 255];
+    this.size        = size;
+};
+
+Identicon.prototype = {
+    background: null,
+    foreground: null,
+    hash:       null,
+    margin:     null,
+    size:       null,
+    format:     null,
+
+    image: function(){
+        return new Pixels(this.size, this.foreground, this.background)
+    },
+
+    render: function(){
+        var image      = this.image(),
+            size       = this.size,
+            baseMargin = Math.floor(size * this.margin),
+            cell       = Math.floor((size - (baseMargin * 2)) / 5),
+            margin     = Math.floor((size - cell * 5) / 2),
+            bg         = this.background,
+            fg         = this.foreground;
+
+        // the first 15 characters of the hash control the pixels (even/odd)
+        // they are drawn down the middle first, then mirrored outwards
+        var i, color;
+        for (i = 0; i < 15; i++) {
+            color = parseInt(this.hash.charAt(i), 16) % 2 ? bg : fg;
+            if (i < 5) {
+                this.rectangle(2 * cell + margin, i * cell + margin, cell, cell, color, image);
+            } else if (i < 10) {
+                this.rectangle(1 * cell + margin, (i - 5) * cell + margin, cell, cell, color, image);
+                this.rectangle(3 * cell + margin, (i - 5) * cell + margin, cell, cell, color, image);
+            } else if (i < 15) {
+                this.rectangle(0 * cell + margin, (i - 10) * cell + margin, cell, cell, color, image);
+                this.rectangle(4 * cell + margin, (i - 10) * cell + margin, cell, cell, color, image);
+            }
+        }
+
+        return image;
+    },
+
+    rectangle: function(x, y, w, h, color, image){
+        var i, j;
+        for (i = x; i < x + w; i++) {
+            for (j = y; j < y + h; j++) {
+                image.buffer[j][i] = color;
+            }
+        }
+    }
+
+};
+
+var Pixels = function(size){
+    this.buffer = [];
+    for (i = 0; i < size; i++) {
+        var row = []
+        for (j = 0; j < size; j++) {
+            row.push([0,0,120]);
+        }
+        this.buffer.push(row);
+    }
+};
+
+Pixels.prototype = {
+    pixels:       null,
+
+};
+
+
+module.exports = Identicon;
+
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports) {
+
+function range(j, k) { 
+    return Array
+        .apply(null, Array((k - j) + 1))
+        .map(function(discard, n){ return n + j; }); 
+}
+
+
+
+module.exports = range;
+
+
+/***/ }),
+/* 22 */
+/***/ (function(module, exports) {
+
+function texcoord(rows, columns, texture_indexes, num_textures) {
+  var grid = [];
+  var texture;
+  var texture_start;
+  var texture_next;
+
+  for (var i = 0; i < rows; i++) {
+    for (var j = 0; j < columns; j++) {
+      texture = texture_indexes[i*rows + j];
+      texture_start = (1/num_textures)*texture;
+      texture_next = texture_start + (1/num_textures);
+
+      grid.push([ 0, texture_start ]);
+      grid.push([ 1, texture_start ]);
+      grid.push([ 0, texture_next ]);
+      
+      grid.push([ 0, texture_next ]);
+      grid.push([ 1, texture_start ]);
+      grid.push([ 1, texture_next ]);
+    }
+  }
+
+  return grid;
+}
+
+
+module.exports = texcoord;
+
+
+/***/ }),
+/* 23 */
+/***/ (function(module, exports, __webpack_require__) {
+
 var conversions = __webpack_require__(0);
-var route = __webpack_require__(20);
+var route = __webpack_require__(24);
 
 var convert = {};
 
@@ -5000,7 +5701,7 @@ module.exports = convert;
 
 
 /***/ }),
-/* 20 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var conversions = __webpack_require__(0);
@@ -5104,12 +5805,12 @@ module.exports = function (fromModel) {
 
 
 /***/ }),
-/* 21 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* MIT license */
 var colorNames = __webpack_require__(1);
-var swizzle = __webpack_require__(31);
+var swizzle = __webpack_require__(35);
 
 var reverseNames = {};
 
@@ -5343,7 +6044,7 @@ function hexDouble(num) {
 
 
 /***/ }),
-/* 22 */
+/* 26 */
 /***/ (function(module, exports) {
 
 // Copyright Joyent, Inc. and other Node contributors.
@@ -5651,7 +6352,7 @@ function isUndefined(arg) {
 
 
 /***/ }),
-/* 23 */
+/* 27 */
 /***/ (function(module, exports) {
 
 module.exports = function flatten(list, depth) {
@@ -5680,7 +6381,7 @@ module.exports = function flatten(list, depth) {
 
 
 /***/ }),
-/* 24 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5698,7 +6399,7 @@ module.exports = function isArrayish(obj) {
 
 
 /***/ }),
-/* 25 */
+/* 29 */
 /***/ (function(module, exports) {
 
 /*!
@@ -5725,10 +6426,10 @@ function isSlowBuffer (obj) {
 
 
 /***/ }),
-/* 26 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isBuffer = __webpack_require__(25);
+var isBuffer = __webpack_require__(29);
 var toString = Object.prototype.toString;
 
 /**
@@ -5847,7 +6548,7 @@ module.exports = function kindOf(val) {
 
 
 /***/ }),
-/* 27 */
+/* 31 */
 /***/ (function(module, exports) {
 
 /* MIT license */
@@ -6551,10 +7252,10 @@ for (var key in cssKeywords) {
 
 
 /***/ }),
-/* 28 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var conversions = __webpack_require__(27);
+var conversions = __webpack_require__(31);
 
 var convert = function() {
    return new Converter();
@@ -6648,7 +7349,7 @@ Converter.prototype.getValues = function(space) {
 module.exports = convert;
 
 /***/ }),
-/* 29 */
+/* 33 */
 /***/ (function(module, exports) {
 
 // shim for using process in browser
@@ -6834,7 +7535,7 @@ process.umask = function() { return 0; };
 
 
 /***/ }),
-/* 30 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function (global, factory) {
@@ -16343,13 +17044,13 @@ return wrapREGL;
 
 
 /***/ }),
-/* 31 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var isArrayish = __webpack_require__(24);
+var isArrayish = __webpack_require__(28);
 
 var concat = Array.prototype.concat;
 var slice = Array.prototype.slice;
@@ -16379,7 +17080,7 @@ swizzle.wrap = function (fn) {
 
 
 /***/ }),
-/* 32 */
+/* 36 */
 /***/ (function(module, exports) {
 
 if (typeof Object.create === 'function') {
@@ -16408,7 +17109,7 @@ if (typeof Object.create === 'function') {
 
 
 /***/ }),
-/* 33 */
+/* 37 */
 /***/ (function(module, exports) {
 
 module.exports = function isBuffer(arg) {
@@ -16419,7 +17120,7 @@ module.exports = function isBuffer(arg) {
 }
 
 /***/ }),
-/* 34 */
+/* 38 */
 /***/ (function(module, exports) {
 
 var g;

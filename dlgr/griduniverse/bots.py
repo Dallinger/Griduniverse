@@ -12,6 +12,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.ui import Select
 
 
 from dallinger.bots import BotBase
@@ -294,12 +295,18 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
                 if observed_state:
                     self.state = observed_state
                     self.send_next_key(grid)
+                else:
+                    return False
             except (StaleElementReferenceException, AttributeError):
                 return True
 
     def complete_questionnaire(self):
-        """Complete the standard debriefing form."""
-        pass
+        """Complete the standard debriefing form randomly."""
+        difficulty = Select(self.driver.find_element_by_id('difficulty'))
+        difficulty.select_by_value(str(random.randint(1, 7)))
+        engagement = Select(self.driver.find_element_by_id('engagement'))
+        engagement.select_by_value(str(random.randint(1, 7)))
+        return True
 
 
 def Bot(*args, **kwargs):
