@@ -41,6 +41,7 @@
     settings.donation_type = null;
     settings.score_visible = {% if experiment.grid.score_visible %}true{% else %}false{% endif %};
     settings.alternate_consumption_donation = {% if experiment.grid.alternate_consumption_donation %}true{% else %}false{% endif %};
+    settings.use_identicons = {% if experiment.grid.use_identicons %}true{% else %}false{% endif %};
     settings.leaderboard_group = {% if experiment.grid.leaderboard_group %}true{% else %}false{% endif %};
     settings.leaderboard_individual = {% if experiment.grid.leaderboard_individual %}true{% else %}false{% endif %};
     settings.leaderboard_time = {{ experiment.grid.leaderboard_time }} || 10;
@@ -60,7 +61,7 @@
     </p>
 </div>
 
-<div id="grid">
+<div id="grid" data-identicon-salt="{{ app_id }}">
     <!-- Grid will be inserted here. -->
 </div>
 
