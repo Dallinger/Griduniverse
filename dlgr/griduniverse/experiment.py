@@ -1112,12 +1112,12 @@ class Griduniverse(Experiment):
         redis.publish('griduniverse', json.dumps(msg))
 
     def handle_connect(self, msg):
+        player_id = msg['player_id']
         if config.get('replay', False):
             # Force all participants to be specatators
             msg['player_id'] = 'spectator'
             if not self.grid.start_timestamp:
                 self.grid.start_timestamp = time.time()
-        player_id = msg['player_id']
         if player_id == 'spectator':
             logger.info('A spectator has connected.')
             return

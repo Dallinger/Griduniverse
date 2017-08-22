@@ -956,9 +956,9 @@ function gameOverHandler(isSpectator, player_id) {
 }
 
 $(document).ready(function() {
+  var player_id = getUrlParameter('participant_id');
   isSpectator = typeof player_id === 'undefined';
-  var player_id = getUrlParameter('participant_id'),
-      socketSettings = {
+  var socketSettings = {
         'endpoint': 'chat',
         'broadcast': CHANNEL,
         'control': CONTROL_CHANNEL,
@@ -971,7 +971,7 @@ $(document).ready(function() {
           'stop': gameOverHandler(isSpectator, player_id)
         }
       },
-      socket = new GUSocket(socketSettings);
+  socket = new GUSocket(socketSettings);
 
   socket.open().done(function () {
       var data = {
