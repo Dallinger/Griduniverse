@@ -17,7 +17,7 @@ addons:
     - heroku-toolbelt
     - redis-server
   sauce_connect:
-    username: "Your Sauce Labs username"
+    username: vlall
   jwt:
     secure: "fOgiH5NXiwR/mhhNPi/wmLf883iLc0Bc987B9S0pkGucChzYWzxwqLZDu+t+Gp1k498t2Dcq8+QhSSBKhEiU21U5vBKZUEJQy+ikVbMbQtX8dvcN1b6bAveNwiFlnFPQOhMn/cXVFroi0Bh3GiBTnyL6G+7JOhO/jv1QNJYqBaP/N2gIKN0OeEqt5M3Z/EvUmwvGAKUYS2a2fUDSM2Mh3/00ZHeLIc6i8M+kTDwbeOd5oBTMB0iHtdgWlrMBHQjadm1KFi/eNNRvLBFkX6ygqctBpYtroX6gZk5+IniF+Bp2tL1v6/sSOeoyfqH59HsdTiLb9spI6/nwapVhNffInIqRdXXTQ/Mx0IFBcSbzDqJfOhSecCDOXXziuBkMXuBDb6/ijvWrmkjS/0c6bvFVgrkJCWbltyKd1rxm9kU1d/bBlZGgb/Raz9bEoSt2ClAZqk7DJva3B6Tqu6zEv1v+LD6a4N8O8ZZcVBOtd90R2coWPi07Jo/+FrphrCuF07UDRsN3QcekIAkg+EK9XZY8gW4An45IQDVoOdoZwaixSFEvDkmnawFCqky/Dmh6hMpdOWHjZGj6NSibIHp79FuZRVE5P8ADhiRQvFBPDLNpw7LrdgSAyMLPjj88Z51m2GkIi0scrDVZQHu+MdMwJtBb5tzCHJy38wcQhCMEkmMwdU8="
 
