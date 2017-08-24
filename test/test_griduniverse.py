@@ -6,6 +6,7 @@ import os
 import pytest
 import shutil
 import tempfile
+import time
 from dallinger.experiments import Griduniverse
 
 
@@ -48,7 +49,7 @@ def output():
 class TestGriduniverse(object):
 
     @classmethod
-    def setup_class(cls):
+    def setup(cls):
         pass
 
     def test_bot_api(self):
@@ -67,9 +68,40 @@ class TestGriduniverse(object):
         assert results > 0
 
     @classmethod
-    def teardown_class(cls):
+    def teardown(cls):
         pass
 
+class Saucelabs(object):
+
+    def setup(self):
+        desired_capabilities = {'browserName': 'chrome'}
+        desired_capabilities['version'] = '11'
+        desired_capabilities['platform'] = 'Mac 10.10'
+        desired_capabilities['name'] = 'Capture screenshot with WebDriver'
+
+        self.driver = webdriver.Remote(
+            desired_capabilities=desired_capabilities,
+            command_executor="http://USERNAME:ACCESS-KEY@ondemand.saucelabs.com:80/wd/hub"
+        self.driver.implicitly_wait(10)
+
+    def test_sauce(self):
+        """Example request"""
+        self.driver.get('http://google.com')
+        sesh = self.driver.session_id
+        print "Link to your job: https://saucelabs.com/jobs/%s" % sesh
+        data = self.experiment.run(
+                mode=u'debug',
+                webdriver_type=u'chrome',
+                recruiter=u'bots',
+                bot_policy=u"AdvantageSeekingBot",
+                max_participants=1,
+                num_dynos_worker=1,
+                time_per_round=30.0,
+           )
+        self.driver.get_screenshot_as_file('griduniverse.png') # see http://seleniumhq.org/docs/04_webdriver_advanced.html#taking-a-screenshot
+
+    def teardown(self):
+        self.driver.quit()
 
 class TestCommandline(object):
 
