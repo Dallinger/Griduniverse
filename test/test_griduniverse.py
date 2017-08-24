@@ -81,7 +81,7 @@ class Saucelabs(object):
 
         self.driver = webdriver.Remote(
             desired_capabilities=desired_capabilities,
-            command_executor="http://USERNAME:ACCESS-KEY@ondemand.saucelabs.com:80/wd/hub"
+            command_executor="http://USERNAME:ACCESS-KEY@ondemand.saucelabs.com:80/wd/hub")
         self.driver.implicitly_wait(10)
 
     def test_sauce(self):
