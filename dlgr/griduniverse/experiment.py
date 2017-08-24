@@ -115,6 +115,7 @@ def extra_parameters():
         'difi_question': bool,
         'difi_group_label': unicode,
         'difi_group_image': unicode,
+        'fun_survey': bool,
         'leach_survey': bool,
         'intergroup_competition': float,
         'intragroup_competition': float,
@@ -267,6 +268,7 @@ class Gridworld(object):
         self.difi_question = kwargs.get('difi_question', False)
         self.difi_group_label = kwargs.get('difi_group_label', 'Group')
         self.difi_group_image = kwargs.get('difi_group_image', '/static/images/group.jpg')
+        self.fun_survey = kwargs.get('fun_survey', False)
         self.leach_survey = kwargs.get('leach_survey', False)
 
         # Set some variables.
@@ -1506,6 +1508,12 @@ class Griduniverse(Experiment):
 
     def replay_finish(self):
         self.publish({'type': 'stop'})
+
+    def player_feedback(self, data):
+        engagement = int(json.loads(data.questions.list[-1][-1])['engagement'])
+        difficulty = int(json.loads(data.questions.list[-1][-1])['difficulty'])
+        fun = int(json.loads(data.questions.list[-1][-1])['fun'])
+        return engagement, difficulty, fun
 
     def analyze(self, data):
         return json.dumps({
