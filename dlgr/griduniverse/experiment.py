@@ -195,7 +195,7 @@ class Gridworld(object):
         self.motion_tremble_rate = kwargs.get('motion_tremble_rate', 0)
 
         # Components
-        self.show_chatroom = kwargs.get('show_chatroom', True)
+        self.show_chatroom = kwargs.get('show_chatroom', False)
         self.show_grid = kwargs.get('show_grid', True)
 
         # Identity
