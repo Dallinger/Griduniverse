@@ -61,21 +61,20 @@ function Pixels(data, textures, opts) {
   var regl = require("regl")(canvas);
 
   var initial_texture = [];
-  for (row=0; row < opts.size; row++) {
+  for (row = 0; row < opts.size; row++) {
     rowdata = []
-    for (col=0; col < opts.size; col++) {
+    for (col = 0; col < opts.size; col++) {
       rowdata.push([255, 255, 255]);
     }
     initial_texture.push(rowdata);
   }
   var salt = $("#grid").data("identicon-salt");
-  for (var i=0;i<num_identicons;i++) {
+  for (var i = 0; i < num_identicons; i++) {
     texture = new pixdenticon(md5(salt + i), opts.size).render().buffer;
-    for (row=0; row < opts.size; row++) {
+    for (row = 0; row < opts.size; row++) {
       initial_texture.push(texture[row]);
     }
   }
-
 
   var texture = regl.texture(initial_texture);
 
@@ -112,8 +111,8 @@ function Pixels(data, textures, opts) {
   });
 
   var expanded_colors = [];
-  for(var i = 0; i< colors.length;++i){
-    for(var n = 0; n<6;++n) {
+  for(var i = 0; i < colors.length; ++i){
+    for(var n = 0; n < 6; ++n) {
       expanded_colors.push(colors[i]);
     }
   }
@@ -139,8 +138,8 @@ Pixels.prototype.update = function(data, textures) {
   var colors = self._formatted ? data : convert(data);
   var expanded_colors = [];
 
-  for(var i = 0; i< colors.length;++i){
-    for(var n = 0; n<6;++n) {
+  for(var i = 0; i < colors.length; ++i){
+    for(var n = 0; n < 6; ++n) {
       expanded_colors.push(colors[i]);
     }
   }

@@ -1623,21 +1623,20 @@ function Pixels(data, textures, opts) {
   var regl = __webpack_require__(36)(canvas);
 
   var initial_texture = [];
-  for (row=0; row < opts.size; row++) {
+  for (row = 0; row < opts.size; row++) {
     rowdata = []
-    for (col=0; col < opts.size; col++) {
+    for (col = 0; col < opts.size; col++) {
       rowdata.push([255, 255, 255]);
     }
     initial_texture.push(rowdata);
   }
   var salt = $("#grid").data("identicon-salt");
-  for (var i=0;i<num_identicons;i++) {
+  for (var i = 0; i < num_identicons; i++) {
     texture = new pixdenticon(md5(salt + i), opts.size).render().buffer;
-    for (row=0; row < opts.size; row++) {
+    for (row = 0; row < opts.size; row++) {
       initial_texture.push(texture[row]);
     }
   }
-
 
   var texture = regl.texture(initial_texture);
 
@@ -1674,8 +1673,8 @@ function Pixels(data, textures, opts) {
   });
 
   var expanded_colors = [];
-  for(var i = 0; i< colors.length;++i){
-    for(var n = 0; n<6;++n) {
+  for(var i = 0; i < colors.length; ++i){
+    for(var n = 0; n < 6; ++n) {
       expanded_colors.push(colors[i]);
     }
   }
@@ -1701,8 +1700,8 @@ Pixels.prototype.update = function(data, textures) {
   var colors = self._formatted ? data : convert(data);
   var expanded_colors = [];
 
-  for(var i = 0; i< colors.length;++i){
-    for(var n = 0; n<6;++n) {
+  for(var i = 0; i < colors.length; ++i){
+    for(var n = 0; n < 6; ++n) {
       expanded_colors.push(colors[i]);
     }
   }
@@ -2300,8 +2299,8 @@ Color.prototype = {
 	mix: function (mixinColor, weight) {
 		// ported from sass implementation in C
 		// https://github.com/sass/libsass/blob/0e6b4a2850092356aa3ece07c6b249f0221caced/functions.cpp#L209
-		var color1 = mixinColor.rgb();
-		var color2 = this.rgb();
+		var color1 = this.rgb();
+		var color2 = mixinColor.rgb();
 		var p = weight === undefined ? 0.5 : weight;
 
 		var w = 2 * p - 1;
@@ -4450,10 +4449,10 @@ module.exports = jQuery;
 /* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var require;/*global create_agent, getUrlParameter, require, settings, submitResponses */
+var require;/*global dallinger, require, settings */
 /*jshint esversion: 6 */
 
-(function (getUrlParameter, require, reqwest, settings, submitResponses) {
+(function (dallinger, require, settings) {
 
 var util = __webpack_require__(15);
 var grid = __webpack_require__(7);
@@ -4537,10 +4536,10 @@ class Section {
   }
 }
 
-var background = [];
+  var background = [], color;
 for (var j = 0; j < settings.rows; j++) {
   for (var i = 0; i < settings.columns; i++) {
-    var color = [0, 0, 0];
+      color = [0, 0, 0];
     for (var k = 0; k < 15; k++) {
       color = animateColor(color);
     }
@@ -4571,7 +4570,7 @@ var start = performance.now();
 var food = [];
 var foodConsumed = [];
 var walls = [];
-var row, column, rand, color;
+  var row, column, rand;
 
 name2idx = function(name) {
   var names = settings.player_color_names;
@@ -4638,7 +4637,7 @@ Player.prototype.move = function(direction) {
 
   function _hasWall(position) {
     for (var i = 0; i < walls.length; i++) {
-      if (position == walls[i].position) {
+        if (position === walls[i].position) {
          return false;
       }
     }
@@ -4681,6 +4680,7 @@ Player.prototype.move = function(direction) {
       default:
         console.log("Direction not recognized.");
     }
+
     if (
       !_hasWall(newPosition) &
       (!players.isPlayerAt(position) || settings.player_overlap)
@@ -4702,7 +4702,6 @@ var playerSet = (function () {
         this.ego_id = settings.ego_id;
     };
 
-
     PlayerSet.prototype.isPlayerAt = function (position) {
       var id, player;
 
@@ -4716,7 +4715,6 @@ var playerSet = (function () {
       }
       return false;
     };
-
 
     PlayerSet.prototype.drawToGrid = function (grid) {
       var positions = [],
@@ -4757,7 +4755,7 @@ var playerSet = (function () {
             }
             var texture = 0;
             if (settings.use_identicons) {
-              texture = parseInt(id);
+              texture = parseInt(id, 10);
             }
             grid.plot(player.position[1], player.position[0], color, texture);
             if (id === this.ego_id) {
@@ -4881,7 +4879,6 @@ var playerSet = (function () {
 }());
 
 var GUSocket = (function () {
-
     var makeSocket = function (endpoint, channel, tolerance) {
       var ws_scheme = (window.location.protocol === "https:") ? 'wss://' : 'ws://',
           app_root = ws_scheme + location.host + '/',
@@ -4911,7 +4908,6 @@ var GUSocket = (function () {
           console.log("Unrecognized message type " + msg.type + ' from backend.');
         }
     };
-
 
     /*
      * Public API
@@ -4963,7 +4959,6 @@ var GUSocket = (function () {
       console.log("Broadcasting message to the " + channel + " channel: " + msg);
       this.socket.send(channel + ':' + msg);
     };
-
 
     return Socket;
 }());
@@ -5452,8 +5447,8 @@ function gameOverHandler(isSpectator, player_id) {
 }
 
 $(document).ready(function() {
-  var player_id = getUrlParameter('participant_id');
-  isSpectator = typeof player_id === 'undefined';
+    var player_id = dallinger.getUrlParameter('participant_id');
+    var isSpectator = typeof player_id === 'undefined';
   var socketSettings = {
         'endpoint': 'chat',
         'broadcast': CHANNEL,
@@ -5467,8 +5462,8 @@ $(document).ready(function() {
           'new_round': displayLeaderboards,
           'stop': gameOverHandler(isSpectator, player_id)
         }
-      },
-  socket = new GUSocket(socketSettings);
+    };
+    var socket = new GUSocket(socketSettings);
 
   socket.open().done(function () {
       var data = {
@@ -5476,8 +5471,7 @@ $(document).ready(function() {
         player_id: isSpectator ? 'spectator' : player_id
       };
       socket.send(data);
-    }
-  );
+    });
 
   players.ego_id = player_id;
   $('#donate label').data('orig-text', $('#donate label').text());
@@ -5501,7 +5495,7 @@ $(document).ready(function() {
 
   // Submit the questionnaire.
   $("#submit-questionnaire").click(function() {
-    submitResponses();
+      dallinger.submitResponses();
   });
 
   $("#finish-reading").click(function() {
@@ -5519,13 +5513,9 @@ $(document).ready(function() {
 
     $("#reproduction").val("");
 
-    reqwest({
-      url: "/info/" + my_node_id,  // XXX my_node_id is undefined(?)
-      method: "post",
-      data: { contents: response, info_type: "Info" },
-      success: function(resp) {
-        console.log("Would call create_agent() if defined...");
-      }
+      dallinger.createInfo(my_node_id, {
+        contents: response,
+        info_type: 'Info'
     });
   });
 
@@ -5625,8 +5615,6 @@ $(document).ready(function() {
       };
       // send directly to all clients
       socket.broadcast(msg);
-      // send to the server for recording
-      socket.send(msg);
     } catch(err) {
       console.error(err);
     } finally {
@@ -5634,7 +5622,6 @@ $(document).ready(function() {
       return false;
     }
   });
-
 
   if (!isSpectator) {
     // Main game keys:
@@ -5666,7 +5653,7 @@ $(document).ready(function() {
 
 });
 
-}(getUrlParameter, require, reqwest, settings, submitResponses));
+}(dallinger, require, settings));
 
 
 /***/ }),

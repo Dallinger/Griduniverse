@@ -1,13 +1,13 @@
-/*global Dallinger, submitAssignment */
+/* global dallinger, console */
+/*jshint esversion: 6 */
 
 import { DIFIInput } from 'identityfusion';
-
 
 $(document).ready(function() {
 
   // Initialize DIFI widget
   var $DIFI = $('input.DIFI-input'),
-      spinner = Dallinger.BusyForm();
+      spinner = dallinger.BusyForm();
 
   if ($DIFI.length) {
     var input = new DIFIInput(
@@ -23,10 +23,10 @@ $(document).ready(function() {
   $("#submit-questionnaire").click(function() {
     console.log("Submitting questionnaire.");
     var $elements = [$("form :input"), $(this)],
-        questionSubmission = Dallinger.submitQuestionnaire("questionnaire");
+        questionSubmission = dallinger.submitQuestionnaire("questionnaire");
 
     spinner.freeze($elements);
-    questionSubmission.done(submitAssignment);
+    questionSubmission.done(dallinger.submitAssignment);
     questionSubmission.always(function () {
       spinner.unfreeze();
     });

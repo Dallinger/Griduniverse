@@ -1,7 +1,7 @@
-/*global create_agent, getUrlParameter, require, settings, submitResponses */
+/*global dallinger, require, settings */
 /*jshint esversion: 6 */
 
-(function (getUrlParameter, require, reqwest, settings, submitResponses) {
+(function (dallinger, require, settings) {
 
 var util = require("util");
 var grid = require("./index");
@@ -85,10 +85,10 @@ class Section {
   }
 }
 
-var background = [];
+  var background = [], color;
 for (var j = 0; j < settings.rows; j++) {
   for (var i = 0; i < settings.columns; i++) {
-    var color = [0, 0, 0];
+      color = [0, 0, 0];
     for (var k = 0; k < 15; k++) {
       color = animateColor(color);
     }
@@ -119,7 +119,7 @@ var start = performance.now();
 var food = [];
 var foodConsumed = [];
 var walls = [];
-var row, column, rand, color;
+  var row, column, rand;
 
 name2idx = function(name) {
   var names = settings.player_color_names;
@@ -186,7 +186,7 @@ Player.prototype.move = function(direction) {
 
   function _hasWall(position) {
     for (var i = 0; i < walls.length; i++) {
-      if (position == walls[i].position) {
+        if (position === walls[i].position) {
          return false;
       }
     }
@@ -229,6 +229,7 @@ Player.prototype.move = function(direction) {
       default:
         console.log("Direction not recognized.");
     }
+
     if (
       !_hasWall(newPosition) &
       (!players.isPlayerAt(position) || settings.player_overlap)
@@ -250,7 +251,6 @@ var playerSet = (function () {
         this.ego_id = settings.ego_id;
     };
 
-
     PlayerSet.prototype.isPlayerAt = function (position) {
       var id, player;
 
@@ -264,7 +264,6 @@ var playerSet = (function () {
       }
       return false;
     };
-
 
     PlayerSet.prototype.drawToGrid = function (grid) {
       var positions = [],
@@ -305,7 +304,7 @@ var playerSet = (function () {
             }
             var texture = 0;
             if (settings.use_identicons) {
-              texture = parseInt(id);
+              texture = parseInt(id, 10);
             }
             grid.plot(player.position[1], player.position[0], color, texture);
             if (id === this.ego_id) {
@@ -429,7 +428,6 @@ var playerSet = (function () {
 }());
 
 var GUSocket = (function () {
-
     var makeSocket = function (endpoint, channel, tolerance) {
       var ws_scheme = (window.location.protocol === "https:") ? 'wss://' : 'ws://',
           app_root = ws_scheme + location.host + '/',
@@ -459,7 +457,6 @@ var GUSocket = (function () {
           console.log("Unrecognized message type " + msg.type + ' from backend.');
         }
     };
-
 
     /*
      * Public API
@@ -511,7 +508,6 @@ var GUSocket = (function () {
       console.log("Broadcasting message to the " + channel + " channel: " + msg);
       this.socket.send(channel + ':' + msg);
     };
-
 
     return Socket;
 }());
@@ -1000,8 +996,8 @@ function gameOverHandler(isSpectator, player_id) {
 }
 
 $(document).ready(function() {
-  var player_id = getUrlParameter('participant_id');
-  isSpectator = typeof player_id === 'undefined';
+    var player_id = dallinger.getUrlParameter('participant_id');
+    var isSpectator = typeof player_id === 'undefined';
   var socketSettings = {
         'endpoint': 'chat',
         'broadcast': CHANNEL,
@@ -1015,8 +1011,8 @@ $(document).ready(function() {
           'new_round': displayLeaderboards,
           'stop': gameOverHandler(isSpectator, player_id)
         }
-      },
-  socket = new GUSocket(socketSettings);
+    };
+    var socket = new GUSocket(socketSettings);
 
   socket.open().done(function () {
       var data = {
@@ -1024,8 +1020,7 @@ $(document).ready(function() {
         player_id: isSpectator ? 'spectator' : player_id
       };
       socket.send(data);
-    }
-  );
+    });
 
   players.ego_id = player_id;
   $('#donate label').data('orig-text', $('#donate label').text());
@@ -1049,7 +1044,7 @@ $(document).ready(function() {
 
   // Submit the questionnaire.
   $("#submit-questionnaire").click(function() {
-    submitResponses();
+      dallinger.submitResponses();
   });
 
   $("#finish-reading").click(function() {
@@ -1067,13 +1062,9 @@ $(document).ready(function() {
 
     $("#reproduction").val("");
 
-    reqwest({
-      url: "/info/" + my_node_id,  // XXX my_node_id is undefined(?)
-      method: "post",
-      data: { contents: response, info_type: "Info" },
-      success: function(resp) {
-        console.log("Would call create_agent() if defined...");
-      }
+      dallinger.createInfo(my_node_id, {
+        contents: response,
+        info_type: 'Info'
     });
   });
 
@@ -1173,8 +1164,6 @@ $(document).ready(function() {
       };
       // send directly to all clients
       socket.broadcast(msg);
-      // send to the server for recording
-      socket.send(msg);
     } catch(err) {
       console.error(err);
     } finally {
@@ -1182,7 +1171,6 @@ $(document).ready(function() {
       return false;
     }
   });
-
 
   if (!isSpectator) {
     // Main game keys:
@@ -1214,4 +1202,4 @@ $(document).ready(function() {
 
 });
 
-}(getUrlParameter, require, reqwest, settings, submitResponses));
+}(dallinger, require, settings));
