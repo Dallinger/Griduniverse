@@ -75,8 +75,7 @@
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_identityfusion__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_identityfusion___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_identityfusion__);
-/*global Dallinger, submitAssignment */
-
+/* global dallinger */
 
 
 
@@ -100,10 +99,10 @@ $(document).ready(function() {
   $("#submit-questionnaire").click(function() {
     console.log("Submitting questionnaire.");
     var $elements = [$("form :input"), $(this)],
-        questionSubmission = Dallinger.submitQuestionnaire("questionnaire");
+        questionSubmission = dallinger.submitQuestionnaire("questionnaire");
 
     spinner.freeze($elements);
-    questionSubmission.done(submitAssignment);
+    questionSubmission.done(dallinger.submitAssignment);
     questionSubmission.always(function () {
       spinner.unfreeze();
     });
