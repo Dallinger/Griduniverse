@@ -114,9 +114,11 @@ class TestCommandline(object):
         os.chdir(self.orig_path)
 
     @pytest.fixture
-    def debugger_unpatched(self, env_with_home, output):
+    def debugger_unpatched(self, env, output, clear_workers):
         from dallinger.command_line import DebugSessionRunner
-        debugger = DebugSessionRunner(output, verbose=True, bot=False, exp_config={})
+        debugger = DebugSessionRunner(
+            output, verbose=True, bot=False, proxy_port=None, exp_config={}
+        )
         return debugger
 
     @pytest.fixture
