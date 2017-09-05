@@ -98,7 +98,7 @@ class Saucelabs(object):
                 num_dynos_worker=1,
                 time_per_round=30.0,
            )
-        self.driver.get_screenshot_as_file('griduniverse.png') # see http://seleniumhq.org/docs/04_webdriver_advanced.html#taking-a-screenshot
+        self.driver.get_screenshot_as_file('griduniverse.png')
 
     def teardown(self):
         self.driver.quit()
