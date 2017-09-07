@@ -194,7 +194,7 @@ class Evolve(object):
                 if self.bot:
                     if player-1 in new_parents['scores']:
                         feedback = new_parents['scores'][player-1]
-                    currPay = experiment.average_pay_off(data)
+                    currPay = experiment.average_payoff(data)
                     new_parents['scores'][player] = self.player_feedback(
                                     currPay, lastPay, feedback)
                     lastPay = currPay
