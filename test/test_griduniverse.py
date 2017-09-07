@@ -6,7 +6,6 @@ import os
 import pytest
 import shutil
 import tempfile
-import time
 from dallinger.experiments import Griduniverse
 
 
@@ -48,10 +47,6 @@ def output():
 
 class TestGriduniverse(object):
 
-    @classmethod
-    def setup(cls):
-        pass
-
     def test_bot_api(self):
         """Run bots using headless chrome and collect data."""
         self.experiment = Griduniverse()
@@ -67,9 +62,6 @@ class TestGriduniverse(object):
         results = self.experiment.average_score(data)
         assert results > 0
 
-    @classmethod
-    def teardown(cls):
-        pass
 
 class Saucelabs(object):
 
@@ -102,6 +94,7 @@ class Saucelabs(object):
 
     def teardown(self):
         self.driver.quit()
+
 
 class TestCommandline(object):
 
