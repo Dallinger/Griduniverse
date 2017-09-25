@@ -45,4 +45,4 @@ env:
 
 # command to run tests, e.g. python setup.py test
 script:
-  - travis_wait 30 py.test
+  - py.test

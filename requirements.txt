@@ -1,2 +1,2 @@
--e git://github.com/Dallinger/Dallinger.git@master#egg=dallinger
+dallinger==3.4.1
 faker==0.7.10
