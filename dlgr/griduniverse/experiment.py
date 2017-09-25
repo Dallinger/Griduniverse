@@ -190,7 +190,7 @@ class Gridworld(object):
         self.player_overlap = kwargs.get('player_overlap', False)
 
         # Motion
-        self.motion_speed_limit = kwargs.get('motion_speed_limit', 16)
+        self.motion_speed_limit = kwargs.get('motion_speed_limit', 8)
         self.motion_auto = kwargs.get('motion_auto', False)
         self.motion_cost = kwargs.get('motion_cost', 0)
         self.motion_tremble_rate = kwargs.get('motion_tremble_rate', 0)
