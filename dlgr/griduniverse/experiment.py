@@ -962,8 +962,9 @@ def consent():
 @extra_routes.route("/grid")
 def serve_grid():
     """Return the game stage."""
-    return flask.render_template("grid.html",
-        app_id = config.get('id')
+    return flask.render_template(
+        "grid.html",
+        app_id=config.get('id')
     )
 
 
@@ -1384,7 +1385,7 @@ class Griduniverse(Experiment):
 
     def average_payoff(self, data):
         df = data.infos.df
-        dataState = df.loc[df['type']=='state']
+        dataState = df.loc[df['type'] == 'state']
         final_state = json.loads(dataState.iloc[-1][-2])
         players = final_state['players']
         payoff = [player['payoff'] for player in players]
@@ -1392,7 +1393,7 @@ class Griduniverse(Experiment):
 
     def average_score(self, data):
         df = data.infos.df
-        dataState = df.loc[df['type']=='state']
+        dataState = df.loc[df['type'] == 'state']
         final_state = json.loads(dataState.iloc[-1][-2])
         players = final_state['players']
         scores = [player['score'] for player in players]
