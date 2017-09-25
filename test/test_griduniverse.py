@@ -84,7 +84,8 @@ class TestCommandline(object):
     @pytest.fixture
     def debugger_unpatched(self, env_with_home, output):
         from dallinger.command_line import DebugSessionRunner
-        debugger = DebugSessionRunner(output, verbose=True, bot=False, exp_config={})
+        debugger = DebugSessionRunner(output, verbose=True, bot=False,
+                                      proxy_port=None, exp_config={})
         return debugger
 
     @pytest.fixture
