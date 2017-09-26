@@ -75,7 +75,8 @@
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_identityfusion__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_identityfusion___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_identityfusion__);
-/* global dallinger */
+/* global dallinger, console */
+/*jshint esversion: 6 */
 
 
 
@@ -83,7 +84,7 @@ $(document).ready(function() {
 
   // Initialize DIFI widget
   var $DIFI = $('input.DIFI-input'),
-      spinner = Dallinger.BusyForm();
+      spinner = dallinger.BusyForm();
 
   if ($DIFI.length) {
     var input = new __WEBPACK_IMPORTED_MODULE_0_identityfusion__["DIFIInput"](

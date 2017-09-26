@@ -2,7 +2,7 @@
 
 $(document).ready(function() {
     // wait for participant to be created and quorum to be reached
-    dallinger.create_participant().done(function () {
+    dallinger.createParticipant().done(function () {
         dallinger.goToPage("grid");
     });
 });

@@ -24,6 +24,15 @@ def env():
 
 
 @pytest.fixture
+def exp_dir():
+    """Set up the environment by changing to the experiment dir."""
+    orig_path = os.getcwd()
+    os.chdir(os.path.join("dlgr", "griduniverse"))
+    yield
+    os.chdir(orig_path)
+
+
+@pytest.fixture
 def env_with_home(env):
     original_env = os.environ.copy()
     if 'HOME' not in original_env:
@@ -47,45 +56,31 @@ def output():
 
 class TestGriduniverse(object):
 
-    @classmethod
-    def setup_class(cls):
-        pass
-
     def test_bot_api(self):
         """Run bots using headless chrome and collect data."""
         self.experiment = Griduniverse()
         data = self.experiment.run(
-                mode=u'debug',
-                webdriver_type=u'chrome',
-                recruiter=u'bots',
-                bot_policy=u"AdvantageSeekingBot",
-                max_participants=1,
-                num_dynos_worker=1,
-                time_per_round=30.0,
-           )
+            mode=u'debug',
+            webdriver_type=u'chrome',
+            recruiter=u'bots',
+            bot_policy=u"AdvantageSeekingBot",
+            max_participants=1,
+            num_dynos_worker=1,
+            time_per_round=20.0,
+        )
         results = self.experiment.average_score(data)
         assert results >= 0.0
 
-    @classmethod
-    def teardown_class(cls):
-        pass
 
-
+@pytest.mark.usefixtures('exp_dir', 'env_with_home')
 class TestCommandline(object):
 
-    def setup(self):
-        """Set up the environment by changing to the experiment dir."""
-        self.orig_path = os.getcwd()
-        os.chdir(os.path.join("dlgr", "griduniverse"))
-
-    def teardown(self):
-        os.chdir(self.orig_path)
-
     @pytest.fixture
-    def debugger_unpatched(self, env_with_home, output):
+    def debugger_unpatched(self, output):
         from dallinger.command_line import DebugSessionRunner
-        debugger = DebugSessionRunner(output, verbose=True, bot=False,
-                                      proxy_port=None, exp_config={})
+        debugger = DebugSessionRunner(
+            output, verbose=True, bot=False, proxy_port=None, exp_config={}
+        )
         return debugger
 
     @pytest.fixture
