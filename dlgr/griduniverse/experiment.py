@@ -1080,7 +1080,7 @@ class Griduniverse(Experiment):
 
         param raw_message is a string with a channel prefix, for example:
 
-            'griduniverse:{"type":"move","player":0,"move":"left"}'
+            'griduniverse_ctrl:{"type":"move","player_id":0,"move":"left"}'
         """
         if raw_message.startswith(self.channel + ":"):
             logger.info("We received a message for our channel: {}".format(
