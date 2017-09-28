@@ -201,7 +201,7 @@ class TestCommandline(object):
 
 
 @skip_on_ci
-@pytest.mark.usefixtures('env_with_home')
+@pytest.mark.usefixtures('env')
 class TestGriduniverse(object):
 
     def test_bot_api(self):
