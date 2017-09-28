@@ -4,6 +4,7 @@ Tests for `dlgr.griduniverse` module.
 import collections
 import mock
 import pytest
+from conftest import skip_on_ci
 from dallinger.experiments import Griduniverse
 
 
@@ -71,7 +72,7 @@ class TestExperimentClass(object):
             data.infos.dict['details'] ==
             u'{"move": "left", "type": "move", "actual": "left", "player_id": 1}'
         )
-        results = self.experiment.average_score(data)
+        results = exp.average_score(data)
         assert results >= 0.0
 
     def test_group_donations_distributed_evenly_across_team(self, exp, a):
@@ -199,20 +200,21 @@ class TestCommandline(object):
                 debugger.run()
 
 
-# @pytest.mark.usefixtures('env_with_home')
-# class TestGriduniverse(object):
+@skip_on_ci
+@pytest.mark.usefixtures('env_with_home')
+class TestGriduniverse(object):
 
-#     def test_bot_api(self):
-#         """Run bots using headless chrome and collect data."""
-#         self.experiment = Griduniverse()
-#         data = self.experiment.run(
-#             mode=u'debug',
-#             webdriver_type=u'chrome',
-#             recruiter=u'bots',
-#             bot_policy=u"AdvantageSeekingBot",
-#             max_participants=1,
-#             num_dynos_worker=1,
-#             time_per_round=20.0,
-#         )
-#         results = self.experiment.average_score(data)
-#         assert results > 0
+    def test_bot_api(self):
+        """Run bots using headless chrome and collect data."""
+        self.experiment = Griduniverse()
+        data = self.experiment.run(
+            mode=u'debug',
+            webdriver_type=u'chrome',
+            recruiter=u'bots',
+            bot_policy=u"AdvantageSeekingBot",
+            max_participants=1,
+            num_dynos_worker=1,
+            time_per_round=10.0,
+        )
+        results = self.experiment.average_score(data)
+        assert results >= 0.0
