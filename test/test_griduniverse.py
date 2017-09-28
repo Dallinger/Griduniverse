@@ -64,7 +64,7 @@ class TestGriduniverse(object):
                 time_per_round=30.0,
            )
         results = self.experiment.average_score(data)
-        assert results > 0
+        assert results >= 0.0
 
     @classmethod
     def teardown_class(cls):
