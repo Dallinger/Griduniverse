@@ -1,2 +1,8 @@
+<<<<<<< HEAD
 -e git://github.com/Dallinger/Dallinger.git@development#egg=dallinger[data]
+||||||| merged common ancestors
+-e git://github.com/Dallinger/Dallinger.git@development#egg=dallinger --install-option data
+=======
+-e git://github.com/Dallinger/Dallinger.git@development#egg=dallinger
+>>>>>>> Remove extras.
 faker==0.7.10
