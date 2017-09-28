@@ -7,6 +7,14 @@
     display: none;
 }
 
+.loading {
+    border: 1px solid #9b4dca;
+}
+
+#progress-percentage {
+    vertical-align: top;
+}
+
 #dashboard { }
 
 .GroupIndicator {

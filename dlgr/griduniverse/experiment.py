@@ -988,6 +988,7 @@ class Griduniverse(Experiment):
     def configure(self):
         super(Griduniverse, self).configure()
         self.num_participants = config.get('max_participants', 3)
+        self.quorum = self.num_participants
         self.initial_recruitment_size = config.get('max_participants', 3)
         self.network_factory = config.get('network', 'FullyConnected')
 
@@ -1032,7 +1033,7 @@ class Griduniverse(Experiment):
         self.node_by_player_id = {}
 
     def recruit(self):
-        self.recruiter().close_recruitment()
+        self.recruiter.close_recruitment()
 
     def bonus(self, participant):
         """The bonus to be awarded to the given participant.
@@ -1386,6 +1387,8 @@ class Griduniverse(Experiment):
     def average_payoff(self, data):
         df = data.infos.df
         dataState = df.loc[df['type'] == 'state']
+        if dataState.empty:
+            return 0.0
         final_state = json.loads(dataState.iloc[-1][-2])
         players = final_state['players']
         payoff = [player['payoff'] for player in players]
@@ -1394,6 +1397,8 @@ class Griduniverse(Experiment):
     def average_score(self, data):
         df = data.infos.df
         dataState = df.loc[df['type'] == 'state']
+        if dataState.empty:
+            return 0.0
         final_state = json.loads(dataState.iloc[-1][-2])
         players = final_state['players']
         scores = [player['score'] for player in players]
