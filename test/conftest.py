@@ -9,7 +9,7 @@ import tempfile
 
 
 skip_on_ci = pytest.mark.skipif(
-    os.environ.get('CI', False),
+    bool(os.environ.get('CI', False)),
     reason="Only runs outside of CI environment"
 )
 
