@@ -14,18 +14,22 @@ skip_on_ci = pytest.mark.skipif(
 )
 
 
-@pytest.fixture
+@pytest.fixture(scope='session')
 def env():
     # Heroku requires a home directory to start up
     # We create a fake one using tempfile and set it into the
     # environment to handle sandboxes on CI servers
-
-    fake_home = tempfile.mkdtemp()
-    environ = os.environ.copy()
-    environ.update({'HOME': fake_home})
-    yield environ
-
-    shutil.rmtree(fake_home, ignore_errors=True)
+    environ_orig = os.environ.copy()
+    if not environ_orig.get("CI", False):
+        yield environ_orig
+    else:
+        fake_home = tempfile.mkdtemp()
+        environ_patched = environ_orig.copy()
+        environ_patched.update({'HOME': fake_home})
+        os.environ = environ_patched
+        yield environ_patched
+        os.environ = environ_orig
+        shutil.rmtree(fake_home, ignore_errors=True)
 
 
 @pytest.fixture
@@ -35,15 +39,6 @@ def exp_dir():
     os.chdir(os.path.join("dlgr", "griduniverse"))
     yield
     os.chdir(orig_path)
-
-
-@pytest.fixture
-def env_with_home(env):
-    original_env = os.environ.copy()
-    if 'HOME' not in original_env:
-        os.environ.update(env)
-    yield
-    os.environ = original_env
 
 
 @pytest.fixture

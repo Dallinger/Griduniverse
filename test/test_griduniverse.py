@@ -18,7 +18,7 @@ class TestDependenciesLoaded(object):
         assert tablib is not None
 
 
-@pytest.mark.usefixtures('env_with_home', 'config')
+@pytest.mark.usefixtures('env', 'config')
 class TestExperimentClass(object):
 
     @pytest.fixture
@@ -83,7 +83,7 @@ class TestExperimentClass(object):
         assert results >= 0.0
 
 
-@pytest.mark.usefixtures('exp_dir', 'env_with_home')
+@pytest.mark.usefixtures('exp_dir', 'env')
 class TestCommandline(object):
 
     @pytest.fixture
@@ -117,7 +117,7 @@ class TestCommandline(object):
 
 
 @skip_on_ci
-@pytest.mark.usefixtures('env_with_home')
+@pytest.mark.usefixtures('env')
 class TestGriduniverse(object):
 
     def test_bot_api(self):
