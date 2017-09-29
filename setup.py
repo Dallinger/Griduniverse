@@ -44,6 +44,7 @@ setup_args = dict(
     include_package_data=True,
     install_requires=[
         'setuptools',
+        'networkx==1.11',
     ],
     license='MIT',
     zip_safe=False,
