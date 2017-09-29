@@ -42,10 +42,7 @@ setup_args = dict(
     package_dir={'': '.'},
     namespace_packages=['dlgr'],
     include_package_data=True,
-    install_requires=[
-        'setuptools',
-        'networkx==1.11',
-    ],
+    install_requires=[],
     license='MIT',
     zip_safe=False,
     keywords='Dallinger Griduniverse',
