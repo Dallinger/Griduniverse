@@ -2,6 +2,7 @@
 Tests for `dlgr.griduniverse` module.
 """
 import collections
+import json
 import mock
 import pytest
 from conftest import skip_on_ci
@@ -26,28 +27,28 @@ class TestExperimentClass(object):
         from dallinger.experiment import Experiment
         assert isinstance(exp, Experiment)
 
-    def test_recruiter(self, exp):
+    def test_recruiter_property_is_some_subclass_of_recruiter(self, exp):
         from dallinger.recruiters import Recruiter
         assert isinstance(exp.recruiter, Recruiter)
 
-    def test_has_grid(self, exp):
+    def test_new_experiment_has_a_grid(self, exp):
         from dlgr.griduniverse.experiment import Gridworld
         assert isinstance(exp.grid, Gridworld)
 
-    def test_create_network(self, exp):
+    def test_create_network_builds_default_network_type(self, exp):
         from dallinger.networks import FullyConnected
         net = exp.create_network()
         assert isinstance(net, FullyConnected)
 
-    def test_session(self, exp, db_session):
+    def test_session_is_not_the_dallinger_global(self, exp, db_session):
         # Experiment creates its own session despite being passed one in the
         # __init__() method. Odd?
         assert exp.session is not db_session()
 
-    def test_environment(self, exp):
+    def test_environment_uses_experiments_networks(self, exp):
         exp.environment.network in exp.networks()
 
-    def test_recruit(self, exp):
+    def test_recruit_does_not_raise(self, exp):
         exp.recruit()
 
     def test_handle_connect_creates_node(self, exp, participant):
@@ -62,18 +63,27 @@ class TestExperimentClass(object):
         exp.handle_connect({'player_id': 'spectator'})
         assert exp.node_by_player_id == {}
 
-    def test_records_events(self, exp, participant, config):
+    def test_records_player_events(self, exp, participant):
         exp.handle_connect({'player_id': participant.id})
         exp.send(
-            'griduniverse_ctrl:{"type":"move","player_id":1,"move":"left"}'
+            'griduniverse_ctrl:'
+            '{{"type":"move","player_id":{},"move":"left"}}'.format(participant.id)
         )
         data = exp.retrieve_data()
-        assert (
-            data.infos.dict['details'] ==
-            u'{"move": "left", "type": "move", "actual": "left", "player_id": 1}'
+        event_detail = json.loads(data.infos.dict['details'])
+        assert event_detail['player_id'] == participant.id
+        assert event_detail['move'] == 'left'
+
+    def test_scores_and_payoffs_averaged(self, exp, participant):
+        exp.handle_connect({'player_id': participant.id})
+        exp.send(
+            'griduniverse_ctrl:'
+            '{{"type":"move","player_id":{},"move":"left"}}'.format(participant.id)
         )
-        results = exp.average_score(data)
-        assert results >= 0.0
+        data = exp.retrieve_data()
+        results = json.loads(exp.analyze(data))
+        assert results[u'average_score'] >= 0.0
+        assert results[u'average_payoff'] >= 0.0
 
     def test_group_donations_distributed_evenly_across_team(self, exp, a):
         donor = a.participant()
