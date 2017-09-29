@@ -5429,7 +5429,7 @@ function displayLeaderboards(msg, callback) {
   } else if (callback) callback();
 }
 
-function gameOverHandler(isSpectator, player_id) {
+  function gameOverHandler(player_id) {
   var callback;
   if (!isSpectator) {
     callback = function () {
@@ -5448,7 +5448,7 @@ function gameOverHandler(isSpectator, player_id) {
 
 $(document).ready(function() {
     var player_id = dallinger.getUrlParameter('participant_id');
-    var isSpectator = typeof player_id === 'undefined';
+    isSpectator = typeof player_id === 'undefined';
   var socketSettings = {
         'endpoint': 'chat',
         'broadcast': CHANNEL,
@@ -5460,7 +5460,7 @@ $(document).ready(function() {
           'change_color': onColorChanged,
           'state': onGameStateChange,
           'new_round': displayLeaderboards,
-          'stop': gameOverHandler(isSpectator, player_id)
+        'stop': gameOverHandler(player_id)
         }
     };
     var socket = new GUSocket(socketSettings);
