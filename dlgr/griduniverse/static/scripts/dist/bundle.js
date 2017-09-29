@@ -4095,6 +4095,7 @@ var require;/*global dallinger, require, settings */
   };
 
   var color2name = function(color) {
+    if (typeof(color) === "object") { color = color.join(',');}
     for (var name in PLAYER_COLORS) {
       if (PLAYER_COLORS.hasOwnProperty(name) && PLAYER_COLORS[name].join(',') === color) {
         return name;
@@ -4891,7 +4892,7 @@ var require;/*global dallinger, require, settings */
     } else if (callback) callback();
   }
 
-  function gameOverHandler(isSpectator, player_id) {
+  function gameOverHandler(player_id) {
     var callback;
     if (!isSpectator) {
       callback = function () {
@@ -4910,7 +4911,7 @@ var require;/*global dallinger, require, settings */
 
   $(document).ready(function() {
     var player_id = dallinger.getUrlParameter('participant_id');
-    var isSpectator = typeof player_id === 'undefined';
+    isSpectator = typeof player_id === 'undefined';
     var socketSettings = {
       'endpoint': 'chat',
       'broadcast': CHANNEL,
@@ -4921,7 +4922,7 @@ var require;/*global dallinger, require, settings */
         'donation_processed': onDonationProcessed,
         'state': onGameStateChange,
         'new_round': displayLeaderboards,
-        'stop': gameOverHandler(isSpectator, player_id)
+        'stop': gameOverHandler(player_id)
       }
     };
     var socket = new GUSocket(socketSettings);

@@ -135,6 +135,7 @@
   };
 
   var color2name = function(color) {
+    if (typeof(color) === "object") { color = color.join(',');}
     for (var name in PLAYER_COLORS) {
       if (PLAYER_COLORS.hasOwnProperty(name) && PLAYER_COLORS[name].join(',') === color) {
         return name;
@@ -931,7 +932,7 @@
     } else if (callback) callback();
   }
 
-  function gameOverHandler(isSpectator, player_id) {
+  function gameOverHandler(player_id) {
     var callback;
     if (!isSpectator) {
       callback = function () {
@@ -950,7 +951,7 @@
 
   $(document).ready(function() {
     var player_id = dallinger.getUrlParameter('participant_id');
-    var isSpectator = typeof player_id === 'undefined';
+    isSpectator = typeof player_id === 'undefined';
     var socketSettings = {
       'endpoint': 'chat',
       'broadcast': CHANNEL,
@@ -961,7 +962,7 @@
         'donation_processed': onDonationProcessed,
         'state': onGameStateChange,
         'new_round': displayLeaderboards,
-        'stop': gameOverHandler(isSpectator, player_id)
+        'stop': gameOverHandler(player_id)
       }
     };
     var socket = new GUSocket(socketSettings);

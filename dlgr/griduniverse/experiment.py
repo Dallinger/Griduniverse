@@ -1348,7 +1348,7 @@ class Griduniverse(Experiment):
     def events_for_replay(self):
         info_cls = dallinger.models.Info
         from models import Event
-        events = super(Griduniverse, self).events_for_replay()
+        events = Experiment.events_for_replay(self)
         event_types = {'chat', 'new_round', 'donation_processed'}
         return events.filter(
             or_(info_cls.type == 'state',
