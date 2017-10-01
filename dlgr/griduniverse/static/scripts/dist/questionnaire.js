@@ -33,9 +33,6 @@
 /******/ 	// expose the module cache
 /******/ 	__webpack_require__.c = installedModules;
 /******/
-/******/ 	// identity function for calling harmony imports with the correct context
-/******/ 	__webpack_require__.i = function(value) { return value; };
-/******/
 /******/ 	// define getter function for harmony exports
 /******/ 	__webpack_require__.d = function(exports, name, getter) {
 /******/ 		if(!__webpack_require__.o(exports, name)) {
@@ -63,12 +60,59 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 18);
+/******/ 	return __webpack_require__(__webpack_require__.s = 39);
 /******/ })
 /************************************************************************/
 /******/ ({
 
-/***/ 11:
+/***/ 39:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_identityfusion__ = __webpack_require__(40);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_identityfusion___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_identityfusion__);
+/* global dallinger, console */
+/*jshint esversion: 6 */
+
+
+
+$(document).ready(function() {
+
+  // Initialize DIFI widget
+  var $DIFI = $('input.DIFI-input'),
+      spinner = dallinger.BusyForm();
+
+  if ($DIFI.length) {
+    var input = new __WEBPACK_IMPORTED_MODULE_0_identityfusion__["DIFIInput"](
+      $DIFI.get(0),
+      {
+        groupLabel: $DIFI.attr('data-group-label'),
+        groupImage: $DIFI.attr('data-group-image')
+      }
+    );
+  }
+
+  // Submit the questionnaire.
+  $("#submit-questionnaire").click(function() {
+    console.log("Submitting questionnaire.");
+    var $elements = [$("form :input"), $(this)],
+        questionSubmission = dallinger.submitQuestionnaire("questionnaire");
+
+    spinner.freeze($elements);
+    questionSubmission.done(dallinger.submitAssignment);
+    questionSubmission.always(function () {
+      spinner.unfreeze();
+    });
+
+  });
+
+});
+
+
+/***/ }),
+
+/***/ 40:
 /***/ (function(module, exports, __webpack_require__) {
 
 (function webpackUniversalModuleDefinition(root, factory) {
@@ -1028,53 +1072,6 @@ module.exports = function (css) {
 /******/ ]);
 });
 //# sourceMappingURL=identityfusion.js.map
-
-/***/ }),
-
-/***/ 18:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_identityfusion__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_identityfusion___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_identityfusion__);
-/* global dallinger, console */
-/*jshint esversion: 6 */
-
-
-
-$(document).ready(function() {
-
-  // Initialize DIFI widget
-  var $DIFI = $('input.DIFI-input'),
-      spinner = dallinger.BusyForm();
-
-  if ($DIFI.length) {
-    var input = new __WEBPACK_IMPORTED_MODULE_0_identityfusion__["DIFIInput"](
-      $DIFI.get(0),
-      {
-        groupLabel: $DIFI.attr('data-group-label'),
-        groupImage: $DIFI.attr('data-group-image')
-      }
-    );
-  }
-
-  // Submit the questionnaire.
-  $("#submit-questionnaire").click(function() {
-    console.log("Submitting questionnaire.");
-    var $elements = [$("form :input"), $(this)],
-        questionSubmission = dallinger.submitQuestionnaire("questionnaire");
-
-    spinner.freeze($elements);
-    questionSubmission.done(dallinger.submitAssignment);
-    questionSubmission.always(function () {
-      spinner.unfreeze();
-    });
-
-  });
-
-});
-
 
 /***/ })
 
