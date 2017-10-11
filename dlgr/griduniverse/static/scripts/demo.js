@@ -3,6 +3,14 @@
 
 (function (dallinger, require, settings) {
 
+  var staticState = {
+    'count': 195,
+    'grid': '{"donation_active": true,"rows": 25,"food": [{"color": [0.54, 0.61, 0.06],"position": [8, 7],"id": 0,"maturity": 1.0},{"color": [0.54, 0.61, 0.06],"position": [23, 21],"id": 1,"maturity": 1.0},{"color": [0.54, 0.61, 0.06],"position": [17, 4],"id": 2,"maturity": 1.0},{"color": [0.54, 0.61, 0.06],"position": [13, 24],"id": 3,"maturity": 1.0},{"color": [0.54, 0.61, 0.06],"position": [18, 22],"id": 4,"maturity": 1.0},{"color": [0.54, 0.61, 0.06],"position": [19, 19],"id": 5,"maturity": 1.0},{"color": [0.54, 0.61, 0.06],"position": [5, 3],"id": 6,"maturity": 1.0},{"color": [0.54, 0.61, 0.06],"position": [3, 1],"id": 7,"maturity": 1.0}],"players": [  {"motion_direction": "right","motion_timestamp": 0,"color": [1.0, 0.86, 0.5],"identity_visible": true,"motion_auto": false,"id": "1","payoff": 0.0,"motion_speed_limit": 8,"name": "Ashley Romero","score": 0.0,"position": [23, 6]}],"walls": [],"round": 0,"columns": 25}',
+    'remaining_time': 260.0,
+    'round':0,
+    'type': "state"
+  };
+
   var util = require("util");
   var grid = require("./index");
   var position = require("mouse-position");
@@ -507,6 +515,44 @@
     return Socket;
   }());
 
+var NullSocket = (function () {
+
+    var Socket = function (settings) {
+      if (!(this instanceof Socket)) {
+        return new Socket(settings);
+      }
+
+      var self = this;
+      this.callbackMap = settings.callbackMap;
+    };
+
+    Socket.prototype.open = function () {
+      var msg = staticState;
+      var isOpen = $.Deferred();
+      var callback = this.callbackMap[msg.type];
+      if (typeof callback !== 'undefined') {
+        callback(msg);
+      }
+      isOpen.resolve();
+
+      return isOpen;
+    };
+
+    Socket.prototype.send = function (data) {
+      var msg = JSON.stringify(data);
+
+      console.log("NullSocket NOT sending: " + msg);
+    };
+
+    Socket.prototype.broadcast = function (data) {
+      var msg = JSON.stringify(data);
+
+      console.log("NullSocket NOT broadcasting: " + msg);
+    };
+
+    return Socket;
+  }());
+
   // ego will be updated on page load
   var players = playerSet({'ego_id': undefined});
 
@@ -953,19 +999,25 @@
     var player_id = dallinger.getUrlParameter('participant_id');
     isSpectator = typeof player_id === 'undefined';
     var socketSettings = {
-      'endpoint': 'chat',
-      'broadcast': CHANNEL,
-      'control': CONTROL_CHANNEL,
-      'lagTolerance': 0.001,
-      'callbackMap': {
-        'chat': onChatMessage,
-        'donation_processed': onDonationProcessed,
-        'state': onGameStateChange,
-        'new_round': displayLeaderboards,
-        'stop': gameOverHandler(player_id)
-      }
-    };
-    var socket = new GUSocket(socketSettings);
+          'endpoint': 'chat',
+          'broadcast': CHANNEL,
+          'control': CONTROL_CHANNEL,
+          'lagTolerance': 0.001,
+          'callbackMap': {
+            'chat': onChatMessage,
+            'donation_processed': onDonationProcessed,
+            'state': onGameStateChange,
+            'new_round': displayLeaderboards,
+            'stop': gameOverHandler(player_id)
+          },
+        },
+        socket;
+
+    if (settings.is_tutorial) {
+      socket = new NullSocket(socketSettings);
+    } else {
+      socket = new GUSocket(socketSettings);
+    }
 
     socket.open().done(function () {
       var data = {

@@ -968,6 +968,16 @@ def serve_grid():
     )
 
 
+@extra_routes.route("/tutorial")
+def serve_tutorial():
+    """Return the game stage."""
+    return flask.render_template(
+        "tutorial.html",
+        app_id=config.get('id'),
+        is_tutorial=True,
+    )
+
+
 class Griduniverse(Experiment):
     """Define the structure of the experiment."""
     channel = 'griduniverse_ctrl'
