@@ -1080,7 +1080,7 @@ class Griduniverse(Experiment):
 
         param raw_message is a string with a channel prefix, for example:
 
-            'griduniverse:{"type":"move","player":0,"move":"left"}'
+            'griduniverse_ctrl:{"type":"move","player_id":0,"move":"left"}'
         """
         if raw_message.startswith(self.channel + ":"):
             logger.info("We received a message for our channel: {}".format(
@@ -1348,7 +1348,7 @@ class Griduniverse(Experiment):
     def events_for_replay(self):
         info_cls = dallinger.models.Info
         from models import Event
-        events = super(Griduniverse, self).events_for_replay()
+        events = Experiment.events_for_replay(self)
         event_types = {'chat', 'new_round', 'donation_processed'}
         return events.filter(
             or_(info_cls.type == 'state',
