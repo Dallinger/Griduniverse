@@ -18,6 +18,8 @@
     settings.background_animation = {% if experiment.grid.background_animation %}true{% else %}false{% endif %};
     settings.time_per_round = {{ experiment.grid.time_per_round }};
     settings.num_rounds = {{ experiment.grid.num_rounds }};
+    settings.player_colors = {{ experiment.serialize(experiment.grid.limited_player_colors) }};
+    settings.player_color_names = {{ experiment.serialize(experiment.grid.limited_player_color_names)|safe }};
     settings.tax = {{ experiment.grid.tax }};
     settings.walls = "{{ experiment.grid.wall_type }}";
     settings.show_grid = {% if experiment.grid.show_grid %}true{% else %}false{% endif %};
