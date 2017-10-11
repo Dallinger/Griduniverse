@@ -11,6 +11,8 @@ var ReconnectingWebSocket = require("reconnecting-websocket");
 var $ = require("jquery");
 var gaussian = require("gaussian");
 var Color = require('color');
+var Identicon = require('./util/identicon');
+var md5 = require('./util/md5');
 
 function coordsToIdx(x, y, columns) {
   return y * columns + x;
@@ -759,7 +761,24 @@ function onChatMessage(msg) {
   } else {
     name = "Player " + msg.player_index;
   }
-  entry = "<span class='name'>" + name + ":</span> ";
+  var salt = $("#grid").data("identicon-salt");
+  var id = parseInt(msg.player_id)-1;
+  var fg = players.get(msg.player_id).color.concat(1);
+  fg = fg.map(function(x) { return x * 255; });
+  bg = fg.map(function(x) { return (x * 0.66); });
+  bg[3] = 255;
+  var options = {
+    size: 10,
+    foreground: fg,
+    background: bg,
+    format: 'svg'
+  };
+  var identicon = new Identicon(md5(salt + id), options).toString();
+  var entry = "<span class='name'>" + name;
+  if (settings.use_identicons) {
+    entry = entry + " <img src='data:image/svg+xml;base64," + identicon + "' />";
+  }
+  entry = entry + ":</span> ";
   $("#messages").append(($("<li>").text(msg.contents)).prepend(entry));
   $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
 }
