@@ -1,4 +1,4 @@
--e git://github.com/Dallinger/Dallinger.git@development#egg=dallinger[data]
+-e git://github.com/Dallinger/Dallinger.git@stories/259-waiting-room-fix#egg=dallinger[data]
 setuptools
 networkx==1.11
 faker==0.7.10
