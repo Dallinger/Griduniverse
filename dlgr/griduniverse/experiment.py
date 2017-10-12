@@ -1117,6 +1117,15 @@ class Griduniverse(Experiment):
         )
         return class_(max_size=self.num_participants + 1)
 
+    def create_node(self, *args, **kwargs):
+        try:
+            return super(Griduniverse, self).create_node(*args, **kwargs)
+        finally:
+            if not self.networks(full=False):
+                # If there are no spaces left in our networks we can close
+                # recruitment, to alleviate problems of over-recruitment
+                self.recruiter.close_recruitment()
+
     def setup(self):
         """Setup the networks."""
         if not self.networks():
