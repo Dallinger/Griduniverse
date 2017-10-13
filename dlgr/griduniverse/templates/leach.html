@@ -26,7 +26,7 @@
 {% macro multichoice(name, num_choices) -%}
     {% for i in range(num_choices) %}
         <label class="label-inline"><span class="label-inline">{{ i }}</span></label>
-        <input type="radio" name="{{ name }}" value="{{ i }}">
+        <input type="radio" name="{{ name }}" value="{{ i }}" onChange="check_answers()">
     {% endfor %}
 {%- endmacro %}
 

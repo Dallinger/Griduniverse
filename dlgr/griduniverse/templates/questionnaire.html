@@ -15,7 +15,7 @@
             <p>On a scale of 1-7 (where 7 is the most engaged), please rate how <b>ENGAGED</b> you were while performing the task:</p>
         </div>
         <div class="column column-25">
-            <select id="engagement" name="engagement">
+            <select id="engagement" name="engagement" onChange="check_answers()">
                 <option value="0"></option>
                 <option value="7">7</option>
                 <option value="6">6</option>
@@ -32,7 +32,7 @@
             On a scale of 1-7 (where 7 is the most difficult), please rate how <b>DIFFICULT</b> you found the learning task:
         </div>
         <div class="column column-25">
-            <select id="difficulty" name="difficulty">
+            <select id="difficulty" name="difficulty" onChange="check_answers()">
                 <option value="0"></option>
                 <option value="7">7</option>
                 <option value="6">6</option>
@@ -63,8 +63,26 @@
 </form>
 <hr>
 <div>
-    <button id="submit-questionnaire" type="button" class="button">
+    <button id="submit-questionnaire" type="button" disabled="true" class="button">
         Continue
     </button>
 </div>
+<script type="text/javascript">
+  function check_answers() {
+    var leach_complete, leach_question;
+    if ($('#difficulty').val() == "0" || $('#engagement').val() == "0") { return false; }
+    if ($("input[name='leach_1']").length) {
+      leach_complete = true;
+      for (leach_question=1; leach_question<21; leach_question++) {
+          if ($("input[name='leach_" + leach_question + "']:checked").length == 0) {
+              leach_complete = false;
+              break;
+          }
+      }
+      if (!leach_complete) { return false; }
+    }
+    $('#submit-questionnaire').prop('disabled', false);
+    return true;
+  }
+</script>
 {% endblock %}
