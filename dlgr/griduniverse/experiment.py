@@ -1124,7 +1124,7 @@ class Griduniverse(Experiment):
             if not self.networks(full=False):
                 # If there are no spaces left in our networks we can close
                 # recruitment, to alleviate problems of over-recruitment
-                self.recruiter.close_recruitment()
+                self.recruiter().close_recruitment()
 
     def setup(self):
         """Setup the networks."""
