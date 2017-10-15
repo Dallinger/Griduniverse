@@ -761,6 +761,16 @@
     $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
   }
 
+  function onColorChanged(msg) {
+    var name;
+    if (settings.pseudonyms) {
+      name = players.get(msg.player_id).name;
+    } else {
+      name = "Player " + msg.player_index;
+    }
+    pushMessage("<span class='name'>Moderator:</span> " + name + ' changed from ' + msg.old_color + ' to ' + msg.new_color + '.');
+  }
+
   function onDonationProcessed(msg) {
     var ego = players.ego(),
       donor = players.get(msg.donor_id),
@@ -776,7 +786,7 @@
       donor_name = "Player " + donor.name;
     }
 
-    if (recipient_id === ego.id) {
+    if (ego && recipient_id === ego.id) {
       recipient_name = 'you';
     } else if (recipient_id === 'all') {
       recipient_name = 'all players';
@@ -960,6 +970,7 @@
       'callbackMap': {
         'chat': onChatMessage,
         'donation_processed': onDonationProcessed,
+        'color_changed': onColorChanged,
         'state': onGameStateChange,
         'new_round': displayLeaderboards,
         'stop': gameOverHandler(player_id)
