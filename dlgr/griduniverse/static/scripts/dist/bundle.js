@@ -4930,7 +4930,7 @@ var require;/*global dallinger, require, settings */
       'callbackMap': {
         'chat': onChatMessage,
         'donation_processed': onDonationProcessed,
-        'color_changed': onColorChanged,
+        'change_color': onColorChanged,
         'state': onGameStateChange,
         'new_round': displayLeaderboards,
         'stop': gameOverHandler(player_id)
