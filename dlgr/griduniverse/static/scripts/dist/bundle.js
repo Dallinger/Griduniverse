@@ -5243,7 +5243,7 @@ function onChatMessage(msg) {
     } else {
       name = "Player " + msg.player_index;
     }
-    pushMessage("<span class='name'>Moderator:</span> " + name + ' changed from ' + msg.old_color + ' to ' + msg.new_color + '.');
+    pushMessage("<span class='name'>Moderator:</span> " + name + ' changed from team ' + msg.old_color + ' to team ' + msg.new_color + '.');
   }
 
   function onDonationProcessed(msg) {
