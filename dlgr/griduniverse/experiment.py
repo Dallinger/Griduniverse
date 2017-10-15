@@ -1173,7 +1173,10 @@ class Griduniverse(Experiment):
     def handle_change_color(self, msg):
         player = self.grid.players[msg['player_id']]
         color_idx = Gridworld.player_colors.index(msg['color'])
+        color_name = Gridworld.player_color_names[color_idx]
         old_color = Gridworld.player_color_names[player.color_idx]
+        msg['old_color'] = old_color
+        msg['new_color'] = color_name
 
         if player.color_idx == color_idx:
             return  # Requested color change is no change at all.
@@ -1186,15 +1189,9 @@ class Griduniverse(Experiment):
 
         player.color = msg['color']
         player.color_idx = color_idx
-        player.color_name = Gridworld.player_color_names[color_idx]
-        message = {
-            'type': 'color_changed',
-            'player_id': msg['player_id'],
-            'old_color': old_color,
-            'new_color': player.color_name,
-        }
-        self.publish(message)
-        self.record_event(message, message['player_id'])
+        player.color_name = color_name
+        # Put the message back on the channel
+        self.publish(msg)
 
     def handle_move(self, msg):
         player = self.grid.players[msg['player_id']]
@@ -1375,7 +1372,7 @@ class Griduniverse(Experiment):
         from models import Event
         events = super(Griduniverse, self).events_for_replay()
         events = Experiment.events_for_replay(self)
-        event_types = {'chat', 'new_round', 'donation_processed', 'color_changed'}
+        event_types = {'chat', 'new_round', 'donation_processed', 'change_color'}
         return events.filter(
             or_(info_cls.type == 'state',
                 and_(info_cls.type == 'event',
