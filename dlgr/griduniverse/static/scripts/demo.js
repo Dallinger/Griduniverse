@@ -1006,7 +1006,7 @@ $(document).ready(function() {
         'callbackMap': {
           'chat': onChatMessage,
           'donation_processed': onDonationProcessed,
-          'change_color': onColorChanged,
+          'color_changed': onColorChanged,
           'state': onGameStateChange,
           'new_round': displayLeaderboards,
         'stop': gameOverHandler(player_id)
