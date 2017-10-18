@@ -772,6 +772,11 @@ class Player(object):
 
     def move(self, direction, tremble_rate=0):
         """Move the player."""
+
+        # no motion during alternate donation rounds
+        if self.grid.donation_active:
+            return
+
         if random.random() < tremble_rate:
             direction = self.tremble(direction)
 

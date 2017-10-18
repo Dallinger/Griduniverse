@@ -82,7 +82,13 @@
 
 <div id="chat">
     <div id="chatlog">
-        <ul id="messages"></ul>
+        <ul id="messages">
+            {% if experiment.grid.alternate_consumption_donation %}
+                <li>
+                    <span class="name">Moderator: </span> Starting a consumption round. Players have to consume as much food as possible.
+                </li>
+            {% endif %}
+        </ul>
     </div>
     <form action="" class="for-players">
         <input id="message" autocomplete="off" placeholder="Message the group." />
