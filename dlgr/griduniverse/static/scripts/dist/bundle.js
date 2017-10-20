@@ -4721,6 +4721,16 @@ var require;/*global dallinger, require, settings */
     $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
   }
 
+  function onColorChanged(msg) {
+    var name;
+    if (settings.pseudonyms) {
+      name = players.get(msg.player_id).name;
+    } else {
+      name = "Player " + msg.player_index;
+    }
+    pushMessage("<span class='name'>Moderator:</span> " + name + ' changed from team ' + msg.old_color + ' to team ' + msg.new_color + '.');
+  }
+
   function onDonationProcessed(msg) {
     var ego = players.ego(),
       donor = players.get(msg.donor_id),
@@ -4736,7 +4746,7 @@ var require;/*global dallinger, require, settings */
       donor_name = "Player " + donor.name;
     }
 
-    if (recipient_id === ego.id) {
+    if (ego && recipient_id === ego.id) {
       recipient_name = 'you';
     } else if (recipient_id === 'all') {
       recipient_name = 'all players';
@@ -4920,6 +4930,7 @@ var require;/*global dallinger, require, settings */
       'callbackMap': {
         'chat': onChatMessage,
         'donation_processed': onDonationProcessed,
+        'change_color': onColorChanged,
         'state': onGameStateChange,
         'new_round': displayLeaderboards,
         'stop': gameOverHandler(player_id)
