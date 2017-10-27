@@ -63,59 +63,12 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 16);
+/******/ 	return __webpack_require__(__webpack_require__.s = 18);
 /******/ })
 /************************************************************************/
 /******/ ({
 
-/***/ 16:
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_identityfusion__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_identityfusion___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_identityfusion__);
-/*global Dallinger, submitAssignment */
-
-
-
-
-$(document).ready(function() {
-
-  // Initialize DIFI widget
-  var $DIFI = $('input.DIFI-input'),
-      spinner = Dallinger.BusyForm();
-
-  if ($DIFI.length) {
-    var input = new __WEBPACK_IMPORTED_MODULE_0_identityfusion__["DIFIInput"](
-      $DIFI.get(0),
-      {
-        groupLabel: $DIFI.attr('data-group-label'),
-        groupImage: $DIFI.attr('data-group-image')
-      }
-    );
-  }
-
-  // Submit the questionnaire.
-  $("#submit-questionnaire").click(function() {
-    console.log("Submitting questionnaire.");
-    var $elements = [$("form :input"), $(this)],
-        questionSubmission = Dallinger.submitQuestionnaire("questionnaire");
-
-    spinner.freeze($elements);
-    questionSubmission.done(submitAssignment);
-    questionSubmission.always(function () {
-      spinner.unfreeze();
-    });
-
-  });
-
-});
-
-
-/***/ }),
-
-/***/ 9:
+/***/ 11:
 /***/ (function(module, exports, __webpack_require__) {
 
 (function webpackUniversalModuleDefinition(root, factory) {
@@ -1072,6 +1025,53 @@ module.exports = function (css) {
 /******/ ]);
 });
 //# sourceMappingURL=identityfusion.js.map
+
+/***/ }),
+
+/***/ 18:
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_identityfusion__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_identityfusion___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_identityfusion__);
+/*global Dallinger, submitAssignment */
+
+
+
+
+$(document).ready(function() {
+
+  // Initialize DIFI widget
+  var $DIFI = $('input.DIFI-input'),
+      spinner = Dallinger.BusyForm();
+
+  if ($DIFI.length) {
+    var input = new __WEBPACK_IMPORTED_MODULE_0_identityfusion__["DIFIInput"](
+      $DIFI.get(0),
+      {
+        groupLabel: $DIFI.attr('data-group-label'),
+        groupImage: $DIFI.attr('data-group-image')
+      }
+    );
+  }
+
+  // Submit the questionnaire.
+  $("#submit-questionnaire").click(function() {
+    console.log("Submitting questionnaire.");
+    var $elements = [$("form :input"), $(this)],
+        questionSubmission = Dallinger.submitQuestionnaire("questionnaire");
+
+    spinner.freeze($elements);
+    questionSubmission.done(submitAssignment);
+    questionSubmission.always(function () {
+      spinner.unfreeze();
+    });
+
+  });
+
+});
+
 
 /***/ })
 
