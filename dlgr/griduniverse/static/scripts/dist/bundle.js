@@ -63,15 +63,302 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 15);
+/******/ 	return __webpack_require__(__webpack_require__.s = 17);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
 /***/ (function(module, exports, __webpack_require__) {
 
+var __WEBPACK_AMD_DEFINE_RESULT__;/*
+ * JavaScript MD5
+ * https://github.com/blueimp/JavaScript-MD5
+ *
+ * Copyright 2011, Sebastian Tschan
+ * https://blueimp.net
+ *
+ * Licensed under the MIT license:
+ * https://opensource.org/licenses/MIT
+ *
+ * Based on
+ * A JavaScript implementation of the RSA Data Security, Inc. MD5 Message
+ * Digest Algorithm, as defined in RFC 1321.
+ * Version 2.2 Copyright (C) Paul Johnston 1999 - 2009
+ * Other contributors: Greg Holt, Andrew Kepert, Ydnar, Lostinet
+ * Distributed under the BSD License
+ * See http://pajhome.org.uk/crypt/md5 for more info.
+ */
+
+/* global define */
+
+;(function ($) {
+  'use strict'
+
+  /*
+  * Add integers, wrapping at 2^32. This uses 16-bit operations internally
+  * to work around bugs in some JS interpreters.
+  */
+  function safeAdd (x, y) {
+    var lsw = (x & 0xFFFF) + (y & 0xFFFF)
+    var msw = (x >> 16) + (y >> 16) + (lsw >> 16)
+    return (msw << 16) | (lsw & 0xFFFF)
+  }
+
+  /*
+  * Bitwise rotate a 32-bit number to the left.
+  */
+  function bitRotateLeft (num, cnt) {
+    return (num << cnt) | (num >>> (32 - cnt))
+  }
+
+  /*
+  * These functions implement the four basic operations the algorithm uses.
+  */
+  function md5cmn (q, a, b, x, s, t) {
+    return safeAdd(bitRotateLeft(safeAdd(safeAdd(a, q), safeAdd(x, t)), s), b)
+  }
+  function md5ff (a, b, c, d, x, s, t) {
+    return md5cmn((b & c) | ((~b) & d), a, b, x, s, t)
+  }
+  function md5gg (a, b, c, d, x, s, t) {
+    return md5cmn((b & d) | (c & (~d)), a, b, x, s, t)
+  }
+  function md5hh (a, b, c, d, x, s, t) {
+    return md5cmn(b ^ c ^ d, a, b, x, s, t)
+  }
+  function md5ii (a, b, c, d, x, s, t) {
+    return md5cmn(c ^ (b | (~d)), a, b, x, s, t)
+  }
+
+  /*
+  * Calculate the MD5 of an array of little-endian words, and a bit length.
+  */
+  function binlMD5 (x, len) {
+    /* append padding */
+    x[len >> 5] |= 0x80 << (len % 32)
+    x[(((len + 64) >>> 9) << 4) + 14] = len
+
+    var i
+    var olda
+    var oldb
+    var oldc
+    var oldd
+    var a = 1732584193
+    var b = -271733879
+    var c = -1732584194
+    var d = 271733878
+
+    for (i = 0; i < x.length; i += 16) {
+      olda = a
+      oldb = b
+      oldc = c
+      oldd = d
+
+      a = md5ff(a, b, c, d, x[i], 7, -680876936)
+      d = md5ff(d, a, b, c, x[i + 1], 12, -389564586)
+      c = md5ff(c, d, a, b, x[i + 2], 17, 606105819)
+      b = md5ff(b, c, d, a, x[i + 3], 22, -1044525330)
+      a = md5ff(a, b, c, d, x[i + 4], 7, -176418897)
+      d = md5ff(d, a, b, c, x[i + 5], 12, 1200080426)
+      c = md5ff(c, d, a, b, x[i + 6], 17, -1473231341)
+      b = md5ff(b, c, d, a, x[i + 7], 22, -45705983)
+      a = md5ff(a, b, c, d, x[i + 8], 7, 1770035416)
+      d = md5ff(d, a, b, c, x[i + 9], 12, -1958414417)
+      c = md5ff(c, d, a, b, x[i + 10], 17, -42063)
+      b = md5ff(b, c, d, a, x[i + 11], 22, -1990404162)
+      a = md5ff(a, b, c, d, x[i + 12], 7, 1804603682)
+      d = md5ff(d, a, b, c, x[i + 13], 12, -40341101)
+      c = md5ff(c, d, a, b, x[i + 14], 17, -1502002290)
+      b = md5ff(b, c, d, a, x[i + 15], 22, 1236535329)
+
+      a = md5gg(a, b, c, d, x[i + 1], 5, -165796510)
+      d = md5gg(d, a, b, c, x[i + 6], 9, -1069501632)
+      c = md5gg(c, d, a, b, x[i + 11], 14, 643717713)
+      b = md5gg(b, c, d, a, x[i], 20, -373897302)
+      a = md5gg(a, b, c, d, x[i + 5], 5, -701558691)
+      d = md5gg(d, a, b, c, x[i + 10], 9, 38016083)
+      c = md5gg(c, d, a, b, x[i + 15], 14, -660478335)
+      b = md5gg(b, c, d, a, x[i + 4], 20, -405537848)
+      a = md5gg(a, b, c, d, x[i + 9], 5, 568446438)
+      d = md5gg(d, a, b, c, x[i + 14], 9, -1019803690)
+      c = md5gg(c, d, a, b, x[i + 3], 14, -187363961)
+      b = md5gg(b, c, d, a, x[i + 8], 20, 1163531501)
+      a = md5gg(a, b, c, d, x[i + 13], 5, -1444681467)
+      d = md5gg(d, a, b, c, x[i + 2], 9, -51403784)
+      c = md5gg(c, d, a, b, x[i + 7], 14, 1735328473)
+      b = md5gg(b, c, d, a, x[i + 12], 20, -1926607734)
+
+      a = md5hh(a, b, c, d, x[i + 5], 4, -378558)
+      d = md5hh(d, a, b, c, x[i + 8], 11, -2022574463)
+      c = md5hh(c, d, a, b, x[i + 11], 16, 1839030562)
+      b = md5hh(b, c, d, a, x[i + 14], 23, -35309556)
+      a = md5hh(a, b, c, d, x[i + 1], 4, -1530992060)
+      d = md5hh(d, a, b, c, x[i + 4], 11, 1272893353)
+      c = md5hh(c, d, a, b, x[i + 7], 16, -155497632)
+      b = md5hh(b, c, d, a, x[i + 10], 23, -1094730640)
+      a = md5hh(a, b, c, d, x[i + 13], 4, 681279174)
+      d = md5hh(d, a, b, c, x[i], 11, -358537222)
+      c = md5hh(c, d, a, b, x[i + 3], 16, -722521979)
+      b = md5hh(b, c, d, a, x[i + 6], 23, 76029189)
+      a = md5hh(a, b, c, d, x[i + 9], 4, -640364487)
+      d = md5hh(d, a, b, c, x[i + 12], 11, -421815835)
+      c = md5hh(c, d, a, b, x[i + 15], 16, 530742520)
+      b = md5hh(b, c, d, a, x[i + 2], 23, -995338651)
+
+      a = md5ii(a, b, c, d, x[i], 6, -198630844)
+      d = md5ii(d, a, b, c, x[i + 7], 10, 1126891415)
+      c = md5ii(c, d, a, b, x[i + 14], 15, -1416354905)
+      b = md5ii(b, c, d, a, x[i + 5], 21, -57434055)
+      a = md5ii(a, b, c, d, x[i + 12], 6, 1700485571)
+      d = md5ii(d, a, b, c, x[i + 3], 10, -1894986606)
+      c = md5ii(c, d, a, b, x[i + 10], 15, -1051523)
+      b = md5ii(b, c, d, a, x[i + 1], 21, -2054922799)
+      a = md5ii(a, b, c, d, x[i + 8], 6, 1873313359)
+      d = md5ii(d, a, b, c, x[i + 15], 10, -30611744)
+      c = md5ii(c, d, a, b, x[i + 6], 15, -1560198380)
+      b = md5ii(b, c, d, a, x[i + 13], 21, 1309151649)
+      a = md5ii(a, b, c, d, x[i + 4], 6, -145523070)
+      d = md5ii(d, a, b, c, x[i + 11], 10, -1120210379)
+      c = md5ii(c, d, a, b, x[i + 2], 15, 718787259)
+      b = md5ii(b, c, d, a, x[i + 9], 21, -343485551)
+
+      a = safeAdd(a, olda)
+      b = safeAdd(b, oldb)
+      c = safeAdd(c, oldc)
+      d = safeAdd(d, oldd)
+    }
+    return [a, b, c, d]
+  }
+
+  /*
+  * Convert an array of little-endian words to a string
+  */
+  function binl2rstr (input) {
+    var i
+    var output = ''
+    var length32 = input.length * 32
+    for (i = 0; i < length32; i += 8) {
+      output += String.fromCharCode((input[i >> 5] >>> (i % 32)) & 0xFF)
+    }
+    return output
+  }
+
+  /*
+  * Convert a raw string to an array of little-endian words
+  * Characters >255 have their high-byte silently ignored.
+  */
+  function rstr2binl (input) {
+    var i
+    var output = []
+    output[(input.length >> 2) - 1] = undefined
+    for (i = 0; i < output.length; i += 1) {
+      output[i] = 0
+    }
+    var length8 = input.length * 8
+    for (i = 0; i < length8; i += 8) {
+      output[i >> 5] |= (input.charCodeAt(i / 8) & 0xFF) << (i % 32)
+    }
+    return output
+  }
+
+  /*
+  * Calculate the MD5 of a raw string
+  */
+  function rstrMD5 (s) {
+    return binl2rstr(binlMD5(rstr2binl(s), s.length * 8))
+  }
+
+  /*
+  * Calculate the HMAC-MD5, of a key and some data (raw strings)
+  */
+  function rstrHMACMD5 (key, data) {
+    var i
+    var bkey = rstr2binl(key)
+    var ipad = []
+    var opad = []
+    var hash
+    ipad[15] = opad[15] = undefined
+    if (bkey.length > 16) {
+      bkey = binlMD5(bkey, key.length * 8)
+    }
+    for (i = 0; i < 16; i += 1) {
+      ipad[i] = bkey[i] ^ 0x36363636
+      opad[i] = bkey[i] ^ 0x5C5C5C5C
+    }
+    hash = binlMD5(ipad.concat(rstr2binl(data)), 512 + data.length * 8)
+    return binl2rstr(binlMD5(opad.concat(hash), 512 + 128))
+  }
+
+  /*
+  * Convert a raw string to a hex string
+  */
+  function rstr2hex (input) {
+    var hexTab = '0123456789abcdef'
+    var output = ''
+    var x
+    var i
+    for (i = 0; i < input.length; i += 1) {
+      x = input.charCodeAt(i)
+      output += hexTab.charAt((x >>> 4) & 0x0F) +
+      hexTab.charAt(x & 0x0F)
+    }
+    return output
+  }
+
+  /*
+  * Encode a string as utf-8
+  */
+  function str2rstrUTF8 (input) {
+    return unescape(encodeURIComponent(input))
+  }
+
+  /*
+  * Take string arguments and return either raw or hex encoded strings
+  */
+  function rawMD5 (s) {
+    return rstrMD5(str2rstrUTF8(s))
+  }
+  function hexMD5 (s) {
+    return rstr2hex(rawMD5(s))
+  }
+  function rawHMACMD5 (k, d) {
+    return rstrHMACMD5(str2rstrUTF8(k), str2rstrUTF8(d))
+  }
+  function hexHMACMD5 (k, d) {
+    return rstr2hex(rawHMACMD5(k, d))
+  }
+
+  function md5 (string, key, raw) {
+    if (!key) {
+      if (!raw) {
+        return hexMD5(string)
+      }
+      return rawMD5(string)
+    }
+    if (!raw) {
+      return hexHMACMD5(key, string)
+    }
+    return rawHMACMD5(key, string)
+  }
+
+  if (true) {
+    !(__WEBPACK_AMD_DEFINE_RESULT__ = function () {
+      return md5
+    }.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__))
+  } else if (typeof module === 'object' && module.exports) {
+    module.exports = md5
+  } else {
+    $.md5 = md5
+  }
+}(this))
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
 /* MIT license */
-var cssKeywords = __webpack_require__(1);
+var cssKeywords = __webpack_require__(2);
 
 // NOTE: conversions should only return primitive values (i.e. arrays, or
 //       values that give correct `typeof` results).
@@ -934,7 +1221,7 @@ convert.rgb.gray = function (rgb) {
 
 
 /***/ }),
-/* 1 */
+/* 2 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -1089,7 +1376,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports) {
 
 
@@ -1128,7 +1415,7 @@ module.exports = isArray || function (val) {
 
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1141,7 +1428,7 @@ module.exports = isArray || function (val) {
 
 
 
-var typeOf = __webpack_require__(30);
+var typeOf = __webpack_require__(32);
 
 module.exports = function isNumber(num) {
   var type = typeOf(num);
@@ -1154,7 +1441,7 @@ module.exports = function isNumber(num) {
 
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1181,10 +1468,10 @@ module.exports = function isString(value) {
 
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var convert = __webpack_require__(32);
+var convert = __webpack_require__(34);
 
 module.exports = function (cstr) {
     var m, conv, parts, alpha;
@@ -1270,19 +1557,19 @@ module.exports = function (cstr) {
 
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var parse = __webpack_require__(5);
-var isnumber = __webpack_require__(3);
-var isstring = __webpack_require__(4);
-var isarray = __webpack_require__(2);
-var convert = __webpack_require__(17);
-var layout = __webpack_require__(18);
-var texcoord = __webpack_require__(22);
-var range = __webpack_require__(21);
-var pixdenticon = __webpack_require__(20);
-var md5 = __webpack_require__(19);
+var parse = __webpack_require__(6);
+var isnumber = __webpack_require__(4);
+var isstring = __webpack_require__(5);
+var isarray = __webpack_require__(3);
+var convert = __webpack_require__(19);
+var layout = __webpack_require__(20);
+var texcoord = __webpack_require__(24);
+var range = __webpack_require__(23);
+var pixdenticon = __webpack_require__(21);
+var md5 = __webpack_require__(0);
 
 function Pixels(data, textures, opts) {
   if (!(this instanceof Pixels)) return new Pixels(data, textures, opts);
@@ -1333,7 +1620,7 @@ function Pixels(data, textures, opts) {
     width / height
   );
 
-  var regl = __webpack_require__(34)(canvas);
+  var regl = __webpack_require__(36)(canvas);
 
   var initial_texture = [];
   for (row=0; row < opts.size; row++) {
@@ -1437,14 +1724,218 @@ module.exports = Pixels;
 
 
 /***/ }),
-/* 7 */
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * Identicon.js 2.3.1
+ * http://github.com/stewartlord/identicon.js
+ *
+ * PNGLib required for PNG output
+ * http://www.xarg.org/download/pnglib.js
+ *
+ * Copyright 2017, Stewart Lord
+ * Released under the BSD license
+ * http://www.opensource.org/licenses/bsd-license.php
+ */
+
+(function() {
+    var PNGlib;
+    if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+        PNGlib = __webpack_require__(22);
+    } else {
+        PNGlib = window.PNGlib;
+    }
+
+    var Identicon = function(hash, options){
+        if (typeof(hash) !== 'string' || hash.length < 15) {
+            throw 'A hash of at least 15 characters is required.';
+        }
+
+        this.defaults = {
+            background: [240, 240, 240, 255],
+            margin:     0.08,
+            size:       64,
+            saturation: 0.7,
+            brightness: 0.5,
+            format:     'png'
+        };
+
+        this.options = typeof(options) === 'object' ? options : this.defaults;
+
+        // backward compatibility with old constructor (hash, size, margin)
+        if (typeof(arguments[1]) === 'number') { this.options.size   = arguments[1]; }
+        if (arguments[2])                      { this.options.margin = arguments[2]; }
+
+        this.hash        = hash
+        this.background  = this.options.background || this.defaults.background;
+        this.size        = this.options.size       || this.defaults.size;
+        this.format      = this.options.format     || this.defaults.format;
+        this.margin      = this.options.margin !== undefined ? this.options.margin : this.defaults.margin;
+
+        // foreground defaults to last 7 chars as hue at 70% saturation, 50% brightness
+        var hue          = parseInt(this.hash.substr(-7), 16) / 0xfffffff;
+        var saturation   = this.options.saturation || this.defaults.saturation;
+        var brightness   = this.options.brightness || this.defaults.brightness;
+        this.foreground  = this.options.foreground || this.hsl2rgb(hue, saturation, brightness);
+    };
+
+    Identicon.prototype = {
+        background: null,
+        foreground: null,
+        hash:       null,
+        margin:     null,
+        size:       null,
+        format:     null,
+
+        image: function(){
+            return this.isSvg()
+                ? new Svg(this.size, this.foreground, this.background)
+                : new PNGlib(this.size, this.size, 256);
+        },
+
+        render: function(){
+            var image      = this.image(),
+                size       = this.size,
+                baseMargin = Math.floor(size * this.margin),
+                cell       = Math.floor((size - (baseMargin * 2)) / 5),
+                margin     = Math.floor((size - cell * 5) / 2),
+                bg         = image.color.apply(image, this.background),
+                fg         = image.color.apply(image, this.foreground);
+
+            // the first 15 characters of the hash control the pixels (even/odd)
+            // they are drawn down the middle first, then mirrored outwards
+            var i, color;
+            for (i = 0; i < 15; i++) {
+                color = parseInt(this.hash.charAt(i), 16) % 2 ? bg : fg;
+                if (i < 5) {
+                    this.rectangle(2 * cell + margin, i * cell + margin, cell, cell, color, image);
+                } else if (i < 10) {
+                    this.rectangle(1 * cell + margin, (i - 5) * cell + margin, cell, cell, color, image);
+                    this.rectangle(3 * cell + margin, (i - 5) * cell + margin, cell, cell, color, image);
+                } else if (i < 15) {
+                    this.rectangle(0 * cell + margin, (i - 10) * cell + margin, cell, cell, color, image);
+                    this.rectangle(4 * cell + margin, (i - 10) * cell + margin, cell, cell, color, image);
+                }
+            }
+
+            return image;
+        },
+
+        rectangle: function(x, y, w, h, color, image){
+            if (this.isSvg()) {
+                image.rectangles.push({x: x, y: y, w: w, h: h, color: color});
+            } else {
+                var i, j;
+                for (i = x; i < x + w; i++) {
+                    for (j = y; j < y + h; j++) {
+                        image.buffer[image.index(i, j)] = color;
+                    }
+                }
+            }
+        },
+
+        // adapted from: https://gist.github.com/aemkei/1325937
+        hsl2rgb: function(h, s, b){
+            h *= 6;
+            s = [
+                b += s *= b < .5 ? b : 1 - b,
+                b - h % 1 * s * 2,
+                b -= s *= 2,
+                b,
+                b + h % 1 * s,
+                b + s
+            ];
+
+            return[
+                s[ ~~h    % 6 ] * 255, // red
+                s[ (h|16) % 6 ] * 255, // green
+                s[ (h|8)  % 6 ] * 255  // blue
+            ];
+        },
+
+        toString: function(raw){
+            // backward compatibility with old toString, default to base64
+            if (raw) {
+                return this.render().getDump();
+            } else {
+                return this.render().getBase64();
+            }
+        },
+
+        isSvg: function(){
+            return this.format.match(/svg/i)
+        }
+    };
+
+    var Svg = function(size, foreground, background){
+        this.size       = size;
+        this.foreground = this.color.apply(this, foreground);
+        this.background = this.color.apply(this, background);
+        this.rectangles = [];
+    };
+
+    Svg.prototype = {
+        size:       null,
+        foreground: null,
+        background: null,
+        rectangles: null,
+
+        color: function(r, g, b, a){
+            var values = [r, g, b].map(Math.round);
+            values.push((a >= 0) && (a <= 255) ? a/255 : 1);
+            return 'rgba(' + values.join(',') + ')';
+        },
+
+        getDump: function(){
+          var i,
+                xml,
+                rect,
+                fg     = this.foreground,
+                bg     = this.background,
+                stroke = this.size * 0.005;
+
+            xml = "<svg xmlns='http://www.w3.org/2000/svg'"
+                + " width='" + this.size + "' height='" + this.size + "'"
+                + " style='background-color:" + bg + ";'>"
+                + "<g style='fill:" + fg + "; stroke:" + fg + "; stroke-width:" + stroke + ";'>";
+
+            for (i = 0; i < this.rectangles.length; i++) {
+                rect = this.rectangles[i];
+                if (rect.color == bg) continue;
+                xml += "<rect "
+                    + " x='"      + rect.x + "'"
+                    + " y='"      + rect.y + "'"
+                    + " width='"  + rect.w + "'"
+                    + " height='" + rect.h + "'"
+                    + "/>";
+            }
+            xml += "</g></svg>"
+
+            return xml;
+        },
+
+        getBase64: function(){
+            return btoa(this.getDump());
+        }
+    };
+
+    if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+        module.exports = Identicon;
+    } else {
+        window.Identicon = Identicon;
+    }
+})();
+
+/***/ }),
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var colorString = __webpack_require__(25);
-var convert = __webpack_require__(23);
+var colorString = __webpack_require__(27);
+var convert = __webpack_require__(25);
 
 var _slice = [].slice;
 
@@ -1923,7 +2414,7 @@ module.exports = Color;
 
 
 /***/ }),
-/* 8 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function(exports) {
@@ -2042,11 +2533,11 @@ module.exports = Color;
 
 
 /***/ }),
-/* 9 */,
-/* 10 */
+/* 11 */,
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Emitter = __webpack_require__(26)
+var Emitter = __webpack_require__(28)
 
 module.exports = attach
 
@@ -2094,7 +2585,7 @@ function attach(element, listener) {
 
 
 /***/ }),
-/* 11 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/*global define:false */
@@ -3145,7 +3636,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*global define:false */
 
 
 /***/ }),
-/* 12 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3357,7 +3848,7 @@ module.exports = ReconnectingWebsocket;
 
 
 /***/ }),
-/* 13 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -3885,7 +4376,7 @@ function isPrimitive(arg) {
 }
 exports.isPrimitive = isPrimitive;
 
-exports.isBuffer = __webpack_require__(37);
+exports.isBuffer = __webpack_require__(39);
 
 function objectToString(o) {
   return Object.prototype.toString.call(o);
@@ -3929,7 +4420,7 @@ exports.log = function() {
  *     prototype.
  * @param {function} superCtor Constructor function to inherit prototype from.
  */
-exports.inherits = __webpack_require__(36);
+exports.inherits = __webpack_require__(38);
 
 exports._extend = function(origin, add) {
   // Don't do anything if add isn't an object
@@ -3947,16 +4438,16 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(38), __webpack_require__(33)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(40), __webpack_require__(35)))
 
 /***/ }),
-/* 14 */
+/* 16 */
 /***/ (function(module, exports) {
 
 module.exports = jQuery;
 
 /***/ }),
-/* 15 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var require;/*global create_agent, getUrlParameter, require, settings, submitResponses */
@@ -3964,14 +4455,16 @@ var require;/*global create_agent, getUrlParameter, require, settings, submitRes
 
 (function (getUrlParameter, require, reqwest, settings, submitResponses) {
 
-var util = __webpack_require__(13);
-var grid = __webpack_require__(6);
-var position = __webpack_require__(10);
-var Mousetrap = __webpack_require__(11);
-var ReconnectingWebSocket = __webpack_require__(12);
-var $ = __webpack_require__(14);
-var gaussian = __webpack_require__(8);
-var Color = __webpack_require__(7);
+var util = __webpack_require__(15);
+var grid = __webpack_require__(7);
+var position = __webpack_require__(12);
+var Mousetrap = __webpack_require__(13);
+var ReconnectingWebSocket = __webpack_require__(14);
+var $ = __webpack_require__(16);
+var gaussian = __webpack_require__(10);
+var Color = __webpack_require__(9);
+var Identicon = __webpack_require__(8);
+var md5 = __webpack_require__(0);
 
 function coordsToIdx(x, y, columns) {
   return y * columns + x;
@@ -4721,7 +5214,24 @@ function onChatMessage(msg) {
   } else {
     name = "Player " + msg.player_index;
   }
-  entry = "<span class='name'>" + name + ":</span> ";
+  var salt = $("#grid").data("identicon-salt");
+  var id = parseInt(msg.player_id)-1;
+  var fg = players.get(msg.player_id).color.concat(1);
+  fg = fg.map(function(x) { return x * 255; });
+  bg = fg.map(function(x) { return (x * 0.66); });
+  bg[3] = 255;
+  var options = {
+    size: 10,
+    foreground: fg,
+    background: bg,
+    format: 'svg'
+  };
+  var identicon = new Identicon(md5(salt + id), options).toString();
+  var entry = "<span class='name'>" + name;
+  if (settings.use_identicons) {
+    entry = entry + " <img src='data:image/svg+xml;base64," + identicon + "' />";
+  }
+  entry = entry + ":</span> ";
   $("#messages").append(($("<li>").text(msg.contents)).prepend(entry));
   $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
 }
@@ -5117,15 +5627,15 @@ $(document).ready(function() {
 
 
 /***/ }),
-/* 16 */,
-/* 17 */
+/* 18 */,
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var flatten = __webpack_require__(27);
-var isarray = __webpack_require__(2);
-var isnumber = __webpack_require__(3);
-var isstring = __webpack_require__(4);
-var parse = __webpack_require__(5);
+var flatten = __webpack_require__(29);
+var isarray = __webpack_require__(3);
+var isnumber = __webpack_require__(4);
+var isstring = __webpack_require__(5);
+var parse = __webpack_require__(6);
 
 function convert(data) {
   data = isarray(data[0]) && data[0].length !== 3 ? flatten(data, 1) : data;
@@ -5151,7 +5661,7 @@ module.exports = convert;
 
 
 /***/ }),
-/* 18 */
+/* 20 */
 /***/ (function(module, exports) {
 
 function layout(rows, columns, padding, size, aspect) {
@@ -5182,294 +5692,7 @@ module.exports = layout;
 
 
 /***/ }),
-/* 19 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var __WEBPACK_AMD_DEFINE_RESULT__;/*
- * JavaScript MD5
- * https://github.com/blueimp/JavaScript-MD5
- *
- * Copyright 2011, Sebastian Tschan
- * https://blueimp.net
- *
- * Licensed under the MIT license:
- * https://opensource.org/licenses/MIT
- *
- * Based on
- * A JavaScript implementation of the RSA Data Security, Inc. MD5 Message
- * Digest Algorithm, as defined in RFC 1321.
- * Version 2.2 Copyright (C) Paul Johnston 1999 - 2009
- * Other contributors: Greg Holt, Andrew Kepert, Ydnar, Lostinet
- * Distributed under the BSD License
- * See http://pajhome.org.uk/crypt/md5 for more info.
- */
-
-/* global define */
-
-;(function ($) {
-  'use strict'
-
-  /*
-  * Add integers, wrapping at 2^32. This uses 16-bit operations internally
-  * to work around bugs in some JS interpreters.
-  */
-  function safeAdd (x, y) {
-    var lsw = (x & 0xFFFF) + (y & 0xFFFF)
-    var msw = (x >> 16) + (y >> 16) + (lsw >> 16)
-    return (msw << 16) | (lsw & 0xFFFF)
-  }
-
-  /*
-  * Bitwise rotate a 32-bit number to the left.
-  */
-  function bitRotateLeft (num, cnt) {
-    return (num << cnt) | (num >>> (32 - cnt))
-  }
-
-  /*
-  * These functions implement the four basic operations the algorithm uses.
-  */
-  function md5cmn (q, a, b, x, s, t) {
-    return safeAdd(bitRotateLeft(safeAdd(safeAdd(a, q), safeAdd(x, t)), s), b)
-  }
-  function md5ff (a, b, c, d, x, s, t) {
-    return md5cmn((b & c) | ((~b) & d), a, b, x, s, t)
-  }
-  function md5gg (a, b, c, d, x, s, t) {
-    return md5cmn((b & d) | (c & (~d)), a, b, x, s, t)
-  }
-  function md5hh (a, b, c, d, x, s, t) {
-    return md5cmn(b ^ c ^ d, a, b, x, s, t)
-  }
-  function md5ii (a, b, c, d, x, s, t) {
-    return md5cmn(c ^ (b | (~d)), a, b, x, s, t)
-  }
-
-  /*
-  * Calculate the MD5 of an array of little-endian words, and a bit length.
-  */
-  function binlMD5 (x, len) {
-    /* append padding */
-    x[len >> 5] |= 0x80 << (len % 32)
-    x[(((len + 64) >>> 9) << 4) + 14] = len
-
-    var i
-    var olda
-    var oldb
-    var oldc
-    var oldd
-    var a = 1732584193
-    var b = -271733879
-    var c = -1732584194
-    var d = 271733878
-
-    for (i = 0; i < x.length; i += 16) {
-      olda = a
-      oldb = b
-      oldc = c
-      oldd = d
-
-      a = md5ff(a, b, c, d, x[i], 7, -680876936)
-      d = md5ff(d, a, b, c, x[i + 1], 12, -389564586)
-      c = md5ff(c, d, a, b, x[i + 2], 17, 606105819)
-      b = md5ff(b, c, d, a, x[i + 3], 22, -1044525330)
-      a = md5ff(a, b, c, d, x[i + 4], 7, -176418897)
-      d = md5ff(d, a, b, c, x[i + 5], 12, 1200080426)
-      c = md5ff(c, d, a, b, x[i + 6], 17, -1473231341)
-      b = md5ff(b, c, d, a, x[i + 7], 22, -45705983)
-      a = md5ff(a, b, c, d, x[i + 8], 7, 1770035416)
-      d = md5ff(d, a, b, c, x[i + 9], 12, -1958414417)
-      c = md5ff(c, d, a, b, x[i + 10], 17, -42063)
-      b = md5ff(b, c, d, a, x[i + 11], 22, -1990404162)
-      a = md5ff(a, b, c, d, x[i + 12], 7, 1804603682)
-      d = md5ff(d, a, b, c, x[i + 13], 12, -40341101)
-      c = md5ff(c, d, a, b, x[i + 14], 17, -1502002290)
-      b = md5ff(b, c, d, a, x[i + 15], 22, 1236535329)
-
-      a = md5gg(a, b, c, d, x[i + 1], 5, -165796510)
-      d = md5gg(d, a, b, c, x[i + 6], 9, -1069501632)
-      c = md5gg(c, d, a, b, x[i + 11], 14, 643717713)
-      b = md5gg(b, c, d, a, x[i], 20, -373897302)
-      a = md5gg(a, b, c, d, x[i + 5], 5, -701558691)
-      d = md5gg(d, a, b, c, x[i + 10], 9, 38016083)
-      c = md5gg(c, d, a, b, x[i + 15], 14, -660478335)
-      b = md5gg(b, c, d, a, x[i + 4], 20, -405537848)
-      a = md5gg(a, b, c, d, x[i + 9], 5, 568446438)
-      d = md5gg(d, a, b, c, x[i + 14], 9, -1019803690)
-      c = md5gg(c, d, a, b, x[i + 3], 14, -187363961)
-      b = md5gg(b, c, d, a, x[i + 8], 20, 1163531501)
-      a = md5gg(a, b, c, d, x[i + 13], 5, -1444681467)
-      d = md5gg(d, a, b, c, x[i + 2], 9, -51403784)
-      c = md5gg(c, d, a, b, x[i + 7], 14, 1735328473)
-      b = md5gg(b, c, d, a, x[i + 12], 20, -1926607734)
-
-      a = md5hh(a, b, c, d, x[i + 5], 4, -378558)
-      d = md5hh(d, a, b, c, x[i + 8], 11, -2022574463)
-      c = md5hh(c, d, a, b, x[i + 11], 16, 1839030562)
-      b = md5hh(b, c, d, a, x[i + 14], 23, -35309556)
-      a = md5hh(a, b, c, d, x[i + 1], 4, -1530992060)
-      d = md5hh(d, a, b, c, x[i + 4], 11, 1272893353)
-      c = md5hh(c, d, a, b, x[i + 7], 16, -155497632)
-      b = md5hh(b, c, d, a, x[i + 10], 23, -1094730640)
-      a = md5hh(a, b, c, d, x[i + 13], 4, 681279174)
-      d = md5hh(d, a, b, c, x[i], 11, -358537222)
-      c = md5hh(c, d, a, b, x[i + 3], 16, -722521979)
-      b = md5hh(b, c, d, a, x[i + 6], 23, 76029189)
-      a = md5hh(a, b, c, d, x[i + 9], 4, -640364487)
-      d = md5hh(d, a, b, c, x[i + 12], 11, -421815835)
-      c = md5hh(c, d, a, b, x[i + 15], 16, 530742520)
-      b = md5hh(b, c, d, a, x[i + 2], 23, -995338651)
-
-      a = md5ii(a, b, c, d, x[i], 6, -198630844)
-      d = md5ii(d, a, b, c, x[i + 7], 10, 1126891415)
-      c = md5ii(c, d, a, b, x[i + 14], 15, -1416354905)
-      b = md5ii(b, c, d, a, x[i + 5], 21, -57434055)
-      a = md5ii(a, b, c, d, x[i + 12], 6, 1700485571)
-      d = md5ii(d, a, b, c, x[i + 3], 10, -1894986606)
-      c = md5ii(c, d, a, b, x[i + 10], 15, -1051523)
-      b = md5ii(b, c, d, a, x[i + 1], 21, -2054922799)
-      a = md5ii(a, b, c, d, x[i + 8], 6, 1873313359)
-      d = md5ii(d, a, b, c, x[i + 15], 10, -30611744)
-      c = md5ii(c, d, a, b, x[i + 6], 15, -1560198380)
-      b = md5ii(b, c, d, a, x[i + 13], 21, 1309151649)
-      a = md5ii(a, b, c, d, x[i + 4], 6, -145523070)
-      d = md5ii(d, a, b, c, x[i + 11], 10, -1120210379)
-      c = md5ii(c, d, a, b, x[i + 2], 15, 718787259)
-      b = md5ii(b, c, d, a, x[i + 9], 21, -343485551)
-
-      a = safeAdd(a, olda)
-      b = safeAdd(b, oldb)
-      c = safeAdd(c, oldc)
-      d = safeAdd(d, oldd)
-    }
-    return [a, b, c, d]
-  }
-
-  /*
-  * Convert an array of little-endian words to a string
-  */
-  function binl2rstr (input) {
-    var i
-    var output = ''
-    var length32 = input.length * 32
-    for (i = 0; i < length32; i += 8) {
-      output += String.fromCharCode((input[i >> 5] >>> (i % 32)) & 0xFF)
-    }
-    return output
-  }
-
-  /*
-  * Convert a raw string to an array of little-endian words
-  * Characters >255 have their high-byte silently ignored.
-  */
-  function rstr2binl (input) {
-    var i
-    var output = []
-    output[(input.length >> 2) - 1] = undefined
-    for (i = 0; i < output.length; i += 1) {
-      output[i] = 0
-    }
-    var length8 = input.length * 8
-    for (i = 0; i < length8; i += 8) {
-      output[i >> 5] |= (input.charCodeAt(i / 8) & 0xFF) << (i % 32)
-    }
-    return output
-  }
-
-  /*
-  * Calculate the MD5 of a raw string
-  */
-  function rstrMD5 (s) {
-    return binl2rstr(binlMD5(rstr2binl(s), s.length * 8))
-  }
-
-  /*
-  * Calculate the HMAC-MD5, of a key and some data (raw strings)
-  */
-  function rstrHMACMD5 (key, data) {
-    var i
-    var bkey = rstr2binl(key)
-    var ipad = []
-    var opad = []
-    var hash
-    ipad[15] = opad[15] = undefined
-    if (bkey.length > 16) {
-      bkey = binlMD5(bkey, key.length * 8)
-    }
-    for (i = 0; i < 16; i += 1) {
-      ipad[i] = bkey[i] ^ 0x36363636
-      opad[i] = bkey[i] ^ 0x5C5C5C5C
-    }
-    hash = binlMD5(ipad.concat(rstr2binl(data)), 512 + data.length * 8)
-    return binl2rstr(binlMD5(opad.concat(hash), 512 + 128))
-  }
-
-  /*
-  * Convert a raw string to a hex string
-  */
-  function rstr2hex (input) {
-    var hexTab = '0123456789abcdef'
-    var output = ''
-    var x
-    var i
-    for (i = 0; i < input.length; i += 1) {
-      x = input.charCodeAt(i)
-      output += hexTab.charAt((x >>> 4) & 0x0F) +
-      hexTab.charAt(x & 0x0F)
-    }
-    return output
-  }
-
-  /*
-  * Encode a string as utf-8
-  */
-  function str2rstrUTF8 (input) {
-    return unescape(encodeURIComponent(input))
-  }
-
-  /*
-  * Take string arguments and return either raw or hex encoded strings
-  */
-  function rawMD5 (s) {
-    return rstrMD5(str2rstrUTF8(s))
-  }
-  function hexMD5 (s) {
-    return rstr2hex(rawMD5(s))
-  }
-  function rawHMACMD5 (k, d) {
-    return rstrHMACMD5(str2rstrUTF8(k), str2rstrUTF8(d))
-  }
-  function hexHMACMD5 (k, d) {
-    return rstr2hex(rawHMACMD5(k, d))
-  }
-
-  function md5 (string, key, raw) {
-    if (!key) {
-      if (!raw) {
-        return hexMD5(string)
-      }
-      return rawMD5(string)
-    }
-    if (!raw) {
-      return hexHMACMD5(key, string)
-    }
-    return rawHMACMD5(key, string)
-  }
-
-  if (true) {
-    !(__WEBPACK_AMD_DEFINE_RESULT__ = function () {
-      return md5
-    }.call(exports, __webpack_require__, exports, module),
-				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__))
-  } else if (typeof module === 'object' && module.exports) {
-    module.exports = md5
-  } else {
-    $.md5 = md5
-  }
-}(this))
-
-/***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports) {
 
 /**
@@ -5576,7 +5799,226 @@ module.exports = Identicon;
 
 
 /***/ }),
-/* 21 */
+/* 22 */
+/***/ (function(module, exports) {
+
+/**
+* A handy class to calculate color values.
+*
+* @version 1.0
+* @author Robert Eisele <robert@xarg.org>
+* @copyright Copyright (c) 2010, Robert Eisele
+* @link http://www.xarg.org/2010/03/generate-client-side-png-files-using-javascript/
+* @license http://www.opensource.org/licenses/bsd-license.php BSD License
+*
+*/
+
+(function() {
+    
+        // helper functions for that ctx
+        function write(buffer, offs) {
+            for (var i = 2; i < arguments.length; i++) {
+                for (var j = 0; j < arguments[i].length; j++) {
+                    buffer[offs++] = arguments[i].charAt(j);
+                }
+            }
+        }
+    
+        function byte2(w) {
+            return String.fromCharCode((w >> 8) & 255, w & 255);
+        }
+    
+        function byte4(w) {
+            return String.fromCharCode((w >> 24) & 255, (w >> 16) & 255, (w >> 8) & 255, w & 255);
+        }
+    
+        function byte2lsb(w) {
+            return String.fromCharCode(w & 255, (w >> 8) & 255);
+        }
+    
+        // modified from original source to support NPM
+        var PNGlib = function(width,height,depth) {
+    
+            this.width   = width;
+            this.height  = height;
+            this.depth   = depth;
+    
+            // pixel data and row filter identifier size
+            this.pix_size = height * (width + 1);
+    
+            // deflate header, pix_size, block headers, adler32 checksum
+            this.data_size = 2 + this.pix_size + 5 * Math.floor((0xfffe + this.pix_size) / 0xffff) + 4;
+    
+            // offsets and sizes of Png chunks
+            this.ihdr_offs = 0;									// IHDR offset and size
+            this.ihdr_size = 4 + 4 + 13 + 4;
+            this.plte_offs = this.ihdr_offs + this.ihdr_size;	// PLTE offset and size
+            this.plte_size = 4 + 4 + 3 * depth + 4;
+            this.trns_offs = this.plte_offs + this.plte_size;	// tRNS offset and size
+            this.trns_size = 4 + 4 + depth + 4;
+            this.idat_offs = this.trns_offs + this.trns_size;	// IDAT offset and size
+            this.idat_size = 4 + 4 + this.data_size + 4;
+            this.iend_offs = this.idat_offs + this.idat_size;	// IEND offset and size
+            this.iend_size = 4 + 4 + 4;
+            this.buffer_size  = this.iend_offs + this.iend_size;	// total PNG size
+    
+            this.buffer  = new Array();
+            this.palette = new Object();
+            this.pindex  = 0;
+    
+            var _crc32 = new Array();
+    
+            // initialize buffer with zero bytes
+            for (var i = 0; i < this.buffer_size; i++) {
+                this.buffer[i] = "\x00";
+            }
+    
+            // initialize non-zero elements
+            write(this.buffer, this.ihdr_offs, byte4(this.ihdr_size - 12), 'IHDR', byte4(width), byte4(height), "\x08\x03");
+            write(this.buffer, this.plte_offs, byte4(this.plte_size - 12), 'PLTE');
+            write(this.buffer, this.trns_offs, byte4(this.trns_size - 12), 'tRNS');
+            write(this.buffer, this.idat_offs, byte4(this.idat_size - 12), 'IDAT');
+            write(this.buffer, this.iend_offs, byte4(this.iend_size - 12), 'IEND');
+    
+            // initialize deflate header
+            var header = ((8 + (7 << 4)) << 8) | (3 << 6);
+            header+= 31 - (header % 31);
+    
+            write(this.buffer, this.idat_offs + 8, byte2(header));
+    
+            // initialize deflate block headers
+            for (var i = 0; (i << 16) - 1 < this.pix_size; i++) {
+                var size, bits;
+                if (i + 0xffff < this.pix_size) {
+                    size = 0xffff;
+                    bits = "\x00";
+                } else {
+                    size = this.pix_size - (i << 16) - i;
+                    bits = "\x01";
+                }
+                write(this.buffer, this.idat_offs + 8 + 2 + (i << 16) + (i << 2), bits, byte2lsb(size), byte2lsb(~size));
+            }
+    
+            /* Create crc32 lookup table */
+            for (var i = 0; i < 256; i++) {
+                var c = i;
+                for (var j = 0; j < 8; j++) {
+                    if (c & 1) {
+                        c = -306674912 ^ ((c >> 1) & 0x7fffffff);
+                    } else {
+                        c = (c >> 1) & 0x7fffffff;
+                    }
+                }
+                _crc32[i] = c;
+            }
+    
+            // compute the index into a png for a given pixel
+            this.index = function(x,y) {
+                var i = y * (this.width + 1) + x + 1;
+                var j = this.idat_offs + 8 + 2 + 5 * Math.floor((i / 0xffff) + 1) + i;
+                return j;
+            }
+    
+            // convert a color and build up the palette
+            this.color = function(red, green, blue, alpha) {
+    
+                alpha = alpha >= 0 ? alpha : 255;
+                var color = (((((alpha << 8) | red) << 8) | green) << 8) | blue;
+    
+                if (typeof this.palette[color] == "undefined") {
+                    if (this.pindex == this.depth) return "\x00";
+    
+                    var ndx = this.plte_offs + 8 + 3 * this.pindex;
+    
+                    this.buffer[ndx + 0] = String.fromCharCode(red);
+                    this.buffer[ndx + 1] = String.fromCharCode(green);
+                    this.buffer[ndx + 2] = String.fromCharCode(blue);
+                    this.buffer[this.trns_offs+8+this.pindex] = String.fromCharCode(alpha);
+    
+                    this.palette[color] = String.fromCharCode(this.pindex++);
+                }
+                return this.palette[color];
+            }
+    
+            // output a PNG string, Base64 encoded
+            this.getBase64 = function() {
+    
+                var s = this.getDump();
+    
+                var ch = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+                var c1, c2, c3, e1, e2, e3, e4;
+                var l = s.length;
+                var i = 0;
+                var r = "";
+    
+                do {
+                    c1 = s.charCodeAt(i);
+                    e1 = c1 >> 2;
+                    c2 = s.charCodeAt(i+1);
+                    e2 = ((c1 & 3) << 4) | (c2 >> 4);
+                    c3 = s.charCodeAt(i+2);
+                    if (l < i+2) { e3 = 64; } else { e3 = ((c2 & 0xf) << 2) | (c3 >> 6); }
+                    if (l < i+3) { e4 = 64; } else { e4 = c3 & 0x3f; }
+                    r+= ch.charAt(e1) + ch.charAt(e2) + ch.charAt(e3) + ch.charAt(e4);
+                } while ((i+= 3) < l);
+                return r;
+            }
+    
+            // output a PNG string
+            this.getDump = function() {
+    
+                // compute adler32 of output pixels + row filter bytes
+                var BASE = 65521; /* largest prime smaller than 65536 */
+                var NMAX = 5552;  /* NMAX is the largest n such that 255n(n+1)/2 + (n+1)(BASE-1) <= 2^32-1 */
+                var s1 = 1;
+                var s2 = 0;
+                var n = NMAX;
+    
+                for (var y = 0; y < this.height; y++) {
+                    for (var x = -1; x < this.width; x++) {
+                        s1+= this.buffer[this.index(x, y)].charCodeAt(0);
+                        s2+= s1;
+                        if ((n-= 1) == 0) {
+                            s1%= BASE;
+                            s2%= BASE;
+                            n = NMAX;
+                        }
+                    }
+                }
+                s1%= BASE;
+                s2%= BASE;
+                write(this.buffer, this.idat_offs + this.idat_size - 8, byte4((s2 << 16) | s1));
+    
+                // compute crc32 of the PNG chunks
+                function crc32(png, offs, size) {
+                    var crc = -1;
+                    for (var i = 4; i < size-4; i += 1) {
+                        crc = _crc32[(crc ^ png[offs+i].charCodeAt(0)) & 0xff] ^ ((crc >> 8) & 0x00ffffff);
+                    }
+                    write(png, offs+size-4, byte4(crc ^ -1));
+                }
+    
+                crc32(this.buffer, this.ihdr_offs, this.ihdr_size);
+                crc32(this.buffer, this.plte_offs, this.plte_size);
+                crc32(this.buffer, this.trns_offs, this.trns_size);
+                crc32(this.buffer, this.idat_offs, this.idat_size);
+                crc32(this.buffer, this.iend_offs, this.iend_size);
+    
+                // convert PNG to string
+                return "\x89PNG\r\n\x1a\n"+this.buffer.join('');
+            }
+        }
+    
+        // modified from original source to support NPM
+        if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+            module.exports = PNGlib;
+        } else {
+            window.PNGlib = PNGlib;
+        }
+    })();
+
+/***/ }),
+/* 23 */
 /***/ (function(module, exports) {
 
 function range(j, k) { 
@@ -5591,7 +6033,7 @@ module.exports = range;
 
 
 /***/ }),
-/* 22 */
+/* 24 */
 /***/ (function(module, exports) {
 
 function texcoord(rows, columns, texture_indexes, num_textures) {
@@ -5624,11 +6066,11 @@ module.exports = texcoord;
 
 
 /***/ }),
-/* 23 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var conversions = __webpack_require__(0);
-var route = __webpack_require__(24);
+var conversions = __webpack_require__(1);
+var route = __webpack_require__(26);
 
 var convert = {};
 
@@ -5708,10 +6150,10 @@ module.exports = convert;
 
 
 /***/ }),
-/* 24 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var conversions = __webpack_require__(0);
+var conversions = __webpack_require__(1);
 
 /*
 	this function routes a model to all other models.
@@ -5812,12 +6254,12 @@ module.exports = function (fromModel) {
 
 
 /***/ }),
-/* 25 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* MIT license */
-var colorNames = __webpack_require__(1);
-var swizzle = __webpack_require__(35);
+var colorNames = __webpack_require__(2);
+var swizzle = __webpack_require__(37);
 
 var reverseNames = {};
 
@@ -6051,7 +6493,7 @@ function hexDouble(num) {
 
 
 /***/ }),
-/* 26 */
+/* 28 */
 /***/ (function(module, exports) {
 
 // Copyright Joyent, Inc. and other Node contributors.
@@ -6359,7 +6801,7 @@ function isUndefined(arg) {
 
 
 /***/ }),
-/* 27 */
+/* 29 */
 /***/ (function(module, exports) {
 
 module.exports = function flatten(list, depth) {
@@ -6388,7 +6830,7 @@ module.exports = function flatten(list, depth) {
 
 
 /***/ }),
-/* 28 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6406,7 +6848,7 @@ module.exports = function isArrayish(obj) {
 
 
 /***/ }),
-/* 29 */
+/* 31 */
 /***/ (function(module, exports) {
 
 /*!
@@ -6433,10 +6875,10 @@ function isSlowBuffer (obj) {
 
 
 /***/ }),
-/* 30 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isBuffer = __webpack_require__(29);
+var isBuffer = __webpack_require__(31);
 var toString = Object.prototype.toString;
 
 /**
@@ -6555,7 +6997,7 @@ module.exports = function kindOf(val) {
 
 
 /***/ }),
-/* 31 */
+/* 33 */
 /***/ (function(module, exports) {
 
 /* MIT license */
@@ -7259,10 +7701,10 @@ for (var key in cssKeywords) {
 
 
 /***/ }),
-/* 32 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var conversions = __webpack_require__(31);
+var conversions = __webpack_require__(33);
 
 var convert = function() {
    return new Converter();
@@ -7356,7 +7798,7 @@ Converter.prototype.getValues = function(space) {
 module.exports = convert;
 
 /***/ }),
-/* 33 */
+/* 35 */
 /***/ (function(module, exports) {
 
 // shim for using process in browser
@@ -7542,7 +7984,7 @@ process.umask = function() { return 0; };
 
 
 /***/ }),
-/* 34 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function (global, factory) {
@@ -17051,13 +17493,13 @@ return wrapREGL;
 
 
 /***/ }),
-/* 35 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var isArrayish = __webpack_require__(28);
+var isArrayish = __webpack_require__(30);
 
 var concat = Array.prototype.concat;
 var slice = Array.prototype.slice;
@@ -17087,7 +17529,7 @@ swizzle.wrap = function (fn) {
 
 
 /***/ }),
-/* 36 */
+/* 38 */
 /***/ (function(module, exports) {
 
 if (typeof Object.create === 'function') {
@@ -17116,7 +17558,7 @@ if (typeof Object.create === 'function') {
 
 
 /***/ }),
-/* 37 */
+/* 39 */
 /***/ (function(module, exports) {
 
 module.exports = function isBuffer(arg) {
@@ -17127,7 +17569,7 @@ module.exports = function isBuffer(arg) {
 }
 
 /***/ }),
-/* 38 */
+/* 40 */
 /***/ (function(module, exports) {
 
 var g;
