@@ -95,11 +95,6 @@ for (var j = 0; j < settings.rows; j++) {
 }
 var initialSection = new Section(background, 0, 0);
 
-var PLAYER_COLORS = {
-  "BLUE": [0.50, 0.86, 1.00],
-  "YELLOW": [1.00, 0.86, 0.50],
-  "RED": [0.64, 0.11, 0.31]
-};
 var GREEN = [0.51, 0.69, 0.61];
 var WHITE = [1.00, 1.00, 1.00];
 var INVISIBLE_COLOR = [0.66, 0.66, 0.66];
@@ -124,8 +119,17 @@ var foodConsumed = [];
 var walls = [];
 var row, column, rand, color;
 
-var color2idx = function(color) {
-  var colors = Object.values(PLAYER_COLORS);
+name2idx = function(name) {
+  var names = settings.player_color_names;
+  for (var idx=0; idx < names.length; idx++) {
+    if (names[idx] === name) {
+      return idx;
+    }
+  }
+}
+
+color2idx = function(color) {
+  var colors = settings.player_colors;
   var value = color.join(',');
   for (var idx=0; idx < colors.length; idx++) {
     if (colors[idx].join(',') === value) {
@@ -134,12 +138,9 @@ var color2idx = function(color) {
   }
 };
 
-var color2name = function(color) {
-  for (var name in PLAYER_COLORS) {
-    if (PLAYER_COLORS.hasOwnProperty(name) && PLAYER_COLORS[name].join(',') == color) {
-      return name;
-    }
-  }
+color2name = function(color) {
+  var idx = color2idx(color);
+  return settings.player_color_names[idx];
 };
 
 var Food = function(settings) {
@@ -707,11 +708,11 @@ function bindGameKeys(socket) {
 
   if (settings.mutable_colors) {
     Mousetrap.bind('c', function () {
-      keys = Object.keys(PLAYER_COLORS);
-      values = Object.values(PLAYER_COLORS);
+      keys = settings.player_color_names;
+      values = settings.player_colors;
       index = arraySearch(values, players.ego().color);
       nextItem = keys[(index + 1) % keys.length];
-      players.ego().color = PLAYER_COLORS[nextItem];
+      players.ego().color = settings.player_colors[name2idx(nextItem)];
       var msg = {
         type: "change_color",
         player_id: players.ego().id,
@@ -785,7 +786,7 @@ function onDonationProcessed(msg) {
     recipient_name = 'all players';
   } else if (recipient_id.indexOf('group:') === 0) {
     team_idx = +recipient_id.substring(6);
-    recipient_name = 'all ' + Object.keys(PLAYER_COLORS)[team_idx] + ' players';
+    recipient_name = 'all ' + settings.player_color_names[team_idx] + ' players';
   } else {
     recipient_name = players.get(recipient_id).name;
   }
@@ -916,7 +917,7 @@ function displayLeaderboards(msg, callback) {
     var rgb_map = function (e) { return Math.round(e * 255); };
     for (i = 0; i < group_scores.length; i++) {
       var group = group_scores[i];
-      var color = PLAYER_COLORS[group.name].map(rgb_map);
+      var color = settings.player_colors[name2idx(group.name)].map(rgb_map);
       pushMessage('<span class="GroupScore">' + group.score + '</span><span class="GroupIndicator" style="background-color:' + Color.rgb(color).string() +';"></span>');
     }
   }

@@ -301,6 +301,14 @@ class Gridworld(object):
         return not self.has_player(position) and not self.has_wall(position)
 
     @property
+    def limited_player_colors(self):
+        return self.player_colors[:self.num_colors]
+
+    @property
+    def limited_player_color_names(self):
+        return self.player_color_names[:self.num_colors]
+
+    @property
     def elapsed_round_time(self):
         if self.start_timestamp is None:
             return 0
@@ -1036,6 +1044,9 @@ class Griduniverse(Experiment):
             for net in self.networks():
                 dallinger.nodes.Environment(network=net)
         self.node_by_player_id = {}
+
+    def serialize(self, value):
+        return json.dumps(value)
 
     def recruit(self):
         self.recruiter.close_recruitment()
