@@ -826,6 +826,15 @@ function onGameStateChange(msg) {
   players.update(state.players);
   ego = players.ego();
 
+  // If on alternate donation/consumption rounds, announce round type
+  if (settings.donation_active != state.donation_active) {
+    if (state.donation_active) {
+      pushMessage("<span class='name'>Moderator:</span> Starting a donation round. Players cannot move, only donate.");
+    } else {
+      pushMessage("<span class='name'>Moderator:</span> Starting a consumption round. Players have to consume as much food as possible.");
+    }
+  }
+
   // Update donation status
   settings.donation_active = state.donation_active;
 

@@ -324,14 +324,14 @@ class Gridworld(object):
 
     @property
     def donation_active(self):
-        """Donation is enabled on odd-numbered rounds if
+        """Donation is enabled on even-numbered rounds if
         alternate_consumption_donation is set to True.
         """
-        return bool(not self.alternate_consumption_donation or self.round % 2)
+        return bool(self.alternate_consumption_donation and self.round % 2)
 
     @property
     def consumption_active(self):
-        """Food consumption is enabled on even-numbered rounds if
+        """Food consumption is enabled on odd-numbered rounds if
         alternate_consumption_donation is set to True.
         """
         return bool(not self.alternate_consumption_donation or not self.round % 2)
@@ -780,6 +780,11 @@ class Player(object):
 
     def move(self, direction, tremble_rate=0):
         """Move the player."""
+
+        # no motion during alternate donation rounds
+        if self.grid.donation_active:
+            return
+
         if random.random() < tremble_rate:
             direction = self.tremble(direction)
 
