@@ -488,7 +488,7 @@ class Gridworld(object):
                         text += """ Players will get more points if their
                             color is in the minority."""
         text += """</p><p>Players move around the grid using the arrow keys.
-                <br><img src='static/images/keys.gif' height='80'><br>"""
+                <br><img src='static/images/keys.gif' height='60'><br>"""
         if self.player_overlap:
             text += " More than one player can occupy a block at the same time."
         else:
@@ -523,11 +523,11 @@ class Gridworld(object):
             grid. Food is represented by a green"""
         if self.food_maturation_threshold > 0:
             text += " or brown"
-        text += " square. <br><img src='static/images/food-green.png' height='40'><br>"
+        text += " square. <img src='static/images/food-green.png height='20'>"
         if self.food_maturation_threshold > 0:
-            text += " <img src='static/images/food-brown.png' height='40'>"
+            text += " <img src='static/images/food-brown.png' height='20'>"
         if self.respawn_food:
-            text += " Food is automatically respawned after it is consumed."
+            text += "<br> Food is automatically respawned after it is consumed."
             if self.food_maturation_threshold > 0:
                 text += """It will appear immediately, but not be consumable for
                     some time, because it has a maturation period. It will show
