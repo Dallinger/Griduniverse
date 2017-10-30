@@ -427,7 +427,8 @@ class Gridworld(object):
         order = ''
         text = """<p>The objective of the game is to maximize your final payoff.
             The game is played on a {g.columns} x {g.rows} grid, where each
-            player occupies one block."""
+            player occupies one block. <br><img src='static/images/gameplay.gif'
+            height='150'><br>"""
         if self.window_columns < self.columns or self.window_rows < self.rows:
             text += """ The grid is viewed through a
                 {g.window_columns} x {g.window_rows} window
@@ -486,7 +487,8 @@ class Gridworld(object):
                     if self.frequency_dependence < 0:
                         text += """ Players will get more points if their
                             color is in the minority."""
-        text += "</p><p>Players move around the grid using the arrow keys."
+        text += """</p><p>Players move around the grid using the arrow keys.
+                <br><img src='static/images/keys.gif' height='80'><br>"""
         if self.player_overlap:
             text += " More than one player can occupy a block at the same time."
         else:
@@ -496,7 +498,8 @@ class Gridworld(object):
             text += """ Players cannot see the whole grid, but only an area
                 approximately {g.visibility} blocks around their current
                 position."""
-        text += "<p>Press 'h' to toggle highlighting of your player.</p>"
+        text += """<p>Press the 'h' key to toggle highlighting of your player.
+                <br> <img src='static/images/h-toggle.gif' height='150'><p>"""
         if self.motion_auto:
             text += """ Once a player presses a key to move, the player will
                 continue to move in the same direction automatically until
@@ -520,7 +523,9 @@ class Gridworld(object):
             grid. Food is represented by a green"""
         if self.food_maturation_threshold > 0:
             text += " or brown"
-        text += " square."
+        text += " square. <br><img src='static/images/food-green.png' height='40'><br>"
+        if self.food_maturation_threshold > 0:
+            text += " <img src='static/images/food-brown.png' height='40'>"
         if self.respawn_food:
             text += " Food is automatically respawned after it is consumed."
             if self.food_maturation_threshold > 0:
@@ -542,7 +547,8 @@ class Gridworld(object):
             text += """<p>A chatroom is available to send messages to the other
                 players."""
             if self.pseudonyms:
-                text += " Player names shown on the chat window are pseudonyms."
+                text += """ Player names shown on the chat window are pseudonyms.
+                        <br><img src='static/images/chatroom.gif' height='150'>"""
             text += "</p>"
         if self.dollars_per_point > 0:
             text += """<p>You will receive ${g.dollars_per_point} for each point
