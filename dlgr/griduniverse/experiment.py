@@ -523,7 +523,7 @@ class Gridworld(object):
             grid. Food is represented by a green"""
         if self.food_maturation_threshold > 0:
             text += " or brown"
-        text += " square. <img src='static/images/food-green.png height='20'>"
+        text += " square: <img src='static/images/food-green.png' height='20'>"
         if self.food_maturation_threshold > 0:
             text += " <img src='static/images/food-brown.png' height='20'>"
         if self.respawn_food:
