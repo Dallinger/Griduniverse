@@ -1473,6 +1473,12 @@ class Griduniverse(Experiment):
         self.socket_session.commit()
         return
 
+    def player_feedback(self, data):
+        engagement = int(json.loads(data.questions.list[-1][-1])['engagement'])
+        difficulty = int(json.loads(data.questions.list[-1][-1])['difficulty'])
+        fun = int(json.loads(data.questions.list[-1][-1])['fun'])
+        return engagement, difficulty, fun
+
     def replay_started(self):
         return self.grid.game_started
 
