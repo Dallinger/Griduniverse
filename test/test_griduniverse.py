@@ -210,7 +210,6 @@ class TestCommandline(object):
                 debugger.run()
 
 
-@skip_on_ci
 @pytest.mark.usefixtures('env')
 class TestGriduniverse(object):
 
