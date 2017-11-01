@@ -728,6 +728,7 @@ color2idx = function(color) {
         move: direction
       };
       socket.send(msg);
+      });
     }
 
     directions.forEach(function(direction) {
@@ -961,6 +962,7 @@ color2idx = function(color) {
         })
       );
     }
+  }
 
     // Update players.
     state = JSON.parse(msg.grid);
@@ -1041,6 +1043,7 @@ color2idx = function(color) {
       pushMessage("<span class='name'>Moderator:</span> the round " + msg.round + ' standings are&hellip;');
     } else {
       pushMessage("<span class='name'>Moderator:</span> the final standings are &hellip;");
+    }
 
     var group_scores = players.group_scores();
     var rgb_map = function (e) { return Math.round(e * 255); };
