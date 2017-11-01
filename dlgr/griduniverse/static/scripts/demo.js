@@ -1,19 +1,28 @@
 /*global dallinger, require, settings */
 /*jshint esversion: 6 */
 
-(function (dallinger, require, settings) {
+(function (getUrlParameter, require, reqwest, settings, submitResponses) {
 
-  var util = require("util");
-  var grid = require("./index");
-  var position = require("mouse-position");
-  var Mousetrap = require("mousetrap");
-  var ReconnectingWebSocket = require("reconnecting-websocket");
-  var $ = require("jquery");
-  var gaussian = require("gaussian");
-  var Color = require('color');
+var util = require("util");
+var grid = require("./index");
+var position = require("mouse-position");
+var Mousetrap = require("mousetrap");
+var ReconnectingWebSocket = require("reconnecting-websocket");
+var $ = require("jquery");
+var gaussian = require("gaussian");
+var Color = require('color');
+var Identicon = require('./util/identicon');
+var md5 = require('./util/md5');
 
-  function coordsToIdx(x, y, columns) {
-    return y * columns + x;
+function coordsToIdx(x, y, columns) {
+  return y * columns + x;
+}
+
+function animateColor(color) {
+  if (settings.background_animation) {
+    rand = Math.random() * 0.02;
+  } else {
+    rand = 0.01;
   }
 
   function animateColor(color) {
@@ -93,44 +102,48 @@
       background.push(color);
     }
   }
-  var initialSection = new Section(background, 0, 0);
+}
+var initialSection = new Section(background, 0, 0);
 
-  var PLAYER_COLORS = {
-    "BLUE": [0.50, 0.86, 1.00],
-    "YELLOW": [1.00, 0.86, 0.50],
-    "RED": [0.64, 0.11, 0.31]
-  };
-  var GREEN = [0.51, 0.69, 0.61];
-  var WHITE = [1.00, 1.00, 1.00];
-  var INVISIBLE_COLOR = [0.66, 0.66, 0.66];
-  var CHANNEL = "griduniverse";
-  var CONTROL_CHANNEL = "griduniverse_ctrl";
+var GREEN = [0.51, 0.69, 0.61];
+var WHITE = [1.00, 1.00, 1.00];
+var INVISIBLE_COLOR = [0.66, 0.66, 0.66];
+var CHANNEL = "griduniverse";
+var CONTROL_CHANNEL = "griduniverse_ctrl";
 
-  var pixels = grid(initialSection.data, initialSection.textures, {
-    rows: settings.window_rows,
-    columns: settings.window_columns,
-    size: settings.block_size,
-    padding: settings.padding,
-    background: [0.1, 0.1, 0.1],
-    formatted: true
-  });
+var pixels = grid(initialSection.data, initialSection.textures, {
+  rows: settings.window_rows,
+  columns: settings.window_columns,
+  size: settings.block_size,
+  padding: settings.padding,
+  background: [0.1, 0.1, 0.1],
+  formatted: true
+});
 
-  var mouse = position(pixels.canvas);
+var mouse = position(pixels.canvas);
 
-  var isSpectator = false;
-  var start = performance.now();
-  var food = [];
-  var foodConsumed = [];
-  var walls = [];
-  var row, column, rand;
+var isSpectator = false;
+var start = performance.now();
+var food = [];
+var foodConsumed = [];
+var walls = [];
+var row, column, rand, color;
 
-  var color2idx = function(color) {
-    var colors = Object.values(PLAYER_COLORS);
-    var value = color.join(',');
-    for (var idx = 0; idx < colors.length; idx++) {
-      if (colors[idx].join(',') === value) {
-        return idx;
-      }
+name2idx = function(name) {
+  var names = settings.player_color_names;
+  for (var idx=0; idx < names.length; idx++) {
+    if (names[idx] === name) {
+      return idx;
+    }
+  }
+}
+
+color2idx = function(color) {
+  var colors = settings.player_colors;
+  var value = color.join(',');
+  for (var idx=0; idx < colors.length; idx++) {
+    if (colors[idx].join(',') === value) {
+      return idx;
     }
   };
 
@@ -647,8 +660,68 @@
       repeatIntervalId = null,
       highlightEgo = false;
 
-    function moveInDir(direction) {
-      players.ego().move(direction);
+  function moveInDir(direction) {
+    players.ego().move(direction);
+    var msg = {
+      type: "move",
+      player_id: players.ego().id,
+      move: direction
+    };
+    socket.send(msg);
+  }
+
+  directions.forEach(function(direction) {
+    Mousetrap.bind(
+      direction,
+      function() {
+        if (direction === lastDirection) {
+          return;
+        }
+
+        // New direction may be pressed before previous dir key is released
+        if (repeatIntervalId) {
+          console.log("Clearing interval for new keydown");
+          clearInterval(repeatIntervalId);
+        }
+
+        moveInDir(direction); // Move once immediately so there's no lag
+        lastDirection = direction;
+        repeatIntervalId = setInterval(moveInDir, repeatDelayMS, direction);
+        console.log("Repeating new direction: " + direction + " (" + repeatIntervalId + ")");
+      },
+      'keydown'
+    );
+
+    Mousetrap.bind(
+      direction,
+      function() {
+        if (direction) {
+          console.log("Calling clearInterval() for " + direction + " (" + repeatIntervalId + ")");
+          clearInterval(repeatIntervalId);
+          lastDirection = null;
+        }
+      },
+      "keyup"
+    );
+
+  });
+
+  Mousetrap.bind("space", function () {
+    var msg = {
+      type: "plant_food",
+      player_id: players.ego().id,
+      position: players.ego().position
+    };
+    socket.send(msg);
+  });
+
+  if (settings.mutable_colors) {
+    Mousetrap.bind('c', function () {
+      keys = settings.player_color_names;
+      values = settings.player_colors;
+      index = arraySearch(values, players.ego().color);
+      nextItem = keys[(index + 1) % keys.length];
+      players.ego().color = settings.player_colors[name2idx(nextItem)];
       var msg = {
         type: "move",
         player_id: players.ego().id,
@@ -771,6 +844,28 @@
     pushMessage("<span class='name'>Moderator:</span> " + name + ' changed from team ' + msg.old_color + ' to team ' + msg.new_color + '.');
   }
 
+  var salt = $("#grid").data("identicon-salt");
+  var id = parseInt(msg.player_id)-1;
+  var fg = players.get(msg.player_id).color.concat(1);
+  fg = fg.map(function(x) { return x * 255; });
+  bg = fg.map(function(x) { return (x * 0.66); });
+  bg[3] = 255;
+  var options = {
+    size: 10,
+    foreground: fg,
+    background: bg,
+    format: 'svg'
+  };
+  var identicon = new Identicon(md5(salt + id), options).toString();
+  var entry = "<span class='name'>" + name;
+  if (settings.use_identicons) {
+    entry = entry + " <img src='data:image/svg+xml;base64," + identicon + "' />";
+  }
+  entry = entry + ":</span> ";
+  $("#messages").append(($("<li>").text(msg.contents)).prepend(entry));
+  $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
+}
+
   function onDonationProcessed(msg) {
     var ego = players.ego(),
       donor = players.get(msg.donor_id),
@@ -825,6 +920,46 @@
     // Update round.
     if (settings.num_rounds > 1) {
       $("#round").html(msg.round + 1);
+  }
+
+  // Update players.
+  state = JSON.parse(msg.grid);
+  players.update(state.players);
+  ego = players.ego();
+
+  // If on alternate donation/consumption rounds, announce round type
+  if (settings.donation_active != state.donation_active) {
+    if (state.donation_active) {
+      pushMessage("<span class='name'>Moderator:</span> Starting a donation round. Players cannot move, only donate.");
+    } else {
+      pushMessage("<span class='name'>Moderator:</span> Starting a consumption round. Players have to consume as much food as possible.");
+    }
+  }
+
+  // Update donation status
+  settings.donation_active = state.donation_active;
+
+  // Update food.
+  food = [];
+  for (var j = 0; j < state.food.length; j++) {
+    food.push(
+      new Food({
+        id: state.food[j].id,
+        position: state.food[j].position,
+        color: state.food[j].color
+      })
+    );
+  }
+
+  // Update walls if they haven't been created yet.
+  if (walls.length === 0) {
+    for (var k = 0; k < state.walls.length; k++) {
+      walls.push(
+        new Wall({
+          position: state.walls[k].position,
+          color: state.walls[k].color
+        })
+      );
     }
 
     // Update players.
@@ -900,11 +1035,19 @@
       if (callback) callback();
       return;
     }
+
     var i;
     if (msg.type == 'new_round') {
       pushMessage("<span class='name'>Moderator:</span> the round " + msg.round + ' standings are&hellip;');
     } else {
       pushMessage("<span class='name'>Moderator:</span> the final standings are &hellip;");
+
+    var group_scores = players.group_scores();
+    var rgb_map = function (e) { return Math.round(e * 255); };
+    for (i = 0; i < group_scores.length; i++) {
+      var group = group_scores[i];
+      var color = settings.player_colors[name2idx(group.name)].map(rgb_map);
+      pushMessage('<span class="GroupScore">' + group.score + '</span><span class="GroupIndicator" style="background-color:' + Color.rgb(color).string() +';"></span>');
     }
     if (settings.leaderboard_group) {
       if (settings.leaderboard_individual) {

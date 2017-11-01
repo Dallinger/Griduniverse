@@ -301,6 +301,14 @@ class Gridworld(object):
         return not self.has_player(position) and not self.has_wall(position)
 
     @property
+    def limited_player_colors(self):
+        return self.player_colors[:self.num_colors]
+
+    @property
+    def limited_player_color_names(self):
+        return self.player_color_names[:self.num_colors]
+
+    @property
     def elapsed_round_time(self):
         if self.start_timestamp is None:
             return 0
@@ -316,14 +324,14 @@ class Gridworld(object):
 
     @property
     def donation_active(self):
-        """Donation is enabled on odd-numbered rounds if
+        """Donation is enabled on even-numbered rounds if
         alternate_consumption_donation is set to True.
         """
-        return bool(not self.alternate_consumption_donation or self.round % 2)
+        return bool(self.alternate_consumption_donation and self.round % 2)
 
     @property
     def consumption_active(self):
-        """Food consumption is enabled on even-numbered rounds if
+        """Food consumption is enabled on odd-numbered rounds if
         alternate_consumption_donation is set to True.
         """
         return bool(not self.alternate_consumption_donation or not self.round % 2)
@@ -772,6 +780,11 @@ class Player(object):
 
     def move(self, direction, tremble_rate=0):
         """Move the player."""
+
+        # no motion during alternate donation rounds
+        if self.grid.donation_active:
+            return
+
         if random.random() < tremble_rate:
             direction = self.tremble(direction)
 
@@ -1031,6 +1044,9 @@ class Griduniverse(Experiment):
             for net in self.networks():
                 dallinger.nodes.Environment(network=net)
         self.node_by_player_id = {}
+
+    def serialize(self, value):
+        return json.dumps(value)
 
     def recruit(self):
         self.recruiter.close_recruitment()
