@@ -499,7 +499,7 @@ class Gridworld(object):
                 approximately {g.visibility} blocks around their current
                 position."""
         text += """<p>Press the 'h' key to toggle highlighting of your player.
-                <br> <img src='static/images/h-toggle.gif' height='150'><p>"""
+                <br><img src='static/images/h-toggle.gif' height='150'><p>"""
         if self.motion_auto:
             text += """ Once a player presses a key to move, the player will
                 continue to move in the same direction automatically until
@@ -525,9 +525,9 @@ class Gridworld(object):
             text += " or brown"
         text += " square: <img src='static/images/food-green.png' height='20'>"
         if self.food_maturation_threshold > 0:
-            text += " <img src='static/images/food-brown.png' height='20'>"
+            text += " <img src='static/images/food-brown.png' height='20'><br>"
         if self.respawn_food:
-            text += "<br> Food is automatically respawned after it is consumed."
+            text += "Food is automatically respawned after it is consumed."
             if self.food_maturation_threshold > 0:
                 text += """It will appear immediately, but not be consumable for
                     some time, because it has a maturation period. It will show
