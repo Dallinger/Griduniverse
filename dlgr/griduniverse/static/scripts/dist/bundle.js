@@ -5454,6 +5454,7 @@ $(document).ready(function() {
         'callbackMap': {
           'chat': onChatMessage,
           'donation_processed': onDonationProcessed,
+          'change_color': onColorChanged,
           'state': onGameStateChange,
           'new_round': displayLeaderboards,
           'stop': gameOverHandler(isSpectator, player_id)
