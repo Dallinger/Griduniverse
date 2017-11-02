@@ -1173,6 +1173,10 @@ class Griduniverse(Experiment):
     def handle_change_color(self, msg):
         player = self.grid.players[msg['player_id']]
         color_idx = Gridworld.player_colors.index(msg['color'])
+        color_name = Gridworld.player_color_names[color_idx]
+        old_color = Gridworld.player_color_names[player.color_idx]
+        msg['old_color'] = old_color
+        msg['new_color'] = color_name
 
         if player.color_idx == color_idx:
             return  # Requested color change is no change at all.
@@ -1185,7 +1189,9 @@ class Griduniverse(Experiment):
 
         player.color = msg['color']
         player.color_idx = color_idx
-        player.color_name = Gridworld.player_color_names[color_idx]
+        player.color_name = color_name
+        # Put the message back on the channel
+        self.publish(msg)
 
     def handle_move(self, msg):
         player = self.grid.players[msg['player_id']]
@@ -1229,7 +1235,7 @@ class Griduniverse(Experiment):
                 'amount': donation,
             }
             self.publish(message)
-            self.record_event(msg, msg['donor_id'])
+            self.record_event(message, message['donor_id'])
 
     def handle_plant_food(self, msg):
         player = self.grid.players[msg['player_id']]
@@ -1365,7 +1371,7 @@ class Griduniverse(Experiment):
         info_cls = dallinger.models.Info
         from models import Event
         events = super(Griduniverse, self).events_for_replay()
-        event_types = {'chat', 'new_round', 'donation_processed'}
+        event_types = {'chat', 'new_round', 'donation_processed', 'change_color'}
         return events.filter(
             or_(info_cls.type == 'state',
                 and_(info_cls.type == 'event',

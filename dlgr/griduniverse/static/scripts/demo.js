@@ -784,8 +784,18 @@ function onChatMessage(msg) {
   $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
 }
 
-function onDonationProcessed(msg) {
-  var ego = players.ego(),
+  function onColorChanged(msg) {
+    var name;
+    if (settings.pseudonyms) {
+      name = players.get(msg.player_id).name;
+    } else {
+      name = "Player " + msg.player_index;
+    }
+    pushMessage("<span class='name'>Moderator:</span> " + name + ' changed from team ' + msg.old_color + ' to team ' + msg.new_color + '.');
+  }
+
+  function onDonationProcessed(msg) {
+    var ego = players.ego(),
       donor = players.get(msg.donor_id),
       recipient_id = msg.recipient_id,
       team_idx,
@@ -793,13 +803,13 @@ function onDonationProcessed(msg) {
       recipient_name,
       entry;
 
-  if (donor === ego) {
-    donor_name = 'You';
-  } else {
-    donor_name = "Player " + donor.name;
-  }
+    if (donor === ego) {
+      donor_name = 'You';
+    } else {
+      donor_name = "Player " + donor.name;
+    }
 
-  if (recipient_id === ego.id) {
+    if (ego && recipient_id === ego.id) {
     recipient_name = 'you';
   } else if (recipient_id === 'all') {
     recipient_name = 'all players';
@@ -992,6 +1002,7 @@ $(document).ready(function() {
         'callbackMap': {
           'chat': onChatMessage,
           'donation_processed': onDonationProcessed,
+          'change_color': onColorChanged,
           'state': onGameStateChange,
           'new_round': displayLeaderboards,
           'stop': gameOverHandler(isSpectator, player_id)
