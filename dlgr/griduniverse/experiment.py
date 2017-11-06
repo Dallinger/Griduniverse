@@ -1049,7 +1049,7 @@ class Griduniverse(Experiment):
         return json.dumps(value)
 
     def recruit(self):
-        self.recruiter.close_recruitment()
+        self.recruiter().close_recruitment()
 
     def bonus(self, participant):
         """The bonus to be awarded to the given participant.
