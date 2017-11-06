@@ -2,90 +2,53 @@
 Tests for `dlgr.griduniverse` module.
 """
 import mock
-import os
 import pytest
-import shutil
-import tempfile
 from dallinger.experiments import Griduniverse
 
 
-@pytest.fixture
-def env():
-    # Heroku requires a home directory to start up
-    # We create a fake one using tempfile and set it into the
-    # environment to handle sandboxes on CI servers
+@pytest.mark.usefixtures('env', 'config')
+class TestExperimentClass(object):
 
-    fake_home = tempfile.mkdtemp()
-    environ = os.environ.copy()
-    environ.update({'HOME': fake_home})
-    yield environ
+    @pytest.fixture
+    def exp(self, db_session, config):
+        gu = Griduniverse(db_session)
+        gu.app_id = 'test app'
+        gu.exp_config = config
 
-    shutil.rmtree(fake_home, ignore_errors=True)
+        return gu
 
-
-@pytest.fixture
-def env_with_home(env):
-    original_env = os.environ.copy()
-    if 'HOME' not in original_env:
-        os.environ.update(env)
-    yield
-    os.environ = original_env
-
-
-@pytest.fixture
-def output():
-
-    class Output(object):
-
-        def __init__(self):
-            self.log = mock.Mock()
-            self.error = mock.Mock()
-            self.blather = mock.Mock()
-
-    return Output()
-
-
-class TestGriduniverse(object):
-
-    @classmethod
-    def setup_class(cls):
+    def test_donations_distributed_evenly_across_team(self, exp):
         pass
+
+
+@pytest.mark.usefixtures('env')
+class TestGriduniverseBotExecution(object):
 
     def test_bot_api(self):
         """Run bots using headless chrome and collect data."""
         self.experiment = Griduniverse()
         data = self.experiment.run(
-                mode=u'debug',
-                webdriver_type=u'chrome',
-                recruiter=u'bots',
-                bot_policy=u"AdvantageSeekingBot",
-                max_participants=1,
-                num_dynos_worker=1,
-                time_per_round=30.0,
-           )
+            mode=u'debug',
+            webdriver_type=u'chrome',
+            recruiter=u'bots',
+            bot_policy=u"AdvantageSeekingBot",
+            max_participants=1,
+            num_dynos_worker=1,
+            time_per_round=10.0,
+        )
         results = self.experiment.average_score(data)
         assert results >= 0.0
 
-    @classmethod
-    def teardown_class(cls):
-        pass
 
-
+@pytest.mark.usefixtures('exp_dir', 'env')
 class TestCommandline(object):
 
-    def setup(self):
-        """Set up the environment by changing to the experiment dir."""
-        self.orig_path = os.getcwd()
-        os.chdir(os.path.join("dlgr", "griduniverse"))
-
-    def teardown(self):
-        os.chdir(self.orig_path)
-
     @pytest.fixture
-    def debugger_unpatched(self, env_with_home, output):
+    def debugger_unpatched(self, output):
         from dallinger.command_line import DebugSessionRunner
-        debugger = DebugSessionRunner(output, verbose=True, bot=False,
-                                      proxy_port=None, exp_config={})
+        debugger = DebugSessionRunner(
+            output, verbose=True, bot=False, proxy_port=None, exp_config={}
+        )
         return debugger
 
     @pytest.fixture
