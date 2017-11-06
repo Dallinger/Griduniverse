@@ -834,16 +834,18 @@ function onChatMessage(msg) {
 }
 
 function onGameStateChange(msg) {
-  var ego,
+  var $donationButtons = $('#individual-donate, #group-donate, #public-donate, #ingroup-donate'),
+      $timeElement = $("#time"),
+      ego,
       state;
 
   if (settings.paused_game) {
-    $("#time").html(0);
+    $timeElement.html(0);
     return;
   }
 
   // Update remaining time.
-  $("#time").html(Math.max(Math.round(msg.remaining_time), 0));
+  $timeElement.html(Math.max(Math.round(msg.remaining_time), 0));
 
   // Update round.
   if (settings.num_rounds > 1) {
@@ -892,7 +894,7 @@ function onGameStateChange(msg) {
   }
 
   // If new walls have been added, draw them
-  if (walls.length != state.walls.length) {
+  if (walls.length !== state.walls.length) {
     for (var k = walls.length; k < state.walls.length; k++) {
       walls.push(
         new Wall({
@@ -914,10 +916,10 @@ function onGameStateChange(msg) {
         players.count() > 1 &&
         settings.donation_active
     ) {
-      $('#individual-donate, #group-donate, #public-donate').prop('disabled', false);
+      $donationButtons.prop('disabled', false);
     } else {
       $('#donation-instructions').text('');
-      $('#individual-donate, #group-donate, #public-donate').prop('disabled', true);
+      $donationButtons.prop('disabled', true);
     }
   }
 }
@@ -1118,9 +1120,25 @@ $(document).ready(function() {
     var donor = players.ego(),
         amt = settings.donation_amount,
         msg;
+
     msg = {
       type: "donation_submitted",
       recipient_id: 'all',
+      donor_id: donor.id,
+      amount: amt
+    };
+    socket.send(msg);
+  };
+
+  var donateToInGroup = function () {
+    var donor = players.ego(),
+        amt = settings.donation_amount,
+        recipientId = 'group:' +  color2idx(donor.color).toString(),
+        msg;
+
+    msg = {
+      type: "donation_submitted",
+      recipient_id: recipientId,
       donor_id: donor.id,
       amount: amt
     };
@@ -1161,6 +1179,7 @@ $(document).ready(function() {
       donateToClicked();
     });
     $('#public-donate').click(donateToAll);
+    $('#ingroup-donate').click(donateToInGroup);
     $('#group-donate').click(function () {
       if (settings.donation_group) {
         $('#donate label').text('Click on a color');
