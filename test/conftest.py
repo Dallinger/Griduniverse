@@ -6,6 +6,8 @@ import os
 import pytest
 import shutil
 import tempfile
+from dallinger import models
+from dallinger.experiments import Griduniverse
 
 
 skip_on_ci = pytest.mark.skipif(
@@ -75,9 +77,53 @@ def db_session():
 
 
 @pytest.fixture
-def participant(db_session):
-    from dallinger.models import Participant
-    p = Participant(worker_id='1', hit_id='1', assignment_id='1', mode="test")
-    db_session.add(p)
-    db_session.flush()
-    return p
+def exp(db_session, config):
+    gu = Griduniverse(db_session)
+    gu.app_id = 'test app'
+    gu.exp_config = config
+
+    return gu
+
+
+@pytest.fixture
+def a(db_session):
+    """ Provides a standard way of building model objects in tests.
+
+        def test_using_all_defaults(self, a):
+            participant = a.participant(worker_id=42)
+    """
+    class ModelFactory(object):
+
+        def __init__(self, db):
+            self.db = db
+
+        def participant(self, **kw):
+            defaults = {
+                'worker_id': '1',
+                'assignment_id': '1',
+                'hit_id': '1',
+                'mode': 'test'
+            }
+            defaults.update(kw)
+            return self._build(models.Participant, defaults)
+
+        def network(self, **kw):
+            defaults = {}
+            defaults.update(kw)
+            return self._build(models.Network, defaults)
+
+        def _build(self, klass, attrs):
+            # Some of our default values are factories:
+            for k, v in attrs.items():
+                if callable(v):
+                    attrs[k] = v()
+
+            obj = klass(**attrs)
+            self._insert(obj)
+            return obj
+
+        def _insert(self, thing):
+            db_session.add(thing)
+            db_session.flush()  # This gets us an ID and sets relationships
+
+    return ModelFactory(db_session)

@@ -336,6 +336,11 @@ class Gridworld(object):
         """
         return bool(not self.alternate_consumption_donation or not self.round % 2)
 
+    def players_in_group(self, group_id):
+        # make sure we've got an integer
+        group_id = int(group_id)
+        return [p for p in self.players.values() if p.color_idx == group_id]
+
     def check_round_completion(self):
         if not self.game_started:
             return
@@ -1199,26 +1204,21 @@ class Griduniverse(Experiment):
             msg['move'], tremble_rate=player.motion_tremble_rate)
 
     def handle_donation(self, msg):
-        """Send a donation from one player to another."""
+        """Send a donation from one player to one or more other players."""
         if not self.grid.donation_active:
             return
 
         recipients = []
         recipient_id = msg['recipient_id']
         if recipient_id.startswith('group:') and self.grid.donation_group:
-            group = recipient_id[6:]
-            for player in self.grid.players.values():
-                if (player.color_idx == int(group) and
-                        player.id != msg['donor_id']):
-                    recipients.append(player)
+            group_id = recipient_id[6:]
+            recipients = self.grid.players_in_group(group_id)
         elif recipient_id == 'all' and self.grid.donation_public:
-            recipients = [p for p in self.grid.players.values()
-                          if p.id != msg['donor_id']]
-        else:
-            if self.grid.donation_individual:
-                recipient = self.grid.players.get(recipient_id)
-                if recipient:
-                    recipients.append(recipient)
+            recipients = self.grid.players.values()
+        elif self.grid.donation_individual:
+            recipient = self.grid.players.get(recipient_id)
+            if recipient:
+                recipients.append(recipient)
         donor = self.grid.players[msg['donor_id']]
         donation = msg['amount']
 

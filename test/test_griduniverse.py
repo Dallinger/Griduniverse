@@ -9,16 +9,59 @@ from dallinger.experiments import Griduniverse
 @pytest.mark.usefixtures('env', 'config')
 class TestExperimentClass(object):
 
-    @pytest.fixture
-    def exp(self, db_session, config):
-        gu = Griduniverse(db_session)
-        gu.app_id = 'test app'
-        gu.exp_config = config
+    def test_group_donations_distributed_evenly_across_team(self, exp, a):
+        donor = a.participant()
+        teammate = a.participant()
+        exp.handle_connect({'player_id': donor.id})
+        exp.handle_connect({'player_id': teammate.id})
+        donor_player = exp.grid.players[1]
+        teammate_player = exp.grid.players[2]
+        # put them on the same team:
+        exp.handle_change_color(
+            {
+                'player_id': teammate_player.id,
+                'color': donor_player.color
+            }
+        )
+        exp.grid.donation_group = True
+        # make donation active
+        exp.grid.alternate_consumption_donation = True
+        exp.grid.round = 1
+        donor_player.score = 2
 
-        return gu
+        exp.handle_donation(
+            {
+                'donor_id': donor_player.id,
+                'recipient_id': 'group:{}'.format(donor_player.color_idx),
+                'amount': 2
+            }
+        )
+        assert donor_player.score == 1
+        assert teammate_player.score == 1
 
-    def test_donations_distributed_evenly_across_team(self, exp):
-        pass
+    def test_public_donations_distributed_evenly_across_players(self, exp, a):
+        donor = a.participant()
+        opponent = a.participant()
+        exp.handle_connect({'player_id': donor.id})
+        exp.handle_connect({'player_id': opponent.id})
+        donor_player = exp.grid.players[1]
+        opponent_player = exp.grid.players[2]
+        exp.grid.donation_public = True
+        # make donation active
+        exp.grid.alternate_consumption_donation = True
+        exp.grid.round = 1
+        donor_player.score = 2
+
+        exp.handle_donation(
+            {
+                'donor_id': donor_player.id,
+                'recipient_id': 'all',
+                'amount': 2
+            }
+        )
+
+        assert donor_player.score == 1
+        assert opponent_player.score == 1
 
 
 @pytest.mark.usefixtures('env')
