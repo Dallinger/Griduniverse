@@ -99,6 +99,7 @@ def extra_parameters():
         'donation_amount': int,
         'donation_individual': bool,
         'donation_group': bool,
+        'donation_ingroup': bool,
         'donation_public': bool,
         'num_food': int,
         'respawn_food': bool,
@@ -238,6 +239,7 @@ class Gridworld(object):
         self.donation_amount = kwargs.get('donation_amount', 0)
         self.donation_individual = kwargs.get('donation_individual', False)
         self.donation_group = kwargs.get('donation_group', False)
+        self.donation_ingroup = kwargs.get('donation_ingroup', False)
         self.donation_public = kwargs.get('donation_public', False)
         self.intergroup_competition = kwargs.get('intergroup_competition', 1)
         self.intragroup_competition = kwargs.get('intragroup_competition', 1)
@@ -328,6 +330,10 @@ class Gridworld(object):
         alternate_consumption_donation is set to True.
         """
         return bool(self.alternate_consumption_donation and self.round % 2)
+
+    @property
+    def group_donation_enabled(self):
+        return self.donation_group or self.donation_ingroup
 
     @property
     def consumption_active(self):
@@ -1238,7 +1244,8 @@ class Griduniverse(Experiment):
 
         recipients = []
         recipient_id = msg['recipient_id']
-        if recipient_id.startswith('group:') and self.grid.donation_group:
+
+        if recipient_id.startswith('group:') and self.grid.group_donation_enabled:
             color_id = recipient_id[6:]
             recipients = self.grid.players_with_color(color_id)
         elif recipient_id == 'all' and self.grid.donation_public:
