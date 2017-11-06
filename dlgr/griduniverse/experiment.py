@@ -336,10 +336,12 @@ class Gridworld(object):
         """
         return bool(not self.alternate_consumption_donation or not self.round % 2)
 
-    def players_in_group(self, group_id):
-        # make sure we've got an integer
-        group_id = int(group_id)
-        return [p for p in self.players.values() if p.color_idx == group_id]
+    def players_with_color(self, color_id):
+        """Return all the players with the specified color, which is how we
+        represent group/team membership.
+        """
+        color_id = int(color_id)
+        return [p for p in self.players.values() if p.color_idx == color_id]
 
     def check_round_completion(self):
         if not self.game_started:
@@ -1211,8 +1213,8 @@ class Griduniverse(Experiment):
         recipients = []
         recipient_id = msg['recipient_id']
         if recipient_id.startswith('group:') and self.grid.donation_group:
-            group_id = recipient_id[6:]
-            recipients = self.grid.players_in_group(group_id)
+            color_id = recipient_id[6:]
+            recipients = self.grid.players_with_color(color_id)
         elif recipient_id == 'all' and self.grid.donation_public:
             recipients = self.grid.players.values()
         elif self.grid.donation_individual:
