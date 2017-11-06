@@ -1134,10 +1134,17 @@ $(document).ready(function() {
   };
 
   $("form").submit(function() {
+    var chatmessage = $("#message").val().trim(),
+        msg;
+
+    if (! chatmessage) {
+      return false;
+    }
+
     try {
-      var msg = {
+      msg = {
         type: 'chat',
-        contents: $("#message").val(),
+        contents: chatmessage,
         player_id: players.ego().id,
         timestamp: performance.now() - start,
         broadcast: true

@@ -1222,10 +1222,7 @@ convert.rgb.gray = function (rgb) {
 
 /***/ }),
 /* 2 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
+/***/ (function(module, exports) {
 
 module.exports = {
 	"aliceblue": [240, 248, 255],
@@ -1377,7 +1374,6 @@ module.exports = {
 	"yellow": [255, 255, 0],
 	"yellowgreen": [154, 205, 50]
 };
-
 
 /***/ }),
 /* 3 */
@@ -3645,9 +3641,6 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*global define:false */
 
 "use strict";
 
-;
-;
-;
 var isWebSocket = function (constructor) {
     return constructor && constructor.CLOSING === 2;
 };
@@ -3689,9 +3682,7 @@ var reassignEventListeners = function (ws, oldWs, listeners) {
         });
     });
     if (oldWs) {
-        LEVEL_0_EVENTS.forEach(function (name) {
-            ws[name] = oldWs[name];
-        });
+        LEVEL_0_EVENTS.forEach(function (name) { ws[name] = oldWs[name]; });
     }
 };
 var ReconnectingWebsocket = function (url, protocols, options) {
@@ -3719,7 +3710,7 @@ var ReconnectingWebsocket = function (url, protocols, options) {
     var log = config.debug ? function () {
         var params = [];
         for (var _i = 0; _i < arguments.length; _i++) {
-            params[_i] = arguments[_i];
+            params[_i - 0] = arguments[_i];
         }
         return console.log.apply(console, ['RWS:'].concat(params));
     } : function () { };
@@ -3741,7 +3732,7 @@ var ReconnectingWebsocket = function (url, protocols, options) {
         }
     }, 0); };
     var handleClose = function () {
-        log('handleClose', { shouldRetry: shouldRetry });
+        log('close');
         retriesCount++;
         log('retries count:', retriesCount);
         if (retriesCount > config.maxRetries) {
@@ -3754,19 +3745,15 @@ var ReconnectingWebsocket = function (url, protocols, options) {
         else {
             reconnectDelay = updateReconnectionDelay(config, reconnectDelay);
         }
-        log('handleClose - reconnectDelay:', reconnectDelay);
+        log('reconnectDelay:', reconnectDelay);
         if (shouldRetry) {
             setTimeout(connect, reconnectDelay);
         }
     };
     var connect = function () {
-        if (!shouldRetry) {
-            return;
-        }
         log('connect');
         var oldWs = ws;
-        var wsUrl = (typeof url === 'function') ? url() : url;
-        ws = new config.constructor(wsUrl, protocols);
+        ws = new config.constructor(url, protocols);
         connectingTimeout = setTimeout(function () {
             log('timeout');
             ws.close();
@@ -3798,11 +3785,10 @@ var ReconnectingWebsocket = function (url, protocols, options) {
         if (code === void 0) { code = 1000; }
         if (reason === void 0) { reason = ''; }
         var _b = _a === void 0 ? {} : _a, _c = _b.keepClosed, keepClosed = _c === void 0 ? false : _c, _d = _b.fastClose, fastClose = _d === void 0 ? true : _d, _e = _b.delay, delay = _e === void 0 ? 0 : _e;
-        log('close - params:', { reason: reason, keepClosed: keepClosed, fastClose: fastClose, delay: delay, retriesCount: retriesCount, maxRetries: config.maxRetries });
-        shouldRetry = !keepClosed && retriesCount <= config.maxRetries;
         if (delay) {
             reconnectDelay = delay;
         }
+        shouldRetry = !keepClosed;
         ws.close(code, reason);
         if (fastClose) {
             var fakeCloseEvent_1 = {
@@ -5600,10 +5586,17 @@ $(document).ready(function() {
   };
 
   $("form").submit(function() {
+    var chatmessage = $("#message").val().trim(),
+        msg;
+
+    if (! chatmessage) {
+      return false;
+    }
+
     try {
-      var msg = {
+      msg = {
         type: 'chat',
-        contents: $("#message").val(),
+        contents: chatmessage,
         player_id: players.ego().id,
         timestamp: performance.now() - start,
         broadcast: true
@@ -6193,10 +6186,11 @@ var conversions = __webpack_require__(1);
 	conversions that are not possible simply are not included.
 */
 
+// https://jsperf.com/object-keys-vs-for-in-with-closure/3
+var models = Object.keys(conversions);
+
 function buildGraph() {
 	var graph = {};
-	// https://jsperf.com/object-keys-vs-for-in-with-closure/3
-	var models = Object.keys(conversions);
 
 	for (var len = models.length, i = 0; i < len; i++) {
 		graph[models[i]] = {
@@ -6880,7 +6874,7 @@ module.exports = function isArrayish(obj) {
 /*!
  * Determine if an object is a Buffer
  *
- * @author   Feross Aboukhadijeh <https://feross.org>
+ * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
  * @license  MIT
  */
 
@@ -7997,10 +7991,6 @@ process.off = noop;
 process.removeListener = noop;
 process.removeAllListeners = noop;
 process.emit = noop;
-process.prependListener = noop;
-process.prependOnceListener = noop;
-
-process.listeners = function (name) { return [] }
 
 process.binding = function (name) {
     throw new Error('process.binding is not supported');
