@@ -4593,10 +4593,12 @@ color2idx = function(color) {
 };
 
   var color2name = function(color) {
+    var color_names = settings.player_color_names;
+    var colors = settings.player_colors;
     if (typeof(color) === "object") { color = color.join(',');}
-    for (var name in PLAYER_COLORS) {
-      if (PLAYER_COLORS.hasOwnProperty(name) && PLAYER_COLORS[name].join(',') === color) {
-        return name;
+    for (var idx=0; idx < colors.length; idx++) {
+      if (color === colors[idx].join(',')) {
+        return color_names[idx];
       }
     }
   };
@@ -5223,11 +5225,9 @@ color2idx = function(color) {
 
     if (settings.mutable_colors) {
       Mousetrap.bind('c', function () {
-        keys = Object.keys(PLAYER_COLORS);
-        values = Object.values(PLAYER_COLORS);
+        values = settings.player_colors;
         index = arraySearch(values, players.ego().color);
-        nextItem = keys[(index + 1) % keys.length];
-        players.ego().color = PLAYER_COLORS[nextItem];
+        players.ego().color = values[(index + 1) % values.length];
         var msg = {
           type: "change_color",
           player_id: players.ego().id,
@@ -5328,7 +5328,7 @@ color2idx = function(color) {
       recipient_name = 'all players';
     } else if (recipient_id.indexOf('group:') === 0) {
       team_idx = +recipient_id.substring(6);
-      recipient_name = 'all ' + Object.keys(PLAYER_COLORS)[team_idx] + ' players';
+      recipient_name = 'all ' + settings.player_color_names[team_idx] + ' players';
     } else {
       recipient_name = players.get(recipient_id).name;
     }
@@ -5485,13 +5485,6 @@ color2idx = function(color) {
       pushMessage("<span class='name'>Moderator:</span> the final standings are &hellip;");
     }
 
-    var group_scores = players.group_scores();
-    var rgb_map = function (e) { return Math.round(e * 255); };
-    for (i = 0; i < group_scores.length; i++) {
-      var group = group_scores[i];
-      var color = settings.player_colors[name2idx(group.name)].map(rgb_map);
-      pushMessage('<span class="GroupScore">' + group.score + '</span><span class="GroupIndicator" style="background-color:' + Color.rgb(color).string() +';"></span>');
-    }
     if (settings.leaderboard_group) {
       if (settings.leaderboard_individual) {
         pushMessage('<em>Group</em>');
@@ -5500,7 +5493,7 @@ color2idx = function(color) {
       var rgb_map = function (e) { return Math.round(e * 255); };
       for (i = 0; i < group_scores.length; i++) {
         var group = group_scores[i];
-        var color = PLAYER_COLORS[group.name].map(rgb_map);
+        var color = settings.player_colors[name2idx(group.name)].map(rgb_map);
         pushMessage('<span class="GroupScore">' + group.score + '</span><span class="GroupIndicator" style="background-color:' + Color.rgb(color).string() +';"></span>');
       }
     }
