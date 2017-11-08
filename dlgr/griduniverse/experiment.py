@@ -124,6 +124,7 @@ def extra_parameters():
         'use_identicons': bool,
         'build_walls': bool,
         'wall_building_cost': int,
+        'donation_multiplier': float,
     }
 
     for key in types:
@@ -236,6 +237,7 @@ class Gridworld(object):
 
         # Donations
         self.donation_amount = kwargs.get('donation_amount', 0)
+        self.donation_multiplier = kwargs.get('donation_multiplier', 1.0)
         self.donation_individual = kwargs.get('donation_individual', False)
         self.donation_group = kwargs.get('donation_group', False)
         self.donation_public = kwargs.get('donation_public', False)
@@ -327,14 +329,14 @@ class Gridworld(object):
         """Donation is enabled on even-numbered rounds if
         alternate_consumption_donation is set to True.
         """
-        return bool(self.alternate_consumption_donation and self.round % 2)
+        return bool(self.round % 2 if self.alternate_consumption_donation else True)
 
     @property
     def consumption_active(self):
         """Food consumption is enabled on odd-numbered rounds if
         alternate_consumption_donation is set to True.
         """
-        return bool(not self.alternate_consumption_donation or not self.round % 2)
+        return bool(not self.round % 2 if self.alternate_consumption_donation else True)
 
     def check_round_completion(self):
         if not self.game_started:
@@ -536,8 +538,11 @@ class Gridworld(object):
         if self.donation_amount > 0:
             text += """<p>It can be helpful to donate points to other players.
                 You can donate {g.donation_amount} {g.donation_amount:plural, point, points}
-                to any player by clicking on their block on the grid.</p>
-                """
+                of your points to any player by clicking on their block on the grid."""
+            if self.donation_multiplier != 1.0:
+                text += """ Points you donate will be multiplied by
+                {g.donation_multiplier} before being distributed."""
+            text += '</p>'
         if self.show_chatroom:
             text += """<p>A chatroom is available to send messages to the other
                 players."""
@@ -1224,15 +1229,17 @@ class Griduniverse(Experiment):
 
         if donor.score >= donation and len(recipients):
             donor.score -= donation
+            donated = donation * self.grid.donation_multiplier
             if len(recipients) > 1:
-                donation = round(donation * 1.0 / len(recipients), 2)
+                donated = round(donated / len(recipients), 2)
             for recipient in recipients:
-                recipient.score += donation
+                recipient.score += donated
             message = {
                 'type': 'donation_processed',
                 'donor_id': msg['donor_id'],
                 'recipient_id': msg['recipient_id'],
                 'amount': donation,
+                'received': donated
             }
             self.publish(message)
             self.record_event(message, message['donor_id'])
