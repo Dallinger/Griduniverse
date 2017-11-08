@@ -125,7 +125,7 @@ def exp(db_session, active_config, fresh_gridworld):
     from dallinger.experiments import Griduniverse
     gu = Griduniverse(db_session)
     gu.app_id = 'test app'
-    gu.exp_config = config
+    gu.exp_config = active_config
     gu.grid.players.clear()
 
     return gu

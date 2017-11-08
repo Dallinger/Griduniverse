@@ -4546,6 +4546,7 @@ for (var j = 0; j < settings.rows; j++) {
     background.push(color);
   }
 }
+
 var initialSection = new Section(background, 0, 0);
 
 var GREEN = [0.51, 0.69, 0.61];
@@ -5653,7 +5654,7 @@ $(document).ready(function() {
 
 });
 
-}(dallinger, require, settings));
+}(dallinger, require, window.settings));
 
 
 /***/ }),
