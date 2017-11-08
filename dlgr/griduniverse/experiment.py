@@ -125,6 +125,7 @@ def extra_parameters():
         'use_identicons': bool,
         'build_walls': bool,
         'wall_building_cost': int,
+        'donation_multiplier': float,
     }
 
     for key in types:
@@ -237,6 +238,7 @@ class Gridworld(object):
 
         # Donations
         self.donation_amount = kwargs.get('donation_amount', 0)
+        self.donation_multiplier = kwargs.get('donation_multiplier', 1.0)
         self.donation_individual = kwargs.get('donation_individual', False)
         self.donation_group = kwargs.get('donation_group', False)
         self.donation_ingroup = kwargs.get('donation_ingroup', False)
@@ -1311,15 +1313,17 @@ class Griduniverse(Experiment):
 
         if donor.score >= donation and len(recipients):
             donor.score -= donation
+            donated = donation * self.grid.donation_multiplier
             if len(recipients) > 1:
-                donation = round(donation * 1.0 / len(recipients), 2)
+                donated = round(donated / len(recipients), 2)
             for recipient in recipients:
-                recipient.score += donation
+                recipient.score += donated
             message = {
                 'type': 'donation_processed',
                 'donor_id': msg['donor_id'],
                 'recipient_id': msg['recipient_id'],
                 'amount': donation,
+                'received': donated
             }
             self.publish(message)
             self.record_event(message, message['donor_id'])
