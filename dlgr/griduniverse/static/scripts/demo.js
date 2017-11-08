@@ -858,13 +858,7 @@ color2idx = function(color) {
   }
 
   function onColorChanged(msg) {
-    var name;
-    if (settings.pseudonyms) {
-      name = players.get(msg.player_id).name;
-    } else {
-      name = "Player " + msg.player_index;
-    }
-    pushMessage("<span class='name'>Moderator:</span> " + name + ' changed from team ' + msg.old_color + ' to team ' + msg.new_color + '.');
+    pushMessage("<span class='name'>Moderator:</span> " + chatName(msg.player_id) + ' changed from team ' + msg.old_color + ' to team ' + msg.new_color + '.');
   }
 
   function onDonationProcessed(msg) {
@@ -1068,10 +1062,7 @@ color2idx = function(color) {
       var ego_id = players.ego_id;
       for (i = 0; i < player_scores.length; i++) {
         var player = player_scores[i];
-        var player_name = player.name;
-        if (ego_id == player.id) {
-          player_name = '<em>' + player_name + ' (You)</em>';
-        }
+        var player_name = chatName(player.id);
         pushMessage('<span class="PlayerScore">' + Math.round(player.score) + '</span><span class="PlayerName">' + player_name + '</span>');
       }
     }
