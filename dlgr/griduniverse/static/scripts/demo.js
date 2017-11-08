@@ -753,19 +753,19 @@ function bindGameKeys(socket) {
   });
 }
 
-  function chatName(player_id) {
-    var ego = players.ego(),
-      name,
-      entry;
-    if (id === ego) {
-      name = "You";
-    } else if (settings.pseudonyms) {
-      name = players.get(player_id).name;
-    } else if (player_id % 1 === 0) {
-      name = "Player " + player_id;
+function chatName(player_id) {
+  var ego = players.ego(),
+    name,
+    entry;
+  if (id === ego) {
+    name = "You";
+  } else if (settings.pseudonyms) {
+    name = players.get(player_id).name;
+  } else if (player_id % 1 === 0) {
+    name = "Player " + player_id;
   } else {
-      // Non-integer player_id
-      return '<span class="name">' + player_id + '</span>';
+    // Non-integer player_id
+    return '<span class="name">' + player_id + '</span>';
   }
 
   var salt = $("#grid").data("identicon-salt");
@@ -787,23 +787,17 @@ function bindGameKeys(socket) {
   }
     entry = entry + " " + name + "</span> ";
     return entry;
-  }
+}
 
   function onChatMessage(msg) {
     var entry = chatName(msg.player_id);
     $("#messages").append(($("<li>").text(": " + msg.contents)).prepend(entry));
-  $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
-}
+    $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
+  }
 
   function onColorChanged(msg) {
-    var name;
     store.set("color", msg.new_color);
-    if (settings.pseudonyms) {
-      name = players.get(msg.player_id).name;
-    } else {
-      name = "Player " + msg.player_index;
-    }
-    pushMessage("<span class='name'>Moderator:</span> " + name + ' changed from team ' + msg.old_color + ' to team ' + msg.new_color + '.');
+    pushMessage("<span class='name'>Moderator:</span> " + chatName(msg.player_id) + ' changed from team ' + msg.old_color + ' to team ' + msg.new_color + '.');
   }
 
   function onDonationProcessed(msg) {
@@ -820,18 +814,18 @@ function bindGameKeys(socket) {
 
     if (recipient_id === 'all') {
       recipient_name = '<span class="name">All players</span>';
-  } else if (recipient_id.indexOf('group:') === 0) {
-    team_idx = +recipient_id.substring(6);
-      recipient_name = 'Everyone in <span class="name">' + settings.player_color_names[team_idx] + '</span>';
-  } else {
-      recipient_name = chatName(recipient_id);
-  }
+    } else if (recipient_id.indexOf('group:') === 0) {
+      team_idx = +recipient_id.substring(6);
+        recipient_name = 'Everyone in <span class="name">' + settings.player_color_names[team_idx] + '</span>';
+    } else {
+        recipient_name = chatName(recipient_id);
+    }
 
-  if (msg.amount === 1) {
-      donated_points = msg.amount + ' point.';
-  } else {
-      donated_points = msg.amount + ' points.';
-  }
+    if (msg.amount === 1) {
+        donated_points = msg.amount + ' point.';
+    } else {
+        donated_points = msg.amount + ' points.';
+    }
 
     if (msg.received === 1) {
       received_points = msg.received + ' point.';
@@ -977,10 +971,7 @@ function displayLeaderboards(msg, callback) {
     var ego_id = players.ego_id;
     for (i = 0; i < player_scores.length; i++) {
       var player = player_scores[i];
-      var player_name = player.name;
-      if (ego_id == player.id) {
-        player_name = '<em>' + player_name + ' (You)</em>';
-      }
+      var player_name = chatName(player.id);
       pushMessage('<span class="PlayerScore">' + Math.round(player.score) + '</span><span class="PlayerName">' + player_name + '</span>');
     }
   }
