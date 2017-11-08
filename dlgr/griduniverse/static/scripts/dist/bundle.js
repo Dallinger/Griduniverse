@@ -4452,7 +4452,7 @@ module.exports = jQuery;
 var require;/*global dallinger, require, settings */
 /*jshint esversion: 6 */
 
-(function (getUrlParameter, require, reqwest, settings, submitResponses) {
+(function (dallinger, require, settings) {
 
 var util = __webpack_require__(15);
 var grid = __webpack_require__(7);
@@ -4475,19 +4475,12 @@ function animateColor(color) {
   } else {
     rand = 0.01;
   }
-
-  function animateColor(color) {
-    if (settings.background_animation) {
-      rand = Math.random() * 0.02;
-    } else {
-      rand = 0.01;
-    }
-    return [
-      color[0] * 0.95 + rand,
-      color[1] * 0.95 + rand,
-      color[2] * 0.95 + rand
-    ];
-  }
+  return [
+    color[0] * 0.95 + rand,
+    color[1] * 0.95 + rand,
+    color[2] * 0.95 + rand
+  ];
+}
 
   class Section {
     // Represents the currently visible section (window) of the grid
@@ -4543,17 +4536,17 @@ function animateColor(color) {
     }
   }
 
-  var background = [], color;
-  for (var j = 0; j < settings.rows; j++) {
-    for (var i = 0; i < settings.columns; i++) {
-      color = [0, 0, 0];
-      for (var k = 0; k < 15; k++) {
-        color = animateColor(color);
-      }
-      background.push(color);
+var background = [], color;
+for (var j = 0; j < settings.rows; j++) {
+  for (var i = 0; i < settings.columns; i++) {
+    color = [0, 0, 0];
+    for (var k = 0; k < 15; k++) {
+      color = animateColor(color);
     }
+    background.push(color);
   }
 }
+
 var initialSection = new Section(background, 0, 0);
 
 var GREEN = [0.51, 0.69, 0.61];
@@ -4596,7 +4589,8 @@ color2idx = function(color) {
     if (colors[idx].join(',') === value) {
       return idx;
     }
-  };
+  }
+};
 
   var color2name = function(color) {
     if (typeof(color) === "object") { color = color.join(',');}
@@ -5281,7 +5275,24 @@ color2idx = function(color) {
     } else {
       name = "Player " + msg.player_index;
     }
-    entry = "<span class='name'>" + name + ":</span> ";
+    var salt = $("#grid").data("identicon-salt");
+    var id = parseInt(msg.player_id)-1;
+    var fg = players.get(msg.player_id).color.concat(1);
+    fg = fg.map(function(x) { return x * 255; });
+    bg = fg.map(function(x) { return (x * 0.66); });
+    bg[3] = 255;
+    var options = {
+      size: 10,
+      foreground: fg,
+      background: bg,
+      format: 'svg'
+    };
+    var identicon = new Identicon(md5(salt + id), options).toString();
+    var entry = "<span class='name'>" + name;
+    if (settings.use_identicons) {
+      entry = entry + " <img src='data:image/svg+xml;base64," + identicon + "' />";
+    }
+    entry = entry + ":</span> ";
     $("#messages").append(($("<li>").text(msg.contents)).prepend(entry));
     $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
   }
@@ -5295,28 +5306,6 @@ color2idx = function(color) {
     }
     pushMessage("<span class='name'>Moderator:</span> " + name + ' changed from team ' + msg.old_color + ' to team ' + msg.new_color + '.');
   }
-
-  var salt = $("#grid").data("identicon-salt");
-  var id = parseInt(msg.player_id)-1;
-  var fg = players.get(msg.player_id).color.concat(1);
-  fg = fg.map(function(x) { return x * 255; });
-  bg = fg.map(function(x) { return (x * 0.66); });
-  bg[3] = 255;
-  var options = {
-    size: 10,
-    foreground: fg,
-    background: bg,
-    format: 'svg'
-  };
-  var identicon = new Identicon(md5(salt + id), options).toString();
-  var entry = "<span class='name'>" + name;
-  if (settings.use_identicons) {
-    entry = entry + " <img src='data:image/svg+xml;base64," + identicon + "' />";
-  }
-  entry = entry + ":</span> ";
-  $("#messages").append(($("<li>").text(msg.contents)).prepend(entry));
-  $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
-}
 
   function onDonationProcessed(msg) {
     var ego = players.ego(),
@@ -5739,7 +5728,7 @@ color2idx = function(color) {
 
   });
 
-}(dallinger, require, settings));
+}(dallinger, require, window.settings));
 
 
 /***/ }),
