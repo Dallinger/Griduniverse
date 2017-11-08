@@ -626,7 +626,7 @@ class Gridworld(object):
             'position': position,
         })
 
-    def spawn_player(self, id=None):
+    def spawn_player(self, id=None, **kwargs):
         """Spawn a player."""
         player = Player(
             id=id,
@@ -641,9 +641,11 @@ class Gridworld(object):
             grid=self,
             identity_visible=(not self.identity_signaling or
                               self.identity_starts_visible),
+            **kwargs
         )
         self.players[id] = player
         self._start_if_ready()
+        return player
 
     def _random_empty_position(self):
         """Select an empty cell at random."""
@@ -785,7 +787,7 @@ class Player(object):
             self.color_idx = random.randint(0, self.num_possible_colors - 1)
 
         self.color_name = Gridworld.player_color_names[self.color_idx]
-        self.color = Gridworld.player_colors[self.color_idx]
+        self.color = Gridworld.player_color_names[self.color_idx]
 
         # Determine the player's profile.
         self.fake = Factory.create(self.pseudonym_locale)
@@ -1184,7 +1186,10 @@ class Griduniverse(Experiment):
                 node = self.create_node(participant, network)
                 self.node_by_player_id[player_id] = node
                 logger.info("Spawning player on the grid...")
-                self.grid.spawn_player(id=player_id)
+                self.grid.spawn_player(
+                    id=player_id,
+                    color_name=self.grid.limited_player_color_names[node.id % self.grid.num_colors]
+                )
             else:
                 logger.info(
                     "No free network found for player {}".format(player_id)
@@ -1205,8 +1210,8 @@ class Griduniverse(Experiment):
 
     def handle_change_color(self, msg):
         player = self.grid.players[msg['player_id']]
-        color_idx = Gridworld.player_colors.index(msg['color'])
-        color_name = Gridworld.player_color_names[color_idx]
+        color_name = msg['color']
+        color_idx = Gridworld.player_color_names.index(color_name)
         old_color = Gridworld.player_color_names[player.color_idx]
         msg['old_color'] = old_color
         msg['new_color'] = color_name
