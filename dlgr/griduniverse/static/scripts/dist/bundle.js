@@ -5204,18 +5204,24 @@ function bindGameKeys(socket) {
   });
 }
 
-function onChatMessage(msg) {
-  var name,
+  function chatName(player_id) {
+    var ego = players.ego(),
+      name,
       entry;
-
-  if (settings.pseudonyms) {
-    name = players.get(msg.player_id).name;
+    if (id === ego) {
+      name = "You";
+    } else if (settings.pseudonyms) {
+      name = players.get(player_id).name;
+    } else if (player_id % 1 === 0) {
+      name = "Player " + player_id;
   } else {
-    name = "Player " + msg.player_index;
+      // Non-integer player_id
+      return '<span class="name">' + player_id + '</span>';
   }
+
   var salt = $("#grid").data("identicon-salt");
-  var id = parseInt(msg.player_id)-1;
-  var fg = players.get(msg.player_id).color.concat(1);
+    var id = parseInt(player_id)-1;
+    var fg = players.get(player_id).color.concat(1);
   fg = fg.map(function(x) { return x * 255; });
   bg = fg.map(function(x) { return (x * 0.66); });
   bg[3] = 255;
@@ -5226,12 +5232,17 @@ function onChatMessage(msg) {
     format: 'svg'
   };
   var identicon = new Identicon(md5(salt + id), options).toString();
-  var entry = "<span class='name'>" + name;
+    var entry = "<span class='name'>";
   if (settings.use_identicons) {
     entry = entry + " <img src='data:image/svg+xml;base64," + identicon + "' />";
   }
-  entry = entry + ":</span> ";
-  $("#messages").append(($("<li>").text(msg.contents)).prepend(entry));
+    entry = entry + " " + name + "</span> ";
+    return entry;
+  }
+
+  function onChatMessage(msg) {
+    var entry = chatName(msg.player_id);
+    $("#messages").append(($("<li>").text(": " + msg.contents)).prepend(entry));
   $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
 }
 
@@ -5247,37 +5258,40 @@ function onChatMessage(msg) {
   }
 
   function onDonationProcessed(msg) {
-    var ego = players.ego(),
-      donor = players.get(msg.donor_id),
+    var donor = players.get(msg.donor_id),
       recipient_id = msg.recipient_id,
       team_idx,
       donor_name,
       recipient_name,
+      donated_points,
+      received_points,
       entry;
 
-    if (donor === ego) {
-      donor_name = 'You';
-    } else {
-      donor_name = "Player " + donor.name;
-    }
+    donor_name = chatName(msg.donor_id);
 
-    if (ego && recipient_id === ego.id) {
-    recipient_name = 'you';
-  } else if (recipient_id === 'all') {
-    recipient_name = 'all players';
+    if (recipient_id === 'all') {
+      recipient_name = '<span class="name">All players</span>';
   } else if (recipient_id.indexOf('group:') === 0) {
     team_idx = +recipient_id.substring(6);
-    recipient_name = 'all ' + settings.player_color_names[team_idx] + ' players';
+      recipient_name = 'Everyone in <span class="name">' + settings.player_color_names[team_idx] + '</span>';
   } else {
-    recipient_name = players.get(recipient_id).name;
+      recipient_name = chatName(recipient_id);
   }
 
-  entry = donor_name + " gave " + recipient_name + " " + msg.amount;
   if (msg.amount === 1) {
-    entry += " point.";
+      donated_points = msg.amount + ' point.';
   } else {
-    entry += " points.";
+      donated_points = msg.amount + ' points.';
   }
+
+    if (msg.received === 1) {
+      received_points = msg.received + ' point.';
+    } else {
+      received_points = msg.received + ' points.';
+    }
+
+    entry = donor_name + " contributed " + donated_points + " " + recipient_name + " received " + received_points;
+
   $("#messages").append($("<li>").html(entry));
   $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
   $('#individual-donate, #group-donate').addClass('button-outline');
