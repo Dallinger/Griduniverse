@@ -125,6 +125,7 @@ def extra_parameters():
         'use_identicons': bool,
         'build_walls': bool,
         'wall_building_cost': int,
+        'donation_multiplier': float,
     }
 
     for key in types:
@@ -237,6 +238,7 @@ class Gridworld(object):
 
         # Donations
         self.donation_amount = kwargs.get('donation_amount', 0)
+        self.donation_multiplier = kwargs.get('donation_multiplier', 1.0)
         self.donation_individual = kwargs.get('donation_individual', False)
         self.donation_group = kwargs.get('donation_group', False)
         self.donation_ingroup = kwargs.get('donation_ingroup', False)
@@ -368,6 +370,7 @@ class Gridworld(object):
         if self.alternate_consumption_donation and self.donation_active:
             return False
         return True
+
 
     @property
     def consumption_active(self):
@@ -587,29 +590,40 @@ class Gridworld(object):
         text += "</p>"
         if self.alternate_consumption_donation and self.num_rounds > 1:
             text += """<p> Rounds will alternate between <strong>consumption</strong> and
-            <strong>donation</strong> rounds. Consumption rounds will allow for free movement
+            <strong>contribution</strong> rounds. Consumption rounds will allow for free movement
             on the grid. Donation rounds will disable movement and allow you to donate points.</p>
             """
         if self.donation_amount > 0:
             text += """<img src='static/images/donate-click.gif' height='210'><br><p>It can be helpful to
-            donate points to others.
+            contribute points to players, groups, or to everyone.
             """
             if self.donation_individual:
-                text += """ You can donate <strong>{g.donation_amount}</strong>
+                text += """ You can contribute <strong>{g.donation_amount}</strong>
                 {g.donation_amount:plural, point, points} to any player by clicking on
                 <img src='static/images/donate-individual.png' class='donate'
                 height='30'>, then clicking on their block on the grid.
                 """
             if self.donation_group:
-                text += """ To donate to a group, click on the <img src='static/images/donate-group.png'
-                class='donate' height='30'> button, then click on any player with the color of the team
-                you want to donate to.
-                """
+                if self.donation_ingroup:
+                    text += """ To contribute to your own group, click on the <img src='static/images/donate-mygroup.png'
+                    class='donate' height='30'> button.
+                    """
+                else:
+                    text += """ To contribute to a group, click on the <img src='static/images/donate-group.png'
+                    class='donate' height='30'> button, then click on any player with the color of the team
+                    you want to contribute to.
+                    """
+
             if self.donation_public:
                 text += """ The <img src='static/images/donate-public.png' class='donate' height='30'>
-                 button splits your donation amongst every player in the game (including yourself).
+                 button splits your contribution amongst every player in the game (including yourself).
                 """
             text += "</p>"
+            if self.donation_multiplier != 1.0:
+                text += """<p>Importantly, points you contribute will be multiplied by
+                <strong>{g.donation_multiplier}</strong> before being distributed."""
+
+
         if self.show_chatroom:
             text += """<p>A chatroom is available to send messages to the other
                 players."""
@@ -1296,15 +1310,17 @@ class Griduniverse(Experiment):
 
         if donor.score >= donation and len(recipients):
             donor.score -= donation
+            donated = donation * self.grid.donation_multiplier
             if len(recipients) > 1:
-                donation = round(donation * 1.0 / len(recipients), 2)
+                donated = round(donated / len(recipients), 2)
             for recipient in recipients:
-                recipient.score += donation
+                recipient.score += donated
             message = {
                 'type': 'donation_processed',
                 'donor_id': msg['donor_id'],
                 'recipient_id': msg['recipient_id'],
                 'amount': donation,
+                'received': donated
             }
             self.publish(message)
             self.record_event(message, message['donor_id'])
