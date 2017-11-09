@@ -47,6 +47,7 @@
     settings.leaderboard_group = {% if experiment.grid.leaderboard_group %}true{% else %}false{% endif %};
     settings.leaderboard_individual = {% if experiment.grid.leaderboard_individual %}true{% else %}false{% endif %};
     settings.leaderboard_time = {{ experiment.grid.leaderboard_time }} || 10;
+    settings.apoptosis = {{ experiment.grid.apoptosis }};
 </script>
 {% endblock %}
 
@@ -59,8 +60,15 @@
     <p>
         <span id="score">0</span> points ($<span id="dollars">0.00</span>),
         <span id="time">?</span> seconds remaining
-        {% if experiment.grid.num_rounds > 1 %}in round <span id="round">?</span>{% endif %}
+        {% if experiment.grid.num_rounds > 1 %}
+        in round <span id="round">?</span>
+        {% else %}
+        in total.
+        {% endif %}
     </p>
+    {% if experiment.grid.apoptosis > 0 %}
+      <p>You have <span id="lifetime"></span> seconds left.</p>
+    {% endif %}
 </div>
 
 <div id="grid" data-identicon-salt="{{ app_id }}">

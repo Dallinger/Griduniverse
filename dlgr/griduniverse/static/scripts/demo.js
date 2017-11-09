@@ -169,6 +169,7 @@ var Player = function(settings) {
     return new Player();
   }
   this.id = settings.id;
+  this.creation_timestamp = settings.creation_timestamp;
   this.position = settings.position;
   this.color = settings.color;
   this.motion_auto = settings.motion_auto;
@@ -350,8 +351,8 @@ var playerSet = (function () {
 
     PlayerSet.prototype.update = function (playerData) {
       var currentPlayerData,
-          i;
-
+        i;
+      this._players = {};
       for (i = 0; i < playerData.length; i++) {
         currentPlayerData = playerData[i];
         this._players[currentPlayerData.id] = new Player(currentPlayerData);
@@ -359,25 +360,25 @@ var playerSet = (function () {
     };
 
     PlayerSet.prototype.maxScore = function () {
-        var id;
-        maxScore = 0;
-        for (id in this._players) {
-            if (this._players[id].score > maxScore) {
-                maxScore = this._players[id].score;
-            }
+      var id;
+      maxScore = 0;
+      for (id in this._players) {
+        if (this._players[id].score > maxScore) {
+          maxScore = this._players[id].score;
         }
-        return maxScore;
+      }
+      return maxScore;
     };
 
-    PlayerSet.prototype.minScore = function () {
-        var id;
-        minScore = Infinity;
-        for (id in this._players) {
-            if (this._players[id].score < minScore) {
-                minScore = this._players[id].score;
-            }
+    PlayerSet.prototype.minScore = function() {
+      var id;
+      minScore = Infinity;
+      for (id in this._players) {
+        if (this._players[id].score < minScore) {
+          minScore = this._players[id].score;
         }
-        return minScore;
+      }
+      return minScore;
     };
 
     PlayerSet.prototype.each = function (callback) {
@@ -668,7 +669,7 @@ function bindGameKeys(socket) {
       direction,
       function() {
         if (direction === lastDirection) {
-          return;
+          return false;
         }
 
         // New direction may be pressed before previous dir key is released
@@ -681,6 +682,7 @@ function bindGameKeys(socket) {
         lastDirection = direction;
         repeatIntervalId = setInterval(moveInDir, repeatDelayMS, direction);
         console.log("Repeating new direction: " + direction + " (" + repeatIntervalId + ")");
+        return false;
       },
       'keydown'
     );
@@ -693,6 +695,7 @@ function bindGameKeys(socket) {
           clearInterval(repeatIntervalId);
           lastDirection = null;
         }
+        return false;
       },
       "keyup"
     );
@@ -854,6 +857,9 @@ function onGameStateChange(msg) {
   state = JSON.parse(msg.grid);
   players.update(state.players);
   ego = players.ego();
+
+  remainingTime = settings.apoptosis - (msg.current_timestamp - ego.creation_timestamp);
+  $("#lifetime").html(Math.round(remainingTime));
 
   // If on alternate donation/consumption rounds, announce round type
   if (settings.donation_active != state.donation_active) {
@@ -1029,6 +1035,10 @@ $(document).ready(function() {
   $("#opt-out").click(function() {
     window.location.href = "/questionnaire?participant_id=" + player_id;
   });
+
+  setTimeout(function(){
+    window.location.href = "/questionnaire?participant_id=" + player_id;
+  }, settings.apoptosis * 1000);
 
   if (isSpectator) {
     $(".for-players").hide();

@@ -3,6 +3,22 @@ mode = sandbox
 auto_recruit = true
 network = FullyConnected
 max_participants = 3
+num_colors = 2
+rows = 25
+; food_planting = true
+columns = 25
+num_food = 25
+block_size = 15
+; walls_density = 0.90
+use_identicons = true
+quorum = 1
+show_chatroom = true
+leaderboard_group = true
+leaderboard_time = 1
+num_rounds = 1
+time_per_round = 60
+dollars_per_point = 0.01
+; difi_question = true
 
 [HIT Configuration]
 title = Griduniverse
@@ -10,7 +26,7 @@ description = Play a game
 keywords = Psychology, game, play
 base_payment = 1.00
 lifetime = 24
-duration = 0.1
+duration = 0.50
 us_only = true
 approve_requirement = 95
 contact_email_on_error = griduniverse@mailinator.com
@@ -23,10 +39,10 @@ database_url = postgresql://postgres@localhost/dallinger
 database_size = standard-0
 
 [Server Parameters]
-dyno_type = standard-2x
+dyno_type = performance-m
 num_dynos_web = 1
 num_dynos_worker = 1
 host = 0.0.0.0
 notification_url = None
-clock_on = false
+clock_on = true
 logfile = -

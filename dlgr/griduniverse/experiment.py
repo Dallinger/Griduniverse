@@ -124,6 +124,8 @@ def extra_parameters():
         'use_identicons': bool,
         'build_walls': bool,
         'wall_building_cost': int,
+        'apoptosis': int,
+        'quorum': int,
     }
 
     for key in types:
@@ -169,6 +171,7 @@ class Gridworld(object):
 
         # Players
         self.num_players = kwargs.get('max_participants', 3)
+        self.apoptosis = kwargs.get('apoptosis', None)
 
         # Rounds
         self.num_rounds = kwargs.get('num_rounds', 1)
@@ -229,7 +232,7 @@ class Gridworld(object):
         self.frequency_dependence = kwargs.get('frequency_dependence', 0)
         self.frequency_dependent_payoff_rate = kwargs.get(
             'frequency_dependent_payoff_rate', 0)
-        self.intergroup_competition = kwargs.get('intergroup_competition', 1)
+        # self.intergroup_competition = kwargs.get('intergroup_competition', 1)
         self.leaderboard_group = kwargs.get('leaderboard_group', False)
         self.leaderboard_individual = kwargs.get('leaderboard_individual', False)
         self.leaderboard_time = kwargs.get('leaderboard_time', 0)
@@ -743,6 +746,8 @@ class Player(object):
         self.identity_visible = kwargs.get('identity_visible', True)
         self.add_wall = None
 
+        self.creation_timestamp = time.time()
+
         # Determine the player's color.
         if 'color' in kwargs:
             self.color_idx = Gridworld.player_colors.index(kwargs['color'])
@@ -765,6 +770,10 @@ class Player(object):
         self.birthdate = self.profile['birthdate']
 
         self.motion_timestamp = 0
+
+    @property
+    def age(self):
+        return time.time() - self.creation_timestamp
 
     def tremble(self, direction):
         """Change direction with some probability."""
@@ -844,6 +853,7 @@ class Player(object):
     def serialize(self):
         return {
             "id": self.id,
+            "creation_timestamp": self.creation_timestamp,
             "position": self.position,
             "score": self.score,
             "payoff": self.payoff,
@@ -1001,7 +1011,7 @@ class Griduniverse(Experiment):
     def configure(self):
         super(Griduniverse, self).configure()
         self.num_participants = config.get('max_participants', 3)
-        self.quorum = self.num_participants
+        self.quorum = config.get("quorum", self.num_participants)
         self.initial_recruitment_size = config.get('max_participants', 3)
         self.network_factory = config.get('network', 'FullyConnected')
 
@@ -1049,7 +1059,7 @@ class Griduniverse(Experiment):
         return json.dumps(value)
 
     def recruit(self):
-        self.recruiter().close_recruitment()
+        self.recruiter().recruit(n=1)
 
     def bonus(self, participant):
         """The bonus to be awarded to the given participant.
@@ -1269,6 +1279,7 @@ class Griduniverse(Experiment):
                 'type': 'state',
                 'grid': self.grid.serialize(),
                 'count': count,
+                'current_timestamp': time.time(),
                 'remaining_time': self.grid.remaining_round_time,
                 'round': self.grid.round,
             }
@@ -1307,6 +1318,12 @@ class Griduniverse(Experiment):
             # Spread through contagion.
             if self.grid.contagion > 0:
                 self.grid.spread_contagion()
+
+            # Apoptosis: programmed player death.
+            if self.grid.apoptosis:
+                for player in self.grid.players.values():
+                    if player.age > self.grid.apoptosis:
+                        self.grid.players.pop(player.id)
 
             # Trigger time-based events.
             if (now - previous_second_timestamp) > 1.000:
