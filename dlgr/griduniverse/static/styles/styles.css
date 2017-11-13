@@ -213,12 +213,6 @@ canvas {
     background-color: #9b4dca;
 }
 
-form .statement {
-  display:block;
-  padding: 15px 0 0 4.25%;
-  margin-bottom:20px;
-  color: #9b4dca;
-}
 form .likert {
   list-style:none;
   width:100%;
