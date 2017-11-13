@@ -1,4 +1,5 @@
-{% set in_group = "In-group" %}
+{% set group_color = "red" %}
+{% set in_group = "<img src='static/images/colors/{{ group_color }}.png' class='team' height='50'/>" %}
 
 {% set items = [
     "I feel a bond with %s.",
@@ -52,7 +53,7 @@
 {% for item in items %}
     {% set name = 'leach_' + loop.index|string %}
     <fieldset id="{{ name }}">
-        {{ prompt(item, in_group) }}
+        {{ prompt(item|safe, in_group|safe) }}
         {{ multichoice(name, 7)}}
     </fieldset>
 {% endfor %}
