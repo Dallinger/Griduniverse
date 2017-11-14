@@ -4742,6 +4742,7 @@ var playerSet = (function () {
 
             if (player.identity_visible) {
               color = player.color;
+              store.set("color", color2name(color));
             } else {
               color = (id === this.ego_id) ? Color.rgb(player.color).desaturate(0.6).rgb().array() : INVISIBLE_COLOR;
             }
@@ -5244,6 +5245,7 @@ function onChatMessage(msg) {
       name = "Player " + msg.player_index;
     }
     pushMessage("<span class='name'>Moderator:</span> " + name + ' changed from team ' + msg.old_color + ' to team ' + msg.new_color + '.');
+    store.set("color", msg.new_color);
   }
 
   function onDonationProcessed(msg) {

@@ -1,5 +1,10 @@
 {% set group_color = "red" %}
-{% set in_group = "<img src='static/images/colors/{{ group_color }}.png' class='team' height='50'/>" %}
+{% set in_group = "<img src='static/images/colors/%s.png' class='team' height='50'/>"|format(group_color) %}
+
+<script>
+document.write("<img src='static/images/colors/" + store.get("color") + ".png' class='team' height='50'/>");
+</script>
+
 
 {% set items = [
     "I feel a bond with %s.",
