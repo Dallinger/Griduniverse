@@ -1,8 +1,9 @@
-{% set group_color = "red" %}
-{% set in_group = "<img src='static/images/colors/%s.png' class='team' height='50'/>"|format(group_color) %}
+{% set in_group = "<script>get_color()</script>" %}
 
 <script>
+function get_color() {
 document.write("<img src='static/images/colors/" + store.get("color") + ".png' class='team' height='50'/>");
+}
 </script>
 
 
