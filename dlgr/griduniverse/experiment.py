@@ -427,7 +427,8 @@ class Gridworld(object):
         order = ''
         text = """<p>The objective of the game is to maximize your final payoff.
             The game is played on a {g.columns} x {g.rows} grid, where each
-            player occupies one block."""
+            player occupies one block. <br><img src='static/images/gameplay.gif'
+            height='150'><br>"""
         if self.window_columns < self.columns or self.window_rows < self.rows:
             text += """ The grid is viewed through a
                 {g.window_columns} x {g.window_rows} window
@@ -446,11 +447,11 @@ class Gridworld(object):
                     points."""
         if self.num_rounds > 1:
             text += """ The game has {g.num_rounds} rounds, each lasting
-                {g.time_per_round} seconds.</p>"""
+                <strong>{g.time_per_round} seconds</strong>.</p>"""
         else:
-            text += " The game duration is {g.time_per_round} seconds.</p>"
+            text += " The game duration is <strong>{g.time_per_round}</strong> seconds.</p>"
         if self.num_players > 1:
-            text += """<p>There are {g.num_players} players participating
+            text += """<p>There are <strong>{g.num_players} players</strong> participating
                 in the game."""
             if not self.others_visible:
                 text += """ However, players cannot see each other on the
@@ -486,7 +487,8 @@ class Gridworld(object):
                     if self.frequency_dependence < 0:
                         text += """ Players will get more points if their
                             color is in the minority."""
-        text += "</p><p>Players move around the grid using the arrow keys."
+        text += """</p><p>Players move around the grid using the arrow keys.
+                <br><img src='static/images/keys.gif' height='60'><br>"""
         if self.player_overlap:
             text += " More than one player can occupy a block at the same time."
         else:
@@ -496,7 +498,8 @@ class Gridworld(object):
             text += """ Players cannot see the whole grid, but only an area
                 approximately {g.visibility} blocks around their current
                 position."""
-        text += "<p>Press 'h' to toggle highlighting of your player.</p>"
+        text += """<p>Press the 'h' key to toggle highlighting of your player.
+                <br><img src='static/images/h-toggle.gif' height='150'><p>"""
         if self.motion_auto:
             text += """ Once a player presses a key to move, the player will
                 continue to move in the same direction automatically until
@@ -516,13 +519,15 @@ class Gridworld(object):
         text += """</p><p>Players gain points by getting to squares that have
             food on them. Each piece of food is worth {g.food_reward}
             {g.food_reward:plural, point, points}. When the game starts there
-            are {g.num_food} {g.num_food:plural, piece, pieces} of food on the
-            grid. Food is represented by a green"""
+            are <strong>{g.num_food}</strong> {g.num_food:plural, piece, pieces}
+            of food on the grid. Food is represented by a green"""
         if self.food_maturation_threshold > 0:
             text += " or brown"
-        text += " square."
+        text += " square: <img src='static/images/food-green.png' height='20'>"
+        if self.food_maturation_threshold > 0:
+            text += " <img src='static/images/food-brown.png' height='20'>"
         if self.respawn_food:
-            text += " Food is automatically respawned after it is consumed."
+            text += "<br>Food is automatically respawned after it is consumed."
             if self.food_maturation_threshold > 0:
                 text += """It will appear immediately, but not be consumable for
                     some time, because it has a maturation period. It will show
@@ -533,19 +538,40 @@ class Gridworld(object):
                 text += """ The cost for planting food is {g.food_planting_cost}
                 {g.food_planting_cost:plural, point, points}."""
         text += "</p>"
+        if self.alternate_consumption_donation and self.num_rounds > 1:
+            text += """<p> Rounds will alternate between <strong>consumption</strong> and
+            <strong>donation</strong> rounds. Consumption rounds will allow for free movement
+            on the grid. Donation rounds will disable movement and allow you to donate points.</p>
+            """
         if self.donation_amount > 0:
-            text += """<p>It can be helpful to donate points to other players.
-                You can donate {g.donation_amount} {g.donation_amount:plural, point, points}
-                to any player by clicking on their block on the grid.</p>
+            text += """<img src='static/images/donate-click.gif' height='210'><br><p>It can be helpful to
+            donate points to others.
+            """
+            if self.donation_individual:
+                text += """ You can donate <strong>{g.donation_amount}</strong>
+                {g.donation_amount:plural, point, points} to any player by clicking on
+                <img src='static/images/donate-individual.png' class='donate'
+                height='30'>, then clicking on their block on the grid.
                 """
+            if self.donation_group:
+                text += """ To donate to a group, click on the <img src='static/images/donate-group.png'
+                class='donate' height='30'> button, then click on any player with the color of the team
+                you want to donate to.
+                """
+            if self.donation_public:
+                text += """ The <img src='static/images/donate-public.png' class='donate' height='30'>
+                 button splits your donation amongst every player in the game (including yourself).
+                """
+            text += "</p>"
         if self.show_chatroom:
             text += """<p>A chatroom is available to send messages to the other
                 players."""
             if self.pseudonyms:
-                text += " Player names shown on the chat window are pseudonyms."
+                text += """ Player names shown on the chat window are pseudonyms.
+                        <br><img src='static/images/chatroom.gif' height='150'>"""
             text += "</p>"
         if self.dollars_per_point > 0:
-            text += """<p>You will receive ${g.dollars_per_point} for each point
+            text += """<p>You will receive <strong>${g.dollars_per_point}</strong> for each point
                 that you score at the end of the game.</p>"""
         return formatter.format(text,
                                 g=self,
