@@ -5285,6 +5285,19 @@ function onChatMessage(msg) {
   settings.donation_type = null;
 }
 
+function updateDonationStatus(donation_is_active) {
+  // If alternating donation/consumption rounds, announce round type
+  if (settings.alternate_consumption_donation && (settings.donation_active !== donation_is_active)) {
+    if (donation_is_active) {
+      pushMessage("<span class='name'>Moderator:</span> Starting a donation round. Players cannot move, only donate.");
+    } else {
+      pushMessage("<span class='name'>Moderator:</span> Starting a consumption round. Players have to consume as much food as possible.");
+    }
+  }
+  // Update donation status
+  settings.donation_active = donation_is_active;
+}
+
 function onGameStateChange(msg) {
   var $donationButtons = $('#individual-donate, #group-donate, #public-donate, #ingroup-donate'),
       $timeElement = $("#time"),
@@ -5309,17 +5322,7 @@ function onGameStateChange(msg) {
   players.update(state.players);
   ego = players.ego();
 
-  // If on alternate donation/consumption rounds, announce round type
-  if (settings.donation_active != state.donation_active) {
-    if (state.donation_active) {
-      pushMessage("<span class='name'>Moderator:</span> Starting a donation round. Players cannot move, only donate.");
-    } else {
-      pushMessage("<span class='name'>Moderator:</span> Starting a consumption round. Players have to consume as much food as possible.");
-    }
-  }
-
-  // Update donation status
-  settings.donation_active = state.donation_active;
+  updateDonationStatus(state.donation_active);
 
   // Update food.
   food = [];
@@ -5363,10 +5366,9 @@ function onGameStateChange(msg) {
     $("#dollars").html(ego.payoff.toFixed(2));
     window.state = msg.grid;
     window.ego = ego.id;
-    if (settings.donation_amount &&
+    if (settings.donation_active &&
         ego.score >= settings.donation_amount &&
-        players.count() > 1 &&
-        settings.donation_active
+        players.count() > 1
     ) {
       $donationButtons.prop('disabled', false);
     } else {
