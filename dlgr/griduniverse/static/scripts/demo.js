@@ -787,13 +787,13 @@ function onChatMessage(msg) {
 
   function onColorChanged(msg) {
     var name;
+    store.set("color", msg.new_color);
     if (settings.pseudonyms) {
       name = players.get(msg.player_id).name;
     } else {
       name = "Player " + msg.player_index;
     }
     pushMessage("<span class='name'>Moderator:</span> " + name + ' changed from team ' + msg.old_color + ' to team ' + msg.new_color + '.');
-    store.set("color", msg.new_color);
   }
 
   function onDonationProcessed(msg) {

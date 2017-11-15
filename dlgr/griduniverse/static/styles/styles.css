@@ -255,7 +255,8 @@ form .likert li label {
   -webkit-transform: scale(0.85, 1);
   display: inline-block;
 }
-
 img.team {
-margin-bottom:-15px;
+  height: 35px;
+  width: 35px;
+  margin: 0px 2px -2px 2px;
 }
