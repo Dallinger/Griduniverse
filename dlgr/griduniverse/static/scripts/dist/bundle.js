@@ -4580,7 +4580,7 @@ name2idx = function(name) {
       return idx;
     }
   }
-}
+};
 
 color2idx = function(color) {
   var colors = settings.player_colors;
@@ -5293,7 +5293,7 @@ function updateDonationStatus(donation_is_active) {
   // If alternating donation/consumption rounds, announce round type
   if (settings.alternate_consumption_donation && (settings.donation_active !== donation_is_active)) {
     if (donation_is_active) {
-      pushMessage("<span class='name'>Moderator:</span> Starting a donation round: you cannot move, only donate.");
+      pushMessage("<span class='name'>Moderator:</span> Starting a contribution round: you cannot move, only contribute. Remember, anything you contribute is multiplied by 1.4 before its split up.");
     } else {
       pushMessage("<span class='name'>Moderator:</span> Starting a collection round: collect as much food as possible.");
     }
