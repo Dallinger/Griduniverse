@@ -99,6 +99,7 @@ def extra_parameters():
         'donation_amount': int,
         'donation_individual': bool,
         'donation_group': bool,
+        'donation_ingroup': bool,
         'donation_public': bool,
         'num_food': int,
         'respawn_food': bool,
@@ -238,6 +239,7 @@ class Gridworld(object):
         self.donation_amount = kwargs.get('donation_amount', 0)
         self.donation_individual = kwargs.get('donation_individual', False)
         self.donation_group = kwargs.get('donation_group', False)
+        self.donation_ingroup = kwargs.get('donation_ingroup', False)
         self.donation_public = kwargs.get('donation_public', False)
         self.intergroup_competition = kwargs.get('intergroup_competition', 1)
         self.intragroup_competition = kwargs.get('intragroup_competition', 1)
@@ -323,18 +325,56 @@ class Gridworld(object):
         return max(0, raw_remaining)
 
     @property
+    def group_donation_enabled(self):
+        return self.donation_group or self.donation_ingroup
+
+    @property
+    def donation_enabled(self):
+        return (
+            (
+                self.group_donation_enabled or
+                self.donation_individual or
+                self.donation_public
+            ) and bool(self.donation_amount)
+        )
+
+    @property
+    def is_even_round(self):
+        return bool(self.round % 2)
+
+    @property
     def donation_active(self):
-        """Donation is enabled on even-numbered rounds if
+        """Donation is enabled if:
+        1. at least one of the donation_individual, donation_group and
+           donation_public flags is set to True
+        2. donation_amount to some non-zero value
+
+        Further, donation is limited to even-numbered rounds if
         alternate_consumption_donation is set to True.
         """
-        return bool(self.alternate_consumption_donation and self.round % 2)
+        if not self.donation_enabled:
+            return False
+
+        if self.alternate_consumption_donation:
+            return self.is_even_round
+
+        return True
+
+    @property
+    def movement_enabled(self):
+        """If we're alternating consumption and donation, Players can only move
+        during consumption rounds.
+        """
+        if self.alternate_consumption_donation and self.donation_active:
+            return False
+        return True
 
     @property
     def consumption_active(self):
         """Food consumption is enabled on odd-numbered rounds if
         alternate_consumption_donation is set to True.
         """
-        return bool(not self.alternate_consumption_donation or not self.round % 2)
+        return not self.alternate_consumption_donation or not self.is_even_round
 
     def players_with_color(self, color_id):
         """Return all the players with the specified color, which is how we
@@ -814,8 +854,7 @@ class Player(object):
     def move(self, direction, tremble_rate=0):
         """Move the player."""
 
-        # no motion during alternate donation rounds
-        if self.grid.donation_active:
+        if not self.grid.movement_enabled:
             return
 
         if random.random() < tremble_rate:
@@ -1238,7 +1277,7 @@ class Griduniverse(Experiment):
 
         recipients = []
         recipient_id = msg['recipient_id']
-        if recipient_id.startswith('group:') and self.grid.donation_group:
+        if recipient_id.startswith('group:') and self.grid.group_donation_enabled:
             color_id = recipient_id[6:]
             recipients = self.grid.players_with_color(color_id)
         elif recipient_id == 'all' and self.grid.donation_public:

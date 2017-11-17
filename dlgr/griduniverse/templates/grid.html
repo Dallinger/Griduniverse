@@ -38,6 +38,7 @@
     settings.donation_amount = {{ experiment.grid.donation_amount }};
     settings.donation_individual = {% if experiment.grid.donation_individual %}true{% else %}false{% endif %};
     settings.donation_group = {% if experiment.grid.donation_group %}true{% else %}false{% endif %};
+    settings.donation_ingroup = {% if experiment.grid.donation_ingroup %}true{% else %}false{% endif %};    
     settings.donation_public = {% if experiment.grid.donation_public %}true{% else %}false{% endif %};
     settings.donation_active = {% if experiment.grid.donation_active %}true{% else %}false{% endif %};
     settings.donation_type = null;
@@ -73,7 +74,10 @@
     {% if experiment.grid.donation_individual %}
         <button id="individual-donate" class="button-outline">Player</button>
     {% endif %}
-    {% if experiment.grid.donation_group %}
+    {% if experiment.grid.donation_ingroup %}
+        <button id="ingroup-donate" class="button-outline">My Group</button>
+    {% endif %}    
+    {% if experiment.grid.donation_group and not experiment.grid.donation_ingroup %}
         <button id="group-donate" class="button-outline">Group</button>
     {% endif %}
     {% if experiment.grid.donation_public %}
