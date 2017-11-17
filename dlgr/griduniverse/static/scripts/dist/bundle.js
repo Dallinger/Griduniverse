@@ -4742,7 +4742,6 @@ var playerSet = (function () {
 
             if (player.identity_visible) {
               color = player.color;
-              store.set("color", color2name(color));
             } else {
               color = (id === this.ego_id) ? Color.rgb(player.color).desaturate(0.6).rgb().array() : INVISIBLE_COLOR;
             }
@@ -4761,6 +4760,9 @@ var playerSet = (function () {
               texture = parseInt(id);
             }
             grid.plot(player.position[1], player.position[0], color, texture);
+            if (id === this.ego_id) {
+              store.set("color", color2name(color));
+            }
           }
         }
       }
