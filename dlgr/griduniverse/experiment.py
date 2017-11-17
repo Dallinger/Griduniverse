@@ -827,7 +827,7 @@ class Player(object):
             self.color_idx = random.randint(0, self.num_possible_colors - 1)
 
         self.color_name = Gridworld.player_color_names[self.color_idx]
-        self.color = Gridworld.player_color_names[self.color_idx]
+        self.color = Gridworld.player_colors[self.color_idx]
 
         # Determine the player's profile.
         self.fake = Factory.create(self.pseudonym_locale)
