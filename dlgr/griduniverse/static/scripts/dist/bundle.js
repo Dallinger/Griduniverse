@@ -5276,12 +5276,13 @@ function onChatMessage(msg) {
     recipient_name = players.get(recipient_id).name;
   }
 
-  entry = donor_name + " gave " + recipient_name + " " + msg.amount;
+  entry = donor_name + " contributed " + msg.amount;
   if (msg.amount === 1) {
-    entry += " point.";
+    entry += " point ";
   } else {
-    entry += " points.";
+    entry += " points ";
   }
+  entry += "to " + recipient_name + ", which is increased to 1.4 and split up."
   $("#messages").append($("<li>").html(entry));
   $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
   $('#individual-donate, #group-donate').addClass('button-outline');
@@ -5293,7 +5294,7 @@ function updateDonationStatus(donation_is_active) {
   // If alternating donation/consumption rounds, announce round type
   if (settings.alternate_consumption_donation && (settings.donation_active !== donation_is_active)) {
     if (donation_is_active) {
-      pushMessage("<span class='name'>Moderator:</span> Starting a contribution round: you cannot move, only contribute. Remember, anything you contribute is multiplied by 1.4 before its split up.");
+      pushMessage("<span class='name'>Moderator:</span> Starting a contribution round: you cannot move, only contribute. Remember, anything you contribute is multiplied by 1.4 before it's split up.");
     } else {
       pushMessage("<span class='name'>Moderator:</span> Starting a collection round: collect as much food as possible.");
     }
@@ -5424,6 +5425,12 @@ function displayLeaderboards(msg, callback) {
       }
       pushMessage('<span class="PlayerScore">' + Math.round(player.score) + '</span><span class="PlayerName">' + player_name + '</span>');
     }
+  }
+  if (settings.intergroup_competition > 2) {
+    pushMessage("<span class='name'>Moderator:</span> Remember, the group with the most points at the end of the game wins the whole pot.");
+  }
+  if (settings.intragroup_competition > 2) {
+    pushMessage("<span class='name'>Moderator:</span> Remember, the player in each group with the highest point total will receive that whole group's earnings.");
   }
   if (settings.leaderboard_time) {
     settings.paused_game = true;

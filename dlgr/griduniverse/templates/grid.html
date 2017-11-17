@@ -21,6 +21,8 @@
     settings.player_colors = {{ experiment.serialize(experiment.grid.limited_player_colors) }};
     settings.player_color_names = {{ experiment.serialize(experiment.grid.limited_player_color_names)|safe }};
     settings.tax = {{ experiment.grid.tax }};
+    settings.intergroup_competition = {{ experiment.grid.intergroup_competition }};
+    settings.intragroup_competition = {{ experiment.grid.intragroup_competition }};
     settings.walls = "{{ experiment.grid.wall_type }}";
     settings.show_grid = {% if experiment.grid.show_grid %}true{% else %}false{% endif %};
     settings.visibility = {{ experiment.grid.visibility }};
