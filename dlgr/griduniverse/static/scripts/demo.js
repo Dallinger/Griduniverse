@@ -841,9 +841,9 @@ function updateDonationStatus(donation_is_active) {
   // If alternating donation/consumption rounds, announce round type
   if (settings.alternate_consumption_donation && (settings.donation_active !== donation_is_active)) {
     if (donation_is_active) {
-      pushMessage("<span class='name'>Moderator:</span> Starting a donation round. Players cannot move, only donate.");
+      pushMessage("<span class='name'>Moderator:</span> Starting a donation round: you cannot move, only donate.");
     } else {
-      pushMessage("<span class='name'>Moderator:</span> Starting a consumption round. Players have to consume as much food as possible.");
+      pushMessage("<span class='name'>Moderator:</span> Starting a collection round: collect as much food as possible.");
     }
   }
   // Update donation status
