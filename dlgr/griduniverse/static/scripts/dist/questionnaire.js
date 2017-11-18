@@ -1054,7 +1054,7 @@ $(document).ready(function() {
       $DIFI.get(0),
       {
         groupLabel: $DIFI.attr('data-group-label'),
-        groupImage: $DIFI.attr('data-group-image')
+        groupImage: "static/images/colors/" + store.get("color") + ".png",
       }
     );
   }
