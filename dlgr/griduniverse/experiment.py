@@ -225,7 +225,7 @@ class Gridworld(object):
 
         # Payoffs
         self.initial_score = kwargs.get('initial_score', 0)
-        self.dollars_per_point = kwargs.get('dollars_per_point', 0.02)
+        self.dollars_per_point = kwargs.get('dollars_per_point', 0.01)
         self.tax = kwargs.get('tax', 0.00)
         self.relative_deprivation = kwargs.get('relative_deprivation', 1)
         self.frequency_dependence = kwargs.get('frequency_dependence', 0)
