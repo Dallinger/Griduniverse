@@ -244,7 +244,7 @@ class Gridworld(object):
         self.intergroup_competition = kwargs.get('intergroup_competition', 1)
         self.intragroup_competition = kwargs.get('intragroup_competition', 1)
         self.score_visible = kwargs.get('score_visible', False)
-        self.alternate_consumption_donation = config.get(
+        self.alternate_consumption_donation = kwargs.get(
             'alternate_consumption_donation', False)
 
         # Food
