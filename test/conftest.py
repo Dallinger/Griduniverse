@@ -7,7 +7,6 @@ import pytest
 import shutil
 import tempfile
 from dallinger import models
-from dallinger.experiments import Griduniverse
 
 
 skip_on_ci = pytest.mark.skipif(
@@ -44,10 +43,48 @@ def exp_dir():
 
 
 @pytest.fixture
-def config():
+def stub_config():
+    """Builds a standardized Configuration object and returns it, but does
+    not load it as the active configuration returned by
+    dallinger.config.get_config()
+    """
+    defaults = {
+        u'aws_region': u'us-east-1',
+        u'base_port': 5000,
+        u'clock_on': True,
+        u'dallinger_email_address': u'test@example.com',
+        u'database_url': u'postgresql://postgres@localhost/dallinger',
+        u'dyno_type': u'standard-2x',
+        u'heroku_team': u'dallinger',
+        u'host': u'localhost',
+        u'logfile': u'server.log',
+        u'loglevel': 0,
+        u'mode': u'debug',
+        u'num_dynos_web': 2,
+        u'num_dynos_worker': 2,
+        u'threads': u'1',
+        u'whimsical': True
+    }
+    from dallinger.config import default_keys
+    from dallinger.config import Configuration
+    config = Configuration()
+    for key in default_keys:
+        config.register(*key)
+    config.extend(defaults.copy())
+    config.ready = True
+
+    return config
+
+
+@pytest.fixture
+def active_config(stub_config):
+    """Loads the standard config as the active configuration returned by
+    dallinger.config.get_config() and returns it.
+    """
     from dallinger.config import get_config
     config = get_config()
-    config.load()
+    config.data = stub_config.data
+    config.ready = True
     return config
 
 
@@ -77,10 +114,18 @@ def db_session():
 
 
 @pytest.fixture
-def exp(db_session, config):
+def fresh_gridworld():
+    from dlgr.griduniverse.experiment import Gridworld
+    if hasattr(Gridworld, 'instance'):
+        delattr(Gridworld, 'instance')
+
+
+@pytest.fixture
+def exp(db_session, active_config, fresh_gridworld):
+    from dallinger.experiments import Griduniverse
     gu = Griduniverse(db_session)
     gu.app_id = 'test app'
-    gu.exp_config = config
+    gu.exp_config = active_config
 
     return gu
 
