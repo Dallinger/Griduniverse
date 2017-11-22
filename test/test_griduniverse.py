@@ -7,7 +7,7 @@ import pytest
 from dallinger.experiments import Griduniverse
 
 
-@pytest.mark.usefixtures('env', 'config')
+@pytest.mark.usefixtures('env')
 class TestExperimentClass(object):
 
     def test_group_donations_distributed_evenly_across_team(self, exp, a):
@@ -24,10 +24,9 @@ class TestExperimentClass(object):
                 'color': donor_player.color
             }
         )
-        exp.grid.donation_group = True
         # make donation active
-        exp.grid.alternate_consumption_donation = True
-        exp.grid.round = 1
+        exp.grid.donation_group = True
+        exp.grid.donation_amount = 1
         donor_player.score = 2
 
         exp.handle_donation(
@@ -48,9 +47,7 @@ class TestExperimentClass(object):
         donor_player = exp.grid.players[1]
         opponent_player = exp.grid.players[2]
         exp.grid.donation_public = True
-        # make donation active
-        exp.grid.alternate_consumption_donation = True
-        exp.grid.round = 1
+        exp.grid.donation_amount = 1
         donor_player.score = 2
 
         exp.handle_donation(
