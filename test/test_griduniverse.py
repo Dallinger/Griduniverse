@@ -5,7 +5,6 @@ import collections
 import json
 import mock
 import pytest
-from conftest import skip_on_ci
 from dallinger.experiments import Griduniverse
 
 
@@ -51,11 +50,13 @@ class TestExperimentClass(object):
     def test_recruit_does_not_raise(self, exp):
         exp.recruit()
 
-    def test_handle_connect_creates_node(self, exp, participant):
+    def test_handle_connect_creates_node(self, exp, a):
+        participant = a.participant()
         exp.handle_connect({'player_id': participant.id})
         assert participant.id in exp.node_by_player_id
 
-    def test_handle_connect_adds_player_to_grid(self, exp, participant):
+    def test_handle_connect_adds_player_to_grid(self, exp, a):
+        participant = a.participant()
         exp.handle_connect({'player_id': participant.id})
         assert participant.id in exp.grid.players
 
@@ -63,18 +64,21 @@ class TestExperimentClass(object):
         exp.handle_connect({'player_id': 'spectator'})
         assert exp.node_by_player_id == {}
 
-    def test_records_player_events(self, exp, participant):
+    def test_records_player_events(self, exp, a):
+        participant = a.participant()
         exp.handle_connect({'player_id': participant.id})
         exp.send(
             'griduniverse_ctrl:'
             '{{"type":"move","player_id":{},"move":"left"}}'.format(participant.id)
         )
         data = exp.retrieve_data()
-        event_detail = json.loads(data.infos.dict['details'])
+        # Get the last recorded event
+        event_detail = json.loads(data.infos.df['details'].values[-1])
         assert event_detail['player_id'] == participant.id
         assert event_detail['move'] == 'left'
 
-    def test_scores_and_payoffs_averaged(self, exp, participant):
+    def test_scores_and_payoffs_averaged(self, exp, a):
+        participant = a.participant()
         exp.handle_connect({'player_id': participant.id})
         exp.send(
             'griduniverse_ctrl:'
