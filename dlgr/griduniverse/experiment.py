@@ -511,7 +511,7 @@ class Gridworld(object):
                     if self.costly_colors:
                         costs = ['{c}, {p} points'.format(c=c, p=p)
                                  for p, c in zip(self.color_costs,
-                                                 self.player_color_names)]
+                                                 self.limited_player_color_names)]
                         color_costs = '; '.join(costs)
                         text += """ Changing color has a different cost in
                             points for each color: {color_costs}."""
@@ -521,7 +521,7 @@ class Gridworld(object):
                         blocks are of a different color, that player will take
                         on the color of the plurality."""
                     if self.contagion_hierarchy:
-                        order = ', '.join([self.player_color_names[h]
+                        order = ', '.join([self.limited_player_color_names[h]
                                            for h in self.contagion_hierarchy])
                         text += """ However, there is a hierarchy of colors, so
                             that only players of some colors are susceptible to
@@ -624,7 +624,7 @@ class Gridworld(object):
                                 g=self,
                                 order=order,
                                 color_costs=color_costs,
-                                color_list=', '.join(self.player_color_names))
+                                color_list=', '.join(self.limited_player_color_names))
 
     def consume(self):
         """Players consume the food."""
@@ -666,7 +666,7 @@ class Gridworld(object):
             'position': position,
         })
 
-    def spawn_player(self, id=None):
+    def spawn_player(self, id=None, **kwargs):
         """Spawn a player."""
         player = Player(
             id=id,
@@ -681,9 +681,11 @@ class Gridworld(object):
             grid=self,
             identity_visible=(not self.identity_signaling or
                               self.identity_starts_visible),
+            **kwargs
         )
         self.players[id] = player
         self._start_if_ready()
+        return player
 
     def _random_empty_position(self):
         """Select an empty cell at random."""
@@ -816,7 +818,11 @@ class Player(object):
         self.identity_visible = kwargs.get('identity_visible', True)
         self.add_wall = None
 
-        # Determine the player's color.
+        # Determine the player's color. We don't have access to the specific
+        # gridworld we are running in, so we can't use the `limited_` variables
+        # We just find the index in the master list. This means it is possible
+        # to explicitly instantiate a player with an invalid colour, but only
+        # intentionally.
         if 'color' in kwargs:
             self.color_idx = Gridworld.player_colors.index(kwargs['color'])
         elif 'color_name' in kwargs:
@@ -825,7 +831,7 @@ class Player(object):
             self.color_idx = random.randint(0, self.num_possible_colors - 1)
 
         self.color_name = Gridworld.player_color_names[self.color_idx]
-        self.color = Gridworld.player_colors[self.color_idx]
+        self.color = Gridworld.player_color_names[self.color_idx]
 
         # Determine the player's profile.
         self.fake = Factory.create(self.pseudonym_locale)
@@ -1223,7 +1229,13 @@ class Griduniverse(Experiment):
                 node = self.create_node(participant, network)
                 self.node_by_player_id[player_id] = node
                 logger.info("Spawning player on the grid...")
-                self.grid.spawn_player(id=player_id)
+                # We use the current node id modulo the number of colours
+                # to pick the user's colour. This ensures that players are
+                # allocated to colours uniformly.
+                self.grid.spawn_player(
+                    id=player_id,
+                    color_name=self.grid.limited_player_color_names[node.id % self.grid.num_colors]
+                )
             else:
                 logger.info(
                     "No free network found for player {}".format(player_id)
@@ -1244,8 +1256,8 @@ class Griduniverse(Experiment):
 
     def handle_change_color(self, msg):
         player = self.grid.players[msg['player_id']]
-        color_idx = Gridworld.player_colors.index(msg['color'])
-        color_name = Gridworld.player_color_names[color_idx]
+        color_name = msg['color']
+        color_idx = Gridworld.player_color_names.index(color_name)
         old_color = Gridworld.player_color_names[player.color_idx]
         msg['old_color'] = old_color
         msg['new_color'] = color_name

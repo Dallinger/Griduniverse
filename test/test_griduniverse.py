@@ -1,6 +1,7 @@
 """
 Tests for `dlgr.griduniverse` module.
 """
+import collections
 import mock
 import pytest
 from dallinger.experiments import Griduniverse
@@ -59,6 +60,27 @@ class TestExperimentClass(object):
 
         assert donor_player.score == 1
         assert opponent_player.score == 1
+
+    def test_colors_distributed_evenly(self, exp, participants):
+        exp.grid.num_players = 9
+        exp.networks()[0].max_size = 10
+        players = [
+            exp.handle_connect({'player_id': participant.id}) or exp.grid.players[participant.id]
+            for participant in participants[:9]
+        ]
+        colors = collections.Counter([player.color_idx for player in players])
+        assert colors == {0: 3, 1: 3, 2: 3}
+
+    def test_colors_distributed_almost_evenly_if_on_edge(self, exp, participants):
+        exp.grid.num_colors = 2
+        exp.grid.num_players = 9
+        exp.networks()[0].max_size = 10
+        players = [
+            exp.handle_connect({'player_id': participant.id}) or exp.grid.players[participant.id]
+            for participant in participants[:9]
+        ]
+        colors = collections.Counter([player.color_idx for player in players])
+        assert colors == {0: 5, 1: 4}
 
 
 @pytest.mark.usefixtures('env')

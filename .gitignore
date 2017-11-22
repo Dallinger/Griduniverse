@@ -53,3 +53,10 @@ docs/build/*
 dlgr/griduniverse/dump.rdb
 
 *.DS_Store
+
+bin
+include
+lib
+local
+selenium
+share
