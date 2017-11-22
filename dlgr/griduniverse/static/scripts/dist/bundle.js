@@ -4725,7 +4725,8 @@ var playerSet = (function () {
           minScore,
           maxScore,
           d,
-          color;
+          color,
+          player_color;
       if (settings.score_visible) {
         minScore = this.minScore();
         maxScore = this.maxScore();
@@ -4738,11 +4739,11 @@ var playerSet = (function () {
             player.move(player.motion_direction);
           }
           if (id === this.ego_id || settings.others_visible) {
-
+            player_color = settings.player_colors[name2idx(player.color)];
             if (player.identity_visible) {
-              color = player.color;
+              color = player_color;
             } else {
-              color = (id === this.ego_id) ? Color.rgb(player.color).desaturate(0.6).rgb().array() : INVISIBLE_COLOR;
+              color = (id === this.ego_id) ? Color.rgb(player_color).desaturate(0.6).rgb().array() : INVISIBLE_COLOR;
             }
             if (settings.score_visible) {
               if (maxScore-minScore > 0) {
@@ -4750,9 +4751,9 @@ var playerSet = (function () {
               } else {
                 d = 0.375;
               }
-              color = Color.rgb(player.color).desaturate(d).rgb().array();
+              color = Color.rgb(player_color).desaturate(d).rgb().array();
             } else {
-              color = player.color;
+              color = player_color;
             }
             var texture = 0;
             if (settings.use_identicons) {
@@ -4848,7 +4849,7 @@ var playerSet = (function () {
       var group_scores = {};
 
       this.each(function (i, player) {
-        var color_name = color2name(player.color);
+        var color_name = player.color;
         var cur_score = group_scores[color_name] || 0;
         group_scores[color_name] = cur_score + Math.round(player.score);
       });
@@ -5162,10 +5163,9 @@ function bindGameKeys(socket) {
   if (settings.mutable_colors) {
     Mousetrap.bind('c', function () {
       keys = settings.player_color_names;
-      values = settings.player_colors;
-      index = arraySearch(values, players.ego().color);
+      index = arraySearch(keys, players.ego().color);
       nextItem = keys[(index + 1) % keys.length];
-      players.ego().color = settings.player_colors[name2idx(nextItem)];
+      players.ego().color = nextItem;
       var msg = {
         type: "change_color",
         player_id: players.ego().id,
@@ -5220,8 +5220,8 @@ function chatName(player_id) {
   }
 
   var salt = $("#grid").data("identicon-salt");
-    var id = parseInt(player_id)-1;
-    var fg = players.get(player_id).color.concat(1);
+  var id = parseInt(player_id)-1;
+  var fg = settings.player_colors[name2idx(players.get(player_id).color)].concat(1);
   fg = fg.map(function(x) { return x * 255; });
   bg = fg.map(function(x) { return (x * 0.66); });
   bg[3] = 255;
@@ -5554,7 +5554,7 @@ $(document).ready(function() {
     if (settings.donation_type === 'individual') {
       recipient_id = recipient.id;
     } else if (settings.donation_type === 'group') {
-      recipient_id = 'group:' +  color2idx(recipient.color).toString();
+      recipient_id = 'group:' +  name2idx(recipient.color).toString();
     } else {
       return;
     }
@@ -5587,7 +5587,7 @@ $(document).ready(function() {
   var donateToInGroup = function () {
     var donor = players.ego(),
         amt = settings.donation_amount,
-        recipientId = 'group:' +  color2idx(donor.color).toString(),
+        recipientId = 'group:' +  name2idx(donor.color).toString(),
         msg;
 
     msg = {
