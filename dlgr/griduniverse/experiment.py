@@ -125,6 +125,7 @@ def extra_parameters():
         'use_identicons': bool,
         'build_walls': bool,
         'wall_building_cost': int,
+        'donation_multiplier': float,
     }
 
     for key in types:
@@ -237,6 +238,7 @@ class Gridworld(object):
 
         # Donations
         self.donation_amount = kwargs.get('donation_amount', 0)
+        self.donation_multiplier = kwargs.get('donation_multiplier', 1.0)
         self.donation_individual = kwargs.get('donation_individual', False)
         self.donation_group = kwargs.get('donation_group', False)
         self.donation_ingroup = kwargs.get('donation_ingroup', False)
@@ -1174,7 +1176,7 @@ class Griduniverse(Experiment):
 
         param raw_message is a string with a channel prefix, for example:
 
-            'griduniverse:{"type":"move","player":0,"move":"left"}'
+            'griduniverse_ctrl:{"type":"move","player_id":0,"move":"left"}'
         """
         if raw_message.startswith(self.channel + ":"):
             logger.info("We received a message for our channel: {}".format(
@@ -1274,8 +1276,15 @@ class Griduniverse(Experiment):
         player.color = msg['color']
         player.color_idx = color_idx
         player.color_name = color_name
+        message = {
+            'type': 'color_changed',
+            'player_id': msg['player_id'],
+            'old_color': old_color,
+            'new_color': player.color_name,
+        }
         # Put the message back on the channel
-        self.publish(msg)
+        self.publish(message)
+        self.record_event(message, message['player_id'])
 
     def handle_move(self, msg):
         player = self.grid.players[msg['player_id']]
@@ -1304,15 +1313,17 @@ class Griduniverse(Experiment):
 
         if donor.score >= donation and len(recipients):
             donor.score -= donation
+            donated = donation * self.grid.donation_multiplier
             if len(recipients) > 1:
-                donation = round(donation * 1.0 / len(recipients), 2)
+                donated = round(donated / len(recipients), 2)
             for recipient in recipients:
-                recipient.score += donation
+                recipient.score += donated
             message = {
                 'type': 'donation_processed',
                 'donor_id': msg['donor_id'],
                 'recipient_id': msg['recipient_id'],
                 'amount': donation,
+                'received': donated
             }
             self.publish(message)
             self.record_event(message, message['donor_id'])
@@ -1450,8 +1461,8 @@ class Griduniverse(Experiment):
     def events_for_replay(self):
         info_cls = dallinger.models.Info
         from models import Event
-        events = super(Griduniverse, self).events_for_replay()
-        event_types = {'chat', 'new_round', 'donation_processed', 'change_color'}
+        events = Experiment.events_for_replay(self)
+        event_types = {'chat', 'new_round', 'donation_processed', 'color_changed'}
         return events.filter(
             or_(info_cls.type == 'state',
                 and_(info_cls.type == 'event',

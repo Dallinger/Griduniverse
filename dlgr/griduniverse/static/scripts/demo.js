@@ -1,7 +1,7 @@
-/*global create_agent, getUrlParameter, require, settings, submitResponses */
+/*global dallinger, require, settings */
 /*jshint esversion: 6 */
 
-(function (getUrlParameter, require, reqwest, settings, submitResponses) {
+(function (dallinger, require, settings) {
 
 var util = require("util");
 var grid = require("./index");
@@ -85,16 +85,17 @@ class Section {
   }
 }
 
-var background = [];
+  var background = [], color;
 for (var j = 0; j < settings.rows; j++) {
   for (var i = 0; i < settings.columns; i++) {
-    var color = [0, 0, 0];
+      color = [0, 0, 0];
     for (var k = 0; k < 15; k++) {
       color = animateColor(color);
     }
     background.push(color);
   }
 }
+
 var initialSection = new Section(background, 0, 0);
 
 var GREEN = [0.51, 0.69, 0.61];
@@ -119,7 +120,7 @@ var start = performance.now();
 var food = [];
 var foodConsumed = [];
 var walls = [];
-var row, column, rand, color;
+  var row, column, rand;
 
 name2idx = function(name) {
   var names = settings.player_color_names;
@@ -186,7 +187,7 @@ Player.prototype.move = function(direction) {
 
   function _hasWall(position) {
     for (var i = 0; i < walls.length; i++) {
-      if (position == walls[i].position) {
+        if (position === walls[i].position) {
          return false;
       }
     }
@@ -229,6 +230,7 @@ Player.prototype.move = function(direction) {
       default:
         console.log("Direction not recognized.");
     }
+
     if (
       !_hasWall(newPosition) &
       (!players.isPlayerAt(position) || settings.player_overlap)
@@ -250,7 +252,6 @@ var playerSet = (function () {
         this.ego_id = settings.ego_id;
     };
 
-
     PlayerSet.prototype.isPlayerAt = function (position) {
       var id, player;
 
@@ -265,7 +266,6 @@ var playerSet = (function () {
       return false;
     };
 
-
     PlayerSet.prototype.drawToGrid = function (grid) {
       var positions = [],
           idx,
@@ -274,7 +274,8 @@ var playerSet = (function () {
           minScore,
           maxScore,
           d,
-          color;
+          color,
+          player_color;
       if (settings.score_visible) {
         minScore = this.minScore();
         maxScore = this.maxScore();
@@ -287,11 +288,11 @@ var playerSet = (function () {
             player.move(player.motion_direction);
           }
           if (id === this.ego_id || settings.others_visible) {
-
+            player_color = settings.player_colors[name2idx(player.color)];
             if (player.identity_visible) {
-              color = player.color;
+              color = player_color;
             } else {
-              color = (id === this.ego_id) ? Color.rgb(player.color).desaturate(0.6).rgb().array() : INVISIBLE_COLOR;
+              color = (id === this.ego_id) ? Color.rgb(player_color).desaturate(0.6).rgb().array() : INVISIBLE_COLOR;
             }
             if (settings.score_visible) {
               if (maxScore-minScore > 0) {
@@ -299,13 +300,13 @@ var playerSet = (function () {
               } else {
                 d = 0.375;
               }
-              color = Color.rgb(player.color).desaturate(d).rgb().array();
+              color = Color.rgb(player_color).desaturate(d).rgb().array();
             } else {
-              color = player.color;
+              color = player_color;
             }
             var texture = 0;
             if (settings.use_identicons) {
-              texture = parseInt(id);
+              texture = parseInt(id, 10);
             }
             grid.plot(player.position[1], player.position[0], color, texture);
             if (id === this.ego_id) {
@@ -397,7 +398,7 @@ var playerSet = (function () {
       var group_scores = {};
 
       this.each(function (i, player) {
-        var color_name = color2name(player.color);
+        var color_name = player.color;
         var cur_score = group_scores[color_name] || 0;
         group_scores[color_name] = cur_score + Math.round(player.score);
       });
@@ -429,7 +430,6 @@ var playerSet = (function () {
 }());
 
 var GUSocket = (function () {
-
     var makeSocket = function (endpoint, channel, tolerance) {
       var ws_scheme = (window.location.protocol === "https:") ? 'wss://' : 'ws://',
           app_root = ws_scheme + location.host + '/',
@@ -459,7 +459,6 @@ var GUSocket = (function () {
           console.log("Unrecognized message type " + msg.type + ' from backend.');
         }
     };
-
 
     /*
      * Public API
@@ -511,7 +510,6 @@ var GUSocket = (function () {
       console.log("Broadcasting message to the " + channel + " channel: " + msg);
       this.socket.send(channel + ':' + msg);
     };
-
 
     return Socket;
 }());
@@ -714,10 +712,9 @@ function bindGameKeys(socket) {
   if (settings.mutable_colors) {
     Mousetrap.bind('c', function () {
       keys = settings.player_color_names;
-      values = settings.player_colors;
-      index = arraySearch(values, players.ego().color);
+      index = arraySearch(keys, players.ego().color);
       nextItem = keys[(index + 1) % keys.length];
-      players.ego().color = settings.player_colors[name2idx(nextItem)];
+      players.ego().color = nextItem;
       var msg = {
         type: "change_color",
         player_id: players.ego().id,
@@ -756,18 +753,24 @@ function bindGameKeys(socket) {
   });
 }
 
-function onChatMessage(msg) {
-  var name,
-      entry;
-
-  if (settings.pseudonyms) {
-    name = players.get(msg.player_id).name;
+function chatName(player_id) {
+  var ego = players.ego(),
+    name,
+    entry;
+  if (id === ego) {
+    name = "You";
+  } else if (settings.pseudonyms) {
+    name = players.get(player_id).name;
+  } else if (player_id % 1 === 0) {
+    name = "Player " + player_id;
   } else {
-    name = "Player " + msg.player_index;
+    // Non-integer player_id
+    return '<span class="name">' + player_id + '</span>';
   }
+
   var salt = $("#grid").data("identicon-salt");
-  var id = parseInt(msg.player_id)-1;
-  var fg = players.get(msg.player_id).color.concat(1);
+  var id = parseInt(player_id)-1;
+  var fg = settings.player_colors[name2idx(players.get(player_id).color)].concat(1);
   fg = fg.map(function(x) { return x * 255; });
   bg = fg.map(function(x) { return (x * 0.66); });
   bg[3] = 255;
@@ -778,58 +781,60 @@ function onChatMessage(msg) {
     format: 'svg'
   };
   var identicon = new Identicon(md5(salt + id), options).toString();
-  var entry = "<span class='name'>" + name;
+    var entry = "<span class='name'>";
   if (settings.use_identicons) {
     entry = entry + " <img src='data:image/svg+xml;base64," + identicon + "' />";
   }
-  entry = entry + ":</span> ";
-  $("#messages").append(($("<li>").text(msg.contents)).prepend(entry));
-  $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
+    entry = entry + " " + name + "</span> ";
+    return entry;
 }
 
+  function onChatMessage(msg) {
+    var entry = chatName(msg.player_id);
+    $("#messages").append(($("<li>").text(": " + msg.contents)).prepend(entry));
+    $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
+  }
+
   function onColorChanged(msg) {
-    var name;
     store.set("color", msg.new_color);
-    if (settings.pseudonyms) {
-      name = players.get(msg.player_id).name;
-    } else {
-      name = "Player " + msg.player_index;
-    }
-    pushMessage("<span class='name'>Moderator:</span> " + name + ' changed from team ' + msg.old_color + ' to team ' + msg.new_color + '.');
+    pushMessage("<span class='name'>Moderator:</span> " + chatName(msg.player_id) + ' changed from team ' + msg.old_color + ' to team ' + msg.new_color + '.');
   }
 
   function onDonationProcessed(msg) {
-    var ego = players.ego(),
-      donor = players.get(msg.donor_id),
+    var donor = players.get(msg.donor_id),
       recipient_id = msg.recipient_id,
       team_idx,
       donor_name,
       recipient_name,
+      donated_points,
+      received_points,
       entry;
 
-    if (donor === ego) {
-      donor_name = 'You';
+    donor_name = chatName(msg.donor_id);
+
+    if (recipient_id === 'all') {
+      recipient_name = '<span class="name">All players</span>';
+    } else if (recipient_id.indexOf('group:') === 0) {
+      team_idx = +recipient_id.substring(6);
+        recipient_name = 'Everyone in <span class="name">' + settings.player_color_names[team_idx] + '</span>';
     } else {
-      donor_name = "Player " + donor.name;
+        recipient_name = chatName(recipient_id);
     }
 
-    if (ego && recipient_id === ego.id) {
-    recipient_name = 'you';
-  } else if (recipient_id === 'all') {
-    recipient_name = 'all players';
-  } else if (recipient_id.indexOf('group:') === 0) {
-    team_idx = +recipient_id.substring(6);
-    recipient_name = 'all ' + settings.player_color_names[team_idx] + ' players';
-  } else {
-    recipient_name = players.get(recipient_id).name;
-  }
+    if (msg.amount === 1) {
+        donated_points = msg.amount + ' point.';
+    } else {
+        donated_points = msg.amount + ' points.';
+    }
 
-  entry = donor_name + " gave " + recipient_name + " " + msg.amount;
-  if (msg.amount === 1) {
-    entry += " point.";
-  } else {
-    entry += " points.";
-  }
+    if (msg.received === 1) {
+      received_points = msg.received + ' point.';
+    } else {
+      received_points = msg.received + ' points.';
+    }
+
+    entry = donor_name + " contributed " + donated_points + " " + recipient_name + " received " + received_points;
+
   $("#messages").append($("<li>").html(entry));
   $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
   $('#individual-donate, #group-donate').addClass('button-outline');
@@ -966,10 +971,7 @@ function displayLeaderboards(msg, callback) {
     var ego_id = players.ego_id;
     for (i = 0; i < player_scores.length; i++) {
       var player = player_scores[i];
-      var player_name = player.name;
-      if (ego_id == player.id) {
-        player_name = '<em>' + player_name + ' (You)</em>';
-      }
+      var player_name = chatName(player.id);
       pushMessage('<span class="PlayerScore">' + Math.round(player.score) + '</span><span class="PlayerName">' + player_name + '</span>');
     }
   }
@@ -982,7 +984,7 @@ function displayLeaderboards(msg, callback) {
   } else if (callback) callback();
 }
 
-function gameOverHandler(isSpectator, player_id) {
+  function gameOverHandler(player_id) {
   var callback;
   if (!isSpectator) {
     callback = function () {
@@ -1000,8 +1002,8 @@ function gameOverHandler(isSpectator, player_id) {
 }
 
 $(document).ready(function() {
-  var player_id = getUrlParameter('participant_id');
-  isSpectator = typeof player_id === 'undefined';
+    var player_id = dallinger.getUrlParameter('participant_id');
+    isSpectator = typeof player_id === 'undefined';
   var socketSettings = {
         'endpoint': 'chat',
         'broadcast': CHANNEL,
@@ -1010,13 +1012,13 @@ $(document).ready(function() {
         'callbackMap': {
           'chat': onChatMessage,
           'donation_processed': onDonationProcessed,
-          'change_color': onColorChanged,
+          'color_changed': onColorChanged,
           'state': onGameStateChange,
           'new_round': displayLeaderboards,
-          'stop': gameOverHandler(isSpectator, player_id)
+        'stop': gameOverHandler(player_id)
         }
-      },
-  socket = new GUSocket(socketSettings);
+    };
+    var socket = new GUSocket(socketSettings);
 
   socket.open().done(function () {
       var data = {
@@ -1024,8 +1026,7 @@ $(document).ready(function() {
         player_id: isSpectator ? 'spectator' : player_id
       };
       socket.send(data);
-    }
-  );
+    });
 
   players.ego_id = player_id;
   $('#donate label').data('orig-text', $('#donate label').text());
@@ -1049,7 +1050,7 @@ $(document).ready(function() {
 
   // Submit the questionnaire.
   $("#submit-questionnaire").click(function() {
-    submitResponses();
+      dallinger.submitResponses();
   });
 
   $("#finish-reading").click(function() {
@@ -1067,13 +1068,9 @@ $(document).ready(function() {
 
     $("#reproduction").val("");
 
-    reqwest({
-      url: "/info/" + my_node_id,  // XXX my_node_id is undefined(?)
-      method: "post",
-      data: { contents: response, info_type: "Info" },
-      success: function(resp) {
-        console.log("Would call create_agent() if defined...");
-      }
+      dallinger.createInfo(my_node_id, {
+        contents: response,
+        info_type: 'Info'
     });
   });
 
@@ -1106,7 +1103,7 @@ $(document).ready(function() {
     if (settings.donation_type === 'individual') {
       recipient_id = recipient.id;
     } else if (settings.donation_type === 'group') {
-      recipient_id = 'group:' +  color2idx(recipient.color).toString();
+      recipient_id = 'group:' +  name2idx(recipient.color).toString();
     } else {
       return;
     }
@@ -1139,7 +1136,7 @@ $(document).ready(function() {
   var donateToInGroup = function () {
     var donor = players.ego(),
         amt = settings.donation_amount,
-        recipientId = 'group:' +  color2idx(donor.color).toString(),
+        recipientId = 'group:' +  name2idx(donor.color).toString(),
         msg;
 
     msg = {
@@ -1173,8 +1170,6 @@ $(document).ready(function() {
       };
       // send directly to all clients
       socket.broadcast(msg);
-      // send to the server for recording
-      socket.send(msg);
     } catch(err) {
       console.error(err);
     } finally {
@@ -1182,7 +1177,6 @@ $(document).ready(function() {
       return false;
     }
   });
-
 
   if (!isSpectator) {
     // Main game keys:
@@ -1214,4 +1208,4 @@ $(document).ready(function() {
 
 });
 
-}(getUrlParameter, require, reqwest, settings, submitResponses));
+}(dallinger, require, window.settings));

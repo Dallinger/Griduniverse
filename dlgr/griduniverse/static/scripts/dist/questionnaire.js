@@ -1038,8 +1038,8 @@ module.exports = function (css) {
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_identityfusion__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_identityfusion___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_identityfusion__);
-/*global Dallinger, submitAssignment */
-
+/* global dallinger, console */
+/*jshint esversion: 6 */
 
 
 
@@ -1047,7 +1047,7 @@ $(document).ready(function() {
 
   // Initialize DIFI widget
   var $DIFI = $('input.DIFI-input'),
-      spinner = Dallinger.BusyForm();
+      spinner = dallinger.BusyForm();
 
   if ($DIFI.length) {
     var input = new __WEBPACK_IMPORTED_MODULE_0_identityfusion__["DIFIInput"](
@@ -1063,10 +1063,10 @@ $(document).ready(function() {
   $("#submit-questionnaire").click(function() {
     console.log("Submitting questionnaire.");
     var $elements = [$("form :input"), $(this)],
-        questionSubmission = Dallinger.submitQuestionnaire("questionnaire");
+        questionSubmission = dallinger.submitQuestionnaire("questionnaire");
 
     spinner.freeze($elements);
-    questionSubmission.done(submitAssignment);
+    questionSubmission.done(dallinger.submitAssignment);
     questionSubmission.always(function () {
       spinner.unfreeze();
     });

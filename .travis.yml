@@ -34,14 +34,15 @@ install:
   - sudo ln -s /usr/local/share/chromedriver /usr/local/bin/chromedriver
 
 before_script:
-  - createdb dallinger -U postgres
+  - createuser dallinger --createdb
+  - createdb -O dallinger dallinger
   - "export DISPLAY=:99.0"
   - "sh -e /etc/init.d/xvfb start"
   - sleep 3 # give xvfb some time to start
 
 env:
   global:
-  - DATABASE_URL=postgresql://postgres@localhost/dallinger
+  - DATABASE_URL=postgresql://dallinger@localhost/dallinger
 
 # command to run tests, e.g. python setup.py test
 script:

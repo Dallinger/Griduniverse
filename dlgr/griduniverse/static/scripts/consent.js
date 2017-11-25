@@ -7,10 +7,10 @@ $(document).ready(function() {
 
   // Consent to the experiment.
   $("#consent").click(function() {
-    store.set("hit_id", getUrlParameter("hit_id"));
-    store.set("worker_id", getUrlParameter("worker_id"));
-    store.set("assignment_id", getUrlParameter("assignment_id"));
-    store.set("mode", getUrlParameter("mode"));
+    store.set("hit_id", dallinger.getUrlParameter("hit_id"));
+    store.set("worker_id", dallinger.getUrlParameter("worker_id"));
+    store.set("assignment_id", dallinger.getUrlParameter("assignment_id"));
+    store.set("mode", dallinger.getUrlParameter("mode"));
 
     window.location.href = "/instructions";
   });
