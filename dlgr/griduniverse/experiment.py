@@ -1515,12 +1515,6 @@ class Griduniverse(Experiment):
     def replay_finish(self):
         self.publish({'type': 'stop'})
 
-    def player_feedback(self, data):
-        engagement = int(json.loads(data.questions.list[-1][-1])['engagement'])
-        difficulty = int(json.loads(data.questions.list[-1][-1])['difficulty'])
-        fun = int(json.loads(data.questions.list[-1][-1])['fun'])
-        return engagement, difficulty, fun
-
     def analyze(self, data):
         return json.dumps({
             "average_payoff": self.average_payoff(data),
