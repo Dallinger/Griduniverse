@@ -128,7 +128,9 @@ def exp(db_session, active_config, fresh_gridworld):
     gu.exp_config = active_config
     gu.grid.players.clear()
 
-    return gu
+    yield gu
+    gu.socket_session.rollback()
+    gu.socket_session.close()
 
 
 @pytest.fixture

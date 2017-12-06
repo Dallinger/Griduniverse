@@ -1077,6 +1077,7 @@ class Griduniverse(Experiment):
                 log_event=self.record_event,
                 **config.as_dict()
             )
+            self.session.commit()
 
     def configure(self):
         super(Griduniverse, self).configure()
@@ -1087,17 +1088,16 @@ class Griduniverse(Experiment):
 
     @property
     def environment(self):
-        environment = self.session.query(dallinger.nodes.Environment).one()
+        environment = self.socket_session.query(dallinger.nodes.Environment).one()
         return environment
 
     @cached_property
-    def session(self):
+    def socket_session(self):
         from dallinger.db import db_url
         engine = create_engine(db_url, pool_size=1000)
         session = scoped_session(
             sessionmaker(autocommit=False, autoflush=True, bind=engine)
         )
-
         return session
 
     @property
@@ -1117,9 +1117,11 @@ class Griduniverse(Experiment):
         )
         return class_(max_size=self.num_participants + 1)
 
-    def create_node(self, *args, **kwargs):
+    def create_node(self, participant, network):
         try:
-            return super(Griduniverse, self).create_node(*args, **kwargs)
+            return dallinger.models.Node(
+                network=network, participant=participant
+            )
         finally:
             if not self.networks(full=False):
                 # If there are no spaces left in our networks we can close
@@ -1128,11 +1130,13 @@ class Griduniverse(Experiment):
 
     def setup(self):
         """Setup the networks."""
+        self.node_by_player_id = {}
         if not self.networks():
             super(Griduniverse, self).setup()
             for net in self.networks():
-                dallinger.nodes.Environment(network=net)
-        self.node_by_player_id = {}
+                env = dallinger.nodes.Environment(network=net)
+                self.session.add(env)
+        self.session.commit()
 
     def serialize(self, value):
         return json.dumps(value)
@@ -1201,12 +1205,13 @@ class Griduniverse(Experiment):
 
     def record_event(self, details, player_id=None):
         """Record an event in the Info table."""
-        session = self.session
+        session = self.socket_session
 
         if player_id == 'spectator':
             return
         elif player_id:
-            node = self.node_by_player_id[player_id]
+            node_id = self.node_by_player_id[player_id]
+            node = session.query(dallinger.models.Node).get(node_id)
         else:
             node = self.environment
 
@@ -1233,12 +1238,14 @@ class Griduniverse(Experiment):
         client_count = len(self.grid.players)
         logger.info("Grid num players: {}".format(self.grid.num_players))
         if client_count < self.grid.num_players:
-            participant = dallinger.models.Participant.query.get(player_id)
+            participant = self.session.query(dallinger.models.Participant).get(player_id)
             network = self.get_network_for_participant(participant)
             if network:
                 logger.info("Found an open network. Adding participant node...")
                 node = self.create_node(participant, network)
-                self.node_by_player_id[player_id] = node
+                self.node_by_player_id[player_id] = node.id
+                self.session.add(node)
+                self.session.commit()
                 logger.info("Spawning player on the grid...")
                 # We use the current node id modulo the number of colours
                 # to pick the user's colour. This ensures that players are
@@ -1388,8 +1395,8 @@ class Griduniverse(Experiment):
         while not self.grid.game_over:
             # Record grid state to database
             state = self.environment.update(self.grid.serialize())
-            self.session.add(state)
-            self.session.commit()
+            self.socket_session.add(state)
+            self.socket_session.commit()
 
             gevent.sleep(0.010)
 
@@ -1462,6 +1469,7 @@ class Griduniverse(Experiment):
                 })
 
         self.publish({'type': 'stop'})
+        self.socket_session.commit()
         return
 
     def replay_started(self):

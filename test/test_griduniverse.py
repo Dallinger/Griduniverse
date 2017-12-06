@@ -39,10 +39,12 @@ class TestExperimentClass(object):
         net = exp.create_network()
         assert isinstance(net, FullyConnected)
 
-    def test_session_is_not_the_dallinger_global(self, exp, db_session):
-        # Experiment creates its own session despite being passed one in the
-        # __init__() method. Odd?
-        assert exp.session is not db_session()
+    def test_session_is_dallinger_global(self, exp, db_session):
+        assert exp.session() is db_session()
+
+    def test_socket_session_is_not_dallinger_global(self, exp, db_session):
+        # Experiment creates socket_session
+        assert exp.socket_session() is not db_session()
 
     def test_environment_uses_experiments_networks(self, exp):
         exp.environment.network in exp.networks()
@@ -212,22 +214,3 @@ class TestCommandline(object):
             Wrapper.return_value = mock_wrapper
             with pytest.raises(OSError):
                 debugger.run()
-
-
-@pytest.mark.usefixtures('env')
-class TestGriduniverse(object):
-
-    def test_bot_api(self):
-        """Run bots using headless chrome and collect data."""
-        self.experiment = Griduniverse()
-        data = self.experiment.run(
-            mode=u'debug',
-            webdriver_type=u'chrome',
-            recruiter=u'bots',
-            bot_policy=u"AdvantageSeekingBot",
-            max_participants=1,
-            num_dynos_worker=1,
-            time_per_round=10.0,
-        )
-        results = self.experiment.average_score(data)
-        assert results >= 0.0
