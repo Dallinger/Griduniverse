@@ -1,11 +1,28 @@
 {% extends "layout.html" %}
 
-{% block head %}
-{{ super() }}
-<script src="/static/scripts/dist/questionnaire.js" type="text/javascript"></script>
+{% block scripts %}
+  <script src="/static/scripts/dist/questionnaire.js" type="text/javascript"></script>
+  <script type="text/javascript">
+    function check_answers() {
+      var leach_complete, leach_question;
+      if ($('#difficulty').val() == "0" || $('#engagement').val() == "0") { return false; }
+      if ($("input[name='leach_1']").length) {
+        leach_complete = true;
+        for (leach_question=1; leach_question<21; leach_question++) {
+            if ($("input[name='leach_" + leach_question + "']:checked").length == 0) {
+                leach_complete = false;
+                break;
+            }
+        }
+        if (!leach_complete) { return false; }
+      }
+      $('#submit-questionnaire').prop('disabled', false);
+      return true;
+    }
+  </script>
 {% endblock %}
 
-{% block body %}
+{% block container %}
 <h1>Finished.</h1>
 <hr>
 <p>Thanks for contributing to our research. You will be eligible for full payment once you answer the following questions:</p>
@@ -67,22 +84,4 @@
         Continue
     </button>
 </div>
-<script type="text/javascript">
-  function check_answers() {
-    var leach_complete, leach_question;
-    if ($('#difficulty').val() == "0" || $('#engagement').val() == "0") { return false; }
-    if ($("input[name='leach_1']").length) {
-      leach_complete = true;
-      for (leach_question=1; leach_question<21; leach_question++) {
-          if ($("input[name='leach_" + leach_question + "']:checked").length == 0) {
-              leach_complete = false;
-              break;
-          }
-      }
-      if (!leach_complete) { return false; }
-    }
-    $('#submit-questionnaire').prop('disabled', false);
-    return true;
-  }
-</script>
 {% endblock %}

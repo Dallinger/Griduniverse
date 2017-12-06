@@ -1,11 +1,10 @@
 {% extends "layout.html" %}
 
-{% block head %}
-{{ super() }}
+{% block scripts %}
 <script src="/static/scripts/instructions.js" type="text/javascript"></script>
 {% endblock %}
 
-{% block body %}
+{% block container %}
 <h1>Instructions</h1>
 {% if experiment.grid.instruct %}
     <p>Welcome to the Griduniverse. Here are the instructions:</p>
