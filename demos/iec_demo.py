@@ -185,9 +185,6 @@ class Evolve(object):
                     background_animation=child['background_animation'],
                     padding=child['padding'],
                     visibility=child['visibility'],
-                    #walls_density=child['walls_density'],
-                    #walls_contiguity=child['walls_contiguity'],
-                    #walls_visible=child['walls_visible'],
                     motion_speed_limit=child['motion_speed_limit'],
                     motion_auto=child['motion_auto'],
                 )
