@@ -735,7 +735,7 @@ class Gridworld(object):
                 colors.append(player.color)
                 plurality_color = max(colors, key=colors.count)
                 if colors.count(plurality_color) > len(colors) / 2.0:
-                    if (self.rank(plurality_color) < self.rank(player.color)):
+                    if (self.rank(plurality_color) <= self.rank(player.color)):
                         color_updates.append((player, plurality_color))
 
         for (player, color) in color_updates:
