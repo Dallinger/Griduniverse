@@ -109,6 +109,7 @@ class Evolve(object):
     """The n x m iteractive evolutionary algorithm"""
 
     TIME_PER_ROUND = 5.00
+    STEP_RATE = .3
 
     def __init__(self, n, m, bot=False, mutation_rate=.1):
         """Run experiment loop"""
@@ -129,13 +130,12 @@ class Evolve(object):
         fixed amounts of money in the beginning, relative to the
         time_per_round variable. After that, the comparison becomes
         relative to a percentage of the last round's fun rating. The
-        stepRate variable is the percent required to bump up a rating.
+        STEP_RATE variable is the percent required to bump up a rating.
         """
         logger.info("Current Pay: {0}. Last Payout {1}."
                     .format(currPay, lastPay))
         low = .015 * self.TIME_PER_ROUND
         high = .08 * self.TIME_PER_ROUND
-        stepRate = .3
         if lastPay == 0:
             if currPay <= low:
                 return 1
@@ -143,9 +143,9 @@ class Evolve(object):
                 return 5
             else:
                 return 3
-        if (currPay / lastPay) - 1 >= stepRate:
+        if (currPay / lastPay) - 1 >= self.STEP_RATE:
             return feedback + 1
-        elif abs(currPay - lastPay) / lastPay < stepRate:
+        elif abs(currPay - lastPay) / lastPay < self.STEP_RATE:
             return feedback
         else:
             if feedback == 0:
