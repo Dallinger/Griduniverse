@@ -287,10 +287,6 @@ class Gridworld(object):
             (self.food_reward * self.food_pg_multiplier) / self.num_players
         )
 
-        if not kwargs.get('replay', False):
-            for i in range(self.num_food):
-                self.spawn_food()
-
         if self.contagion_hierarchy:
             self.contagion_hierarchy = range(self.num_colors)
             random.shuffle(self.contagion_hierarchy)
@@ -446,6 +442,9 @@ class Gridworld(object):
         # Don't start unless we have a least one player
         if self.players and not self.game_started:
             self.start_timestamp = time.time()
+            if not config.get('replay', False):
+                for i in range(self.num_food):
+                    self.spawn_food()
 
     @property
     def game_started(self):
