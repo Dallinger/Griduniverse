@@ -309,7 +309,9 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
         engagement.select_by_value(str(random.randint(1, 7)))
         try:
             fun = Select(self.driver.find_element_by_id('fun'))
-            fun.select_by_value(str(random.randint(1, 7)))
+            # This is executed by the IEC_demo.py script...
+            # No need to fill out a random value.
+            fun.select_by_value(str(0))
         except NoSuchElementException:
             pass
         return True
