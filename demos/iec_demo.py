@@ -192,10 +192,12 @@ class Evolve(object):
                     if player-1 in new_parents['scores']:
                         feedback = new_parents['scores'][player-1]
                     currPay = experiment.average_payoff(data)
+                    # Use custom feedback from the script with bots
                     new_parents['scores'][player] = self.player_feedback(
                                     currPay, lastPay, feedback)
                     lastPay = currPay
                 else:
+                    # Use the real feedback from the database with real players
                     new_parents['scores'][player] = experiment.player_feedback(data)[2]
                 logger.info("Fun rating: {}.".format(new_parents['scores'][player]))
                 new_parents['genome'][player] = child
