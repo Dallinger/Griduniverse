@@ -1476,8 +1476,11 @@ class Griduniverse(Experiment):
     def player_feedback(self, data):
         engagement = int(json.loads(data.questions.list[-1][-1])['engagement'])
         difficulty = int(json.loads(data.questions.list[-1][-1])['difficulty'])
-        fun = int(json.loads(data.questions.list[-1][-1])['fun'])
-        return engagement, difficulty, fun
+        try:
+            fun = int(json.loads(data.questions.list[-1][-1])['fun'])
+            return engagement, difficulty, fun
+        except IndexError:
+            return engagement, difficulty
 
     def replay_started(self):
         return self.grid.game_started
@@ -1526,7 +1529,7 @@ class Griduniverse(Experiment):
         dataState = df.loc[df['type'] == 'state']
         if dataState.empty:
             return 0.0
-        final_state = json.loads(dataState.iloc[-1][-2])
+        final_state = json.loads(dataState.iloc[-1][-1])
         players = final_state['players']
         payoff = [player['payoff'] for player in players]
         return float(sum(payoff)) / len(payoff)
