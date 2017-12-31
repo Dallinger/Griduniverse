@@ -358,3 +358,20 @@ is "/static/images/group.jpg".
 
 If true, the Leach survey is applied as part of the ending questionnaire.
 Default is False.
+
+
+### pre_difi_question
+
+Whether to asminister the Dynamic Identity Fusion Index (DIFI) before the
+beginning of the game. Default is False.
+
+
+### pre_difi_group_label
+
+The label to use for the group when asking the DIFI question at the start.
+
+
+### pre_difi_group_image
+
+URI to the group image to use when asking the DIFI question at the start. Default
+is "/static/images/group.jpg".

@@ -29,7 +29,8 @@ if (env === 'build') {
 module.exports = {
   entry: {
     bundle: './dlgr/griduniverse/static/scripts/demo.js',
-    questionnaire: './dlgr/griduniverse/static/scripts/questionnaire.js'
+    questionnaire: './dlgr/griduniverse/static/scripts/questionnaire.js',
+    difi: './dlgr/griduniverse/static/scripts/difi.js'
   },
   output: {
     path: __dirname + '/dlgr/griduniverse/static',

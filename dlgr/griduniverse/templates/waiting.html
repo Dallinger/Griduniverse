@@ -9,6 +9,13 @@
 </div>
 {% endblock %}
 
+{% if experiment.grid.pre_difi_question %}
+<form>
+    <input type="hidden" name="DIFI_overlap" id="DIFI_overlap" value="{{request.args.get('DIFI_overlap')}}" />
+    <input type="hidden" name="DIFI_distance" id="DIFI_distance" value="{{request.args.get('DIFI_distance')}}" />
+</form>
+{% endif %}
+
 {% block scripts %}
 <script type="text/javascript">
     $(document).ready(function() {

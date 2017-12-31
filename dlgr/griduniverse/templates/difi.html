@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+
+{% block head %}
+{{ super() }}
+<script src="/static/scripts/dist/difi.js" type="text/javascript"></script>
+{% endblock %}
+
+{% block body %}
+<h1>Before We Begin.</h1>
+<hr>
+<p>Thanks for contributing to our research. Please answer the following question before the experiment begins:</p>
+<form action="/waiting">
+    <div class="row question">
+        <div class="column">
+            <br />
+            The diagram below is designed to represent your relationship with
+            <strong>{{ experiment.grid.pre_difi_group_label }}</strong>.
+            Please indicate your relationship by clicking and dragging the smaller
+            "Me" circle to the position that best captures your relationship with
+            <strong>{{ experiment.grid.pre_difi_group_label }}</strong>.
+            <input class="DIFI-input" id="DIFI" name="DIFI" data-group-label="{{ experiment.grid.pre_difi_group_label }}" data-group-image="{{ experiment.grid.pre_difi_group_image }}" />
+        </div>
+    </div>
+<hr>
+<input type="submit" value="Begin Experiment" />
+</form>
+{% endblock %}
