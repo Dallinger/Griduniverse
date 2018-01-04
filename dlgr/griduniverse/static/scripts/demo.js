@@ -667,7 +667,8 @@ function bindGameKeys(socket) {
   directions.forEach(function(direction) {
     Mousetrap.bind(
       direction,
-      function() {
+      function(e) {
+        e.preventDefault();
         if (direction === lastDirection) {
           return;
         }
@@ -688,7 +689,8 @@ function bindGameKeys(socket) {
 
     Mousetrap.bind(
       direction,
-      function() {
+      function(e) {
+        e.preventDefault();
         if (direction) {
           console.log("Calling clearInterval() for " + direction + " (" + repeatIntervalId + ")");
           clearInterval(repeatIntervalId);
