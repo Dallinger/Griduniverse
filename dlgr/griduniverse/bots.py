@@ -7,6 +7,7 @@ import time
 
 from selenium.common.exceptions import StaleElementReferenceException
 from selenium.common.exceptions import WebDriverException
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -306,6 +307,13 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
         difficulty.select_by_value(str(random.randint(1, 7)))
         engagement = Select(self.driver.find_element_by_id('engagement'))
         engagement.select_by_value(str(random.randint(1, 7)))
+        try:
+            fun = Select(self.driver.find_element_by_id('fun'))
+            # This is executed by the IEC_demo.py script...
+            # No need to fill out a random value.
+            fun.select_by_value(str(0))
+        except NoSuchElementException:
+            pass
         return True
 
 

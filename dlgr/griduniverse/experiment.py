@@ -115,6 +115,7 @@ def extra_parameters():
         'difi_question': bool,
         'difi_group_label': unicode,
         'difi_group_image': unicode,
+        'fun_survey': bool,
         'leach_survey': bool,
         'intergroup_competition': float,
         'intragroup_competition': float,
@@ -267,6 +268,7 @@ class Gridworld(object):
         self.difi_question = kwargs.get('difi_question', False)
         self.difi_group_label = kwargs.get('difi_group_label', 'Group')
         self.difi_group_image = kwargs.get('difi_group_image', '/static/images/group.jpg')
+        self.fun_survey = kwargs.get('fun_survey', False)
         self.leach_survey = kwargs.get('leach_survey', False)
 
         # Set some variables.
@@ -1471,6 +1473,15 @@ class Griduniverse(Experiment):
         self.socket_session.commit()
         return
 
+    def player_feedback(self, data):
+        engagement = int(json.loads(data.questions.list[-1][-1])['engagement'])
+        difficulty = int(json.loads(data.questions.list[-1][-1])['difficulty'])
+        try:
+            fun = int(json.loads(data.questions.list[-1][-1])['fun'])
+            return engagement, difficulty, fun
+        except IndexError:
+            return engagement, difficulty
+
     def replay_started(self):
         return self.grid.game_started
 
@@ -1518,7 +1529,7 @@ class Griduniverse(Experiment):
         dataState = df.loc[df['type'] == 'state']
         if dataState.empty:
             return 0.0
-        final_state = json.loads(dataState.iloc[-1][-2])
+        final_state = json.loads(dataState.iloc[-1][-1])
         players = final_state['players']
         payoff = [player['payoff'] for player in players]
         return float(sum(payoff)) / len(payoff)
@@ -1528,7 +1539,7 @@ class Griduniverse(Experiment):
         dataState = df.loc[df['type'] == 'state']
         if dataState.empty:
             return 0.0
-        final_state = json.loads(dataState.iloc[-1][-2])
+        final_state = json.loads(dataState.iloc[-1][-1])
         players = final_state['players']
         scores = [player['score'] for player in players]
         return float(sum(scores)) / len(scores)
