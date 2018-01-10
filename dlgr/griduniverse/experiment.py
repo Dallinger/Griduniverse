@@ -463,7 +463,7 @@ class Gridworld(object):
         return self.round >= self.num_rounds
 
     def serialize(self):
-        return json.dumps({
+        return {
             "players": [player.serialize() for player in self.players.values()],
             "food": [food.serialize() for food in self.food],
             "walls": [wall.serialize() for wall in self.walls],
@@ -471,7 +471,7 @@ class Gridworld(object):
             "donation_active": self.donation_active,
             "rows": self.rows,
             "columns": self.columns,
-        })
+        }
 
     @property
     def food_mature(self):
@@ -784,7 +784,7 @@ class Food(object):
 
     @property
     def maturity(self):
-        return 1 - math.exp(-self._age * self.maturation_speed)
+        return round(1 - math.exp(-self._age * self.maturation_speed), 1)
 
     @property
     def _age(self):
@@ -905,12 +905,13 @@ class Player(object):
             self.position = new_position
             self.motion_timestamp = elapsed_time
             self.score -= self.motion_cost
-            return direction
 
             # now that player moved, check if wall needs to be built
             if self.add_wall is not None:
                 self.grid.walls.append(Wall(position=self.add_wall))
                 self.add_wall = None
+
+            return direction
 
     def is_neighbor(self, player, d=1):
         """Determine whether other player is adjacent."""
@@ -1375,18 +1376,42 @@ class Griduniverse(Experiment):
     def send_state_thread(self):
         """Publish the current state of the grid and game"""
         count = 0
+        grid_state = None
+        prior_state = None
         gevent.sleep(1.00)
         while True:
             gevent.sleep(0.050)
+            grid_state = self.grid.serialize()
+            send_state = grid_state.copy()
+
+            # Send all data once every 50 loops
+            force_static_update = False
+            if (count % 50) == 0:
+                force_static_update = True
             count += 1
+
+            if prior_state:
+                # Force update when players arrive or leave
+                if len(grid_state['players']) != len(grid_state['players']):
+                    force_static_update = True
+
+                if not force_static_update:
+                    if len(grid_state['walls']) == len(prior_state['walls']):
+                        send_state['walls'] = []
+                    if ({(f['id'], f['maturity']) for f in grid_state['food']} ==
+                            {(f['id'], f['maturity']) for f in prior_state['food']}):
+                        send_state['food'] = None
+
             message = {
                 'type': 'state',
-                'grid': self.grid.serialize(),
+                'grid': json.dumps(send_state),
                 'count': count,
                 'remaining_time': self.grid.remaining_round_time,
                 'round': self.grid.round,
             }
+
             self.publish(message)
+            prior_state = grid_state
             if self.grid.game_over:
                 return
 
@@ -1401,7 +1426,7 @@ class Griduniverse(Experiment):
 
         while not self.grid.game_over:
             # Record grid state to database
-            state = self.environment.update(self.grid.serialize())
+            state = self.environment.update(json.dumps(self.grid.serialize()))
             self.socket_session.add(state)
             self.socket_session.commit()
 
