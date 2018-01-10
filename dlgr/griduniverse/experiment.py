@@ -2,6 +2,7 @@
 
 import flask
 import gevent
+import itertools
 import json
 import logging
 import math
@@ -287,13 +288,6 @@ class Gridworld(object):
         self.food_locations = {}
         self.food_consumed = []
         self.start_timestamp = kwargs.get('start_timestamp', None)
-        labyrinth = Labyrinth(
-            columns=self.columns,
-            rows=self.rows,
-            density=self.walls_density,
-            contiguity=self.walls_contiguity,
-        )
-        self.walls = labyrinth.walls
 
         self.round = 0
         self.public_good = (
@@ -465,13 +459,25 @@ class Gridworld(object):
             player.payoff *= inter_proportions[player.color_idx]
             player.payoff *= self.dollars_per_point
 
+    def build_labyrinth(self):
+        if self.walls_density and len(self.walls) == 0:
+            start = time.time()
+            logger.info('Building labyrinth:')
+            labyrinth = Labyrinth(
+                columns=self.columns,
+                rows=self.rows,
+                density=self.walls_density,
+                contiguity=self.walls_contiguity,
+            )
+            logger.info('Built {} walls in {} seconds.'.format(
+                len(labyrinth.walls), time.time() - start
+            ))
+            self.walls = labyrinth.walls
+
     def _start_if_ready(self):
         # Don't start unless we have a least one player
         if self.players and not self.game_started:
             self.start_timestamp = time.time()
-            if not config.get('replay', False):
-                for i in range(self.num_food):
-                    self.spawn_food()
 
     @property
     def game_started(self):
@@ -1047,34 +1053,72 @@ class Labyrinth(object):
         """Prune walls to a labyrinth with the given density and contiguity."""
         num_to_prune = int(round(len(walls) * (1 - density)))
         num_pruned = 0
+        count = 0
         while num_pruned < num_to_prune:
-            (terminals, nonterminals) = self._classify_terminals(walls)
-            walls_to_prune = terminals[:num_to_prune]
-            for w in walls_to_prune:
-                walls.remove(w)
-            num_pruned += len(walls_to_prune)
+            count += 1
+            to_prune = self._classify_terminals(
+                walls, limit=num_to_prune - num_pruned
+            )
+            walls = [w for i, w in enumerate(walls) if i not in to_prune]
+            if len(to_prune) == 0:
+                break
+            num_pruned += len(to_prune)
 
         num_to_prune = int(round(len(walls) * (1 - contiguity)))
-        for _ in range(num_to_prune):
-            walls.remove(random.choice(walls))
+        to_prune = set(random.sample(range(len(walls)), num_to_prune))
+        walls = [w for i, w in enumerate(walls) if i not in to_prune]
 
         return walls
 
-    def _classify_terminals(self, walls):
-        terminals = []
-        nonterminals = []
-        positions = [w.position for w in walls]
-        for w in walls:
-            num_neighbors = 0
-            num_neighbors += [w.position[0] + 1, w.position[1]] in positions
-            num_neighbors += [w.position[0] - 1, w.position[1]] in positions
-            num_neighbors += [w.position[0], w.position[1] + 1] in positions
-            num_neighbors += [w.position[0], w.position[1] - 1] in positions
-            if num_neighbors == 1:
-                terminals.append(w)
-            else:
-                nonterminals.append(w)
-        return (terminals, nonterminals)
+    def _classify_terminals(self, walls, limit=None):
+        found = [set()]
+        unmatched = {}
+        enumerated_walls = tuple(enumerate(walls))
+        position_map = {tuple(w.position): i for i, w in enumerated_walls}
+
+        for i, w in enumerated_walls:
+            neighbors = set()
+            for adj in ([1, 0], [-1, 0], [0, 1], [0, -1]):
+                neighbor = tuple(p1 + p2 for p1, p2 in zip(w.position, adj))
+                if neighbor in position_map:
+                    neighbors.add(neighbor)
+            if len(neighbors) <= 1:
+                found[0].add(i)
+                if limit and len(found[0]) >= limit:
+                    break
+            elif len(neighbors) == 2:
+                n_indexes = {position_map[i] for i in neighbors}
+                j = 0
+                while j < len(found):
+                    if n_indexes.intersection(found[j]):
+                        if len(found) < j + 2:
+                            found.append(set())
+                        up_next = found[j + 1]
+                        up_next.add(i)
+                        break
+                    j += 1
+                else:
+                    unmatched[i] = n_indexes
+
+        for index in unmatched:
+            j = 0
+            n_indexes = unmatched[index]
+            while j < len(found):
+                if n_indexes.intersection(found[j]):
+                    if len(found) < j + 2:
+                        found.append(set())
+                    up_next = found[j + 1]
+                    up_next.add(index)
+                    break
+                j += 1
+
+        to_prune = set()
+        count = 0
+        for entries in found:
+            count += 1
+            if len(to_prune) < limit:
+                to_prune = to_prune.union(set(itertools.islice(entries, limit - len(to_prune))))
+        return to_prune
 
 
 def fermi(beta, p1, p2):
@@ -1481,6 +1525,12 @@ class Griduniverse(Experiment):
 
     def game_loop(self):
         """Update the world state."""
+        if not config.get('replay', False):
+            self.grid.build_labyrinth()
+            logger.info('Spawning food')
+            for i in range(self.grid.num_food):
+                self.grid.spawn_food()
+
         gevent.sleep(0.200)
 
         while not self.grid.game_started:
