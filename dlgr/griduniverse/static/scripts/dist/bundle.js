@@ -1645,7 +1645,7 @@ class Section {
   }
 }
 
-  var background = [], color;
+var background = [], color;
 for (var j = 0; j < settings.rows; j++) {
   for (var i = 0; i < settings.columns; i++) {
       color = [0, 0, 0];
@@ -1680,7 +1680,8 @@ var start = performance.now();
 var food = [];
 var foodConsumed = [];
 var walls = [];
-  var row, column, rand;
+var wall_map = {};
+var row, column, rand;
 
 name2idx = function(name) {
   var names = settings.player_color_names;
@@ -1746,9 +1747,12 @@ var Player = function(settings) {
 Player.prototype.move = function(direction) {
 
   function _hasWall(position) {
+    // This should speed up collision detection, but seems to cause
+    // movement jitter for reasons I don't understand [AM]
+    // return wall_map[[position[1], position[0]]] !== undefined;
     for (var i = 0; i < walls.length; i++) {
-        if (position === walls[i].position) {
-         return false;
+      if (position === walls[i].position) {
+        return false;
       }
     }
     return true;
@@ -1791,10 +1795,7 @@ Player.prototype.move = function(direction) {
         console.log("Direction not recognized.");
     }
 
-    if (
-      !_hasWall(newPosition) &
-      (!players.isPlayerAt(position) || settings.player_overlap)
-    ) {
+    if (!_hasWall(newPosition) && (!players.isPlayerAt(newPosition) || settings.player_overlap)) {
       this.position = newPosition;
       this.motion_timestamp = ts;
     }
@@ -2104,24 +2105,18 @@ pixels.frame(function() {
 
   for (i = 0; i < food.length; i++) {
     // Players digest the food.
-    if (players.isPlayerAt(food[i].position)) {
+    var cur_food = food[i];
+    if (players.isPlayerAt(cur_food.position)) {
       foodConsumed.push(food.splice(i, 1));
     } else {
       if (settings.food_visible) {
-        section.plot(food[i].position[1], food[i].position[0], food[i].color);
+        section.plot(cur_food.position[1], cur_food.position[0], cur_food.color);
       }
     }
   }
 
   // Draw the players:
   players.drawToGrid(section);
-
-  // Draw the walls.
-  if (settings.walls_visible) {
-    walls.forEach(function(w) {
-      section.plot(w.position[1], w.position[0], w.color);
-    });
-  }
 
   // Add the Gaussian mask.
   var elapsedTime = performance.now() - startTime;
@@ -2136,24 +2131,30 @@ pixels.frame(function() {
   var g = gaussian(0, Math.pow(visibilityNow, 2));
   rescaling = 1 / g.pdf(0);
 
-  if (!isSpectator) {
-    if (typeof ego !== "undefined") {
-      x = ego.position[1];
-      y = ego.position[0];
-    } else {
-      x = 1e100;
-      y = 1e100;
+  if (typeof ego !== "undefined") {
+    x = ego.position[1];
+    y = ego.position[0];
+  } else {
+    x = 1e100;
+    y = 1e100;
+  }
+  section.map(function(i, j, color) {
+    var newColor;
+    // Draw walls
+    if (settings.walls_visible) {
+      color = wall_map[[i,j]] || color;
     }
-    section.map(function(i, j, color) {
+    // Add Blur
+    if (!isSpectator) {
       dimness = g.pdf(distance(x, y, i, j)) * rescaling;
-      var newColor = [
+      newColor = [
         color[0] * dimness,
         color[1] * dimness,
         color[2] * dimness
       ];
-      return newColor;
-    });
-  }
+    }
+    return newColor;
+  });
   pixels.update(section.data, section.textures);
 });
 
@@ -2467,6 +2468,7 @@ function onGameStateChange(msg) {
           color: cur_wall.color
         })
       );
+      wall_map[[cur_wall.position[1], cur_wall.position[0]]] = cur_wall.color;
     }
   }
 
@@ -2480,6 +2482,7 @@ function onGameStateChange(msg) {
           color: cur_wall.color
         })
       );
+      wall_map[[cur_wall.position[1], cur_wall.position[0]]] = cur_wall.color;
     }
   }
 
