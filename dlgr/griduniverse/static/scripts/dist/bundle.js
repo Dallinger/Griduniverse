@@ -2444,36 +2444,40 @@ function onGameStateChange(msg) {
   updateDonationStatus(state.donation_active);
 
   // Update food.
-  food = [];
-  for (var j = 0; j < state.food.length; j++) {
-    food.push(
-      new Food({
-        id: state.food[j].id,
-        position: state.food[j].position,
-        color: state.food[j].color
-      })
-    );
+  if (state.food !== null) {
+    food = [];
+    for (var j = 0; j < state.food.length; j++) {
+      food.push(
+        new Food({
+          id: state.food[j].id,
+          position: state.food[j].position,
+          color: state.food[j].color
+        })
+      );
+    }
   }
 
   // Update walls if they haven't been created yet.
   if (walls.length === 0) {
     for (var k = 0; k < state.walls.length; k++) {
+      var cur_wall = state.walls[k];
       walls.push(
         new Wall({
-          position: state.walls[k].position,
-          color: state.walls[k].color
+          position: cur_wall.position,
+          color: cur_wall.color
         })
       );
     }
   }
 
   // If new walls have been added, draw them
-  if (walls.length !== state.walls.length) {
+  if (walls.length < state.walls.length) {
     for (var k = walls.length; k < state.walls.length; k++) {
+      var cur_wall = state.walls[k];
       walls.push(
         new Wall({
-          position: state.walls[k].position,
-          color: state.walls[k].color
+          position: cur_wall.position,
+          color: cur_wall.color
         })
       );
     }
