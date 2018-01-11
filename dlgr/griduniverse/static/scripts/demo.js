@@ -595,6 +595,10 @@ pixels.frame(function() {
       color = wall_map[[i,j]] || color;
     }
     // Add Blur
+    players.each(function (i, player) {
+      dimness = g.pdf(x, y, player.position[0], player.position[1]) * rescaling;
+      player["dimness"] = dimness;
+    });
     if (!isSpectator) {
       dimness = g.pdf(distance(x, y, i, j)) * rescaling;
       newColor = [
@@ -814,12 +818,18 @@ function chatName(player_id) {
 
 function onChatMessage(msg) {
   var entry = chatName(msg.player_id);
+  if (players.get(msg.player_id).dimness < settings.chat_visibility_threshold) {
+    return;
+  }
   $("#messages").append(($("<li>").text(": " + msg.contents)).prepend(entry));
   $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
 }
 
 function onColorChanged(msg) {
   store.set("color", msg.new_color);
+  if (players.get(msg.player_id).dimness < settings.chat_visibility_threshold) {
+    return;
+  }
   pushMessage("<span class='name'>Moderator:</span> " + chatName(msg.player_id) + ' changed from team ' + msg.old_color + ' to team ' + msg.new_color + '.');
 }
 
