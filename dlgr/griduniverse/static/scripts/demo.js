@@ -818,7 +818,7 @@ function chatName(player_id) {
 
 function onChatMessage(msg) {
   var entry = chatName(msg.player_id);
-  if (players.get(msg.player_id).dimness < settings.chat_visibility_threshold) {
+  if (settings.spatial_chat && players.get(msg.player_id).dimness < settings.chat_visibility_threshold) {
     return;
   }
   $("#messages").append(($("<li>").text(": " + msg.contents)).prepend(entry));
@@ -827,7 +827,7 @@ function onChatMessage(msg) {
 
 function onColorChanged(msg) {
   store.set("color", msg.new_color);
-  if (players.get(msg.player_id).dimness < settings.chat_visibility_threshold) {
+  if (settings.spatial_chat && players.get(msg.player_id).dimness < settings.chat_visibility_threshold) {
     return;
   }
   pushMessage("<span class='name'>Moderator:</span> " + chatName(msg.player_id) + ' changed from team ' + msg.old_color + ' to team ' + msg.new_color + '.');

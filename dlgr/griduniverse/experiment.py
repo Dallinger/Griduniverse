@@ -68,6 +68,7 @@ def extra_parameters():
         'block_size': int,
         'padding': int,
         'chat_visibility_threshold': float,
+        'spatial_chat': bool,
         'visibility': int,
         'visibility_ramp_time': int,
         'background_animation': bool,
@@ -198,6 +199,7 @@ class Gridworld(object):
         self.block_size = kwargs.get('block_size', 10)
         self.padding = kwargs.get('padding', 1)
         self.chat_visibility_threshold = kwargs.get('chat_visibility_threshold', 0.25)
+        self.spatial_chat = kwargs.get('spatial_chat', False)
         self.visibility = kwargs.get('visibility', 40)
         self.visibility_ramp_time = kwargs.get('visibility_ramp_time', 4)
         self.background_animation = kwargs.get('background_animation', True)
