@@ -4,36 +4,14 @@
 <script type="text/javascript">
     // Parameters
     settings = {};
-    settings.block_size = {{ experiment.grid.block_size }};
-    settings.padding = {{ experiment.grid.padding }};
-    settings.respawn_food = {% if experiment.grid.respawn_food %}true{% else %}false{% endif %};
-    settings.dollars_per_point = {{ experiment.grid.dollars_per_point }};
-    settings.rows = {{ experiment.grid.rows }};
-    settings.columns = {{ experiment.grid.columns }};
-    settings.window_columns = {{ experiment.grid.window_columns }};
-    settings.window_rows = {{ experiment.grid.window_rows }};
-    settings.mutable_colors = {% if experiment.grid.mutable_colors %}true{% else %}false{% endif %};
-    settings.player_overlap = {% if experiment.grid.player_overlap %}true{% else %}false{% endif %};
-    settings.background_animation = {% if experiment.grid.background_animation %}true{% else %}false{% endif %};
     settings.time_per_round = {{ experiment.grid.time_per_round }};
     settings.num_rounds = {{ experiment.grid.num_rounds }};
     settings.player_colors = {{ experiment.serialize(experiment.grid.limited_player_colors) }};
     settings.player_color_names = {{ experiment.serialize(experiment.grid.limited_player_color_names)|safe }};
-    settings.tax = {{ experiment.grid.tax }};
-    settings.walls = "{{ experiment.grid.wall_type }}";
     settings.show_grid = {% if experiment.grid.show_grid %}true{% else %}false{% endif %};
-    settings.visibility = {{ experiment.grid.visibility }};
-    settings.visibility_ramp_time = {{ experiment.grid.visibility_ramp_time }};
     settings.others_visible = {% if experiment.grid.others_visible %}true{% else %}false{% endif %};
-    settings.identity_signaling = {% if experiment.grid.identity_signaling %}true{% else %}false{% endif %};
-    settings.identity_starts_visible = {% if experiment.grid.identity_starts_visible %}true{% else %}false{% endif %};
-    settings.motion_speed_limit = {{ experiment.grid.motion_speed_limit }};
-    settings.food_visible = {% if experiment.grid.food_visible %}true{% else %}false{% endif %};
     settings.show_chatroom = {% if experiment.grid.show_chatroom %}true{% else %}false{% endif %};
     settings.pseudonyms = {% if experiment.grid.pseudonyms %}true{% else %}false{% endif %};
-    settings.walls_visible = {% if experiment.grid.walls_visible %}true{% else %}false{% endif %};
-    settings.build_walls = {% if experiment.grid.build_walls %}true{% else %}false{% endif %};
-    settings.wall_building_cost = {{ experiment.grid.wall_building_cost }};
     settings.donation_amount = {{ experiment.grid.donation_amount }};
     settings.donation_individual = {% if experiment.grid.donation_individual %}true{% else %}false{% endif %};
     settings.donation_group = {% if experiment.grid.donation_group %}true{% else %}false{% endif %};
@@ -51,39 +29,6 @@
 {% endblock %}
 
 {% block container %}
-<div id="game-over">
-    <h2>Game over.</h2>
-</div>
-
-<div id="dashboard">
-    <p>
-        <span id="score">0</span> points ($<span id="dollars">0.00</span>),
-        <span id="time">?</span> seconds remaining
-        {% if experiment.grid.num_rounds > 1 %}in round <span id="round">?</span>{% endif %}
-    </p>
-</div>
-
-<div id="grid" data-identicon-salt="{{ app_id }}">
-    <!-- Grid will be inserted here. -->
-</div>
-
-{% if experiment.grid.donation_amount %}
-<div id="donate" class="for-players">
-    <label>Give {{ experiment.grid.donation_amount }} point{{experiment.grid.donation_amount > 1 and 's' or ''}} to:</label>
-    {% if experiment.grid.donation_individual %}
-        <button id="individual-donate" class="button-outline">Player</button>
-    {% endif %}
-    {% if experiment.grid.donation_ingroup %}
-        <button id="ingroup-donate" class="button-outline">My Group</button>
-    {% endif %}
-    {% if experiment.grid.donation_group and not experiment.grid.donation_ingroup %}
-        <button id="group-donate" class="button-outline">Group</button>
-    {% endif %}
-    {% if experiment.grid.donation_public %}
-        <button id="public-donate" class="button-outline">Everyone</button>
-    {% endif %}
-</div>
-{% endif %}
 
 <div id="chat">
     <div id="chatlog">

@@ -180,27 +180,8 @@ class Gridworld(object):
         # Instructions
         self.instruct = kwargs.get('instruct', True)
 
-        # Grid
-        self.columns = kwargs.get('columns', 25)
-        self.rows = kwargs.get('rows', 25)
-        self.window_columns = kwargs.get('window_columns', min(self.columns, 25))
-        self.window_rows = kwargs.get('window_rows', min(self.rows, 25))
-        self.block_size = kwargs.get('block_size', 10)
-        self.padding = kwargs.get('padding', 1)
-        self.visibility = kwargs.get('visibility', 40)
-        self.visibility_ramp_time = kwargs.get('visibility_ramp_time', 4)
-        self.background_animation = kwargs.get('background_animation', True)
-        self.player_overlap = kwargs.get('player_overlap', False)
-
-        # Motion
-        self.motion_speed_limit = kwargs.get('motion_speed_limit', 8)
-        self.motion_auto = kwargs.get('motion_auto', False)
-        self.motion_cost = kwargs.get('motion_cost', 0)
-        self.motion_tremble_rate = kwargs.get('motion_tremble_rate', 0)
-
         # Components
-        self.show_chatroom = kwargs.get('show_chatroom', False)
-        self.show_grid = kwargs.get('show_grid', True)
+        self.show_chatroom = kwargs.get('show_chatroom', True)
 
         # Identity
         self.others_visible = kwargs.get('others_visible', True)
@@ -216,13 +197,6 @@ class Gridworld(object):
         self.identity_starts_visible = kwargs.get('identity_starts_visible',
                                                   False)
         self.use_identicons = kwargs.get('use_identicons', False)
-
-        # Walls
-        self.walls_visible = kwargs.get('walls_visible', True)
-        self.walls_density = kwargs.get('walls_density', 0.0)
-        self.walls_contiguity = kwargs.get('walls_contiguity', 1.0)
-        self.build_walls = kwargs.get('build_walls', False)
-        self.wall_building_cost = kwargs.get('wall_building_cost', 0)
 
         # Payoffs
         self.initial_score = kwargs.get('initial_score', 0)
@@ -250,20 +224,6 @@ class Gridworld(object):
         self.alternate_consumption_donation = kwargs.get(
             'alternate_consumption_donation', False)
 
-        # Food
-        self.num_food = kwargs.get('num_food', 8)
-        self.respawn_food = kwargs.get('respawn_food', True)
-        self.food_visible = kwargs.get('food_visible', True)
-        self.food_reward = kwargs.get('food_reward', 1)
-        self.food_pg_multiplier = kwargs.get('food_pg_multiplier', 1)
-        self.food_growth_rate = kwargs.get('food_growth_rate', 1.00)
-        self.food_maturation_speed = kwargs.get('food_maturation_speed', 1)
-        self.food_maturation_threshold = kwargs.get(
-            'food_maturation_threshold', 0.0)
-        self.food_planting = kwargs.get('food_planting', False)
-        self.food_planting_cost = kwargs.get('food_planting_cost', 1)
-        self.seasonal_growth_rate = kwargs.get('seasonal_growth_rate', 1)
-
         # Questionnaire
         self.difi_question = kwargs.get('difi_question', False)
         self.difi_group_label = kwargs.get('difi_group_label', 'Group')
@@ -273,34 +233,13 @@ class Gridworld(object):
 
         # Set some variables.
         self.players = {}
-        self.food = []
-        self.food_consumed = []
         self.start_timestamp = kwargs.get('start_timestamp', None)
-        labyrinth = Labyrinth(
-            columns=self.columns,
-            rows=self.rows,
-            density=self.walls_density,
-            contiguity=self.walls_contiguity,
-        )
-        self.walls = labyrinth.walls
 
         self.round = 0
-        self.public_good = (
-            (self.food_reward * self.food_pg_multiplier) / self.num_players
-        )
-
-        if self.contagion_hierarchy:
-            self.contagion_hierarchy = range(self.num_colors)
-            random.shuffle(self.contagion_hierarchy)
-
         if self.costly_colors:
             self.color_costs = [2**i for i in range(self.num_colors)]
             random.shuffle(self.color_costs)
 
-    def can_occupy(self, position):
-        if self.player_overlap:
-            return not self.has_wall(position)
-        return not self.has_player(position) and not self.has_wall(position)
 
     @property
     def limited_player_colors(self):
@@ -444,9 +383,6 @@ class Gridworld(object):
         # Don't start unless we have a least one player
         if self.players and not self.game_started:
             self.start_timestamp = time.time()
-            if not config.get('replay', False):
-                for i in range(self.num_food):
-                    self.spawn_food()
 
     @property
     def game_started(self):
@@ -459,160 +395,14 @@ class Gridworld(object):
     def serialize(self):
         return json.dumps({
             "players": [player.serialize() for player in self.players.values()],
-            "food": [food.serialize() for food in self.food],
-            "walls": [wall.serialize() for wall in self.walls],
             "round": self.round,
             "donation_active": self.donation_active,
-            "rows": self.rows,
-            "columns": self.columns,
         })
-
-    @property
-    def food_mature(self):
-        return [f for f in self.food
-                if f.maturity >= self.food_maturation_threshold]
 
     def instructions(self):
         color_costs = ''
         order = ''
-        text = """<p>The objective of the game is to maximize your final payoff.
-            The game is played on a {g.columns} x {g.rows} grid, where each
-            player occupies one block. <br><img src='static/images/gameplay.gif'
-            height='150'><br>"""
-        if self.window_columns < self.columns or self.window_rows < self.rows:
-            text += """ The grid is viewed through a
-                {g.window_columns} x {g.window_rows} window
-                that moves along with your player."""
-        if self.walls_density > 0:
-            text += """ There are walls throughout the grid, which the players
-               cannot pass through."""
-            if not self.walls_visible:
-                text += " However, the walls are not visible."
-        if self.build_walls:
-            text += """ Players can build walls at their current position using
-                the 'w' key. The wall will not appear until the player has moved
-                away from that position."""
-            if self.wall_building_cost > 0:
-                text += """ Building a wall has a cost of {g.wall_building_cost}
-                    points."""
-        if self.num_rounds > 1:
-            text += """ The game has {g.num_rounds} rounds, each lasting
-                <strong>{g.time_per_round} seconds</strong>.</p>"""
-        else:
-            text += " The game duration is <strong>{g.time_per_round}</strong> seconds.</p>"
-        if self.num_players > 1:
-            text += """<p>There are <strong>{g.num_players} players</strong> participating
-                in the game."""
-            if not self.others_visible:
-                text += """ However, players cannot see each other on the
-                    grid."""
-            if self.num_colors > 1:
-                text += """ Each player will be one of {g.num_colors} available
-                    colors ({color_list})."""
-                if self.mutable_colors:
-                    text += " Players can change color using the 'c' key."
-                    if self.costly_colors:
-                        costs = ['{c}, {p} points'.format(c=c, p=p)
-                                 for p, c in zip(self.color_costs,
-                                                 self.limited_player_color_names)]
-                        color_costs = '; '.join(costs)
-                        text += """ Changing color has a different cost in
-                            points for each color: {color_costs}."""
-                if self.contagion > 0:
-                    text += """ If a player enters a region of the grid where a
-                    plurality of the surrounding players within {g.contagion}
-                        blocks are of a different color, that player will take
-                        on the color of the plurality."""
-                    if self.contagion_hierarchy:
-                        order = ', '.join([self.limited_player_color_names[h]
-                                           for h in self.contagion_hierarchy])
-                        text += """ However, there is a hierarchy of colors, so
-                            that only players of some colors are susceptible to
-                            changing color in  this way. The hierarchy, from
-                            lowest to highest, is: {order}. Colors lower in the
-                            hierarchy can be affected only by higher colors."""
-                    if self.frequency_dependence > 0:
-                        text += """ Players will get more points if their
-                            color is in the majority."""
-                    if self.frequency_dependence < 0:
-                        text += """ Players will get more points if their
-                            color is in the minority."""
-        text += """</p><p>Players move around the grid using the arrow keys.
-                <br><img src='static/images/keys.gif' height='60'><br>"""
-        if self.player_overlap:
-            text += " More than one player can occupy a block at the same time."
-        else:
-            text += """ A player cannot occupy a block where a player is
-                already present."""
-        if self.visibility < max(self.rows, self.columns):
-            text += """ Players cannot see the whole grid, but only an area
-                approximately {g.visibility} blocks around their current
-                position."""
-        text += """<p>Press the 'h' key to toggle highlighting of your player.
-                <br><img src='static/images/h-toggle.gif' height='150'><p>"""
-        if self.motion_auto:
-            text += """ Once a player presses a key to move, the player will
-                continue to move in the same direction automatically until
-                another key is pressed."""
-        if self.motion_cost > 0:
-            text += """ Each movement costs the player {g.motion_cost}
-                        {g.motion_cost:plural, point, points}."""
-        if self.motion_tremble_rate > 0 and self.motion_tremble_rate < 0.4:
-            text += """ Some of the time, movement will not be in the chosen
-                direction, but random."""
-        if self.motion_tremble_rate >= 0.4 and self.motion_tremble_rate < 0.7:
-            text += """ Movement will not be in the chosen direction most of the
-                time, but random."""
-        if self.motion_tremble_rate >= 0.7:
-            text += """ Movement commands will be ignored almost all of the time,
-                and the player will move in a random direction instead."""
-        text += """</p><p>Players gain points by getting to squares that have
-            food on them. Each piece of food is worth {g.food_reward}
-            {g.food_reward:plural, point, points}. When the game starts there
-            are <strong>{g.num_food}</strong> {g.num_food:plural, piece, pieces}
-            of food on the grid. Food is represented by a green"""
-        if self.food_maturation_threshold > 0:
-            text += " or brown"
-        text += " square: <img src='static/images/food-green.png' height='20'>"
-        if self.food_maturation_threshold > 0:
-            text += " <img src='static/images/food-brown.png' height='20'>"
-        if self.respawn_food:
-            text += "<br>Food is automatically respawned after it is consumed."
-            if self.food_maturation_threshold > 0:
-                text += """It will appear immediately, but not be consumable for
-                    some time, because it has a maturation period. It will show
-                    up as brown initially, and then as green when it matures."""
-        if self.food_planting:
-            text += " Players can plant more food by pressing the spacebar."
-            if self.food_planting_cost > 0:
-                text += """ The cost for planting food is {g.food_planting_cost}
-                {g.food_planting_cost:plural, point, points}."""
-        text += "</p>"
-        if self.alternate_consumption_donation and self.num_rounds > 1:
-            text += """<p> Rounds will alternate between <strong>consumption</strong> and
-            <strong>donation</strong> rounds. Consumption rounds will allow for free movement
-            on the grid. Donation rounds will disable movement and allow you to donate points.</p>
-            """
-        if self.donation_amount > 0:
-            text += """<img src='static/images/donate-click.gif' height='210'><br><p>It can be helpful to
-            donate points to others.
-            """
-            if self.donation_individual:
-                text += """ You can donate <strong>{g.donation_amount}</strong>
-                {g.donation_amount:plural, point, points} to any player by clicking on
-                <img src='static/images/donate-individual.png' class='donate'
-                height='30'>, then clicking on their block on the grid.
-                """
-            if self.donation_group:
-                text += """ To donate to a group, click on the <img src='static/images/donate-group.png'
-                class='donate' height='30'> button, then click on any player with the color of the team
-                you want to donate to.
-                """
-            if self.donation_public:
-                text += """ The <img src='static/images/donate-public.png' class='donate' height='30'>
-                 button splits your donation amongst every player in the game (including yourself).
-                """
-            text += "</p>"
+        text = """<p>The objective of the game is to talk"""
         if self.show_chatroom:
             text += """<p>A chatroom is available to send messages to the other
                 players."""
@@ -629,56 +419,13 @@ class Gridworld(object):
                                 color_costs=color_costs,
                                 color_list=', '.join(self.limited_player_color_names))
 
-    def consume(self):
-        """Players consume the food."""
-        for food in self.food_mature:
-            for player in self.players.values():
-                if food.position == player.position:
-                    # Update existence and count of food.
-                    self.food_consumed.append(food)
-                    self.food.remove(food)
-                    if self.respawn_food:
-                        self.spawn_food()
-                    else:
-                        self.num_food -= 1
-
-                    # Update scores.
-                    print(player.color_idx)
-                    if player.color_idx > 0:
-                        reward = self.food_reward
-                    else:
-                        reward = self.food_reward * self.relative_deprivation
-
-                    player.score += reward
-                    for player_to in self.players.values():
-                        player_to.score += self.public_good
-                    break
-
-    def spawn_food(self, position=None):
-        """Respawn the food."""
-        if not position:
-            position = self._random_empty_position()
-
-        self.food.append(Food(
-            id=(len(self.food) + len(self.food_consumed)),
-            position=position,
-            maturation_speed=self.food_maturation_speed,
-        ))
-        self.log_event({
-            'type': 'spawn_food',
-            'position': position,
-        })
 
     def spawn_player(self, id=None, **kwargs):
         """Spawn a player."""
         player = Player(
             id=id,
-            position=self._random_empty_position(),
             num_possible_colors=self.num_colors,
-            motion_speed_limit=self.motion_speed_limit,
-            motion_cost=self.motion_cost,
             score=self.initial_score,
-            motion_tremble_rate=self.motion_tremble_rate,
             pseudonym_locale=self.pseudonyms_locale,
             pseudonym_gender=self.pseudonyms_gender,
             grid=self,
@@ -690,24 +437,11 @@ class Gridworld(object):
         self._start_if_ready()
         return player
 
-    def _random_empty_position(self):
-        """Select an empty cell at random."""
-        empty_cell = False
-        while (not empty_cell):
-            position = [
-                random.randint(0, self.rows - 1),
-                random.randint(0, self.columns - 1),
-            ]
-            empty_cell = self._empty(position)
-
-        return position
 
     def _empty(self, position):
         """Determine whether a particular cell is empty."""
         return not (
-            self.has_player(position) or
-            self.has_food(position) or
-            self.has_wall(position)
+            self.has_player(position)
         )
 
     def has_player(self, position):
@@ -716,88 +450,7 @@ class Gridworld(object):
                 return True
         return False
 
-    def has_food(self, position):
-        for food in self.food:
-            if food.position == position:
-                return True
-        return False
 
-    def has_wall(self, position):
-        for wall in self.walls:
-            if wall.position == position:
-                return True
-        return False
-
-    def spread_contagion(self):
-        """Spread contagion."""
-        color_updates = []
-        for player in self.players.values():
-            colors = [n.color for n in player.neighbors(d=self.contagion)]
-            if colors:
-                colors.append(player.color)
-                plurality_color = max(colors, key=colors.count)
-                if colors.count(plurality_color) > len(colors) / 2.0:
-                    if (self.rank(plurality_color) <= self.rank(player.color)):
-                        color_updates.append((player, plurality_color))
-
-        for (player, color) in color_updates:
-            player.color = color
-
-    def rank(self, color):
-        """Where does this color fall on the color hierarchy?"""
-        if self.contagion_hierarchy:
-            return self.contagion_hierarchy[
-                Gridworld.player_colors.index(color)]
-        else:
-            return 1
-
-
-class Food(object):
-    """Food."""
-    def __init__(self, **kwargs):
-        super(Food, self).__init__()
-
-        self.id = kwargs.get('id', uuid.uuid4())
-        self.position = kwargs.get('position', [0, 0])
-        self.color = kwargs.get('color', [0.5, 0.5, 0.5])
-        self.maturation_speed = kwargs.get('maturation_speed', 0.1)
-        self.creation_timestamp = time.time()
-
-    def serialize(self):
-        return {
-            "id": self.id,
-            "position": self.position,
-            "maturity": self.maturity,
-            "color": self._maturity_to_rgb(self.maturity),
-        }
-
-    def _maturity_to_rgb(self, maturity):
-        B = [0.48, 0.42, 0.33]  # Brown
-        G = [0.54, 0.61, 0.06]  # Green
-        return [B[i] + maturity * (G[i] - B[i]) for i in range(3)]
-
-    @property
-    def maturity(self):
-        return 1 - math.exp(-self._age * self.maturation_speed)
-
-    @property
-    def _age(self):
-        return time.time() - self.creation_timestamp
-
-
-class Wall(object):
-    """Wall."""
-    def __init__(self, **kwargs):
-        super(Wall, self).__init__()
-
-        self.position = kwargs.get('position', [0, 0])
-        self.color = kwargs.get('color', [0.5, 0.5, 0.5])
-
-    def serialize(self):
-        return {
-            "position": self.position,
-            "color": self.color,
-        }
 
 
 class Player(object):
@@ -807,14 +460,7 @@ class Player(object):
         super(Player, self).__init__()
 
         self.id = kwargs.get('id', uuid.uuid4())
-        self.position = kwargs.get('position', [0, 0])
-        self.motion_auto = kwargs.get('motion_auto', False)
-        self.motion_direction = kwargs.get('motion_direction', 'right')
-        self.motion_speed_limit = kwargs.get('motion_speed_limit', 8)
         self.num_possible_colors = kwargs.get('num_possible_colors', 2)
-        self.motion_cost = kwargs.get('motion_cost', 0)
-        self.motion_tremble_rate = kwargs.get('motion_tremble_rate', 0)
-        self.grid = kwargs.get('grid', None)
         self.score = kwargs.get('score', 0)
         self.payoff = kwargs.get('payoff', 0)
         self.pseudonym_locale = kwargs.get('pseudonym_locale', 'en_US')
@@ -848,180 +494,15 @@ class Player(object):
 
         self.motion_timestamp = 0
 
-    def tremble(self, direction):
-        """Change direction with some probability."""
-        directions = [
-            "up",
-            "down",
-            "left",
-            "right"
-        ]
-        directions.remove(direction)
-        direction = random.choice(directions)
-        return direction
-
-    def move(self, direction, tremble_rate=0):
-        """Move the player."""
-
-        if not self.grid.movement_enabled:
-            return
-
-        if random.random() < tremble_rate:
-            direction = self.tremble(direction)
-
-        self.motion_direction = direction
-
-        new_position = self.position[:]
-
-        if direction == "up":
-            if self.position[0] > 0:
-                new_position[0] -= 1
-
-        elif direction == "down":
-            if self.position[0] < (self.grid.rows - 1):
-                new_position[0] = self.position[0] + 1
-
-        elif direction == "left":
-            if self.position[1] > 0:
-                new_position[1] = self.position[1] - 1
-
-        elif direction == "right":
-            if self.position[1] < (self.grid.columns - 1):
-                new_position[1] = self.position[1] + 1
-
-        # Update motion.
-        elapsed_time = self.grid.elapsed_round_time
-        wait_time = 1.0 / self.motion_speed_limit
-        can_move = elapsed_time > (self.motion_timestamp + wait_time)
-        can_afford_to_move = self.score >= self.motion_cost
-
-        if can_move and can_afford_to_move and self.grid.can_occupy(new_position):
-            self.position = new_position
-            self.motion_timestamp = elapsed_time
-            self.score -= self.motion_cost
-            return direction
-
-            # now that player moved, check if wall needs to be built
-            if self.add_wall is not None:
-                self.grid.walls.append(Wall(position=self.add_wall))
-                self.add_wall = None
-
-    def is_neighbor(self, player, d=1):
-        """Determine whether other player is adjacent."""
-        manhattan_distance = (
-            abs(self.position[0] - player.position[0]) +
-            abs(self.position[1] - player.position[1])
-        )
-        return (manhattan_distance <= d)
-
-    def neighbors(self, d=1):
-        """Return all adjacent players."""
-        return [
-            p for p in self.grid.players.values() if (
-                self.is_neighbor(p, d=d) and (p is not self)
-            )
-        ]
 
     def serialize(self):
         return {
             "id": self.id,
-            "position": self.position,
             "score": self.score,
             "payoff": self.payoff,
-            "color": self.color,
-            "motion_auto": self.motion_auto,
-            "motion_direction": self.motion_direction,
-            "motion_speed_limit": self.motion_speed_limit,
-            "motion_timestamp": self.motion_timestamp,
             "name": self.name,
             "identity_visible": self.identity_visible,
         }
-
-
-class Labyrinth(object):
-    """A maze generator."""
-    def __init__(self, columns=25, rows=25, density=1.0, contiguity=1.0):
-        if density:
-            walls = self._generate_maze(rows, columns)
-            self.walls = self._prune(walls, density, contiguity)
-        else:
-            self.walls = []
-
-    def _generate_maze(self, rows, columns):
-
-        c = (columns - 1) / 2
-        r = (rows - 1) / 2
-
-        visited = [[0] * c + [1] for _ in range(r)] + [[1] * (c + 1)]
-        ver = [["* "] * c + ['*'] for _ in range(r)] + [[]]
-        hor = [["**"] * c + ['*'] for _ in range(r + 1)]
-
-        sx = random.randrange(c)
-        sy = random.randrange(r)
-        visited[sy][sx] = 1
-        stack = [(sx, sy)]
-        while len(stack) > 0:
-            (x, y) = stack.pop()
-            d = [
-                (x - 1, y),
-                (x, y + 1),
-                (x + 1, y),
-                (x, y - 1)
-            ]
-            random.shuffle(d)
-            for (xx, yy) in d:
-                if visited[yy][xx]:
-                    continue
-                if xx == x:
-                    hor[max(y, yy)][x] = "* "
-                if yy == y:
-                    ver[y][max(x, xx)] = "  "
-                stack.append((xx, yy))
-                visited[yy][xx] = 1
-
-        # Convert the maze to a list of wall cell positions.
-        the_rows = ([j for i in zip(hor, ver) for j in i])
-        the_rows = [list("".join(j)) for j in the_rows]
-        maze = [item == '*' for sublist in the_rows for item in sublist]
-        walls = []
-        for idx, value in enumerate(maze):
-            if value:
-                walls.append(Wall(position=[idx / columns, idx % columns]))
-
-        return walls
-
-    def _prune(self, walls, density, contiguity):
-        """Prune walls to a labyrinth with the given density and contiguity."""
-        num_to_prune = int(round(len(walls) * (1 - density)))
-        num_pruned = 0
-        while num_pruned < num_to_prune:
-            (terminals, nonterminals) = self._classify_terminals(walls)
-            walls_to_prune = terminals[:num_to_prune]
-            for w in walls_to_prune:
-                walls.remove(w)
-            num_pruned += len(walls_to_prune)
-
-        num_to_prune = int(round(len(walls) * (1 - contiguity)))
-        for _ in range(num_to_prune):
-            walls.remove(random.choice(walls))
-
-        return walls
-
-    def _classify_terminals(self, walls):
-        terminals = []
-        nonterminals = []
-        positions = [w.position for w in walls]
-        for w in walls:
-            num_neighbors = 0
-            num_neighbors += [w.position[0] + 1, w.position[1]] in positions
-            num_neighbors += [w.position[0] - 1, w.position[1]] in positions
-            num_neighbors += [w.position[0], w.position[1] + 1] in positions
-            num_neighbors += [w.position[0], w.position[1] - 1] in positions
-            if num_neighbors == 1:
-                terminals.append(w)
-            else:
-                nonterminals.append(w)
-        return (terminals, nonterminals)
 
 
 def fermi(beta, p1, p2):
@@ -1050,15 +531,6 @@ def consent():
         assignment_id=flask.request.args['assignment_id'],
         worker_id=flask.request.args['worker_id'],
         mode=config.get('mode'),
-    )
-
-
-@extra_routes.route("/grid")
-def serve_grid():
-    """Return the game stage."""
-    return flask.render_template(
-        "grid.html",
-        app_id=config.get('id')
     )
 
 
@@ -1174,12 +646,7 @@ class Griduniverse(Experiment):
             # Ignore these events in replay mode
             mapping.update({
                 'chat': self.handle_chat_message,
-                'change_color': self.handle_change_color,
-                'move': self.handle_move,
                 'donation_submitted': self.handle_donation,
-                'plant_food': self.handle_plant_food,
-                'toggle_visible': self.handle_toggle_visible,
-                'build_wall': self.handle_build_wall,
             })
 
         if msg['type'] in mapping:
@@ -1273,14 +740,6 @@ class Griduniverse(Experiment):
         if not msg.get('broadcast', False):
             self.publish(message)
 
-    def handle_change_color(self, msg):
-        player = self.grid.players[msg['player_id']]
-        color_name = msg['color']
-        color_idx = Gridworld.player_color_names.index(color_name)
-        old_color = Gridworld.player_color_names[player.color_idx]
-        msg['old_color'] = old_color
-        msg['new_color'] = color_name
-
         if player.color_idx == color_idx:
             return  # Requested color change is no change at all.
 
@@ -1303,10 +762,6 @@ class Griduniverse(Experiment):
         self.publish(message)
         self.record_event(message, message['player_id'])
 
-    def handle_move(self, msg):
-        player = self.grid.players[msg['player_id']]
-        msg['actual'] = player.move(
-            msg['move'], tremble_rate=player.motion_tremble_rate)
 
     def handle_donation(self, msg):
         """Send a donation from one player to one or more other players."""
@@ -1345,27 +800,6 @@ class Griduniverse(Experiment):
             self.publish(message)
             self.record_event(message, message['donor_id'])
 
-    def handle_plant_food(self, msg):
-        player = self.grid.players[msg['player_id']]
-        position = msg['position']
-        can_afford = player.score >= self.grid.food_planting_cost
-        if (can_afford and not self.grid.has_food(position)):
-            player.score -= self.grid.food_planting_cost
-            self.grid.spawn_food(position=position)
-
-    def handle_toggle_visible(self, msg):
-        player = self.grid.players[msg['player_id']]
-        player.identity_visible = msg['identity_visible']
-
-    def handle_build_wall(self, msg):
-        player = self.grid.players[msg['player_id']]
-        position = msg['position']
-        can_afford = player.score >= self.grid.wall_building_cost
-        msg['success'] = can_afford
-        if can_afford:
-            player.score -= self.grid.wall_building_cost
-            player.add_wall = position
-
     def send_state_thread(self):
         """Publish the current state of the grid and game"""
         count = 0
@@ -1375,7 +809,6 @@ class Griduniverse(Experiment):
             count += 1
             message = {
                 'type': 'state',
-                'grid': self.grid.serialize(),
                 'count': count,
                 'remaining_time': self.grid.remaining_round_time,
                 'round': self.grid.round,
@@ -1402,63 +835,6 @@ class Griduniverse(Experiment):
             gevent.sleep(0.010)
 
             now = time.time()
-
-            # Update motion.
-            if self.grid.motion_auto:
-                for player in self.grid.players.values():
-                    player.move(player.motion_direction, tremble_rate=0)
-
-            # Consume the food.
-            if self.grid.consumption_active:
-                self.grid.consume()
-
-            # Spread through contagion.
-            if self.grid.contagion > 0:
-                self.grid.spread_contagion()
-
-            # Trigger time-based events.
-            if (now - previous_second_timestamp) > 1.000:
-
-                # Grow or shrink the food stores.
-                seasonal_growth = (
-                    self.grid.seasonal_growth_rate **
-                    (-1 if self.grid.round % 2 else 1)
-                )
-
-                self.grid.num_food = max(min(
-                    self.grid.num_food *
-                    self.grid.food_growth_rate *
-                    seasonal_growth,
-                    self.grid.rows * self.grid.columns,
-                ), 0)
-
-                for i in range(int(round(self.grid.num_food) - len(self.grid.food))):
-                    self.grid.spawn_food()
-
-                for i in range(len(self.grid.food) - int(round(self.grid.num_food))):
-                    self.grid.food.remove(random.choice(self.grid.food))
-
-                for player in self.grid.players.values():
-                    # Apply tax.
-                    player.score = max(player.score - self.grid.tax, 0)
-
-                    # Apply frequency-dependent payoff.
-                    for player in self.grid.players.values():
-                        abundance = len(
-                            [p for p in self.grid.players.values() if p.color == player.color]
-                        )
-                        relative_frequency = 1.0 * abundance / len(self.grid.players)
-                        payoff = fermi(
-                            beta=self.grid.frequency_dependence,
-                            p1=relative_frequency,
-                            p2=0.5
-                        ) * self.grid.frequency_dependent_payoff_rate
-
-                        player.score = max(player.score + payoff, 0)
-
-                previous_second_timestamp = now
-
-            self.grid.compute_payoffs()
 
             game_round = self.grid.round
             self.grid.check_round_completion()
