@@ -1356,11 +1356,12 @@ class Griduniverse(Experiment):
             msg['move'], timestamp=msg.get('timestamp'),
             tremble_rate=player.motion_tremble_rate
         )
-        msg["actual"] = msgs["direction"]
-        if msgs.get("wall"):
-            wall_msg = msgs.get("wall")
-            self.publish(wall_msg)
-            self.record_event(wall_msg)
+        if msgs:
+            msg["actual"] = msgs["direction"]
+            if msgs.get("wall"):
+                wall_msg = msgs.get("wall")
+                self.publish(wall_msg)
+                self.record_event(wall_msg)
 
     def handle_donation(self, msg):
         """Send a donation from one player to one or more other players."""
