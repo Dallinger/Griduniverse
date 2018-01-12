@@ -1745,17 +1745,8 @@ var Player = function(settings) {
 };
 
 Player.prototype.move = function(direction) {
-
   function _hasWall(position) {
-    // This should speed up collision detection, but seems to cause
-    // movement jitter for reasons I don't understand [AM]
-    // return wall_map[[position[1], position[0]]] !== undefined;
-    for (var i = 0; i < walls.length; i++) {
-      if (position === walls[i].position) {
-        return false;
-      }
-    }
-    return true;
+    return wall_map[[position[1], position[0]]] !== undefined;
   }
 
   this.motion_direction = direction;
@@ -1798,8 +1789,10 @@ Player.prototype.move = function(direction) {
     if (!_hasWall(newPosition) && (!players.isPlayerAt(newPosition) || settings.player_overlap)) {
       this.position = newPosition;
       this.motion_timestamp = ts;
+      return true;
     }
   }
+  return false;
 };
 
 var playerSet = (function () {
@@ -1845,6 +1838,8 @@ var playerSet = (function () {
       for (id in this._players) {
         if (this._players.hasOwnProperty(id)) {
           player = this._players[id];
+          /* It's unlikely that auto motion will keep identical pace to server-side auto-motion */
+          /* this should be implemented either all on server or all on client */
           if (player.motion_auto) {
             player.move(player.motion_direction);
           }
@@ -1915,10 +1910,18 @@ var playerSet = (function () {
 
     PlayerSet.prototype.update = function (playerData) {
       var currentPlayerData,
+          oldPlayerData,
           i;
 
       for (i = 0; i < playerData.length; i++) {
         currentPlayerData = playerData[i];
+        oldPlayerData = this._players[currentPlayerData.id];
+        /* Don't override current player position and motion timestamp
+           with server one, they should eventually synchronize. */
+        if (oldPlayerData && oldPlayerData.id === this.ego_id) {
+          currentPlayerData.motion_timestamp = oldPlayerData.motion_timestamp;
+          currentPlayerData.position = oldPlayerData.position;
+        }
         this._players[currentPlayerData.id] = new Player(currentPlayerData);
       }
     };
@@ -2216,11 +2219,13 @@ function bindGameKeys(socket) {
       highlightEgo = false;
 
   function moveInDir(direction) {
-    players.ego().move(direction);
+    var ego = players.ego();
+    ego.move(direction);
     var msg = {
       type: "move",
-      player_id: players.ego().id,
-      move: direction
+      player_id: ego.id,
+      move: direction,
+      timestamp: ego.motion_timestamp
     };
     socket.send(msg);
   }
@@ -2424,6 +2429,8 @@ function onGameStateChange(msg) {
       ego,
       state;
 
+  performance.mark('state_start');
+
   if (settings.paused_game) {
     $timeElement.html(0);
     return;
@@ -2445,7 +2452,7 @@ function onGameStateChange(msg) {
   updateDonationStatus(state.donation_active);
 
   // Update food.
-  if (state.food !== null) {
+  if (state.food !== undefined && state.food !== null) {
     food = [];
     for (var j = 0; j < state.food.length; j++) {
       food.push(
@@ -2459,7 +2466,7 @@ function onGameStateChange(msg) {
   }
 
   // Update walls if they haven't been created yet.
-  if (walls.length === 0) {
+  if (state.walls !== undefined && walls.length == 0) {
     for (var k = 0; k < state.walls.length; k++) {
       var cur_wall = state.walls[k];
       walls.push(
@@ -2473,7 +2480,7 @@ function onGameStateChange(msg) {
   }
 
   // If new walls have been added, draw them
-  if (walls.length < state.walls.length) {
+  if (state.walls !== undefined && walls.length < state.walls.length) {
     for (var k = walls.length; k < state.walls.length; k++) {
       var cur_wall = state.walls[k];
       walls.push(
@@ -2599,6 +2606,22 @@ $(document).ready(function() {
 
   players.ego_id = player_id;
   $('#donate label').data('orig-text', $('#donate label').text());
+
+  setInterval(function () {
+    var delays = []
+    var start_marks = performance.getEntriesByName('state_start', 'mark');
+    for (var i = 0; i < start_marks.length; i++) {
+      if (start_marks.length > i + 2) {
+        delays.push(start_marks[i+1].startTime - start_marks[i].startTime);
+      }
+    }
+    if (delays.length) {
+      var average_delay = delays.reduce(function(sum, value){
+        return sum + value;
+      }, 0) / delays.length;
+      console.log('Average delay between state updates: ' + average_delay + 'ms.');
+    }
+  }, 5000)
 
   // Append the canvas.
   $("#grid").append(pixels.canvas);
