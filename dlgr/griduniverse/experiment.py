@@ -931,6 +931,8 @@ class Player(object):
             can_move = timestamp > (self.last_timestamp + wait_time)
         can_afford_to_move = self.score >= self.motion_cost
 
+        msgs = {"direction": direction}
+
         if can_move and can_afford_to_move and self.grid.can_occupy(new_position):
             self.position = new_position
             self.motion_timestamp = self.grid.elapsed_round_time
@@ -940,11 +942,16 @@ class Player(object):
 
             # now that player moved, check if wall needs to be built
             if self.add_wall is not None:
-                self.grid.wall_locations[tuple(self.add_wall)] = Wall(position=self.add_wall)
+                new_wall = Wall(position=self.add_wall)
+                self.grid.wall_locations[tuple(new_wall.position)] = new_wall
                 self.add_wall = None
-                self.grid.walls_updated = True
+                wall_msg = {
+                    'type': 'wall_built',
+                    'wall': new_wall.serialize()
+                }
+                msgs["wall"] = wall_msg
 
-            return direction
+            return msgs
 
     def is_neighbor(self, player, d=1):
         """Determine whether other player is adjacent."""
@@ -1345,10 +1352,15 @@ class Griduniverse(Experiment):
 
     def handle_move(self, msg):
         player = self.grid.players[msg['player_id']]
-        msg['actual'] = player.move(
+        msgs = player.move(
             msg['move'], timestamp=msg.get('timestamp'),
             tremble_rate=player.motion_tremble_rate
         )
+        msg["actual"] = msgs["direction"]
+        if msgs.get("wall"):
+            wall_msg = msgs.get("wall")
+            self.publish(wall_msg)
+            self.record_event(wall_msg)
 
     def handle_donation(self, msg):
         """Send a donation from one player to one or more other players."""
@@ -1431,7 +1443,7 @@ class Griduniverse(Experiment):
                 update_food = True
                 last_player_count = player_count
 
-            if not last_walls or len(last_walls) != len(self.grid.wall_locations):
+            if not last_walls:
                 update_walls = True
 
             if not last_food or self.grid.food_changed(last_food):
