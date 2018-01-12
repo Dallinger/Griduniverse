@@ -4812,7 +4812,7 @@ var playerSet = (function () {
           currentPlayerData.motion_timestamp = oldPlayerData.motion_timestamp;
           /* Only override position from server if tremble is enabled,
              otherwise motion jitter is likely and positions will sync anyway. */
-          if (settings.motion_tremble_rate != 0) {
+          if (settings.motion_tremble_rate == 0) {
             currentPlayerData.position = oldPlayerData.position;
           }
         }
