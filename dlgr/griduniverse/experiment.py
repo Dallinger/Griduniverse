@@ -460,7 +460,7 @@ class Gridworld(object):
             player.payoff *= self.dollars_per_point
 
     def build_labyrinth(self):
-        if self.walls_density and len(self.walls) == 0:
+        if self.walls_density and not self.wall_locations:
             start = time.time()
             logger.info('Building labyrinth:')
             labyrinth = Labyrinth(
@@ -472,7 +472,7 @@ class Gridworld(object):
             logger.info('Built {} walls in {} seconds.'.format(
                 len(labyrinth.walls), time.time() - start
             ))
-            self.walls = labyrinth.walls
+            self.wall_locations = {tuple(w.position): w for w in labyrinth.walls}
 
     def _start_if_ready(self):
         # Don't start unless we have a least one player
@@ -1002,6 +1002,8 @@ class Labyrinth(object):
     def __init__(self, columns=25, rows=25, density=1.0, contiguity=1.0):
         if density:
             walls = self._generate_maze(rows, columns)
+            # Add sleep to avoid timeouts
+            gevent.sleep(0.00001)
             self.walls = self._prune(walls, density, contiguity)
         else:
             self.walls = []
@@ -1479,6 +1481,10 @@ class Griduniverse(Experiment):
         last_walls = []
         last_food = []
 
+        # Sleep until we have walls
+        while (self.grid.walls_density and not self.grid.wall_locations):
+            gevent.sleep(0.1)
+
         while True:
             gevent.sleep(0.050)
 
@@ -1525,13 +1531,14 @@ class Griduniverse(Experiment):
 
     def game_loop(self):
         """Update the world state."""
+        gevent.sleep(0.1)
         if not config.get('replay', False):
             self.grid.build_labyrinth()
             logger.info('Spawning food')
             for i in range(self.grid.num_food):
+                if (i % 250) == 0:
+                    gevent.sleep(0.00001)
                 self.grid.spawn_food()
-
-        gevent.sleep(0.200)
 
         while not self.grid.game_started:
             gevent.sleep(0.01)
