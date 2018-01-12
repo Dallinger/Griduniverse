@@ -2441,6 +2441,7 @@ function updateDonationStatus(donation_is_active) {
 function onGameStateChange(msg) {
   var $donationButtons = $('#individual-donate, #group-donate, #public-donate, #ingroup-donate'),
       $timeElement = $("#time"),
+      $loading = $('.grid-loading'),
       cur_wall,
       ego,
       state,
@@ -2448,6 +2449,7 @@ function onGameStateChange(msg) {
       k;
 
   performance.mark('state_start');
+  if ($loading.is(':visible')) $loading.fadeOut();
 
   if (settings.paused_game) {
     $timeElement.html(0);
