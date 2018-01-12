@@ -1916,11 +1916,14 @@ var playerSet = (function () {
       for (i = 0; i < playerData.length; i++) {
         currentPlayerData = playerData[i];
         oldPlayerData = this._players[currentPlayerData.id];
-        /* Don't override current player position and motion timestamp
-           with server one, they should eventually synchronize. */
         if (oldPlayerData && oldPlayerData.id === this.ego_id) {
+          /* Don't override current player motion timestamp */
           currentPlayerData.motion_timestamp = oldPlayerData.motion_timestamp;
-          currentPlayerData.position = oldPlayerData.position;
+          /* Only override position from server if tremble is enabled,
+             otherwise motion jitter is likely and positions will sync anyway. */
+          if (settings.motion_tremble_rate != 0) {
+            currentPlayerData.position = oldPlayerData.position;
+          }
         }
         this._players[currentPlayerData.id] = new Player(currentPlayerData);
       }
@@ -2511,6 +2514,19 @@ function onGameStateChange(msg) {
   }
 }
 
+function addWall(msg) {
+  var wall = msg.wall;
+  if (wall) {
+    walls.push(
+      new Wall({
+        position: wall.position,
+        color: wall.color
+      })
+    );
+    wall_map[[wall.position[1], wall.position[0]]] = wall.color;
+  }
+}
+
 function pushMessage(html) {
   $("#messages").append(($("<li>").html(html)));
   $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
@@ -2591,7 +2607,8 @@ $(document).ready(function() {
           'color_changed': onColorChanged,
           'state': onGameStateChange,
           'new_round': displayLeaderboards,
-        'stop': gameOverHandler(player_id)
+          'stop': gameOverHandler(player_id),
+          'wall_built': addWall
         }
     };
     var socket = new GUSocket(socketSettings);
