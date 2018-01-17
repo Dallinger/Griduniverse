@@ -1816,65 +1816,8 @@ function chatName(player_id) {
     $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
   }
 
-
-  function onDonationProcessed(msg) {
-    var donor = players.get(msg.donor_id),
-      recipient_id = msg.recipient_id,
-      team_idx,
-      donor_name,
-      recipient_name,
-      donated_points,
-      received_points,
-      entry;
-
-    donor_name = chatName(msg.donor_id);
-
-    if (recipient_id === 'all') {
-      recipient_name = '<span class="name">All players</span>';
-    } else if (recipient_id.indexOf('group:') === 0) {
-      team_idx = +recipient_id.substring(6);
-        recipient_name = 'Everyone in <span class="name">' + settings.player_color_names[team_idx] + '</span>';
-    } else {
-        recipient_name = chatName(recipient_id);
-    }
-
-    if (msg.amount === 1) {
-        donated_points = msg.amount + ' point.';
-    } else {
-        donated_points = msg.amount + ' points.';
-    }
-
-    if (msg.received === 1) {
-      received_points = msg.received + ' point.';
-    } else {
-      received_points = msg.received + ' points.';
-    }
-
-    entry = donor_name + " contributed " + donated_points + " " + recipient_name + " received " + received_points;
-
-  $("#messages").append($("<li>").html(entry));
-  $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
-  $('#individual-donate, #group-donate').addClass('button-outline');
-  $('#donate label').text($('#donate label').data('orig-text'));
-  settings.donation_type = null;
-}
-
-function updateDonationStatus(donation_is_active) {
-  // If alternating donation/consumption rounds, announce round type
-  if (settings.alternate_consumption_donation && (settings.donation_active !== donation_is_active)) {
-    if (donation_is_active) {
-      pushMessage("<span class='name'>Moderator:</span> Starting a donation round. Players cannot move, only donate.");
-    } else {
-      pushMessage("<span class='name'>Moderator:</span> Starting a consumption round. Players have to consume as much food as possible.");
-    }
-  }
-  // Update donation status
-  settings.donation_active = donation_is_active;
-}
-
 function onGameStateChange(msg) {
-  var $donationButtons = $('#individual-donate, #group-donate, #public-donate, #ingroup-donate'),
-      $timeElement = $("#time"),
+  var $timeElement = $("#time"),
       ego,
       state;
 
@@ -1989,7 +1932,6 @@ $(document).ready(function() {
   players.ego_id = player_id;
   console.log("ego id:");
   console.log(players.ego_id);
-  $('#donate label').data('orig-text', $('#donate label').text());
 
   // Opt out of the experiment.
   $("#opt-out").click(function() {
@@ -2035,34 +1977,6 @@ $(document).ready(function() {
     $("#chat form").show();
   }
 
-  var donateToAll = function() {
-    var donor = players.ego(),
-        amt = settings.donation_amount,
-        msg;
-
-    msg = {
-      type: "donation_submitted",
-      recipient_id: 'all',
-      donor_id: donor.id,
-      amount: amt
-    };
-    socket.send(msg);
-  };
-
-  var donateToInGroup = function () {
-    var donor = players.ego(),
-        amt = settings.donation_amount,
-        msg;
-
-    msg = {
-      type: "donation_submitted",
-      recipient_id: recipientId,
-      donor_id: donor.id,
-      amount: amt
-    };
-    socket.send(msg);
-  };
-
   $("form").submit(function() {
     var chatmessage = $("#message").val().trim(),
         msg;
@@ -2091,31 +2005,6 @@ $(document).ready(function() {
       return false;
     }
   });
-
-  if (!isSpectator) {
-    // Main game keys:
-    // Donation click events:
-    $('#public-donate').click(donateToAll);
-    $('#ingroup-donate').click(donateToInGroup);
-    $('#group-donate').click(function () {
-      if (settings.donation_group) {
-        $('#donate label').text('Click on a color');
-        settings.donation_type = 'group';
-        $(this).prop('disabled', false);
-        $(this).removeClass('button-outline');
-        $('#individual-donate').addClass('button-outline');
-      }
-    });
-    $('#individual-donate').click(function () {
-      if (settings.donation_individual) {
-        $('#donate label').text('Click on a player');
-        settings.donation_type = 'individual';
-        $(this).removeClass('button-outline');
-        $('#group-donate').addClass('button-outline');
-      }
-    });
-  }
-
 });
 
 }(dallinger, require, window.settings));

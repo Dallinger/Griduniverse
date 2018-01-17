@@ -12,15 +12,7 @@
     settings.others_visible = {% if experiment.grid.others_visible %}true{% else %}false{% endif %};
     settings.show_chatroom = {% if experiment.grid.show_chatroom %}true{% else %}false{% endif %};
     settings.pseudonyms = {% if experiment.grid.pseudonyms %}true{% else %}false{% endif %};
-    settings.donation_amount = {{ experiment.grid.donation_amount }};
-    settings.donation_individual = {% if experiment.grid.donation_individual %}true{% else %}false{% endif %};
-    settings.donation_group = {% if experiment.grid.donation_group %}true{% else %}false{% endif %};
-    settings.donation_ingroup = {% if experiment.grid.donation_ingroup %}true{% else %}false{% endif %};    
-    settings.donation_public = {% if experiment.grid.donation_public %}true{% else %}false{% endif %};
-    settings.donation_active = {% if experiment.grid.donation_active %}true{% else %}false{% endif %};
-    settings.donation_type = null;
     settings.score_visible = {% if experiment.grid.score_visible %}true{% else %}false{% endif %};
-    settings.alternate_consumption_donation = {% if experiment.grid.alternate_consumption_donation %}true{% else %}false{% endif %};
     settings.use_identicons = {% if experiment.grid.use_identicons %}true{% else %}false{% endif %};
     settings.leaderboard_group = {% if experiment.grid.leaderboard_group %}true{% else %}false{% endif %};
     settings.leaderboard_individual = {% if experiment.grid.leaderboard_individual %}true{% else %}false{% endif %};
@@ -33,11 +25,6 @@
 <div id="chat">
     <div id="chatlog">
         <ul id="messages">
-            {% if experiment.grid.alternate_consumption_donation %}
-                <li>
-                    <span class="name">Moderator: </span> Starting a consumption round. Players have to consume as much food as possible.
-                </li>
-            {% endif %}
         </ul>
     </div>
     <form action="" class="for-players">

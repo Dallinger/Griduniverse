@@ -96,11 +96,6 @@ def extra_parameters():
         'relative_deprivation': float,
         'frequency_dependence': float,
         'frequency_dependent_payoff_rate': float,
-        'donation_amount': int,
-        'donation_individual': bool,
-        'donation_group': bool,
-        'donation_ingroup': bool,
-        'donation_public': bool,
         'num_food': int,
         'respawn_food': bool,
         'food_visible': bool,
@@ -122,11 +117,9 @@ def extra_parameters():
         'identity_signaling': bool,
         'identity_starts_visible': bool,
         'score_visible': bool,
-        'alternate_consumption_donation': bool,
         'use_identicons': bool,
         'build_walls': bool,
         'wall_building_cost': int,
-        'donation_multiplier': float,
     }
 
     for key in types:
@@ -211,18 +204,10 @@ class Gridworld(object):
         self.leaderboard_individual = kwargs.get('leaderboard_individual', False)
         self.leaderboard_time = kwargs.get('leaderboard_time', 0)
 
-        # Donations
-        self.donation_amount = kwargs.get('donation_amount', 0)
-        self.donation_multiplier = kwargs.get('donation_multiplier', 1.0)
-        self.donation_individual = kwargs.get('donation_individual', False)
-        self.donation_group = kwargs.get('donation_group', False)
-        self.donation_ingroup = kwargs.get('donation_ingroup', False)
-        self.donation_public = kwargs.get('donation_public', False)
+        # Competition
         self.intergroup_competition = kwargs.get('intergroup_competition', 1)
         self.intragroup_competition = kwargs.get('intragroup_competition', 1)
         self.score_visible = kwargs.get('score_visible', False)
-        self.alternate_consumption_donation = kwargs.get(
-            'alternate_consumption_donation', False)
 
         # Questionnaire
         self.difi_question = kwargs.get('difi_question', False)
@@ -264,56 +249,8 @@ class Gridworld(object):
         return max(0, raw_remaining)
 
     @property
-    def group_donation_enabled(self):
-        return self.donation_group or self.donation_ingroup
-
-    @property
-    def donation_enabled(self):
-        return (
-            (
-                self.group_donation_enabled or
-                self.donation_individual or
-                self.donation_public
-            ) and bool(self.donation_amount)
-        )
-
-    @property
     def is_even_round(self):
         return bool(self.round % 2)
-
-    @property
-    def donation_active(self):
-        """Donation is enabled if:
-        1. at least one of the donation_individual, donation_group and
-           donation_public flags is set to True
-        2. donation_amount to some non-zero value
-
-        Further, donation is limited to even-numbered rounds if
-        alternate_consumption_donation is set to True.
-        """
-        if not self.donation_enabled:
-            return False
-
-        if self.alternate_consumption_donation:
-            return self.is_even_round
-
-        return True
-
-    @property
-    def movement_enabled(self):
-        """If we're alternating consumption and donation, Players can only move
-        during consumption rounds.
-        """
-        if self.alternate_consumption_donation and self.donation_active:
-            return False
-        return True
-
-    @property
-    def consumption_active(self):
-        """Food consumption is enabled on odd-numbered rounds if
-        alternate_consumption_donation is set to True.
-        """
-        return not self.alternate_consumption_donation or not self.is_even_round
 
     def players_with_color(self, color_id):
         """Return all the players with the specified color, which is how we
@@ -396,7 +333,6 @@ class Gridworld(object):
         return json.dumps({
             "players": [player.serialize() for player in self.players.values()],
             "round": self.round,
-            "donation_active": self.donation_active,
         })
 
     def instructions(self):
@@ -646,7 +582,6 @@ class Griduniverse(Experiment):
             # Ignore these events in replay mode
             mapping.update({
                 'chat': self.handle_chat_message,
-                'donation_submitted': self.handle_donation,
             })
 
         if msg['type'] in mapping:
@@ -762,44 +697,6 @@ class Griduniverse(Experiment):
         self.publish(message)
         self.record_event(message, message['player_id'])
 
-
-    def handle_donation(self, msg):
-        """Send a donation from one player to one or more other players."""
-        if not self.grid.donation_active:
-            return
-
-        recipients = []
-        recipient_id = msg['recipient_id']
-
-        if recipient_id.startswith('group:') and self.grid.group_donation_enabled:
-            color_id = recipient_id[6:]
-            recipients = self.grid.players_with_color(color_id)
-        elif recipient_id == 'all' and self.grid.donation_public:
-            recipients = self.grid.players.values()
-        elif self.grid.donation_individual:
-            recipient = self.grid.players.get(recipient_id)
-            if recipient:
-                recipients.append(recipient)
-        donor = self.grid.players[msg['donor_id']]
-        donation = msg['amount']
-
-        if donor.score >= donation and len(recipients):
-            donor.score -= donation
-            donated = donation * self.grid.donation_multiplier
-            if len(recipients) > 1:
-                donated = round(donated / len(recipients), 2)
-            for recipient in recipients:
-                recipient.score += donated
-            message = {
-                'type': 'donation_processed',
-                'donor_id': msg['donor_id'],
-                'recipient_id': msg['recipient_id'],
-                'amount': donation,
-                'received': donated
-            }
-            self.publish(message)
-            self.record_event(message, message['donor_id'])
-
     def send_state_thread(self):
         """Publish the current state of the grid and game"""
         count = 0
@@ -866,7 +763,7 @@ class Griduniverse(Experiment):
         info_cls = dallinger.models.Info
         from models import Event
         events = Experiment.events_for_replay(self)
-        event_types = {'chat', 'new_round', 'donation_processed', 'color_changed'}
+        event_types = {'chat', 'new_round', 'color_changed'}
         return events.filter(
             or_(info_cls.type == 'state',
                 and_(info_cls.type == 'event',

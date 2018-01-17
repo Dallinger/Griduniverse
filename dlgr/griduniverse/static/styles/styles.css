@@ -189,34 +189,6 @@ canvas {
     white-space: nowrap;
 }
 
-#donate button {
-    padding: 0 0.5rem;
-    text-transform: uppercase;
-    font-weight: bold;
-    line-height: 2.5rem;
-    height: auto;
-}
-
-#donate label {
-    display: inline;
-    vertical-align: middle;
-    padding-right: 0.5rem;
-}
-
-#donate button#public-donate:active, #donate button#public-donate:focus {
-    color: #9b4dca;
-    background-color: #ffffff;
-}
-
-#donate button:focus, #donate button:hover, #donate button#public-donate:hover {
-    color: #ffffff;
-    background-color: #9b4dca;
-}
-
-img.donate {
-margin-bottom:-5px;
-}
-
 form .likert {
   list-style:none;
   width:100%;

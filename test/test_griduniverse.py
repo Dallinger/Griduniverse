@@ -128,7 +128,6 @@ class TestExperimentClass(object):
         donor_player = exp.grid.players[1]
         opponent_player = exp.grid.players[2]
         exp.grid.donation_public = True
-        exp.grid.donation_amount = 1
         donor_player.score = 2
 
         exp.handle_donation(
