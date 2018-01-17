@@ -25,14 +25,10 @@ from dallinger.config import get_config
 from dallinger.experiment import Experiment
 from dallinger.heroku.worker import conn as redis
 
-from bots import Bot
 from models import Event
 
 logger = logging.getLogger(__file__)
 config = get_config()
-
-# Make bot importable without triggering style warnings
-Bot = Bot
 
 
 class PluralFormatter(string.Formatter):
@@ -55,7 +51,6 @@ def extra_parameters():
     types = {
         'network': unicode,
         'max_participants': int,
-        'bot_policy': unicode,
         'num_rounds': int,
         'time_per_round': float,
         'instruct': bool,

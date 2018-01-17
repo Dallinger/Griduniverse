@@ -5,8 +5,6 @@ participants = 3
 
 data = experiment.run(
     mode=u'debug',
-    recruiter=u'bots',
-    bot_policy=u"AdvantageSeekingBot",
     max_participants=participants,
     num_dynos_worker=participants,
 )
