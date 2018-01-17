@@ -128,7 +128,6 @@ class TestExperimentClass(object):
         donor_player = exp.grid.players[1]
         opponent_player = exp.grid.players[2]
         exp.grid.donation_public = True
-        exp.grid.donation_amount = 1
         donor_player.score = 2
 
         exp.handle_donation(
@@ -162,25 +161,6 @@ class TestExperimentClass(object):
         ]
         colors = collections.Counter([player.color_idx for player in players])
         assert colors == {0: 5, 1: 4}
-
-
-@pytest.mark.usefixtures('env')
-class TestGriduniverseBotExecution(object):
-
-    def test_bot_api(self):
-        """Run bots using headless chrome and collect data."""
-        self.experiment = Griduniverse()
-        data = self.experiment.run(
-            mode=u'debug',
-            webdriver_type=u'chrome',
-            recruiter=u'bots',
-            bot_policy=u"AdvantageSeekingBot",
-            max_participants=1,
-            num_dynos_worker=1,
-            time_per_round=10.0,
-        )
-        results = self.experiment.average_score(data)
-        assert results >= 0.0
 
 
 @pytest.mark.usefixtures('exp_dir', 'env')
