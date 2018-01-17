@@ -58,7 +58,7 @@ class TestLabyrinth(object):
         ]
 
         """
-        labyrinth = factory(columns=10, rows=10)
+        labyrinth = factory()  # rows/columns irrelevant
         positions = [
             [0, 7], [0, 8],
             [1, 7], [1, 8],
@@ -87,7 +87,7 @@ class TestLabyrinth(object):
         assert pruned == singles_removed
 
     def test_prune_removes_some_contiguous_walls_with_contiguity_less_than_1(self, factory):
-        labyrinth = factory(columns=10, rows=10)
+        labyrinth = factory()  # rows/columns irrelevant
         positions = [
             [0, 7], [0, 8],
             [1, 7], [1, 8],
