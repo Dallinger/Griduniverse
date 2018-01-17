@@ -54,25 +54,6 @@ def extra_parameters():
         'num_rounds': int,
         'time_per_round': float,
         'instruct': bool,
-        'columns': int,
-        'rows': int,
-        'window_columns': int,
-        'window_rows': int,
-        'block_size': int,
-        'padding': int,
-        'visibility': int,
-        'visibility_ramp_time': int,
-        'background_animation': bool,
-        'player_overlap': bool,
-        'leaderboard_group': bool,
-        'leaderboard_individual': bool,
-        'leaderboard_time': int,
-        'motion_speed_limit': float,
-        'motion_auto': bool,
-        'motion_cost': float,
-        'motion_tremble_rate': float,
-        'show_chatroom': bool,
-        'show_grid': bool,
         'others_visible': bool,
         'num_colors': int,
         'mutable_colors': bool,
@@ -156,9 +137,6 @@ class Gridworld(object):
 
         # Instructions
         self.instruct = kwargs.get('instruct', True)
-
-        # Components
-        self.show_chatroom = kwargs.get('show_chatroom', True)
 
         # Identity
         self.others_visible = kwargs.get('others_visible', True)
@@ -323,13 +301,12 @@ class Gridworld(object):
         color_costs = ''
         order = ''
         text = """<p>The objective of the game is to talk"""
-        if self.show_chatroom:
-            text += """<p>A chatroom is available to send messages to the other
-                players."""
-            if self.pseudonyms:
-                text += """ Player names shown on the chat window are pseudonyms.
-                        <br><img src='static/images/chatroom.gif' height='150'>"""
-            text += "</p>"
+        text += """<p>A chatroom is available to send messages to the other
+            players."""
+        if self.pseudonyms:
+            text += """ Player names shown on the chat window are pseudonyms.
+                    <br><img src='static/images/chatroom.gif' height='150'>"""
+        text += "</p>"
         if self.dollars_per_point > 0:
             text += """<p>You will receive <strong>${g.dollars_per_point}</strong> for each point
                 that you score at the end of the game.</p>"""

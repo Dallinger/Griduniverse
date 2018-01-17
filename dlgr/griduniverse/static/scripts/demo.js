@@ -391,13 +391,6 @@ $(document).ready(function() {
       dallinger.submitResponses();
   });
 
-  $("#finish-reading").click(function() {
-    $("#stimulus").hide();
-    $("#response-form").show();
-    $("#submit-response").removeClass("disabled");
-    $("#submit-response").html("Submit");
-  });
-
   $("#submit-response").click(function() {
     $("#submit-response").addClass("disabled");
     $("#submit-response").html("Sending...");
@@ -412,9 +405,7 @@ $(document).ready(function() {
     });
   });
 
-  if (settings.show_chatroom) {
-    $("#chat form").show();
-  }
+  $("#chat form").show();
 
   $("form").submit(function() {
     var chatmessage = $("#message").val().trim(),

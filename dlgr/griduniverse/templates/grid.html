@@ -10,7 +10,6 @@
     settings.player_color_names = {{ experiment.serialize(experiment.grid.limited_player_color_names)|safe }};
     settings.show_grid = {% if experiment.grid.show_grid %}true{% else %}false{% endif %};
     settings.others_visible = {% if experiment.grid.others_visible %}true{% else %}false{% endif %};
-    settings.show_chatroom = {% if experiment.grid.show_chatroom %}true{% else %}false{% endif %};
     settings.pseudonyms = {% if experiment.grid.pseudonyms %}true{% else %}false{% endif %};
     settings.score_visible = {% if experiment.grid.score_visible %}true{% else %}false{% endif %};
     settings.use_identicons = {% if experiment.grid.use_identicons %}true{% else %}false{% endif %};
