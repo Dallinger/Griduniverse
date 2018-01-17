@@ -1,3 +1,4 @@
+from collections import namedtuple
 import pytest
 from dlgr.griduniverse.experiment import Wall
 
@@ -31,7 +32,29 @@ class TestLabyrinth(object):
         labyrinth = factory(columns=10, rows=10, density=0.5, contiguity=0.5)
         assert len(labyrinth.walls) == 12  # 50 * .5. * .5, rounded down.
 
-    def test_prune_removes_isolated_walls_only_when_contiguity_is_1(self, factory):
+
+class TestMaze(object):
+
+    @pytest.fixture
+    def prune(self, **kw):
+        from dlgr.griduniverse import maze
+        return maze.prune
+
+    @pytest.fixture
+    def generate(self, **kw):
+        from dlgr.griduniverse import maze
+        return maze.generate
+
+    @pytest.fixture
+    def Pos(self):
+        Positioned = namedtuple('Positioned', ['position'])
+        return Positioned
+
+    def test_generate_creates_a_matrix_with_50_percent_density(self, generate):
+        matrix = generate(rows=10, columns=10)
+        assert len(matrix) == 50
+
+    def test_prune_removes_isolated_walls_only_when_contiguity_is_1(self, Pos, prune):
         """Before:
         [
                                                                 [0, 7], [0, 8],
@@ -58,7 +81,6 @@ class TestLabyrinth(object):
         ]
 
         """
-        labyrinth = factory()  # rows/columns irrelevant
         positions = [
             [0, 7], [0, 8],
             [1, 7], [1, 8],
@@ -70,9 +92,9 @@ class TestLabyrinth(object):
             [7, 1], [7, 2], [7, 3],
             [8, 0]
         ]
-        walls = [Wall(position=pos) for pos in positions]
+        walls = [Pos(pos) for pos in positions]
         pruned = [
-            w.position for w in labyrinth._prune(walls, density=0.5, contiguity=1.0)
+            w.position for w in prune(walls, density=0.5, contiguity=1.0)
         ]
         singles_removed = [
             [0, 7], [0, 8],
@@ -86,8 +108,7 @@ class TestLabyrinth(object):
         ]
         assert pruned == singles_removed
 
-    def test_prune_removes_some_contiguous_walls_with_contiguity_less_than_1(self, factory):
-        labyrinth = factory()  # rows/columns irrelevant
+    def test_prune_removes_some_contiguous_walls_with_contiguity_less_than_1(self, Pos, prune):
         positions = [
             [0, 7], [0, 8],
             [1, 7], [1, 8],
@@ -100,9 +121,9 @@ class TestLabyrinth(object):
             [8, 0]
         ]
         num_with_neighbors = 18  # 18 of 26 walls have neighbors in this configuration
-        walls = [Wall(position=pos) for pos in positions]
+        walls = [Pos(pos) for pos in positions]
         pruned = [
-            w.position for w in labyrinth._prune(walls, density=0.5, contiguity=0.5)
+            w.position for w in prune(walls, density=0.5, contiguity=0.5)
         ]
 
         assert len(pruned) < num_with_neighbors
