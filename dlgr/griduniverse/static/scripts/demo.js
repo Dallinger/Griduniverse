@@ -20,8 +20,6 @@ var CONTROL_CHANNEL = "griduniverse_ctrl";
 
 var isSpectator = false;
 var start = performance.now();
-var food = [];
-var foodConsumed = [];
 var walls = [];
 var row, column, rand;
 
