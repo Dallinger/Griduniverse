@@ -809,6 +809,7 @@ class Griduniverse(Experiment):
             count += 1
             message = {
                 'type': 'state',
+                'grid': self.grid.serialize(),
                 'count': count,
                 'remaining_time': self.grid.remaining_round_time,
                 'round': self.grid.round,

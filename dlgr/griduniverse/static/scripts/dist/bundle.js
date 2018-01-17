@@ -1618,6 +1618,22 @@ var playerSet = (function () {
       }
     };
 
+    PlayerSet.prototype.ego = function () {
+      return this.get(this.ego_id);
+    };
+
+    PlayerSet.prototype.get = function (id) {
+      return this._players[id];
+    };
+
+    PlayerSet.prototype.update = function(playerData) {
+      var currentPlayerData, i;
+      for (i = 0; i < playerData.length; i++) {
+        currentPlayerData = playerData[i];
+        this._players[currentPlayerData.id] = new Player(currentPlayerData);
+      }
+    };
+
     PlayerSet.prototype.group_scores = function () {
       var group_scores = {};
 
@@ -1789,11 +1805,7 @@ function chatName(player_id) {
 
   var salt = $("#grid").data("identicon-salt");
   var id = parseInt(player_id)-1;
-  var identicon = new Identicon(md5(salt + id), options).toString();
     var entry = "<span class='name'>";
-  if (settings.use_identicons) {
-    entry = entry + " <img src='data:image/svg+xml;base64," + identicon + "' />";
-  }
     entry = entry + " " + name + "</span> ";
     return entry;
 }
@@ -1880,29 +1892,9 @@ function onGameStateChange(msg) {
   }
 
   // Update players.
+  ego = players.ego();
   state = JSON.parse(msg.grid);
   players.update(state.players);
-  ego = players.ego();
-
-  updateDonationStatus(state.donation_active);
-
-
-  // Update displayed score, set donation info.
-  if (ego !== undefined) {
-    $("#score").html(Math.round(ego.score));
-    $("#dollars").html(ego.payoff.toFixed(2));
-    window.state = msg.grid;
-    window.ego = ego.id;
-    if (settings.donation_active &&
-        ego.score >= settings.donation_amount &&
-        players.count() > 1
-    ) {
-      $donationButtons.prop('disabled', false);
-    } else {
-      $('#donation-instructions').text('');
-      $donationButtons.prop('disabled', true);
-    }
-  }
 }
 
 function pushMessage(html) {
@@ -1979,7 +1971,7 @@ $(document).ready(function() {
         'lagTolerance': 0.001,
         'callbackMap': {
           'chat': onChatMessage,
-          'donation_processed': onDonationProcessed,
+          'state': onGameStateChange,
           'new_round': displayLeaderboards,
         'stop': gameOverHandler(player_id)
         }
@@ -1995,6 +1987,8 @@ $(document).ready(function() {
     });
 
   players.ego_id = player_id;
+  console.log("ego id:");
+  console.log(players.ego_id);
   $('#donate label').data('orig-text', $('#donate label').text());
 
   // Opt out of the experiment.
@@ -2076,6 +2070,9 @@ $(document).ready(function() {
     if (! chatmessage) {
       return false;
     }
+
+    console.log(players);
+    console.log(players.ego());
 
     try {
       msg = {
