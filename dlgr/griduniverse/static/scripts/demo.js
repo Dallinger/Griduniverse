@@ -280,68 +280,26 @@ function onGameStateChange(msg) {
 }
 
 function pushMessage(html) {
-  $("#messages").append(($("<li>").html(html)));
+  $("#messages").append($("<li>").html(html));
   $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
 }
 
-function displayLeaderboards(msg, callback) {
-  if (!settings.leaderboard_group && !settings.leaderboard_individual) {
-    if (callback) callback();
-    return;
-  }
-  var i;
-  if (msg.type == 'new_round') {
-    pushMessage("<span class='name'>Moderator:</span> the round " + msg.round + ' standings are&hellip;');
-  } else {
-    pushMessage("<span class='name'>Moderator:</span> the final standings are &hellip;");
-  }
-  if (settings.leaderboard_group) {
-    if (settings.leaderboard_individual) {
-      pushMessage('<em>Group</em>');
-    }
-    var group_scores = players.group_scores();
-    var rgb_map = function (e) { return Math.round(e * 255); };
-    for (i = 0; i < group_scores.length; i++) {
-      var group = group_scores[i];
-      pushMessage('<span class="GroupScore">' + group.score + '</span><span class="GroupIndicator" style="background-color:' + Color.rgb(color).string() +';"></span>');
-    }
-  }
-  if (settings.leaderboard_individual) {
-    if (settings.leaderboard_group) {
-      pushMessage('<em>Individual</em>');
-    }
-    var player_scores = players.player_scores();
-    var ego_id = players.ego_id;
-    for (i = 0; i < player_scores.length; i++) {
-      var player = player_scores[i];
-      var player_name = chatName(player.id);
-      pushMessage('<span class="PlayerScore">' + Math.round(player.score) + '</span><span class="PlayerName">' + player_name + '</span>');
-    }
-  }
-  if (settings.leaderboard_time) {
-    settings.paused_game = true;
-    setTimeout(function () {
-        settings.paused_game = false;
-        if (callback) callback();
-      }, 1000 * settings.leaderboard_time);
-  } else if (callback) callback();
-}
-
-  function gameOverHandler(player_id) {
+function gameOverHandler(player_id) {
   var callback;
   if (!isSpectator) {
-    callback = function () {
+    callback = function() {
       $("#dashboard").hide();
       $("#instructions").hide();
       $("#chat").hide();
-      if (player_id) window.location.href = "/questionnaire?participant_id=" + player_id;
+      if (player_id)
+        window.location.href = "/questionnaire?participant_id=" + player_id;
     };
   }
-  return function (msg) {
+  return function(msg) {
     $("#game-over").show();
-    return displayLeaderboards(msg, callback);
   };
 }
+
 
 $(document).ready(function() {
     var player_id = dallinger.getUrlParameter('participant_id');
@@ -354,7 +312,6 @@ $(document).ready(function() {
         'callbackMap': {
           'chat': onChatMessage,
           'state': onGameStateChange,
-          'new_round': displayLeaderboards,
         'stop': gameOverHandler(player_id)
         }
     };
