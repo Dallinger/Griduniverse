@@ -1,4 +1,5 @@
 import pytest
+from dlgr.griduniverse.experiment import Wall
 
 
 class TestLabyrinth(object):
@@ -57,9 +58,8 @@ class TestLabyrinth(object):
         ]
 
         """
-        from dlgr.griduniverse.experiment import Wall
         labyrinth = factory(columns=10, rows=10)
-        postions = [
+        positions = [
             [0, 7], [0, 8],
             [1, 7], [1, 8],
             [2, 0], [2, 3], [2, 6], [2, 7],
@@ -70,7 +70,7 @@ class TestLabyrinth(object):
             [7, 1], [7, 2], [7, 3],
             [8, 0]
         ]
-        walls = [Wall(position=pos) for pos in postions]
+        walls = [Wall(position=pos) for pos in positions]
         pruned = [
             w.position for w in labyrinth._prune(walls, density=0.5, contiguity=1.0)
         ]
@@ -85,3 +85,24 @@ class TestLabyrinth(object):
             [7, 1], [7, 2], [7, 3]
         ]
         assert pruned == singles_removed
+
+    def test_prune_removes_some_contiguous_walls_with_contiguity_less_than_1(self, factory):
+        labyrinth = factory(columns=10, rows=10)
+        positions = [
+            [0, 7], [0, 8],
+            [1, 7], [1, 8],
+            [2, 0], [2, 3], [2, 6], [2, 7],
+            [3, 1], [3, 5], [3, 6], [3, 9],
+            [4, 0], [4, 2], [4, 4], [4, 5],
+            [5, 3], [5, 4], [5, 7],
+            [6, 1], [6, 2], [6, 3],
+            [7, 1], [7, 2], [7, 3],
+            [8, 0]
+        ]
+        num_with_neighbors = 18  # 18 of 26 walls have neighbors in this configuration
+        walls = [Wall(position=pos) for pos in positions]
+        pruned = [
+            w.position for w in labyrinth._prune(walls, density=0.5, contiguity=0.5)
+        ]
+
+        assert len(pruned) < num_with_neighbors
