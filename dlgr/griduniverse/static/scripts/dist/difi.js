@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 40);
+/******/ 	return __webpack_require__(__webpack_require__.s = 41);
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -1028,7 +1028,7 @@ module.exports = function (css) {
 
 /***/ }),
 
-/***/ 40:
+/***/ 41:
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1056,24 +1056,11 @@ $(document).ready(function() {
     );
   }
 
-  // Submit the questionnaire.
-  $("#submit-questionnaire").click(function() {
-    console.log("Submitting questionnaire.");
-    var $elements = [$("form :input"), $(this)],
-        questionSubmission = dallinger.submitQuestionnaire("questionnaire");
-
-    spinner.freeze($elements);
-    questionSubmission.done(dallinger.submitAssignment);
-    questionSubmission.always(function () {
-      spinner.unfreeze();
-    });
-
-  });
-
 });
+
 
 
 /***/ })
 
 /******/ });
-//# sourceMappingURL=questionnaire.js.map
+//# sourceMappingURL=difi.js.map

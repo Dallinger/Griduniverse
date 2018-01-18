@@ -60,14 +60,15 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 7);
+/******/ 	return __webpack_require__(__webpack_require__.s = 8);
 /******/ })
 /************************************************************************/
 /******/ ([
-/* 0 */
+/* 0 */,
+/* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var convert = __webpack_require__(14);
+var convert = __webpack_require__(15);
 
 module.exports = function (cstr) {
     var m, conv, parts, alpha;
@@ -153,7 +154,7 @@ module.exports = function (cstr) {
 
 
 /***/ }),
-/* 1 */
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -166,7 +167,7 @@ module.exports = function (cstr) {
 
 
 
-var typeOf = __webpack_require__(16);
+var typeOf = __webpack_require__(17);
 
 module.exports = function isNumber(num) {
   var type = typeOf(num);
@@ -179,7 +180,7 @@ module.exports = function isNumber(num) {
 
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -206,7 +207,7 @@ module.exports = function isString(value) {
 
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports) {
 
 
@@ -245,7 +246,7 @@ module.exports = isArray || function (val) {
 
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/*
@@ -532,7 +533,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*
 }(this))
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -687,11 +688,11 @@ module.exports = {
 };
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* MIT license */
-var cssKeywords = __webpack_require__(5);
+var cssKeywords = __webpack_require__(6);
 
 // NOTE: conversions should only return primitive values (i.e. arrays, or
 //       values that give correct `typeof` results).
@@ -1554,7 +1555,7 @@ convert.rgb.gray = function (rgb) {
 
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var require;/*global dallinger, require, settings */
@@ -1562,16 +1563,16 @@ var require;/*global dallinger, require, settings */
 
 (function (dallinger, require, settings) {
 
-var util = __webpack_require__(8);
-var grid = __webpack_require__(13);
-var position = __webpack_require__(25);
-var Mousetrap = __webpack_require__(27);
-var ReconnectingWebSocket = __webpack_require__(28);
-var $ = __webpack_require__(29);
-var gaussian = __webpack_require__(30);
-var Color = __webpack_require__(31);
-var Identicon = __webpack_require__(37);
-var md5 = __webpack_require__(4);
+var util = __webpack_require__(9);
+var grid = __webpack_require__(14);
+var position = __webpack_require__(26);
+var Mousetrap = __webpack_require__(28);
+var ReconnectingWebSocket = __webpack_require__(29);
+var $ = __webpack_require__(30);
+var gaussian = __webpack_require__(31);
+var Color = __webpack_require__(32);
+var Identicon = __webpack_require__(38);
+var md5 = __webpack_require__(5);
 
 function coordsToIdx(x, y, columns) {
   return y * columns + x;
@@ -2773,7 +2774,7 @@ $(document).ready(function() {
 
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -3301,7 +3302,7 @@ function isPrimitive(arg) {
 }
 exports.isPrimitive = isPrimitive;
 
-exports.isBuffer = __webpack_require__(11);
+exports.isBuffer = __webpack_require__(12);
 
 function objectToString(o) {
   return Object.prototype.toString.call(o);
@@ -3345,7 +3346,7 @@ exports.log = function() {
  *     prototype.
  * @param {function} superCtor Constructor function to inherit prototype from.
  */
-exports.inherits = __webpack_require__(12);
+exports.inherits = __webpack_require__(13);
 
 exports._extend = function(origin, add) {
   // Don't do anything if add isn't an object
@@ -3363,10 +3364,10 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(9), __webpack_require__(10)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(10), __webpack_require__(11)))
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports) {
 
 var g;
@@ -3393,7 +3394,7 @@ module.exports = g;
 
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, exports) {
 
 // shim for using process in browser
@@ -3579,7 +3580,7 @@ process.umask = function() { return 0; };
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports) {
 
 module.exports = function isBuffer(arg) {
@@ -3590,7 +3591,7 @@ module.exports = function isBuffer(arg) {
 }
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports) {
 
 if (typeof Object.create === 'function') {
@@ -3619,19 +3620,19 @@ if (typeof Object.create === 'function') {
 
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var parse = __webpack_require__(0);
-var isnumber = __webpack_require__(1);
-var isstring = __webpack_require__(2);
-var isarray = __webpack_require__(3);
-var convert = __webpack_require__(18);
-var layout = __webpack_require__(20);
-var texcoord = __webpack_require__(21);
-var range = __webpack_require__(22);
-var pixdenticon = __webpack_require__(23);
-var md5 = __webpack_require__(4);
+var parse = __webpack_require__(1);
+var isnumber = __webpack_require__(2);
+var isstring = __webpack_require__(3);
+var isarray = __webpack_require__(4);
+var convert = __webpack_require__(19);
+var layout = __webpack_require__(21);
+var texcoord = __webpack_require__(22);
+var range = __webpack_require__(23);
+var pixdenticon = __webpack_require__(24);
+var md5 = __webpack_require__(5);
 
 function Pixels(data, textures, opts) {
   if (!(this instanceof Pixels)) return new Pixels(data, textures, opts);
@@ -3682,7 +3683,7 @@ function Pixels(data, textures, opts) {
     width / height
   );
 
-  var regl = __webpack_require__(24)(canvas);
+  var regl = __webpack_require__(25)(canvas);
 
   var initial_texture = [];
   for (row = 0; row < opts.size; row++) {
@@ -3785,10 +3786,10 @@ module.exports = Pixels;
 
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var conversions = __webpack_require__(15);
+var conversions = __webpack_require__(16);
 
 var convert = function() {
    return new Converter();
@@ -3882,7 +3883,7 @@ Converter.prototype.getValues = function(space) {
 module.exports = convert;
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports) {
 
 /* MIT license */
@@ -4586,10 +4587,10 @@ for (var key in cssKeywords) {
 
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isBuffer = __webpack_require__(17);
+var isBuffer = __webpack_require__(18);
 var toString = Object.prototype.toString;
 
 /**
@@ -4708,7 +4709,7 @@ module.exports = function kindOf(val) {
 
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports) {
 
 /*!
@@ -4735,14 +4736,14 @@ function isSlowBuffer (obj) {
 
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var flatten = __webpack_require__(19);
-var isarray = __webpack_require__(3);
-var isnumber = __webpack_require__(1);
-var isstring = __webpack_require__(2);
-var parse = __webpack_require__(0);
+var flatten = __webpack_require__(20);
+var isarray = __webpack_require__(4);
+var isnumber = __webpack_require__(2);
+var isstring = __webpack_require__(3);
+var parse = __webpack_require__(1);
 
 function convert(data) {
   data = isarray(data[0]) && data[0].length !== 3 ? flatten(data, 1) : data;
@@ -4768,7 +4769,7 @@ module.exports = convert;
 
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports) {
 
 module.exports = function flatten(list, depth) {
@@ -4797,7 +4798,7 @@ module.exports = function flatten(list, depth) {
 
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports) {
 
 function layout(rows, columns, padding, size, aspect) {
@@ -4828,7 +4829,7 @@ module.exports = layout;
 
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports) {
 
 function texcoord(rows, columns, texture_indexes, num_textures) {
@@ -4861,7 +4862,7 @@ module.exports = texcoord;
 
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports) {
 
 function range(j, k) { 
@@ -4876,7 +4877,7 @@ module.exports = range;
 
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports) {
 
 /**
@@ -4983,7 +4984,7 @@ module.exports = Identicon;
 
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function (global, factory) {
@@ -14492,10 +14493,10 @@ return wrapREGL;
 
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Emitter = __webpack_require__(26)
+var Emitter = __webpack_require__(27)
 
 module.exports = attach
 
@@ -14543,7 +14544,7 @@ function attach(element, listener) {
 
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports) {
 
 // Copyright Joyent, Inc. and other Node contributors.
@@ -14851,7 +14852,7 @@ function isUndefined(arg) {
 
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/*global define:false */
@@ -15902,7 +15903,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*global define:false */
 
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16114,13 +16115,13 @@ module.exports = ReconnectingWebsocket;
 
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports) {
 
 module.exports = jQuery;
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function(exports) {
@@ -16239,14 +16240,14 @@ module.exports = jQuery;
 
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var colorString = __webpack_require__(32);
-var convert = __webpack_require__(35);
+var colorString = __webpack_require__(33);
+var convert = __webpack_require__(36);
 
 var _slice = [].slice;
 
@@ -16725,12 +16726,12 @@ module.exports = Color;
 
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* MIT license */
-var colorNames = __webpack_require__(5);
-var swizzle = __webpack_require__(33);
+var colorNames = __webpack_require__(6);
+var swizzle = __webpack_require__(34);
 
 var reverseNames = {};
 
@@ -16964,13 +16965,13 @@ function hexDouble(num) {
 
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var isArrayish = __webpack_require__(34);
+var isArrayish = __webpack_require__(35);
 
 var concat = Array.prototype.concat;
 var slice = Array.prototype.slice;
@@ -17000,7 +17001,7 @@ swizzle.wrap = function (fn) {
 
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -17018,11 +17019,11 @@ module.exports = function isArrayish(obj) {
 
 
 /***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var conversions = __webpack_require__(6);
-var route = __webpack_require__(36);
+var conversions = __webpack_require__(7);
+var route = __webpack_require__(37);
 
 var convert = {};
 
@@ -17102,10 +17103,10 @@ module.exports = convert;
 
 
 /***/ }),
-/* 36 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var conversions = __webpack_require__(6);
+var conversions = __webpack_require__(7);
 
 /*
 	this function routes a model to all other models.
@@ -17206,7 +17207,7 @@ module.exports = function (fromModel) {
 
 
 /***/ }),
-/* 37 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -17224,7 +17225,7 @@ module.exports = function (fromModel) {
 (function() {
     var PNGlib;
     if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-        PNGlib = __webpack_require__(38);
+        PNGlib = __webpack_require__(39);
     } else {
         PNGlib = window.PNGlib;
     }
@@ -17410,7 +17411,7 @@ module.exports = function (fromModel) {
 })();
 
 /***/ }),
-/* 38 */
+/* 39 */
 /***/ (function(module, exports) {
 
 /**

@@ -116,6 +116,9 @@ def extra_parameters():
         'difi_group_label': unicode,
         'difi_group_image': unicode,
         'fun_survey': bool,
+        'pre_difi_question': bool,
+        'pre_difi_group_label': unicode,
+        'pre_difi_group_image': unicode,
         'leach_survey': bool,
         'intergroup_competition': float,
         'intragroup_competition': float,
@@ -269,6 +272,9 @@ class Gridworld(object):
         self.difi_group_label = kwargs.get('difi_group_label', 'Group')
         self.difi_group_image = kwargs.get('difi_group_image', '/static/images/group.jpg')
         self.fun_survey = kwargs.get('fun_survey', False)
+        self.pre_difi_question = kwargs.get('pre_difi_question', False)
+        self.pre_difi_group_label = kwargs.get('pre_difi_group_label', 'Group')
+        self.pre_difi_group_image = kwargs.get('pre_difi_group_image', '/static/images/group.jpg')
         self.leach_survey = kwargs.get('leach_survey', False)
 
         # Set some variables.

@@ -3,7 +3,7 @@
 $(document).ready(function() {
   // Begin the experiment.
   $("#begin-experiment").click(function() {
-    window.location.href = '/waiting';
+    window.location.href = next_location;
   });
 
   // Opt out of the experiment.
