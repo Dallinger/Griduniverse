@@ -1,39 +1,43 @@
 from collections import namedtuple
 import pytest
-from dlgr.griduniverse.experiment import Wall
 
 
 class TestLabyrinth(object):
 
     @pytest.fixture
-    def factory(self, **kw):
-        from dlgr.griduniverse.experiment import Labyrinth
-        return Labyrinth
+    def labyrinth(self, **kw):
+        from dlgr.griduniverse.experiment import labyrinth
+        return labyrinth
 
-    def test_defaults_to_25x25(self, factory):
-        labyrinth = factory()
-        maxX = max([wall.position[0] for wall in labyrinth.walls])
-        maxY = max([wall.position[1] for wall in labyrinth.walls])
+    def test_creates_walls(self, labyrinth):
+        from dlgr.griduniverse.experiment import Wall
+        walls = labyrinth()
+        assert isinstance(walls[0], Wall)
+
+    def test_defaults_to_25x25(self, labyrinth):
+        walls = labyrinth()
+        maxX = max([wall.position[0] for wall in walls])
+        maxY = max([wall.position[1] for wall in walls])
         assert maxX == maxY == 24  # zero-index
 
-    def test_zero_density_includes_no_walls(self, factory):
-        labyrinth = factory(columns=4, rows=4, density=0.0)
-        assert len(labyrinth.walls) == 0
+    def test_zero_density_includes_no_walls(self, labyrinth):
+        walls = labyrinth(columns=4, rows=4, density=0.0)
+        assert len(walls) == 0
 
-    def test_full_density_results_in_50_percent_wall(self, factory):
-        labyrinth = factory(columns=10, rows=10)
-        assert len(labyrinth.walls) == 50
+    def test_full_density_results_in_50_percent_wall(self, labyrinth):
+        walls = labyrinth(columns=10, rows=10)
+        assert len(walls) == 50
 
-    def test_reducing_density_reduces_wall_count_correspondingly(self, factory):
-        labyrinth = factory(columns=10, rows=10, density=0.5)
-        assert len(labyrinth.walls) == 25
+    def test_reducing_density_reduces_wall_count_correspondingly(self, labyrinth):
+        walls = labyrinth(columns=10, rows=10, density=0.5)
+        assert len(walls) == 25
 
-    def test_reducing_density_and_contiguity_reduces_wall_count_by_sum(self, factory):
-        labyrinth = factory(columns=10, rows=10, density=0.5, contiguity=0.5)
-        assert len(labyrinth.walls) == 12  # 50 * .5. * .5, rounded down.
+    def test_reducing_density_and_contiguity_reduces_wall_count_by_sum(self, labyrinth):
+        walls = labyrinth(columns=10, rows=10, density=0.5, contiguity=0.5)
+        assert len(walls) == 12  # 50 * .5. * .5, rounded down.
 
 
-class TestMaze(object):
+class TestMazePrune(object):
 
     @pytest.fixture
     def prune(self, **kw):
@@ -41,18 +45,9 @@ class TestMaze(object):
         return maze.prune
 
     @pytest.fixture
-    def generate(self, **kw):
-        from dlgr.griduniverse import maze
-        return maze.generate
-
-    @pytest.fixture
     def Pos(self):
         Positioned = namedtuple('Positioned', ['position'])
         return Positioned
-
-    def test_generate_creates_a_matrix_with_50_percent_density(self, generate):
-        matrix = generate(rows=10, columns=10)
-        assert len(matrix) == 50
 
     def test_prune_removes_isolated_walls_only_when_contiguity_is_1(self, Pos, prune):
         """Before:
