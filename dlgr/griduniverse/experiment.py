@@ -146,6 +146,16 @@ def softmax(vector, temperature=1):
         return [float(len(vector)) for _ in vector]
 
 
+def labyrinth(columns=25, rows=25, density=1.0, contiguity=1.0):
+    if density:
+        walls = [Wall(position=pos) for pos in maze.generate(rows, columns)]
+        # Add sleep to avoid timeouts
+        gevent.sleep(0.00001)
+        return maze.prune(walls, density, contiguity)
+    else:
+        return []
+
+
 class Gridworld(object):
     """A Gridworld in the Griduniverse."""
     player_color_names = [
@@ -463,16 +473,16 @@ class Gridworld(object):
         if self.walls_density and not self.wall_locations:
             start = time.time()
             logger.info('Building labyrinth:')
-            labyrinth = Labyrinth(
+            walls = labyrinth(
                 columns=self.columns,
                 rows=self.rows,
                 density=self.walls_density,
                 contiguity=self.walls_contiguity,
             )
             logger.info('Built {} walls in {} seconds.'.format(
-                len(labyrinth.walls), time.time() - start
+                len(walls), time.time() - start
             ))
-            self.wall_locations = {tuple(w.position): w for w in labyrinth.walls}
+            self.wall_locations = {tuple(w.position): w for w in walls}
 
     def _start_if_ready(self):
         # Don't start unless we have a least one player
@@ -995,18 +1005,6 @@ class Player(object):
             "name": self.name,
             "identity_visible": self.identity_visible,
         }
-
-
-class Labyrinth(object):
-    """Generates a maze in the form of a matrix of Walls"""
-    def __init__(self, columns=25, rows=25, density=1.0, contiguity=1.0):
-        if density:
-            walls = [Wall(position=pos) for pos in maze.generate(rows, columns)]
-            # Add sleep to avoid timeouts
-            gevent.sleep(0.00001)
-            self.walls = maze.prune(walls, density, contiguity)
-        else:
-            self.walls = []
 
 
 def fermi(beta, p1, p2):
