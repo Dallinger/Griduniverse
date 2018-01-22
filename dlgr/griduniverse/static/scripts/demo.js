@@ -123,16 +123,16 @@ var walls = [];
 var wall_map = {};
 var row, column, rand;
 
-name2idx = function(name) {
+var name2idx = function (name) {
   var names = settings.player_color_names;
   for (var idx=0; idx < names.length; idx++) {
     if (names[idx] === name) {
       return idx;
     }
   }
-}
+};
 
-color2idx = function(color) {
+var color2idx = function (color) {
   var colors = settings.player_colors;
   var value = color.join(',');
   for (var idx=0; idx < colors.length; idx++) {
@@ -142,12 +142,12 @@ color2idx = function(color) {
   }
 };
 
-color2name = function(color) {
+var color2name = function (color) {
   var idx = color2idx(color);
   return settings.player_color_names[idx];
 };
 
-var Food = function(settings) {
+var Food = function (settings) {
   if (!(this instanceof Food)) {
     return new Food();
   }
@@ -157,7 +157,7 @@ var Food = function(settings) {
   return this;
 };
 
-var Wall = function(settings) {
+var Wall = function (settings) {
   if (!(this instanceof Wall)) {
     return new Wall();
   }
@@ -166,7 +166,7 @@ var Wall = function(settings) {
   return this;
 };
 
-var Player = function(settings) {
+var Player = function (settings) {
   if (!(this instanceof Player)) {
     return new Player();
   }
@@ -361,7 +361,7 @@ var playerSet = (function () {
           currentPlayerData.motion_timestamp = oldPlayerData.motion_timestamp;
           /* Only override position from server if tremble is enabled,
              otherwise motion jitter is likely and positions will sync anyway. */
-          if (settings.motion_tremble_rate == 0) {
+          if (settings.motion_tremble_rate === 0) {
             currentPlayerData.position = oldPlayerData.position;
           }
         }
@@ -370,8 +370,8 @@ var playerSet = (function () {
     };
 
     PlayerSet.prototype.maxScore = function () {
-        var id;
-        maxScore = 0;
+        var id,
+            maxScore = 0;
         for (id in this._players) {
             if (this._players[id].score > maxScore) {
                 maxScore = this._players[id].score;
@@ -381,8 +381,8 @@ var playerSet = (function () {
     };
 
     PlayerSet.prototype.minScore = function () {
-        var id;
-        minScore = Infinity;
+        var id,
+            minScore = Infinity;
         for (id in this._players) {
             if (this._players[id].score < minScore) {
                 minScore = this._players[id].score;
@@ -722,11 +722,13 @@ function bindGameKeys(socket) {
 
   if (settings.mutable_colors) {
     Mousetrap.bind('c', function () {
-      keys = settings.player_color_names;
-      index = arraySearch(keys, players.ego().color);
-      nextItem = keys[(index + 1) % keys.length];
+      var keys = settings.player_color_names,
+          index = arraySearch(keys, players.ego().color),
+          nextItem = keys[(index + 1) % keys.length],
+          msg;
+
       players.ego().color = nextItem;
-      var msg = {
+      msg = {
         type: "change_color",
         player_id: players.ego().id,
         color: players.ego().color
@@ -737,9 +739,11 @@ function bindGameKeys(socket) {
 
   if (settings.identity_signaling) {
     Mousetrap.bind("v", function () {
-      var ego = players.ego();
+      var ego = players.ego(),
+          msg;
+
       ego.identity_visible = !ego.identity_visible;
-      var msg = {
+      msg = {
         type: "toggle_visible",
         player_id: ego.id,
         identity_visible: ego.identity_visible
@@ -766,8 +770,15 @@ function bindGameKeys(socket) {
 
 function chatName(player_id) {
   var ego = players.ego(),
-    name,
-    entry;
+      entry = "<span class='name'>",
+      id = parseInt(player_id) - 1,
+      salt = $("#grid").data("identicon-salt"),
+      fg = settings.player_colors[name2idx(players.get(player_id).color)].concat(1),
+      bg,
+      identicon,
+      name,
+      options;
+
   if (id === ego) {
     name = "You";
   } else if (settings.pseudonyms) {
@@ -779,39 +790,36 @@ function chatName(player_id) {
     return '<span class="name">' + player_id + '</span>';
   }
 
-  var salt = $("#grid").data("identicon-salt");
-  var id = parseInt(player_id)-1;
-  var fg = settings.player_colors[name2idx(players.get(player_id).color)].concat(1);
   fg = fg.map(function(x) { return x * 255; });
   bg = fg.map(function(x) { return (x * 0.66); });
   bg[3] = 255;
-  var options = {
+  options = {
     size: 10,
     foreground: fg,
     background: bg,
     format: 'svg'
   };
-  var identicon = new Identicon(md5(salt + id), options).toString();
-    var entry = "<span class='name'>";
+
+  identicon = new Identicon(md5(salt + id), options).toString();
   if (settings.use_identicons) {
     entry = entry + " <img src='data:image/svg+xml;base64," + identicon + "' />";
   }
-    entry = entry + " " + name + "</span> ";
-    return entry;
+  entry = entry + " " + name + "</span> ";
+  return entry;
 }
 
-  function onChatMessage(msg) {
-    var entry = chatName(msg.player_id);
-    $("#messages").append(($("<li>").text(": " + msg.contents)).prepend(entry));
-    $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
-  }
+function onChatMessage(msg) {
+  var entry = chatName(msg.player_id);
+  $("#messages").append(($("<li>").text(": " + msg.contents)).prepend(entry));
+  $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
+}
 
-  function onColorChanged(msg) {
-    store.set("color", msg.new_color);
-    pushMessage("<span class='name'>Moderator:</span> " + chatName(msg.player_id) + ' changed from team ' + msg.old_color + ' to team ' + msg.new_color + '.');
-  }
+function onColorChanged(msg) {
+  store.set("color", msg.new_color);
+  pushMessage("<span class='name'>Moderator:</span> " + chatName(msg.player_id) + ' changed from team ' + msg.old_color + ' to team ' + msg.new_color + '.');
+}
 
-  function onDonationProcessed(msg) {
+function onDonationProcessed(msg) {
     var donor = players.get(msg.donor_id),
       recipient_id = msg.recipient_id,
       team_idx,
@@ -869,8 +877,11 @@ function updateDonationStatus(donation_is_active) {
 function onGameStateChange(msg) {
   var $donationButtons = $('#individual-donate, #group-donate, #public-donate, #ingroup-donate'),
       $timeElement = $("#time"),
+      cur_wall,
       ego,
-      state;
+      state,
+      j,
+      k;
 
   performance.mark('state_start');
 
@@ -897,7 +908,7 @@ function onGameStateChange(msg) {
   // Update food.
   if (state.food !== undefined && state.food !== null) {
     food = [];
-    for (var j = 0; j < state.food.length; j++) {
+    for (j = 0; j < state.food.length; j++) {
       food.push(
         new Food({
           id: state.food[j].id,
@@ -909,9 +920,9 @@ function onGameStateChange(msg) {
   }
 
   // Update walls if they haven't been created yet.
-  if (state.walls !== undefined && walls.length == 0) {
-    for (var k = 0; k < state.walls.length; k++) {
-      var cur_wall = state.walls[k];
+  if (state.walls !== undefined && walls.length === 0) {
+    for (k = 0; k < state.walls.length; k++) {
+      cur_wall = state.walls[k];
       walls.push(
         new Wall({
           position: cur_wall.position,
@@ -924,8 +935,8 @@ function onGameStateChange(msg) {
 
   // If new walls have been added, draw them
   if (state.walls !== undefined && walls.length < state.walls.length) {
-    for (var k = walls.length; k < state.walls.length; k++) {
-      var cur_wall = state.walls[k];
+    for (k = walls.length; k < state.walls.length; k++) {
+      cur_wall = state.walls[k];
       walls.push(
         new Wall({
           position: cur_wall.position,
@@ -974,11 +985,13 @@ function pushMessage(html) {
 
 function displayLeaderboards(msg, callback) {
   if (!settings.leaderboard_group && !settings.leaderboard_individual) {
-    if (callback) callback();
+    if (callback) {
+      callback();
+    }
     return;
   }
   var i;
-  if (msg.type == 'new_round') {
+  if (msg.type === 'new_round') {
     pushMessage("<span class='name'>Moderator:</span> the round " + msg.round + ' standings are&hellip;');
   } else {
     pushMessage("<span class='name'>Moderator:</span> the final standings are &hellip;");
@@ -1011,19 +1024,25 @@ function displayLeaderboards(msg, callback) {
     settings.paused_game = true;
     setTimeout(function () {
         settings.paused_game = false;
-        if (callback) callback();
+        if (callback) {
+          callback();
+        }
       }, 1000 * settings.leaderboard_time);
-  } else if (callback) callback();
+  } else if (callback) {
+    callback();
+  }
 }
 
-  function gameOverHandler(player_id) {
+function gameOverHandler(player_id) {
   var callback;
   if (!isSpectator) {
     callback = function () {
       $("#dashboard").hide();
       $("#instructions").hide();
       $("#chat").hide();
-      if (player_id) window.location.href = "/questionnaire?participant_id=" + player_id;
+      if (player_id) {
+        window.location.href = "/questionnaire?participant_id=" + player_id;
+      }
     };
     pixels.canvas.style.display = "none";
   }
@@ -1065,8 +1084,8 @@ $(document).ready(function() {
   $('#donate label').data('orig-text', $('#donate label').text());
 
   setInterval(function () {
-    var delays = []
-    var start_marks = performance.getEntriesByName('state_start', 'mark');
+    var delays = [],
+        start_marks = performance.getEntriesByName('state_start', 'mark');
     for (var i = 0; i < start_marks.length; i++) {
       if (start_marks.length > i + 2) {
         delays.push(start_marks[i+1].startTime - start_marks[i].startTime);
@@ -1078,7 +1097,7 @@ $(document).ready(function() {
       }, 0) / delays.length;
       console.log('Average delay between state updates: ' + average_delay + 'ms.');
     }
-  }, 5000)
+  }, 5000);
 
   // Append the canvas.
   $("#grid").append(pixels.canvas);
@@ -1100,27 +1119,6 @@ $(document).ready(function() {
   // Submit the questionnaire.
   $("#submit-questionnaire").click(function() {
       dallinger.submitResponses();
-  });
-
-  $("#finish-reading").click(function() {
-    $("#stimulus").hide();
-    $("#response-form").show();
-    $("#submit-response").removeClass("disabled");
-    $("#submit-response").html("Submit");
-  });
-
-  $("#submit-response").click(function() {
-    $("#submit-response").addClass("disabled");
-    $("#submit-response").html("Sending...");
-
-    var response = $("#reproduction").val();
-
-    $("#reproduction").val("");
-
-      dallinger.createInfo(my_node_id, {
-        contents: response,
-        info_type: 'Info'
-    });
   });
 
   if (settings.show_grid) {
