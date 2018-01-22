@@ -31,6 +31,10 @@ function animateColor(color) {
   ];
 }
 
+function positionsAreEqual(a, b) {
+  return a[0] === b[0] && a[1] === b[1];
+}
+
 class Section {
   // Represents the currently visible section (window) of the grid
 
@@ -252,7 +256,7 @@ var playerSet = (function () {
       for (id in this._players) {
         if (this._players.hasOwnProperty(id)) {
           player = this._players[id];
-          if (position === player.position) {
+          if (positionsAreEqual(position, player.position)) {
             return true;
           }
         }
