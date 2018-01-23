@@ -601,7 +601,7 @@ pixels.frame(function() {
     }
     // Add Blur
     players.each(function (i, player) {
-      dimness = g.pdf(x, y, player.position[0], player.position[1]) * rescaling;
+      dimness = g.pdf(distance(y, x, player.position[0], player.position[1])) * rescaling;
       player["dimness"] = dimness;
     });
     if (!isSpectator) {
