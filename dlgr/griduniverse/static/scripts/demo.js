@@ -170,7 +170,7 @@ var Wall = function (settings) {
   return this;
 };
 
-var Player = function (settings) {
+var Player = function (settings, dimness) {
   if (!(this instanceof Player)) {
     return new Player();
   }
@@ -185,6 +185,7 @@ var Player = function (settings) {
   this.payoff = settings.payoff;
   this.name = settings.name;
   this.identity_visible = settings.identity_visible;
+  this.dimness = dimness;
   return this;
 };
 
@@ -369,7 +370,11 @@ var playerSet = (function () {
             currentPlayerData.position = oldPlayerData.position;
           }
         }
-        this._players[currentPlayerData.id] = new Player(currentPlayerData);
+        var last_dimness = 1;
+        if (this._players[currentPlayerData.id] !== undefined) {
+          last_dimness = this._players[currentPlayerData.id].dimness;
+        } 
+        this._players[currentPlayerData.id] = new Player(currentPlayerData, last_dimness);
       }
     };
 
