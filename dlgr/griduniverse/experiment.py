@@ -25,6 +25,7 @@ from dallinger.config import get_config
 from dallinger.experiment import Experiment
 from dallinger.heroku.worker import conn as redis
 
+import maze
 from bots import Bot
 from models import Event
 
@@ -143,6 +144,16 @@ def softmax(vector, temperature=1):
         return [float(x) / sum(vector) for x in vector]
     else:
         return [float(len(vector)) for _ in vector]
+
+
+def labyrinth(columns=25, rows=25, density=1.0, contiguity=1.0):
+    if density:
+        walls = [Wall(position=pos) for pos in maze.generate(rows, columns)]
+        # Add sleep to avoid timeouts
+        gevent.sleep(0.00001)
+        return maze.prune(walls, density, contiguity)
+    else:
+        return []
 
 
 class Gridworld(object):
@@ -287,13 +298,6 @@ class Gridworld(object):
         self.food_locations = {}
         self.food_consumed = []
         self.start_timestamp = kwargs.get('start_timestamp', None)
-        labyrinth = Labyrinth(
-            columns=self.columns,
-            rows=self.rows,
-            density=self.walls_density,
-            contiguity=self.walls_contiguity,
-        )
-        self.walls = labyrinth.walls
 
         self.round = 0
         self.public_good = (
@@ -465,13 +469,25 @@ class Gridworld(object):
             player.payoff *= inter_proportions[player.color_idx]
             player.payoff *= self.dollars_per_point
 
+    def build_labyrinth(self):
+        if self.walls_density and not self.wall_locations:
+            start = time.time()
+            logger.info('Building labyrinth:')
+            walls = labyrinth(
+                columns=self.columns,
+                rows=self.rows,
+                density=self.walls_density,
+                contiguity=self.walls_contiguity,
+            )
+            logger.info('Built {} walls in {} seconds.'.format(
+                len(walls), time.time() - start
+            ))
+            self.wall_locations = {tuple(w.position): w for w in walls}
+
     def _start_if_ready(self):
         # Don't start unless we have a least one player
         if self.players and not self.game_started:
             self.start_timestamp = time.time()
-            if not config.get('replay', False):
-                for i in range(self.num_food):
-                    self.spawn_food()
 
     @property
     def game_started(self):
@@ -991,92 +1007,6 @@ class Player(object):
         }
 
 
-class Labyrinth(object):
-    """A maze generator."""
-    def __init__(self, columns=25, rows=25, density=1.0, contiguity=1.0):
-        if density:
-            walls = self._generate_maze(rows, columns)
-            self.walls = self._prune(walls, density, contiguity)
-        else:
-            self.walls = []
-
-    def _generate_maze(self, rows, columns):
-
-        c = (columns - 1) / 2
-        r = (rows - 1) / 2
-
-        visited = [[0] * c + [1] for _ in range(r)] + [[1] * (c + 1)]
-        ver = [["* "] * c + ['*'] for _ in range(r)] + [[]]
-        hor = [["**"] * c + ['*'] for _ in range(r + 1)]
-
-        sx = random.randrange(c)
-        sy = random.randrange(r)
-        visited[sy][sx] = 1
-        stack = [(sx, sy)]
-        while len(stack) > 0:
-            (x, y) = stack.pop()
-            d = [
-                (x - 1, y),
-                (x, y + 1),
-                (x + 1, y),
-                (x, y - 1)
-            ]
-            random.shuffle(d)
-            for (xx, yy) in d:
-                if visited[yy][xx]:
-                    continue
-                if xx == x:
-                    hor[max(y, yy)][x] = "* "
-                if yy == y:
-                    ver[y][max(x, xx)] = "  "
-                stack.append((xx, yy))
-                visited[yy][xx] = 1
-
-        # Convert the maze to a list of wall cell positions.
-        the_rows = ([j for i in zip(hor, ver) for j in i])
-        the_rows = [list("".join(j)) for j in the_rows]
-        maze = [item == '*' for sublist in the_rows for item in sublist]
-        walls = []
-        for idx, value in enumerate(maze):
-            if value:
-                walls.append(Wall(position=[idx / columns, idx % columns]))
-
-        return walls
-
-    def _prune(self, walls, density, contiguity):
-        """Prune walls to a labyrinth with the given density and contiguity."""
-        num_to_prune = int(round(len(walls) * (1 - density)))
-        num_pruned = 0
-        while num_pruned < num_to_prune:
-            (terminals, nonterminals) = self._classify_terminals(walls)
-            walls_to_prune = terminals[:num_to_prune]
-            for w in walls_to_prune:
-                walls.remove(w)
-            num_pruned += len(walls_to_prune)
-
-        num_to_prune = int(round(len(walls) * (1 - contiguity)))
-        for _ in range(num_to_prune):
-            walls.remove(random.choice(walls))
-
-        return walls
-
-    def _classify_terminals(self, walls):
-        terminals = []
-        nonterminals = []
-        positions = [w.position for w in walls]
-        for w in walls:
-            num_neighbors = 0
-            num_neighbors += [w.position[0] + 1, w.position[1]] in positions
-            num_neighbors += [w.position[0] - 1, w.position[1]] in positions
-            num_neighbors += [w.position[0], w.position[1] + 1] in positions
-            num_neighbors += [w.position[0], w.position[1] - 1] in positions
-            if num_neighbors == 1:
-                terminals.append(w)
-            else:
-                nonterminals.append(w)
-        return (terminals, nonterminals)
-
-
 def fermi(beta, p1, p2):
     """The Fermi function from statistical physics."""
     return 2.0 * ((1.0 / (1 + math.exp(-beta * (p1 - p2)))) - 0.5)
@@ -1435,6 +1365,10 @@ class Griduniverse(Experiment):
         last_walls = []
         last_food = []
 
+        # Sleep until we have walls
+        while (self.grid.walls_density and not self.grid.wall_locations):
+            gevent.sleep(0.1)
+
         while True:
             gevent.sleep(0.050)
 
@@ -1481,7 +1415,14 @@ class Griduniverse(Experiment):
 
     def game_loop(self):
         """Update the world state."""
-        gevent.sleep(0.200)
+        gevent.sleep(0.1)
+        if not config.get('replay', False):
+            self.grid.build_labyrinth()
+            logger.info('Spawning food')
+            for i in range(self.grid.num_food):
+                if (i % 250) == 0:
+                    gevent.sleep(0.00001)
+                self.grid.spawn_food()
 
         while not self.grid.game_started:
             gevent.sleep(0.01)
