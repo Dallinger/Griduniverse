@@ -1,9 +1,41 @@
+import gevent
 import itertools
 import random
 
 
-def generate(rows, columns):
+class Wall(object):
+    """A segment of colored wall occupying a single grid postion"""
+    def __init__(self, **kwargs):
+        super(Wall, self).__init__()
 
+        self.position = kwargs.get('position', [0, 0])
+        self.color = kwargs.get('color', [0.5, 0.5, 0.5])
+
+    def serialize(self):
+        return {
+            "position": self.position,
+            "color": self.color,
+        }
+
+
+def labyrinth(columns=25, rows=25, density=1.0, contiguity=1.0):
+    """Builds a labyrinth of Wall objects of a given size, with a given
+    density and contiguity. A density of 1.0 will produce a maze that
+    is 50% Wall and 50% open space. A contiguity of 1.0 will produce a maze with
+    no neighborless Walls. A contiguity < 1 will be increasingly likely to
+    contain neighborless Walls.
+    """
+    if density:
+        walls = [Wall(position=pos) for pos in _generate(rows, columns)]
+        # Add sleep to avoid timeouts
+        gevent.sleep(0.00001)
+        return _prune(walls, density, contiguity)
+    else:
+        return []
+
+
+def _generate(rows, columns):
+    """Generate an initial maze with 50% wall and 50% space."""
     c = (columns - 1) / 2
     r = (rows - 1) / 2
 
@@ -11,9 +43,11 @@ def generate(rows, columns):
     ver = [["* "] * c + ['*'] for _ in range(r)] + [[]]
     hor = [["**"] * c + ['*'] for _ in range(r + 1)]
 
+    # Select a starting position at random, and mark it as visited:
     sx = random.randrange(c)
     sy = random.randrange(r)
     visited[sy][sx] = 1
+
     stack = [(sx, sy)]
     while len(stack) > 0:
         (x, y) = stack.pop()
@@ -46,13 +80,11 @@ def generate(rows, columns):
     return positions
 
 
-def prune(walls, density, contiguity):
+def _prune(walls, density, contiguity):
     """Prune walls to a labyrinth with the given density and contiguity."""
     num_to_prune = int(round(len(walls) * (1 - density)))
     num_pruned = 0
-    count = 0
     while num_pruned < num_to_prune:
-        count += 1
         to_prune = _classify_terminals(
             walls, limit=num_to_prune - num_pruned
         )
@@ -111,9 +143,7 @@ def _classify_terminals(walls, limit=None):
             j += 1
 
     to_prune = set()
-    count = 0
     for entries in found:
-        count += 1
         if len(to_prune) < limit:
             to_prune = to_prune.union(set(itertools.islice(entries, limit - len(to_prune))))
     return to_prune

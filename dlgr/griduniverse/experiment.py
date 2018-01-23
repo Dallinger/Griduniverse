@@ -25,7 +25,8 @@ from dallinger.config import get_config
 from dallinger.experiment import Experiment
 from dallinger.heroku.worker import conn as redis
 
-import maze
+from maze import Wall
+from maze import labyrinth
 from bots import Bot
 from models import Event
 
@@ -144,16 +145,6 @@ def softmax(vector, temperature=1):
         return [float(x) / sum(vector) for x in vector]
     else:
         return [float(len(vector)) for _ in vector]
-
-
-def labyrinth(columns=25, rows=25, density=1.0, contiguity=1.0):
-    if density:
-        walls = [Wall(position=pos) for pos in maze.generate(rows, columns)]
-        # Add sleep to avoid timeouts
-        gevent.sleep(0.00001)
-        return maze.prune(walls, density, contiguity)
-    else:
-        return []
 
 
 class Gridworld(object):
@@ -838,21 +829,6 @@ class Food(object):
     @property
     def _age(self):
         return time.time() - self.creation_timestamp
-
-
-class Wall(object):
-    """Wall."""
-    def __init__(self, **kwargs):
-        super(Wall, self).__init__()
-
-        self.position = kwargs.get('position', [0, 0])
-        self.color = kwargs.get('color', [0.5, 0.5, 0.5])
-
-    def serialize(self):
-        return {
-            "position": self.position,
-            "color": self.color,
-        }
 
 
 class Player(object):

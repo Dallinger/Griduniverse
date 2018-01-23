@@ -6,11 +6,11 @@ class TestLabyrinth(object):
 
     @pytest.fixture
     def labyrinth(self, **kw):
-        from dlgr.griduniverse.experiment import labyrinth
+        from dlgr.griduniverse.maze import labyrinth
         return labyrinth
 
     def test_creates_walls(self, labyrinth):
-        from dlgr.griduniverse.experiment import Wall
+        from dlgr.griduniverse.maze import Wall
         walls = labyrinth()
         assert isinstance(walls[0], Wall)
 
@@ -42,7 +42,7 @@ class TestMazePrune(object):
     @pytest.fixture
     def prune(self, **kw):
         from dlgr.griduniverse import maze
-        return maze.prune
+        return maze._prune
 
     @pytest.fixture
     def Pos(self):
