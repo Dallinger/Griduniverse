@@ -115,6 +115,7 @@ def extra_parameters():
         'food_maturation_threshold': float,
         'food_planting': bool,
         'food_planting_cost': int,
+        'food_probability_distribution': unicode,
         'seasonal_growth_rate': float,
         'difi_question': bool,
         'difi_group_label': unicode,
@@ -276,6 +277,7 @@ class Gridworld(object):
             'food_maturation_threshold', 0.0)
         self.food_planting = kwargs.get('food_planting', False)
         self.food_planting_cost = kwargs.get('food_planting_cost', 1)
+        self.food_probability_distribution = kwargs.get('food_probability_distribution', 'random')
         self.seasonal_growth_rate = kwargs.get('seasonal_growth_rate', 1)
 
         # Questionnaire
@@ -306,6 +308,18 @@ class Gridworld(object):
         if self.costly_colors:
             self.color_costs = [2**i for i in range(self.num_colors)]
             random.shuffle(self.color_costs)
+
+        # get food spawning probability distribution function and args
+        self.probability_function_args = []
+        parts = self.food_probability_distribution.split()
+        if len(parts) > 1:
+            self.food_probability_distribution = parts[0]
+            self.probability_function_args = parts[1:]
+        probability_distribution = "_{}_probability_distribution".format(
+            self.food_probability_distribution)
+        self.food_probability_function = getattr(self,
+                                                 probability_distribution,
+                                                 self._random_probability_distribution)
 
     def can_occupy(self, position):
         if self.player_overlap:
@@ -618,6 +632,9 @@ class Gridworld(object):
                 text += """It will appear immediately, but not be consumable for
                     some time, because it has a maturation period. It will show
                     up as brown initially, and then as green when it matures."""
+        text += """<br>The location where the food will appear after respawning is
+            is determined by a <strong>{g.food_probability_distribution}</strong>
+            probability distribution."""
         if self.food_planting:
             text += " Players can plant more food by pressing the spacebar."
             if self.food_planting_cost > 0:
@@ -747,16 +764,20 @@ class Gridworld(object):
         return player
 
     def _random_empty_position(self):
-        """Select an empty cell at random."""
+        """Select an empty cell at random, using the configured probability
+        distribution."""
         empty_cell = False
         while (not empty_cell):
-            position = [
-                random.randint(0, self.rows - 1),
-                random.randint(0, self.columns - 1),
-            ]
+            position = self.food_probability_function(*self.probability_function_args)
             empty_cell = self._empty(position)
 
         return position
+
+    def _random_probability_distribution(self, *args):
+        """A probability distribution function always returns a [row, column] pair."""
+        row = random.randint(0, self.rows -1)
+        column = random.randint(0, self.columns -1)
+        return [row, column]
 
     def _empty(self, position):
         """Determine whether a particular cell is empty."""
