@@ -12,6 +12,7 @@ import uuid
 
 from cached_property import cached_property
 from faker import Factory
+from numpy.random import choice
 from sqlalchemy import create_engine
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import (
@@ -633,7 +634,7 @@ class Gridworld(object):
                     some time, because it has a maturation period. It will show
                     up as brown initially, and then as green when it matures."""
         text += """<br>The location where the food will appear after respawning is
-            is determined by a <strong>{g.food_probability_distribution}</strong>
+            is determined by the <strong>{g.food_probability_distribution}</strong>
             probability distribution."""
         if self.food_planting:
             text += " Players can plant more food by pressing the spacebar."
@@ -777,6 +778,48 @@ class Gridworld(object):
         """A probability distribution function always returns a [row, column] pair."""
         row = random.randint(0, self.rows -1)
         column = random.randint(0, self.columns -1)
+        return [row, column]
+
+    def _edge_bias_probability_distribution(self, *args):
+        rows = self.rows
+        cols = self.columns
+        values = range(rows * cols)
+        for row in range(rows):
+            for col in range(cols):
+                values[row * cols + col] = 2
+                if col == 2 or row == 2 or col == cols - 3 or row == rows - 3:
+                    values[row * cols + col] = 4
+                if col == 1 or row == 1 or col == cols - 2 or row == rows - 2:
+                    values[row * cols + col] = 8
+                if col == 0 or row == 0 or col == cols - 1 or row == rows - 1:
+                    values[row * cols + col] = 16
+        total = sum(values)
+        for index, value in enumerate(values):
+            values[index] = float(value)/float(total)
+        value = choice(rows * cols, p = values)
+        row = value / cols
+        column = value - (row * cols)
+        return [row, column]
+
+    def _center_bias_probability_distribution(self, *args):
+        rows = self.rows
+        cols = self.columns
+        values = range(rows * cols)
+        for row in range(rows):
+            for col in range(cols):
+                values[row * cols + col] = 16
+                if col == 2 or row == 2 or col == cols - 3 or row == rows - 3:
+                    values[row * cols + col] = 8
+                if col == 1 or row == 1 or col == cols - 2 or row == rows - 2:
+                    values[row * cols + col] = 4
+                if col == 0 or row == 0 or col == cols - 1 or row == rows - 1:
+                    values[row * cols + col] = 2
+        total = sum(values)
+        for index, value in enumerate(values):
+            values[index] = float(value)/float(total)
+        value = choice(rows * cols, p = values)
+        row = value / cols
+        column = value - (row * cols)
         return [row, column]
 
     def _empty(self, position):
