@@ -25,6 +25,8 @@ from dallinger.config import get_config
 from dallinger.experiment import Experiment
 from dallinger.heroku.worker import conn as redis
 
+from maze import Wall
+from maze import labyrinth
 from bots import Bot
 from models import Event
 
@@ -160,6 +162,10 @@ class Gridworld(object):
 
     GREEN = [0.51, 0.69, 0.61]
     WHITE = [1.00, 1.00, 1.00]
+    wall_locations = None
+    food_locations = None
+    walls_updated = True
+    food_updated = True
 
     def __new__(cls, **kwargs):
         if not hasattr(cls, 'instance'):
@@ -226,6 +232,7 @@ class Gridworld(object):
         self.walls_contiguity = kwargs.get('walls_contiguity', 1.0)
         self.build_walls = kwargs.get('build_walls', False)
         self.wall_building_cost = kwargs.get('wall_building_cost', 0)
+        self.wall_locations = {}
 
         # Payoffs
         self.initial_score = kwargs.get('initial_score', 0)
@@ -279,16 +286,9 @@ class Gridworld(object):
 
         # Set some variables.
         self.players = {}
-        self.food = []
+        self.food_locations = {}
         self.food_consumed = []
         self.start_timestamp = kwargs.get('start_timestamp', None)
-        labyrinth = Labyrinth(
-            columns=self.columns,
-            rows=self.rows,
-            density=self.walls_density,
-            contiguity=self.walls_contiguity,
-        )
-        self.walls = labyrinth.walls
 
         self.round = 0
         self.public_good = (
@@ -425,18 +425,32 @@ class Gridworld(object):
         ratio, and therefore it pays to be a group's highest-scoring member.
         """
         players = self.players.values()
+        player_groups = {}
+        total_payoff = 0
         group_scores = []
+        for p in players:
+            group_info = player_groups.setdefault(
+                p.color_idx, {'players': [], 'scores': [], 'total': 0}
+            )
+            group_info['players'].append(p)
+            group_info['scores'].append(p.score)
+            group_info['total'] += p.score
+            total_payoff += p.score
+
         for g in range(len(self.player_colors)):
-            ingroup_players = [p for p in players if p.color_idx == g]
-            ingroup_scores = [p.score for p in ingroup_players]
-            group_scores.append(sum(ingroup_scores))
+            group_info = player_groups.get(g)
+            if not group_info:
+                group_scores.append(0)
+                continue
+            ingroup_players = group_info['players']
+            ingroup_scores = group_info['scores']
+            group_scores.append(group_info['total'])
             intra_proportions = softmax(
                 ingroup_scores,
                 temperature=self.intragroup_competition,
             )
             for i, player in enumerate(ingroup_players):
-                player.payoff = sum([p.score for p in players])  # grand score
-                player.payoff *= intra_proportions[i]
+                player.payoff = total_payoff * intra_proportions[i]
 
         inter_proportions = softmax(
             group_scores,
@@ -446,13 +460,25 @@ class Gridworld(object):
             player.payoff *= inter_proportions[player.color_idx]
             player.payoff *= self.dollars_per_point
 
+    def build_labyrinth(self):
+        if self.walls_density and not self.wall_locations:
+            start = time.time()
+            logger.info('Building labyrinth:')
+            walls = labyrinth(
+                columns=self.columns,
+                rows=self.rows,
+                density=self.walls_density,
+                contiguity=self.walls_contiguity,
+            )
+            logger.info('Built {} walls in {} seconds.'.format(
+                len(walls), time.time() - start
+            ))
+            self.wall_locations = {tuple(w.position): w for w in walls}
+
     def _start_if_ready(self):
         # Don't start unless we have a least one player
         if self.players and not self.game_started:
             self.start_timestamp = time.time()
-            if not config.get('replay', False):
-                for i in range(self.num_food):
-                    self.spawn_food()
 
     @property
     def game_started(self):
@@ -462,21 +488,21 @@ class Gridworld(object):
     def game_over(self):
         return self.round >= self.num_rounds
 
-    def serialize(self):
-        return json.dumps({
+    def serialize(self, include_walls=True, include_food=True):
+        grid_data = {
             "players": [player.serialize() for player in self.players.values()],
-            "food": [food.serialize() for food in self.food],
-            "walls": [wall.serialize() for wall in self.walls],
             "round": self.round,
             "donation_active": self.donation_active,
             "rows": self.rows,
             "columns": self.columns,
-        })
+        }
 
-    @property
-    def food_mature(self):
-        return [f for f in self.food
-                if f.maturity >= self.food_maturation_threshold]
+        if include_walls:
+            grid_data['walls'] = [w.serialize() for w in self.wall_locations.values()]
+        if include_food:
+            grid_data['food'] = [f.serialize() for f in self.food_locations.values()]
+
+        return grid_data
 
     def instructions(self):
         color_costs = ''
@@ -637,43 +663,63 @@ class Gridworld(object):
 
     def consume(self):
         """Players consume the food."""
-        for food in self.food_mature:
-            for player in self.players.values():
-                if food.position == player.position:
-                    # Update existence and count of food.
-                    self.food_consumed.append(food)
-                    self.food.remove(food)
-                    if self.respawn_food:
-                        self.spawn_food()
-                    else:
-                        self.num_food -= 1
+        consumed = 0
+        for player in self.players.values():
+            position = tuple(player.position)
+            if position in self.food_locations:
+                food = self.food_locations[position]
+                if food.maturity < self.food_maturation_threshold:
+                    continue
+                del self.food_locations[position]
+                # Update existence and count of food.
+                self.food_consumed.append(food)
+                self.food_updated = True
+                if self.respawn_food:
+                    self.spawn_food()
+                else:
+                    self.num_food -= 1
 
-                    # Update scores.
-                    print(player.color_idx)
-                    if player.color_idx > 0:
-                        reward = self.food_reward
-                    else:
-                        reward = self.food_reward * self.relative_deprivation
+                # Update scores.
+                if player.color_idx > 0:
+                    reward = self.food_reward
+                else:
+                    reward = self.food_reward * self.relative_deprivation
 
-                    player.score += reward
-                    for player_to in self.players.values():
-                        player_to.score += self.public_good
-                    break
+                player.score += reward
+                consumed += 1
+
+        if consumed and self.public_good:
+            for player_to in self.players.values():
+                player_to.score += self.public_good * consumed
 
     def spawn_food(self, position=None):
         """Respawn the food."""
         if not position:
             position = self._random_empty_position()
 
-        self.food.append(Food(
-            id=(len(self.food) + len(self.food_consumed)),
+        self.food_locations[tuple(position)] = Food(
+            id=(len(self.food_locations) + len(self.food_consumed)),
             position=position,
             maturation_speed=self.food_maturation_speed,
-        ))
+        )
+        self.food_updated = True
         self.log_event({
             'type': 'spawn_food',
             'position': position,
         })
+
+    def food_changed(self, last_food):
+        locations = self.food_locations
+        if len(last_food) != len(locations):
+            return True
+        for food in last_food:
+            position = tuple(food['position'])
+            if position not in locations:
+                return True
+            found = locations[position]
+            if found.id != food['id'] or found.maturity != food['maturity']:
+                return True
+        return False
 
     def spawn_player(self, id=None, **kwargs):
         """Spawn a player."""
@@ -723,16 +769,10 @@ class Gridworld(object):
         return False
 
     def has_food(self, position):
-        for food in self.food:
-            if food.position == position:
-                return True
-        return False
+        return tuple(position) in self.food_locations
 
     def has_wall(self, position):
-        for wall in self.walls:
-            if wall.position == position:
-                return True
-        return False
+        return tuple(position) in self.wall_locations
 
     def spread_contagion(self):
         """Spread contagion."""
@@ -784,26 +824,11 @@ class Food(object):
 
     @property
     def maturity(self):
-        return 1 - math.exp(-self._age * self.maturation_speed)
+        return round(1 - math.exp(-self._age * self.maturation_speed), 1)
 
     @property
     def _age(self):
         return time.time() - self.creation_timestamp
-
-
-class Wall(object):
-    """Wall."""
-    def __init__(self, **kwargs):
-        super(Wall, self).__init__()
-
-        self.position = kwargs.get('position', [0, 0])
-        self.color = kwargs.get('color', [0.5, 0.5, 0.5])
-
-    def serialize(self):
-        return {
-            "position": self.position,
-            "color": self.color,
-        }
 
 
 class Player(object):
@@ -853,6 +878,7 @@ class Player(object):
         self.birthdate = self.profile['birthdate']
 
         self.motion_timestamp = 0
+        self.last_timestamp = 0
 
     def tremble(self, direction):
         """Change direction with some probability."""
@@ -866,7 +892,7 @@ class Player(object):
         direction = random.choice(directions)
         return direction
 
-    def move(self, direction, tremble_rate=0):
+    def move(self, direction, tremble_rate=0, timestamp=None):
         """Move the player."""
 
         if not self.grid.movement_enabled:
@@ -896,21 +922,34 @@ class Player(object):
                 new_position[1] = self.position[1] + 1
 
         # Update motion.
-        elapsed_time = self.grid.elapsed_round_time
         wait_time = 1.0 / self.motion_speed_limit
-        can_move = elapsed_time > (self.motion_timestamp + wait_time)
+        if timestamp is None:
+            can_move = self.grid.elapsed_round_time > (self.motion_timestamp + wait_time)
+        else:
+            can_move = timestamp > (self.last_timestamp + wait_time)
         can_afford_to_move = self.score >= self.motion_cost
+
+        msgs = {"direction": direction}
 
         if can_move and can_afford_to_move and self.grid.can_occupy(new_position):
             self.position = new_position
-            self.motion_timestamp = elapsed_time
+            self.motion_timestamp = self.grid.elapsed_round_time
+            if timestamp:
+                self.last_timestamp = timestamp
             self.score -= self.motion_cost
-            return direction
 
             # now that player moved, check if wall needs to be built
             if self.add_wall is not None:
-                self.grid.walls.append(Wall(position=self.add_wall))
+                new_wall = Wall(position=self.add_wall)
+                self.grid.wall_locations[tuple(new_wall.position)] = new_wall
                 self.add_wall = None
+                wall_msg = {
+                    'type': 'wall_built',
+                    'wall': new_wall.serialize()
+                }
+                msgs["wall"] = wall_msg
+
+            return msgs
 
     def is_neighbor(self, player, d=1):
         """Determine whether other player is adjacent."""
@@ -942,92 +981,6 @@ class Player(object):
             "name": self.name,
             "identity_visible": self.identity_visible,
         }
-
-
-class Labyrinth(object):
-    """A maze generator."""
-    def __init__(self, columns=25, rows=25, density=1.0, contiguity=1.0):
-        if density:
-            walls = self._generate_maze(rows, columns)
-            self.walls = self._prune(walls, density, contiguity)
-        else:
-            self.walls = []
-
-    def _generate_maze(self, rows, columns):
-
-        c = (columns - 1) / 2
-        r = (rows - 1) / 2
-
-        visited = [[0] * c + [1] for _ in range(r)] + [[1] * (c + 1)]
-        ver = [["* "] * c + ['*'] for _ in range(r)] + [[]]
-        hor = [["**"] * c + ['*'] for _ in range(r + 1)]
-
-        sx = random.randrange(c)
-        sy = random.randrange(r)
-        visited[sy][sx] = 1
-        stack = [(sx, sy)]
-        while len(stack) > 0:
-            (x, y) = stack.pop()
-            d = [
-                (x - 1, y),
-                (x, y + 1),
-                (x + 1, y),
-                (x, y - 1)
-            ]
-            random.shuffle(d)
-            for (xx, yy) in d:
-                if visited[yy][xx]:
-                    continue
-                if xx == x:
-                    hor[max(y, yy)][x] = "* "
-                if yy == y:
-                    ver[y][max(x, xx)] = "  "
-                stack.append((xx, yy))
-                visited[yy][xx] = 1
-
-        # Convert the maze to a list of wall cell positions.
-        the_rows = ([j for i in zip(hor, ver) for j in i])
-        the_rows = [list("".join(j)) for j in the_rows]
-        maze = [item == '*' for sublist in the_rows for item in sublist]
-        walls = []
-        for idx, value in enumerate(maze):
-            if value:
-                walls.append(Wall(position=[idx / columns, idx % columns]))
-
-        return walls
-
-    def _prune(self, walls, density, contiguity):
-        """Prune walls to a labyrinth with the given density and contiguity."""
-        num_to_prune = int(round(len(walls) * (1 - density)))
-        num_pruned = 0
-        while num_pruned < num_to_prune:
-            (terminals, nonterminals) = self._classify_terminals(walls)
-            walls_to_prune = terminals[:num_to_prune]
-            for w in walls_to_prune:
-                walls.remove(w)
-            num_pruned += len(walls_to_prune)
-
-        num_to_prune = int(round(len(walls) * (1 - contiguity)))
-        for _ in range(num_to_prune):
-            walls.remove(random.choice(walls))
-
-        return walls
-
-    def _classify_terminals(self, walls):
-        terminals = []
-        nonterminals = []
-        positions = [w.position for w in walls]
-        for w in walls:
-            num_neighbors = 0
-            num_neighbors += [w.position[0] + 1, w.position[1]] in positions
-            num_neighbors += [w.position[0] - 1, w.position[1]] in positions
-            num_neighbors += [w.position[0], w.position[1] + 1] in positions
-            num_neighbors += [w.position[0], w.position[1] - 1] in positions
-            if num_neighbors == 1:
-                terminals.append(w)
-            else:
-                nonterminals.append(w)
-        return (terminals, nonterminals)
 
 
 def fermi(beta, p1, p2):
@@ -1311,8 +1264,16 @@ class Griduniverse(Experiment):
 
     def handle_move(self, msg):
         player = self.grid.players[msg['player_id']]
-        msg['actual'] = player.move(
-            msg['move'], tremble_rate=player.motion_tremble_rate)
+        msgs = player.move(
+            msg['move'], timestamp=msg.get('timestamp'),
+            tremble_rate=player.motion_tremble_rate
+        )
+        if msgs:
+            msg["actual"] = msgs["direction"]
+            if msgs.get("wall"):
+                wall_msg = msgs.get("wall")
+                self.publish(wall_msg)
+                self.record_event(wall_msg)
 
     def handle_donation(self, msg):
         """Send a donation from one player to one or more other players."""
@@ -1375,38 +1336,94 @@ class Griduniverse(Experiment):
     def send_state_thread(self):
         """Publish the current state of the grid and game"""
         count = 0
+        last_player_count = 0
         gevent.sleep(1.00)
+        last_walls = []
+        last_food = []
+
+        # Sleep until we have walls
+        while (self.grid.walls_density and not self.grid.wall_locations):
+            gevent.sleep(0.1)
+
         while True:
             gevent.sleep(0.050)
+
+            # Send all food data once every 40 loops
+            update_walls = update_food = False
+            if (count % 50) == 0:
+                update_food = True
             count += 1
+
+            player_count = len(self.grid.players)
+            if not last_player_count or player_count != last_player_count:
+                update_walls = True
+                update_food = True
+                last_player_count = player_count
+
+            if not last_walls:
+                update_walls = True
+
+            if not last_food or self.grid.food_changed(last_food):
+                update_food = True
+
+            grid_state = self.grid.serialize(
+                include_walls=update_walls,
+                include_food=update_food
+            )
+
+            if update_walls:
+                last_walls = grid_state['walls']
+
+            if update_food:
+                last_food = grid_state['food']
+
             message = {
                 'type': 'state',
-                'grid': self.grid.serialize(),
+                'grid': json.dumps(grid_state),
                 'count': count,
                 'remaining_time': self.grid.remaining_round_time,
                 'round': self.grid.round,
             }
+
             self.publish(message)
             if self.grid.game_over:
                 return
 
     def game_loop(self):
         """Update the world state."""
-        gevent.sleep(0.200)
+        gevent.sleep(0.1)
+        if not config.get('replay', False):
+            self.grid.build_labyrinth()
+            logger.info('Spawning food')
+            for i in range(self.grid.num_food):
+                if (i % 250) == 0:
+                    gevent.sleep(0.00001)
+                self.grid.spawn_food()
 
         while not self.grid.game_started:
             gevent.sleep(0.01)
 
         previous_second_timestamp = self.grid.start_timestamp
+        count = 0
 
         while not self.grid.game_over:
             # Record grid state to database
-            state = self.environment.update(self.grid.serialize())
+            state = self.environment.update(
+                json.dumps(self.grid.serialize(
+                    include_walls=self.grid.walls_updated,
+                    include_food=self.grid.food_updated
+                ))
+            )
             self.socket_session.add(state)
             self.socket_session.commit()
-
+            count += 1
+            self.grid.walls_updated = False
+            self.grid.food_updated = False
             gevent.sleep(0.010)
 
+            # Log food updates every hundred rounds to capture maturity changes
+            if self.grid.food_maturation_threshold and (count % 100) == 0:
+                self.grid.food_updated = True
             now = time.time()
 
             # Update motion.
@@ -1438,22 +1455,25 @@ class Griduniverse(Experiment):
                     self.grid.rows * self.grid.columns,
                 ), 0)
 
-                for i in range(int(round(self.grid.num_food) - len(self.grid.food))):
+                for i in range(int(round(self.grid.num_food) - len(self.grid.food_locations))):
                     self.grid.spawn_food()
 
-                for i in range(len(self.grid.food) - int(round(self.grid.num_food))):
-                    self.grid.food.remove(random.choice(self.grid.food))
+                for i in range(len(self.grid.food_locations) - int(round(self.grid.num_food))):
+                    del self.grid.food_locations[random.choice(self.grid.food_locations.keys())]
+                    self.grid.food_updated = True
 
+                abundances = {}
                 for player in self.grid.players.values():
                     # Apply tax.
                     player.score = max(player.score - self.grid.tax, 0)
+                    if player.color not in abundances:
+                        abundances[player.color] = 0
+                    abundances[player.color] += 1
 
-                    # Apply frequency-dependent payoff.
+                # Apply frequency-dependent payoff.
+                if self.grid.frequency_dependence:
                     for player in self.grid.players.values():
-                        abundance = len(
-                            [p for p in self.grid.players.values() if p.color == player.color]
-                        )
-                        relative_frequency = 1.0 * abundance / len(self.grid.players)
+                        relative_frequency = 1.0 * abundances[player.color] / len(self.grid.players)
                         payoff = fermi(
                             beta=self.grid.frequency_dependence,
                             p1=relative_frequency,

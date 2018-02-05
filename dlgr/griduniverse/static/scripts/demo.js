@@ -31,6 +31,10 @@ function animateColor(color) {
   ];
 }
 
+function positionsAreEqual(a, b) {
+  return a[0] === b[0] && a[1] === b[1];
+}
+
 class Section {
   // Represents the currently visible section (window) of the grid
 
@@ -85,7 +89,7 @@ class Section {
   }
 }
 
-  var background = [], color;
+var background = [], color;
 for (var j = 0; j < settings.rows; j++) {
   for (var i = 0; i < settings.columns; i++) {
       color = [0, 0, 0];
@@ -120,18 +124,19 @@ var start = performance.now();
 var food = [];
 var foodConsumed = [];
 var walls = [];
-  var row, column, rand;
+var wall_map = {};
+var row, column, rand;
 
-name2idx = function(name) {
+var name2idx = function (name) {
   var names = settings.player_color_names;
   for (var idx=0; idx < names.length; idx++) {
     if (names[idx] === name) {
       return idx;
     }
   }
-}
+};
 
-color2idx = function(color) {
+var color2idx = function (color) {
   var colors = settings.player_colors;
   var value = color.join(',');
   for (var idx=0; idx < colors.length; idx++) {
@@ -141,12 +146,12 @@ color2idx = function(color) {
   }
 };
 
-color2name = function(color) {
+var color2name = function (color) {
   var idx = color2idx(color);
   return settings.player_color_names[idx];
 };
 
-var Food = function(settings) {
+var Food = function (settings) {
   if (!(this instanceof Food)) {
     return new Food();
   }
@@ -156,7 +161,7 @@ var Food = function(settings) {
   return this;
 };
 
-var Wall = function(settings) {
+var Wall = function (settings) {
   if (!(this instanceof Wall)) {
     return new Wall();
   }
@@ -165,7 +170,7 @@ var Wall = function(settings) {
   return this;
 };
 
-var Player = function(settings) {
+var Player = function (settings) {
   if (!(this instanceof Player)) {
     return new Player();
   }
@@ -184,14 +189,8 @@ var Player = function(settings) {
 };
 
 Player.prototype.move = function(direction) {
-
   function _hasWall(position) {
-    for (var i = 0; i < walls.length; i++) {
-        if (position === walls[i].position) {
-         return false;
-      }
-    }
-    return true;
+    return wall_map[[position[1], position[0]]] !== undefined;
   }
 
   this.motion_direction = direction;
@@ -231,14 +230,13 @@ Player.prototype.move = function(direction) {
         console.log("Direction not recognized.");
     }
 
-    if (
-      !_hasWall(newPosition) &
-      (!players.isPlayerAt(position) || settings.player_overlap)
-    ) {
+    if (!_hasWall(newPosition) && (!players.isPlayerAt(newPosition) || settings.player_overlap)) {
       this.position = newPosition;
       this.motion_timestamp = ts;
+      return true;
     }
   }
+  return false;
 };
 
 var playerSet = (function () {
@@ -258,7 +256,7 @@ var playerSet = (function () {
       for (id in this._players) {
         if (this._players.hasOwnProperty(id)) {
           player = this._players[id];
-          if (position === player.position) {
+          if (positionsAreEqual(position, player.position)) {
             return true;
           }
         }
@@ -284,6 +282,8 @@ var playerSet = (function () {
       for (id in this._players) {
         if (this._players.hasOwnProperty(id)) {
           player = this._players[id];
+          /* It's unlikely that auto motion will keep identical pace to server-side auto-motion */
+          /* this should be implemented either all on server or all on client */
           if (player.motion_auto) {
             player.move(player.motion_direction);
           }
@@ -354,17 +354,28 @@ var playerSet = (function () {
 
     PlayerSet.prototype.update = function (playerData) {
       var currentPlayerData,
+          oldPlayerData,
           i;
 
       for (i = 0; i < playerData.length; i++) {
         currentPlayerData = playerData[i];
+        oldPlayerData = this._players[currentPlayerData.id];
+        if (oldPlayerData && oldPlayerData.id === this.ego_id) {
+          /* Don't override current player motion timestamp */
+          currentPlayerData.motion_timestamp = oldPlayerData.motion_timestamp;
+          /* Only override position from server if tremble is enabled,
+             otherwise motion jitter is likely and positions will sync anyway. */
+          if (settings.motion_tremble_rate === 0) {
+            currentPlayerData.position = oldPlayerData.position;
+          }
+        }
         this._players[currentPlayerData.id] = new Player(currentPlayerData);
       }
     };
 
     PlayerSet.prototype.maxScore = function () {
-        var id;
-        maxScore = 0;
+        var id,
+            maxScore = 0;
         for (id in this._players) {
             if (this._players[id].score > maxScore) {
                 maxScore = this._players[id].score;
@@ -374,8 +385,8 @@ var playerSet = (function () {
     };
 
     PlayerSet.prototype.minScore = function () {
-        var id;
-        minScore = Infinity;
+        var id,
+            minScore = Infinity;
         for (id in this._players) {
             if (this._players[id].score < minScore) {
                 minScore = this._players[id].score;
@@ -544,24 +555,18 @@ pixels.frame(function() {
 
   for (i = 0; i < food.length; i++) {
     // Players digest the food.
-    if (players.isPlayerAt(food[i].position)) {
+    var cur_food = food[i];
+    if (players.isPlayerAt(cur_food.position)) {
       foodConsumed.push(food.splice(i, 1));
     } else {
       if (settings.food_visible) {
-        section.plot(food[i].position[1], food[i].position[0], food[i].color);
+        section.plot(cur_food.position[1], cur_food.position[0], cur_food.color);
       }
     }
   }
 
   // Draw the players:
   players.drawToGrid(section);
-
-  // Draw the walls.
-  if (settings.walls_visible) {
-    walls.forEach(function(w) {
-      section.plot(w.position[1], w.position[0], w.color);
-    });
-  }
 
   // Add the Gaussian mask.
   var elapsedTime = performance.now() - startTime;
@@ -576,24 +581,30 @@ pixels.frame(function() {
   var g = gaussian(0, Math.pow(visibilityNow, 2));
   rescaling = 1 / g.pdf(0);
 
-  if (!isSpectator) {
-    if (typeof ego !== "undefined") {
-      x = ego.position[1];
-      y = ego.position[0];
-    } else {
-      x = 1e100;
-      y = 1e100;
+  if (typeof ego !== "undefined") {
+    x = ego.position[1];
+    y = ego.position[0];
+  } else {
+    x = 1e100;
+    y = 1e100;
+  }
+  section.map(function(i, j, color) {
+    var newColor;
+    // Draw walls
+    if (settings.walls_visible) {
+      color = wall_map[[i,j]] || color;
     }
-    section.map(function(i, j, color) {
+    // Add Blur
+    if (!isSpectator) {
       dimness = g.pdf(distance(x, y, i, j)) * rescaling;
-      var newColor = [
+      newColor = [
         color[0] * dimness,
         color[1] * dimness,
         color[2] * dimness
       ];
-      return newColor;
-    });
-  }
+    }
+    return newColor;
+  });
   pixels.update(section.data, section.textures);
 });
 
@@ -655,11 +666,13 @@ function bindGameKeys(socket) {
       highlightEgo = false;
 
   function moveInDir(direction) {
-    players.ego().move(direction);
+    var ego = players.ego();
+    ego.move(direction);
     var msg = {
       type: "move",
-      player_id: players.ego().id,
-      move: direction
+      player_id: ego.id,
+      move: direction,
+      timestamp: ego.motion_timestamp
     };
     socket.send(msg);
   }
@@ -713,11 +726,13 @@ function bindGameKeys(socket) {
 
   if (settings.mutable_colors) {
     Mousetrap.bind('c', function () {
-      keys = settings.player_color_names;
-      index = arraySearch(keys, players.ego().color);
-      nextItem = keys[(index + 1) % keys.length];
+      var keys = settings.player_color_names,
+          index = arraySearch(keys, players.ego().color),
+          nextItem = keys[(index + 1) % keys.length],
+          msg;
+
       players.ego().color = nextItem;
-      var msg = {
+      msg = {
         type: "change_color",
         player_id: players.ego().id,
         color: players.ego().color
@@ -728,9 +743,11 @@ function bindGameKeys(socket) {
 
   if (settings.identity_signaling) {
     Mousetrap.bind("v", function () {
-      var ego = players.ego();
+      var ego = players.ego(),
+          msg;
+
       ego.identity_visible = !ego.identity_visible;
-      var msg = {
+      msg = {
         type: "toggle_visible",
         player_id: ego.id,
         identity_visible: ego.identity_visible
@@ -757,8 +774,15 @@ function bindGameKeys(socket) {
 
 function chatName(player_id) {
   var ego = players.ego(),
-    name,
-    entry;
+      entry = "<span class='name'>",
+      id = parseInt(player_id) - 1,
+      salt = $("#grid").data("identicon-salt"),
+      fg = settings.player_colors[name2idx(players.get(player_id).color)].concat(1),
+      bg,
+      identicon,
+      name,
+      options;
+
   if (id === ego) {
     name = "You";
   } else if (settings.pseudonyms) {
@@ -770,39 +794,36 @@ function chatName(player_id) {
     return '<span class="name">' + player_id + '</span>';
   }
 
-  var salt = $("#grid").data("identicon-salt");
-  var id = parseInt(player_id)-1;
-  var fg = settings.player_colors[name2idx(players.get(player_id).color)].concat(1);
   fg = fg.map(function(x) { return x * 255; });
   bg = fg.map(function(x) { return (x * 0.66); });
   bg[3] = 255;
-  var options = {
+  options = {
     size: 10,
     foreground: fg,
     background: bg,
     format: 'svg'
   };
-  var identicon = new Identicon(md5(salt + id), options).toString();
-    var entry = "<span class='name'>";
+
+  identicon = new Identicon(md5(salt + id), options).toString();
   if (settings.use_identicons) {
     entry = entry + " <img src='data:image/svg+xml;base64," + identicon + "' />";
   }
-    entry = entry + " " + name + "</span> ";
-    return entry;
+  entry = entry + " " + name + "</span> ";
+  return entry;
 }
 
-  function onChatMessage(msg) {
-    var entry = chatName(msg.player_id);
-    $("#messages").append(($("<li>").text(": " + msg.contents)).prepend(entry));
-    $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
-  }
+function onChatMessage(msg) {
+  var entry = chatName(msg.player_id);
+  $("#messages").append(($("<li>").text(": " + msg.contents)).prepend(entry));
+  $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
+}
 
-  function onColorChanged(msg) {
-    store.set("color", msg.new_color);
-    pushMessage("<span class='name'>Moderator:</span> " + chatName(msg.player_id) + ' changed from team ' + msg.old_color + ' to team ' + msg.new_color + '.');
-  }
+function onColorChanged(msg) {
+  store.set("color", msg.new_color);
+  pushMessage("<span class='name'>Moderator:</span> " + chatName(msg.player_id) + ' changed from team ' + msg.old_color + ' to team ' + msg.new_color + '.');
+}
 
-  function onDonationProcessed(msg) {
+function onDonationProcessed(msg) {
     var donor = players.get(msg.donor_id),
       recipient_id = msg.recipient_id,
       team_idx,
@@ -860,8 +881,15 @@ function updateDonationStatus(donation_is_active) {
 function onGameStateChange(msg) {
   var $donationButtons = $('#individual-donate, #group-donate, #public-donate, #ingroup-donate'),
       $timeElement = $("#time"),
+      $loading = $('.grid-loading'),
+      cur_wall,
       ego,
-      state;
+      state,
+      j,
+      k;
+
+  performance.mark('state_start');
+  if ($loading.is(':visible')) $loading.fadeOut();
 
   if (settings.paused_game) {
     $timeElement.html(0);
@@ -884,38 +912,44 @@ function onGameStateChange(msg) {
   updateDonationStatus(state.donation_active);
 
   // Update food.
-  food = [];
-  for (var j = 0; j < state.food.length; j++) {
-    food.push(
-      new Food({
-        id: state.food[j].id,
-        position: state.food[j].position,
-        color: state.food[j].color
-      })
-    );
-  }
-
-  // Update walls if they haven't been created yet.
-  if (walls.length === 0) {
-    for (var k = 0; k < state.walls.length; k++) {
-      walls.push(
-        new Wall({
-          position: state.walls[k].position,
-          color: state.walls[k].color
+  if (state.food !== undefined && state.food !== null) {
+    food = [];
+    for (j = 0; j < state.food.length; j++) {
+      food.push(
+        new Food({
+          id: state.food[j].id,
+          position: state.food[j].position,
+          color: state.food[j].color
         })
       );
     }
   }
 
-  // If new walls have been added, draw them
-  if (walls.length !== state.walls.length) {
-    for (var k = walls.length; k < state.walls.length; k++) {
+  // Update walls if they haven't been created yet.
+  if (state.walls !== undefined && walls.length === 0) {
+    for (k = 0; k < state.walls.length; k++) {
+      cur_wall = state.walls[k];
       walls.push(
         new Wall({
-          position: state.walls[k].position,
-          color: state.walls[k].color
+          position: cur_wall.position,
+          color: cur_wall.color
         })
       );
+      wall_map[[cur_wall.position[1], cur_wall.position[0]]] = cur_wall.color;
+    }
+  }
+
+  // If new walls have been added, draw them
+  if (state.walls !== undefined && walls.length < state.walls.length) {
+    for (k = walls.length; k < state.walls.length; k++) {
+      cur_wall = state.walls[k];
+      walls.push(
+        new Wall({
+          position: cur_wall.position,
+          color: cur_wall.color
+        })
+      );
+      wall_map[[cur_wall.position[1], cur_wall.position[0]]] = cur_wall.color;
     }
   }
 
@@ -937,6 +971,19 @@ function onGameStateChange(msg) {
   }
 }
 
+function addWall(msg) {
+  var wall = msg.wall;
+  if (wall) {
+    walls.push(
+      new Wall({
+        position: wall.position,
+        color: wall.color
+      })
+    );
+    wall_map[[wall.position[1], wall.position[0]]] = wall.color;
+  }
+}
+
 function pushMessage(html) {
   $("#messages").append(($("<li>").html(html)));
   $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
@@ -944,11 +991,13 @@ function pushMessage(html) {
 
 function displayLeaderboards(msg, callback) {
   if (!settings.leaderboard_group && !settings.leaderboard_individual) {
-    if (callback) callback();
+    if (callback) {
+      callback();
+    }
     return;
   }
   var i;
-  if (msg.type == 'new_round') {
+  if (msg.type === 'new_round') {
     pushMessage("<span class='name'>Moderator:</span> the round " + msg.round + ' standings are&hellip;');
   } else {
     pushMessage("<span class='name'>Moderator:</span> the final standings are &hellip;");
@@ -981,19 +1030,25 @@ function displayLeaderboards(msg, callback) {
     settings.paused_game = true;
     setTimeout(function () {
         settings.paused_game = false;
-        if (callback) callback();
+        if (callback) {
+          callback();
+        }
       }, 1000 * settings.leaderboard_time);
-  } else if (callback) callback();
+  } else if (callback) {
+    callback();
+  }
 }
 
-  function gameOverHandler(player_id) {
+function gameOverHandler(player_id) {
   var callback;
   if (!isSpectator) {
     callback = function () {
       $("#dashboard").hide();
       $("#instructions").hide();
       $("#chat").hide();
-      if (player_id) window.location.href = "/questionnaire?participant_id=" + player_id;
+      if (player_id) {
+        window.location.href = "/questionnaire?participant_id=" + player_id;
+      }
     };
     pixels.canvas.style.display = "none";
   }
@@ -1017,7 +1072,8 @@ $(document).ready(function() {
           'color_changed': onColorChanged,
           'state': onGameStateChange,
           'new_round': displayLeaderboards,
-        'stop': gameOverHandler(player_id)
+          'stop': gameOverHandler(player_id),
+          'wall_built': addWall
         }
     };
     var socket = new GUSocket(socketSettings);
@@ -1032,6 +1088,22 @@ $(document).ready(function() {
 
   players.ego_id = player_id;
   $('#donate label').data('orig-text', $('#donate label').text());
+
+  setInterval(function () {
+    var delays = [],
+        start_marks = performance.getEntriesByName('state_start', 'mark');
+    for (var i = 0; i < start_marks.length; i++) {
+      if (start_marks.length > i + 2) {
+        delays.push(start_marks[i+1].startTime - start_marks[i].startTime);
+      }
+    }
+    if (delays.length) {
+      var average_delay = delays.reduce(function(sum, value){
+        return sum + value;
+      }, 0) / delays.length;
+      console.log('Average delay between state updates: ' + average_delay + 'ms.');
+    }
+  }, 5000);
 
   // Append the canvas.
   $("#grid").append(pixels.canvas);
@@ -1053,27 +1125,6 @@ $(document).ready(function() {
   // Submit the questionnaire.
   $("#submit-questionnaire").click(function() {
       dallinger.submitResponses();
-  });
-
-  $("#finish-reading").click(function() {
-    $("#stimulus").hide();
-    $("#response-form").show();
-    $("#submit-response").removeClass("disabled");
-    $("#submit-response").html("Submit");
-  });
-
-  $("#submit-response").click(function() {
-    $("#submit-response").addClass("disabled");
-    $("#submit-response").html("Sending...");
-
-    var response = $("#reproduction").val();
-
-    $("#reproduction").val("");
-
-      dallinger.createInfo(my_node_id, {
-        contents: response,
-        info_type: 'Info'
-    });
   });
 
   if (settings.show_grid) {

@@ -47,6 +47,7 @@
     settings.leaderboard_group = {% if experiment.grid.leaderboard_group %}true{% else %}false{% endif %};
     settings.leaderboard_individual = {% if experiment.grid.leaderboard_individual %}true{% else %}false{% endif %};
     settings.leaderboard_time = {{ experiment.grid.leaderboard_time }} || 10;
+    settings.motion_tremble_rate = {{ experiment.grid.motion_tremble_rate }} || 0.0;
 </script>
 {% endblock %}
 
@@ -62,6 +63,7 @@
         {% if experiment.grid.num_rounds > 1 %}in round <span id="round">?</span>{% endif %}
     </p>
 </div>
+<p class="grid-loading">Loading Game World <span>.</span><span>.</span><span>.</span></p>
 
 <div id="grid" data-identicon-salt="{{ app_id }}">
     <!-- Grid will be inserted here. -->
