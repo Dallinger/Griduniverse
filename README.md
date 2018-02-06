@@ -337,7 +337,10 @@ By default, food is placed on the grid using a random choice from a simple
 random distribution. This parameter allows the experimenter to use a
 different probability distribution. Possible values are random, sinusoidal,
 standing_wave, gaussian_mixture, horizontal_gradient, vertical_gradient,
-edge_bias, and center_bias.
+edge_bias, and center_bias. The gaussian_mixture distribution takes two
+optional parameters, k and sd. Other functions can take one or more
+parameters as well. Parameters go after the distibution name, separated by
+spaces. For example, "food_probability_distribution = gaussian_mixture 2 4".
 
 ### seasonal_growth_rate
 

@@ -829,11 +829,16 @@ class Gridworld(object):
     def _gaussian_mixture_probability_distribution(self, *args):
         rows = self.rows
         cols = self.columns
-        sd = 1
         k = 2
         if len(args):
             try:
                 k = int(args[0])
+            except ValueError:
+                pass
+        sd = 1
+        if len(args) > 1:
+            try:
+                sd = int(args[1])
             except ValueError:
                 pass
         if 'gaussian_means' not in self.food_probability_info:
