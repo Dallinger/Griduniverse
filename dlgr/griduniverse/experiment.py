@@ -322,6 +322,7 @@ class Gridworld(object):
         self.food_probability_function = getattr(self,
                                                  probability_distribution,
                                                  self._random_probability_distribution)
+        self.food_probability_info = {}
 
     def can_occupy(self, position):
         if self.player_overlap:
@@ -826,12 +827,29 @@ class Gridworld(object):
         return [row, column]
 
     def _gaussian_mixture_probability_distribution(self, *args):
-        # Not implemented yet, return simple random value
         rows = self.rows
         cols = self.columns
-        row = random.randint(0, rows - 1)
-        column = random.randint(0, cols - 1)
-        return [row, column]
+        sd = 1
+        k = 2
+        if len(args):
+            try:
+                k = int(args[0])
+            except ValueError:
+                pass
+        if 'gaussian_means' not in self.food_probability_info:
+            means = [(random.randint(0, cols - 1), random.randint(0, rows - 1))
+                     for _ in range(k)]
+            (row_mean, col_mean) = random.choice(means)
+            self.food_probability_info['gaussian_means'] = (row_mean, col_mean)
+        row_mean = self.food_probability_info['gaussian_means'][0]
+        col_mean = self.food_probability_info['gaussian_means'][1]
+        proposed = None
+        while proposed is None:
+            proposed_row = round(random.normalvariate(row_mean, sd))
+            proposed_col = round(random.normalvariate(col_mean, sd))
+            if (0 <= proposed_row < rows) and (0 <= proposed_col < cols):
+                proposed = [proposed_row, proposed_col]
+        return proposed
 
     def _horizontal_gradient_probability_distribution(self, *args):
         rows = self.rows
