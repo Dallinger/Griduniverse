@@ -2,8 +2,7 @@
 mode = sandbox
 auto_recruit = true
 network = FullyConnected
-max_participants = 1
-food_probability_distribution = gaussian_mixture 2 5
+max_participants = 3
 
 [HIT Configuration]
 title = Griduniverse
@@ -20,7 +19,7 @@ organization_name = Monsters University
 browser_exclude_rule = MSIE, mobile, tablet
 
 [Database Parameters]
-database_url = postgresql://dallinger:dallinger@localhost/dallinger
+database_url = postgresql://postgres@localhost/dallinger
 database_size = standard-0
 
 [Server Parameters]
@@ -29,5 +28,5 @@ num_dynos_web = 1
 num_dynos_worker = 1
 host = 0.0.0.0
 notification_url = None
-clock_on = true
+clock_on = false
 logfile = -
