@@ -312,6 +312,7 @@ class Gridworld(object):
             random.shuffle(self.color_costs)
 
         # get food spawning probability distribution function and args
+        self.food_probability_info = {}
         self.probability_function_args = []
         parts = self.food_probability_distribution.split()
         if len(parts) > 1:
@@ -321,8 +322,10 @@ class Gridworld(object):
             self.food_probability_distribution)
         self.food_probability_function = getattr(self,
                                                  probability_distribution,
-                                                 self._random_probability_distribution)
-        self.food_probability_info = {}
+                                                 None)
+        if self.food_probability_function is None:
+            logger.info("Unknown food probability distribution: {}.".format(self.food_probability_distribution))
+            self.food_probability_function = self._random_probability_distribution
 
     def can_occupy(self, position):
         if self.player_overlap:
