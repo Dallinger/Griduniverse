@@ -161,7 +161,7 @@ means all movement is random.
 
 ### show_chatroom
 
-Whether the chatroom appears in the UI. Defaults to True.
+Whether the chatroom appears in the UI. Defaults to False.
 
 
 ### show_grid

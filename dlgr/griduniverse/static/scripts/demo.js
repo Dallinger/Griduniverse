@@ -170,7 +170,7 @@ var Wall = function (settings) {
   return this;
 };
 
-var Player = function (settings) {
+var Player = function (settings, dimness) {
   if (!(this instanceof Player)) {
     return new Player();
   }
@@ -185,6 +185,7 @@ var Player = function (settings) {
   this.payoff = settings.payoff;
   this.name = settings.name;
   this.identity_visible = settings.identity_visible;
+  this.dimness = dimness;
   return this;
 };
 
@@ -369,7 +370,11 @@ var playerSet = (function () {
             currentPlayerData.position = oldPlayerData.position;
           }
         }
-        this._players[currentPlayerData.id] = new Player(currentPlayerData);
+        var last_dimness = 1;
+        if (this._players[currentPlayerData.id] !== undefined) {
+          last_dimness = this._players[currentPlayerData.id].dimness;
+        } 
+        this._players[currentPlayerData.id] = new Player(currentPlayerData, last_dimness);
       }
     };
 
@@ -595,6 +600,10 @@ pixels.frame(function() {
       color = wall_map[[i,j]] || color;
     }
     // Add Blur
+    players.each(function (i, player) {
+      dimness = g.pdf(distance(y, x, player.position[0], player.position[1])) * rescaling;
+      player["dimness"] = dimness;
+    });
     if (!isSpectator) {
       dimness = g.pdf(distance(x, y, i, j)) * rescaling;
       newColor = [
@@ -814,12 +823,18 @@ function chatName(player_id) {
 
 function onChatMessage(msg) {
   var entry = chatName(msg.player_id);
+  if (settings.spatial_chat && players.get(msg.player_id).dimness < settings.chat_visibility_threshold) {
+    return;
+  }
   $("#messages").append(($("<li>").text(": " + msg.contents)).prepend(entry));
   $("#chatlog").scrollTop($("#chatlog")[0].scrollHeight);
 }
 
 function onColorChanged(msg) {
   store.set("color", msg.new_color);
+  if (settings.spatial_chat && players.get(msg.player_id).dimness < settings.chat_visibility_threshold) {
+    return;
+  }
   pushMessage("<span class='name'>Moderator:</span> " + chatName(msg.player_id) + ' changed from team ' + msg.old_color + ' to team ' + msg.new_color + '.');
 }
 
