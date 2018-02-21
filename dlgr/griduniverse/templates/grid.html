@@ -101,7 +101,13 @@
     </div>
     <form action="" class="for-players">
         <input id="message" autocomplete="off" class="for-players" placeholder="Message the group." />
-        <button id="submit-message" class="button button-clear for-players">Send to everyone</button>
+        <button id="submit-message" class="button button-clear for-players">Send to
+            {% if experiment.grid.spatial_chat %}
+                visible players
+            {% else %}
+                everyone
+            {% endif %}
+        </button>
     </form>
 </div>
 
