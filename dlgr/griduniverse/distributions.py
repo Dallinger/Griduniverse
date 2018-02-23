@@ -1,4 +1,3 @@
-
 import numpy
 import random
 from numpy.random import choice
@@ -173,4 +172,3 @@ if __name__ == "__main__":
         coord = test._horizontal_gradient_probability_distribution()
         plt.plot(coord[0],coord[1], color='blue', marker='o')
     plt.show()
-    #print test._sinusoidal_probability_distribution()
