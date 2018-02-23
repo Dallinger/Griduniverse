@@ -12,14 +12,14 @@ class Distributions(object):
         self.rows = rows
         self.columns = columns
 
-    def _random_probability_distribution(self, *args):
+    def random_probability_distribution(self, *args):
         """A probability distribution function always returns a [row, column] pair."""
         row = random.randint(0, self.rows - 1)
         column = random.randint(0, self.columns - 1)
         return [row, column]
 
 
-    def _sinusoidal_probability_distribution(self, *args):
+    def sinusoidal_probability_distribution(self, *args):
         rows = self.rows
         cols = self.columns
         frequency = 10
@@ -37,7 +37,7 @@ class Distributions(object):
         return [row, column]
 
 
-    def _standing_wave_probability_distribution(self, *args):
+    def standing_wave_probability_distribution(self, *args):
         # https://ocefpaf.github.io/python4oceanographers/blog/2013/11/25/waves/
         rows = self.rows
         cols = self.columns
@@ -65,7 +65,7 @@ class Distributions(object):
         return [row, column]
 
 
-    def _gaussian_mixture_probability_distribution(self, *args):
+    def gaussian_mixture_probability_distribution(self, *args):
         rows = self.rows
         cols = self.columns
         k = 2
@@ -96,7 +96,7 @@ class Distributions(object):
         return proposed
 
 
-    def _horizontal_gradient_probability_distribution(self, *args):
+    def horizontal_gradient_probability_distribution(self, *args):
         rows = self.rows
         cols = self.columns
         cells = rows * cols
@@ -109,7 +109,7 @@ class Distributions(object):
         return [row, column]
 
 
-    def _vertical_gradient_probability_distribution(self, *args):
+    def vertical_gradient_probability_distribution(self, *args):
         rows = self.rows
         cols = self.columns
         cells = rows * cols
@@ -122,7 +122,7 @@ class Distributions(object):
         return [row, column]
 
 
-    def _edge_bias_probability_distribution(self, *args):
+    def edge_bias_probability_distribution(self, *args):
         rows = self.rows
         cols = self.columns
         values = range(rows * cols)
@@ -144,7 +144,7 @@ class Distributions(object):
         return [row, column]
 
 
-    def _center_bias_probability_distribution(self, *args):
+    def center_bias_probability_distribution(self, *args):
         rows = self.rows
         cols = self.columns
         values = range(rows * cols)
@@ -169,6 +169,6 @@ class Distributions(object):
 if __name__ == "__main__":
     test = Distributions(100, 100)
     for i in xrange (1, 1000):
-        coord = test._horizontal_gradient_probability_distribution()
+        coord = test.horizontal_gradient_probability_distribution()
         plt.plot(coord[0],coord[1], color='blue', marker='o')
     plt.show()

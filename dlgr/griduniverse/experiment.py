@@ -321,7 +321,7 @@ class Gridworld(object):
             self.probability_function_args = parts[1:]
         distributions = Distributions(self.rows, self.columns)
         # This is used below
-        probability_distribution = "distributions._{}_probability_distribution".format(
+        probability_distribution = "distributions.{}_probability_distribution".format(
             self.food_probability_distribution)
         self.food_probability_function = getattr(self,
                                                  probability_distribution,
