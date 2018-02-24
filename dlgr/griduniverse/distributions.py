@@ -11,6 +11,7 @@ class Distributions(object):
     def __init__(self, rows, columns):
         self.rows = rows
         self.columns = columns
+        self.limit = min(self.rows, self.columns)
 
     def random_probability_distribution(self, *args):
         """A probability distribution function always returns a [row, column] pair."""
@@ -97,78 +98,49 @@ class Distributions(object):
 
 
     def horizontal_gradient_probability_distribution(self, *args):
-        rows = self.rows
-        cols = self.columns
-        cells = rows * cols
-        grid = numpy.gradient(cells * numpy.random.random((rows, cols)), axis=0)
-        grid = (grid - numpy.min(grid)) / (numpy.max(grid) - numpy.min(grid))
-        grid = grid / numpy.sum(grid)
-        value = choice(cells, p=grid.flatten())
-        row = value / cols
-        column = value - (row * cols)
+        size = self.columns - 1
+        column = random.randint(0, size)
+        row = random.triangular(0, size, size)
         return [row, column]
 
 
     def vertical_gradient_probability_distribution(self, *args):
-        rows = self.rows
-        cols = self.columns
-        cells = rows * cols
-        grid = numpy.gradient(cells * numpy.random.random((rows, cols)), axis=1)
-        grid = (grid - numpy.min(grid)) / (numpy.max(grid) - numpy.min(grid))
-        grid = grid / numpy.sum(grid)
-        value = choice(cells, p=grid.flatten())
-        row = value / cols
-        column = value - (row * cols)
+        size = self.rows - 1
+        row = random.randint(0, size)
+        column = random.triangular(0, size, size)
         return [row, column]
 
 
     def edge_bias_probability_distribution(self, *args):
-        rows = self.rows
-        cols = self.columns
-        values = range(rows * cols)
-        for row in range(rows):
-            for col in range(cols):
-                values[row * cols + col] = 2
-                if col == 2 or row == 2 or col == cols - 3 or row == rows - 3:
-                    values[row * cols + col] = 4
-                if col == 1 or row == 1 or col == cols - 2 or row == rows - 2:
-                    values[row * cols + col] = 8
-                if col == 0 or row == 0 or col == cols - 1 or row == rows - 1:
-                    values[row * cols + col] = 16
-        total = sum(values)
-        for index, value in enumerate(values):
-            values[index] = float(value) / float(total)
-        value = choice(rows * cols, p=values)
-        row = value / cols
-        column = value - (row * cols)
+        mu = self.rows / 2 # mean
+        sigma = 15  # standard deviation
+        row = numpy.random.normal(mu, sigma)
+        column = numpy.random.normal(mu, sigma)
+        if row < 50:
+            row = (50 + numpy.random.normal(mu, sigma))
+        elif row > 50:
+            row = abs(numpy.random.normal(mu, sigma) - 50)
+        if column < 50:
+            column = 50 + numpy.random.normal(mu, sigma)
+        elif column > 50:
+            column = abs(numpy.random.normal(mu, sigma) - 50)
         return [row, column]
 
 
     def center_bias_probability_distribution(self, *args):
-        rows = self.rows
-        cols = self.columns
-        values = range(rows * cols)
-        for row in range(rows):
-            for col in range(cols):
-                values[row * cols + col] = 16
-                if col == 2 or row == 2 or col == cols - 3 or row == rows - 3:
-                    values[row * cols + col] = 8
-                if col == 1 or row == 1 or col == cols - 2 or row == rows - 2:
-                    values[row * cols + col] = 4
-                if col == 0 or row == 0 or col == cols - 1 or row == rows - 1:
-                    values[row * cols + col] = 2
-        total = sum(values)
-        for index, value in enumerate(values):
-            values[index] = float(value) / float(total)
-        value = choice(rows * cols, p=values)
-        row = value / cols
-        column = value - (row * cols)
+        mu = self.row / 2 # mean
+        sigma = 15  # standard deviation
+        while True:
+            row = numpy.random.normal(mu, sigma)
+            column = numpy.random.normal(mu, sigma)
+            # Create some cutoff for values
+            if row < self.rows and row >= 0 and column < self.columns and column >= 0:
+                break
         return [row, column]
-
 
 if __name__ == "__main__":
     test = Distributions(100, 100)
     for i in xrange (1, 1000):
-        coord = test.horizontal_gradient_probability_distribution()
+        coord = test.edge_bias_probability_distribution()
         plt.plot(coord[0],coord[1], color='blue', marker='o')
     plt.show()
