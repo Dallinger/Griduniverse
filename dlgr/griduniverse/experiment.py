@@ -31,7 +31,7 @@ from maze import Wall
 from maze import labyrinth
 from bots import Bot
 from models import Event
-from distributions import Distributions
+from dallinger.distributions import Distributions
 
 logger = logging.getLogger(__file__)
 config = get_config()
