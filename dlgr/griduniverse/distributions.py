@@ -39,30 +39,10 @@ class Distributions(object):
 
 
     def standing_wave_probability_distribution(self, *args):
-        # https://ocefpaf.github.io/python4oceanographers/blog/2013/11/25/waves/
-        rows = self.rows
-        cols = self.columns
-        a = 1
-        if len(args):
-            try:
-                a = int(args[0])
-            except ValueError:
-                pass
-        d = 1
-        t = 20
-        w = 2 * numpy.pi / t
-        k = w ** 2 / 9.81
-        x = numpy.arange(rows * cols)
-        a1 = (a ** 2 + a ** 2 + 2 * a * a * numpy.cos(2 * k * x + d)) ** (0.5)
-        a2 = a * numpy.cos(k * x) + a * numpy.cos(k * x + d)
-        a3 = a * numpy.sin(k * x) - a * numpy.sin(k * x + d)
-        g = numpy.arctan2(a3, a2)
-        p = a1 * numpy.cos(w * x - g)
-        p = (p - numpy.min(p)) / (numpy.max(p) - numpy.min(p))
-        p = p / numpy.sum(p)
-        value = choice(rows * cols, p=p)
-        row = value / cols
-        column = value - (row * cols)
+        size = self.columns - 1
+        mu = (self.columns - 1) / 2
+        column = random.randint(0, size)
+        row = random.triangular(0, size, mu)
         return [row, column]
 
 
@@ -152,9 +132,10 @@ class Distributions(object):
                 break
         return [row, column]
 
+
 if __name__ == "__main__":
     test = Distributions(100, 100)
     for i in xrange (1, 1000):
-        coord = test.edge_bias_probability_distribution()
+        coord = test.standing_wave_probability_distribution()
         plt.plot(coord[0],coord[1], color='blue', marker='o')
     plt.show()
