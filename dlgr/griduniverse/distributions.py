@@ -98,6 +98,7 @@ class Distributions(object):
 
 
     def horizontal_gradient_probability_distribution(self, *args):
+        """Vertical gradient on the x axis"""
         size = self.columns - 1
         column = random.randint(0, size)
         row = random.triangular(0, size, size)
@@ -105,6 +106,7 @@ class Distributions(object):
 
 
     def vertical_gradient_probability_distribution(self, *args):
+        """Vertical gradient on the y axis"""
         size = self.rows - 1
         row = random.randint(0, size)
         column = random.triangular(0, size, size)
@@ -112,23 +114,35 @@ class Distributions(object):
 
 
     def edge_bias_probability_distribution(self, *args):
+        """Do the inverse to a normal distribution """
         mu = self.rows / 2 # mean
         sigma = 15  # standard deviation
         row = numpy.random.normal(mu, sigma)
         column = numpy.random.normal(mu, sigma)
-        if row < 50:
-            row = (50 + numpy.random.normal(mu, sigma))
-        elif row > 50:
-            row = abs(numpy.random.normal(mu, sigma) - 50)
-        if column < 50:
-            column = 50 + numpy.random.normal(mu, sigma)
-        elif column > 50:
-            column = abs(numpy.random.normal(mu, sigma) - 50)
+        while True:
+            flip = random.randint(0, 1)
+            if flip:
+                if row < mu:
+                    row = (mu + numpy.random.normal(mu, sigma))
+                    column = random.randint(0, self.columns - 1)
+                elif row > mu:
+                    row = abs(numpy.random.normal(mu, sigma) - mu)
+                    column = random.randint(0, self.columns - 1)
+            else:
+                if column < mu:
+                    column = mu + numpy.random.normal(mu, sigma)
+                    row  = random.randint(0, self.columns - 1)
+                elif column > mu:
+                    column = abs(numpy.random.normal(mu, sigma) - mu)
+                    row  = random.randint(0, self.columns - 1)
+            if row < self.rows and row >= 0 and column < self.columns and column >= 0:
+                break
         return [row, column]
 
 
     def center_bias_probability_distribution(self, *args):
-        mu = self.row / 2 # mean
+        """Do normal distribution in two dimensions"""
+        mu = self.rows / 2 # mean
         sigma = 15  # standard deviation
         while True:
             row = numpy.random.normal(mu, sigma)
