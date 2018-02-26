@@ -99,24 +99,21 @@ class Distributions(object):
         sigma = 15  # standard deviation
         row = numpy.random.normal(mu, sigma)
         column = numpy.random.normal(mu, sigma)
-        while True:
-            flip = random.randint(0, 1)
-            if flip:
-                if row < mu:
-                    row = (mu + numpy.random.normal(mu, sigma))
-                    column = random.randint(0, self.columns - 1)
-                elif row > mu:
-                    row = abs(numpy.random.normal(mu, sigma) - mu)
-                    column = random.randint(0, self.columns - 1)
+        valid = False
+        while not valid:
+            if row > mu and column > mu:
+                row = (mu + numpy.random.normal(mu, sigma))
+                column = random.randint(0, self.columns - 1)
+            elif row > mu and column < mu:
+                row = abs(numpy.random.normal(mu, sigma) - mu)
+                column = random.randint(0, self.columns - 1)
+            elif row < mu and column > mu:
+                column = mu + numpy.random.normal(mu, sigma)
+                row  = random.randint(0, self.columns - 1)
             else:
-                if column < mu:
-                    column = mu + numpy.random.normal(mu, sigma)
-                    row  = random.randint(0, self.columns - 1)
-                elif column > mu:
-                    column = abs(numpy.random.normal(mu, sigma) - mu)
-                    row  = random.randint(0, self.columns - 1)
-            if row < self.rows and row >= 0 and column < self.columns and column >= 0:
-                break
+                column = abs(numpy.random.normal(mu, sigma) - mu)
+                row  = random.randint(0, self.columns - 1)
+            valid = self.valid_boundary(row, column)
         return [row, column]
 
 
@@ -132,10 +129,14 @@ class Distributions(object):
                 break
         return [row, column]
 
+    def valid_boundary(self, row, column):
+        if row < self.rows and row >= 0 and column < self.columns and column >= 0:
+            return True
+        return False
 
 if __name__ == "__main__":
     test = Distributions(100, 100)
     for i in xrange (1, 1000):
-        coord = test.standing_wave_probability_distribution()
+        coord = test.edge_bias_probability_distribution()
         plt.plot(coord[0],coord[1], color='blue', marker='o')
     plt.show()
