@@ -121,12 +121,12 @@ class Distributions(object):
         """Do normal distribution in two dimensions"""
         mu = self.rows / 2 # mean
         sigma = 15  # standard deviation
-        while True:
+        valid = False
+        while not valid:
             row = numpy.random.normal(mu, sigma)
             column = numpy.random.normal(mu, sigma)
             # Create some cutoff for values
-            if row < self.rows and row >= 0 and column < self.columns and column >= 0:
-                break
+            valid = self.valid_boundary(row, column)
         return [row, column]
 
     def valid_boundary(self, row, column):
