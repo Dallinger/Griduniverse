@@ -800,21 +800,21 @@ class Gridworld(object):
         value = choice(rows * cols, p=p.flatten())
         row = value / cols
         column = value - (row * cols)
-        return [row, column]
+        return [int(row), int(column)]
 
     def _horizontal_gradient_probability_distribution(self, *args):
         """Vertical gradient on the x axis"""
         size = self.columns - 1
         column = random.randint(0, size)
         row = random.triangular(0, size, size)
-        return [row, column]
+        return [int(row), int(column)]
 
     def _vertical_gradient_probability_distribution(self, *args):
         """Vertical gradient on the y axis"""
         size = self.rows - 1
         row = random.randint(0, size)
         column = random.triangular(0, size, size)
-        return [row, column]
+        return [int(row), int(column)]
 
     def _edge_bias_probability_distribution(self, *args):
         """Do the inverse to a normal distribution """
@@ -836,8 +836,8 @@ class Gridworld(object):
             else:
                 column = abs(numpy.random.normal(mu, sigma) - mu)
                 row = random.randint(0, self.columns - 1)
-            valid = self.valid_boundary(row, column)
-        return [row, column]
+            valid = self._is_valid_boundary(row, column)
+        return [int(row), int(column)]
 
     def _center_bias_probability_distribution(self, *args):
         """Do normal distribution in two dimensions"""
@@ -848,10 +848,10 @@ class Gridworld(object):
             row = numpy.random.normal(mu, sigma)
             column = numpy.random.normal(mu, sigma)
             # Create some cutoff for values
-            valid = self.valid_boundary(row, column)
-        return [row, column]
+            valid = self._is_valid_boundary(row, column)
+        return [int(row), int(column)]
 
-    def valid_boundary(self, row, column):
+    def _is_valid_boundary(self, row, column):
         """Truncate random sample"""
         if row < self.rows and row >= 0 and column < self.columns and column >= 0:
             return True
