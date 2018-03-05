@@ -5,6 +5,7 @@ import gevent
 import json
 import logging
 import math
+import numpy
 import random
 import string
 import time
@@ -12,6 +13,7 @@ import uuid
 
 from cached_property import cached_property
 from faker import Factory
+from numpy.random import choice
 from sqlalchemy import create_engine
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import (
@@ -115,6 +117,7 @@ def extra_parameters():
         'food_maturation_threshold': float,
         'food_planting': bool,
         'food_planting_cost': int,
+        'food_probability_distribution': unicode,
         'seasonal_growth_rate': float,
         'difi_question': bool,
         'difi_group_label': unicode,
@@ -276,6 +279,7 @@ class Gridworld(object):
             'food_maturation_threshold', 0.0)
         self.food_planting = kwargs.get('food_planting', False)
         self.food_planting_cost = kwargs.get('food_planting_cost', 1)
+        self.food_probability_distribution = kwargs.get('food_probability_distribution', 'random')
         self.seasonal_growth_rate = kwargs.get('seasonal_growth_rate', 1)
 
         # Questionnaire
@@ -306,6 +310,22 @@ class Gridworld(object):
         if self.costly_colors:
             self.color_costs = [2**i for i in range(self.num_colors)]
             random.shuffle(self.color_costs)
+
+        # get food spawning probability distribution function and args
+        self.food_probability_info = {}
+        self.probability_function_args = []
+        parts = self.food_probability_distribution.split()
+        if len(parts) > 1:
+            self.food_probability_distribution = parts[0]
+            self.probability_function_args = parts[1:]
+        probability_distribution = "_{}_probability_distribution".format(
+            self.food_probability_distribution)
+        self.food_probability_function = getattr(self,
+                                                 probability_distribution,
+                                                 None)
+        if self.food_probability_function is None:
+            logger.info("Unknown food probability distribution: {}.".format(self.food_probability_distribution))
+            self.food_probability_function = self._random_probability_distribution
 
     def can_occupy(self, position):
         if self.player_overlap:
@@ -618,6 +638,9 @@ class Gridworld(object):
                 text += """It will appear immediately, but not be consumable for
                     some time, because it has a maturation period. It will show
                     up as brown initially, and then as green when it matures."""
+        text += """<br>The location where the food will appear after respawning is
+            is determined by the <strong>{g.food_probability_distribution}</strong>
+            probability distribution."""
         if self.food_planting:
             text += " Players can plant more food by pressing the spacebar."
             if self.food_planting_cost > 0:
@@ -747,16 +770,92 @@ class Gridworld(object):
         return player
 
     def _random_empty_position(self):
-        """Select an empty cell at random."""
+        """Select an empty cell at random, using the configured probability
+        distribution."""
         empty_cell = False
         while (not empty_cell):
-            position = [
-                random.randint(0, self.rows - 1),
-                random.randint(0, self.columns - 1),
-            ]
+            position = self.food_probability_function(*self.probability_function_args)
             empty_cell = self._empty(position)
 
         return position
+
+    def _random_probability_distribution(self, *args):
+        """A probability distribution function always returns a [row, column] pair."""
+        row = random.randint(0, self.rows - 1)
+        column = random.randint(0, self.columns - 1)
+        return [row, column]
+
+    def _sinusoidal_probability_distribution(self, *args):
+        rows = self.rows
+        cols = self.columns
+        frequency = 10
+        if len(args):
+            try:
+                frequency = int(args[0])
+            except ValueError:
+                pass
+        grid = numpy.tile(numpy.linspace(0, 1, cols), (rows, 1))
+        p = 0.5 + 0.5 * numpy.sin(frequency * grid)
+        p = p / numpy.sum(p)
+        value = choice(rows * cols, p=p.flatten())
+        row = value / cols
+        column = value - (row * cols)
+        return [int(row), int(column)]
+
+    def _horizontal_gradient_probability_distribution(self, *args):
+        """Vertical gradient on the x axis"""
+        size = self.columns - 1
+        column = random.randint(0, size)
+        row = random.triangular(0, size, size)
+        return [int(row), int(column)]
+
+    def _vertical_gradient_probability_distribution(self, *args):
+        """Vertical gradient on the y axis"""
+        size = self.rows - 1
+        row = random.randint(0, size)
+        column = random.triangular(0, size, size)
+        return [int(row), int(column)]
+
+    def _edge_bias_probability_distribution(self, *args):
+        """Do the inverse to a normal distribution """
+        mu = self.rows / 2  # mean
+        sigma = 15  # standard deviation
+        row = numpy.random.normal(mu, sigma)
+        column = numpy.random.normal(mu, sigma)
+        valid = False
+        while not valid:
+            if row > mu and column > mu:
+                row = (mu + numpy.random.normal(mu, sigma))
+                column = random.randint(0, self.columns - 1)
+            elif row > mu and column < mu:
+                row = abs(numpy.random.normal(mu, sigma) - mu)
+                column = random.randint(0, self.columns - 1)
+            elif row < mu and column > mu:
+                column = mu + numpy.random.normal(mu, sigma)
+                row = random.randint(0, self.columns - 1)
+            else:
+                column = abs(numpy.random.normal(mu, sigma) - mu)
+                row = random.randint(0, self.columns - 1)
+            valid = self._is_valid_boundary(row, column)
+        return [int(row), int(column)]
+
+    def _center_bias_probability_distribution(self, *args):
+        """Do normal distribution in two dimensions"""
+        mu = self.rows / 2  # mean
+        sigma = 15  # standard deviation
+        valid = False
+        while not valid:
+            row = numpy.random.normal(mu, sigma)
+            column = numpy.random.normal(mu, sigma)
+            # Create some cutoff for values
+            valid = self._is_valid_boundary(row, column)
+        return [int(row), int(column)]
+
+    def _is_valid_boundary(self, row, column):
+        """Truncate random sample"""
+        if row < self.rows and row >= 0 and column < self.columns and column >= 0:
+            return True
+        return False
 
     def _empty(self, position):
         """Determine whether a particular cell is empty."""
