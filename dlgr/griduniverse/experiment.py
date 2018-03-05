@@ -802,128 +802,60 @@ class Gridworld(object):
         column = value - (row * cols)
         return [row, column]
 
-    def _standing_wave_probability_distribution(self, *args):
-        # https://ocefpaf.github.io/python4oceanographers/blog/2013/11/25/waves/
-        rows = self.rows
-        cols = self.columns
-        a = 1
-        if len(args):
-            try:
-                a = int(args[0])
-            except ValueError:
-                pass
-        d = 1
-        t = 20
-        w = 2 * numpy.pi / t
-        k = w**2 / 9.81
-        x = numpy.arange(rows * cols)
-        a1 = (a**2 + a**2 + 2*a * a * numpy.cos(2 * k * x + d))**(0.5)
-        a2 = a * numpy.cos(k * x) + a * numpy.cos(k * x + d)
-        a3 = a * numpy.sin(k * x) - a * numpy.sin(k * x + d)
-        g = numpy.arctan2(a3, a2)
-        p = a1 * numpy.cos(w * x - g)
-        p = (p-numpy.min(p)) / (numpy.max(p) - numpy.min(p))
-        p = p / numpy.sum(p)
-        value = choice(rows * cols, p=p)
-        row = value / cols
-        column = value - (row * cols)
-        return [row, column]
-
-    def _gaussian_mixture_probability_distribution(self, *args):
-        rows = self.rows
-        cols = self.columns
-        k = 2
-        if len(args):
-            try:
-                k = int(args[0])
-            except ValueError:
-                pass
-        sd = 1
-        if len(args) > 1:
-            try:
-                sd = int(args[1])
-            except ValueError:
-                pass
-        if 'gaussian_means' not in self.food_probability_info:
-            means = [(random.randint(0, cols - 1), random.randint(0, rows - 1))
-                     for _ in range(k)]
-            (row_mean, col_mean) = random.choice(means)
-            self.food_probability_info['gaussian_means'] = (row_mean, col_mean)
-        row_mean = self.food_probability_info['gaussian_means'][0]
-        col_mean = self.food_probability_info['gaussian_means'][1]
-        proposed = None
-        while proposed is None:
-            proposed_row = round(random.normalvariate(row_mean, sd))
-            proposed_col = round(random.normalvariate(col_mean, sd))
-            if (0 <= proposed_row < rows) and (0 <= proposed_col < cols):
-                proposed = [proposed_row, proposed_col]
-        return proposed
-
     def _horizontal_gradient_probability_distribution(self, *args):
-        rows = self.rows
-        cols = self.columns
-        cells = rows * cols
-        grid = numpy.gradient(cells * numpy.random.random((rows, cols)), axis=0)
-        grid = (grid-numpy.min(grid)) / (numpy.max(grid) - numpy.min(grid))
-        grid = grid / numpy.sum(grid)
-        value = choice(cells, p=grid.flatten())
-        row = value / cols
-        column = value - (row * cols)
+        """Vertical gradient on the x axis"""
+        size = self.columns - 1
+        column = random.randint(0, size)
+        row = random.triangular(0, size, size)
         return [row, column]
 
     def _vertical_gradient_probability_distribution(self, *args):
-        rows = self.rows
-        cols = self.columns
-        cells = rows * cols
-        grid = numpy.gradient(cells * numpy.random.random((rows, cols)), axis=1)
-        grid = (grid-numpy.min(grid)) / (numpy.max(grid) - numpy.min(grid))
-        grid = grid / numpy.sum(grid)
-        value = choice(cells, p=grid.flatten())
-        row = value / cols
-        column = value - (row * cols)
+        """Vertical gradient on the y axis"""
+        size = self.rows - 1
+        row = random.randint(0, size)
+        column = random.triangular(0, size, size)
         return [row, column]
 
     def _edge_bias_probability_distribution(self, *args):
-        rows = self.rows
-        cols = self.columns
-        values = range(rows * cols)
-        for row in range(rows):
-            for col in range(cols):
-                values[row * cols + col] = 2
-                if col == 2 or row == 2 or col == cols - 3 or row == rows - 3:
-                    values[row * cols + col] = 4
-                if col == 1 or row == 1 or col == cols - 2 or row == rows - 2:
-                    values[row * cols + col] = 8
-                if col == 0 or row == 0 or col == cols - 1 or row == rows - 1:
-                    values[row * cols + col] = 16
-        total = sum(values)
-        for index, value in enumerate(values):
-            values[index] = float(value)/float(total)
-        value = choice(rows * cols, p=values)
-        row = value / cols
-        column = value - (row * cols)
+        """Do the inverse to a normal distribution """
+        mu = self.rows / 2  # mean
+        sigma = 15  # standard deviation
+        row = numpy.random.normal(mu, sigma)
+        column = numpy.random.normal(mu, sigma)
+        valid = False
+        while not valid:
+            if row > mu and column > mu:
+                row = (mu + numpy.random.normal(mu, sigma))
+                column = random.randint(0, self.columns - 1)
+            elif row > mu and column < mu:
+                row = abs(numpy.random.normal(mu, sigma) - mu)
+                column = random.randint(0, self.columns - 1)
+            elif row < mu and column > mu:
+                column = mu + numpy.random.normal(mu, sigma)
+                row = random.randint(0, self.columns - 1)
+            else:
+                column = abs(numpy.random.normal(mu, sigma) - mu)
+                row = random.randint(0, self.columns - 1)
+            valid = self.valid_boundary(row, column)
         return [row, column]
 
     def _center_bias_probability_distribution(self, *args):
-        rows = self.rows
-        cols = self.columns
-        values = range(rows * cols)
-        for row in range(rows):
-            for col in range(cols):
-                values[row * cols + col] = 16
-                if col == 2 or row == 2 or col == cols - 3 or row == rows - 3:
-                    values[row * cols + col] = 8
-                if col == 1 or row == 1 or col == cols - 2 or row == rows - 2:
-                    values[row * cols + col] = 4
-                if col == 0 or row == 0 or col == cols - 1 or row == rows - 1:
-                    values[row * cols + col] = 2
-        total = sum(values)
-        for index, value in enumerate(values):
-            values[index] = float(value)/float(total)
-        value = choice(rows * cols, p=values)
-        row = value / cols
-        column = value - (row * cols)
+        """Do normal distribution in two dimensions"""
+        mu = self.rows / 2  # mean
+        sigma = 15  # standard deviation
+        valid = False
+        while not valid:
+            row = numpy.random.normal(mu, sigma)
+            column = numpy.random.normal(mu, sigma)
+            # Create some cutoff for values
+            valid = self.valid_boundary(row, column)
         return [row, column]
+
+    def valid_boundary(self, row, column):
+        """Truncate random sample"""
+        if row < self.rows and row >= 0 and column < self.columns and column >= 0:
+            return True
+        return False
 
     def _empty(self, position):
         """Determine whether a particular cell is empty."""
