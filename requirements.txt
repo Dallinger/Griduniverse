@@ -1,5 +1,5 @@
 -e git://github.com/Dallinger/Dallinger.git@master#egg=dallinger[data]
 setuptools
 networkx==1.11
-numpy==1.13.1
+numpy==1.11.1
 faker==0.7.10
