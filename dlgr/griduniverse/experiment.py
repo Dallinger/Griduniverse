@@ -138,6 +138,7 @@ def extra_parameters():
         'wall_building_cost': int,
         'donation_multiplier': float,
         'num_recruits': int,
+        'state_interval': float,
     }
 
     for key in types:
@@ -1241,6 +1242,9 @@ class Griduniverse(Experiment):
 
     def publish(self, msg):
         """Publish a message to all griduniverse clients"""
+        # Include the time the message was published, for synchronisation
+        # of bot clocks
+        msg['server_time'] = time.time()
         redis.publish('griduniverse', json.dumps(msg))
 
     def handle_connect(self, msg):
@@ -1406,7 +1410,7 @@ class Griduniverse(Experiment):
             gevent.sleep(0.1)
 
         while True:
-            gevent.sleep(0.050)
+            gevent.sleep(config.get('state_interval', 0.050))
 
             # Send all food data once every 40 loops
             update_walls = update_food = False
