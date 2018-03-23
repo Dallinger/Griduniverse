@@ -1021,11 +1021,6 @@ extra_routes = flask.Blueprint(
     static_folder='static')
 
 
-@extra_routes.route('/')
-def index():
-    return flask.render_template('index.html')
-
-
 @extra_routes.route("/consent")
 def consent():
     """Return the consent form. Here for backwards-compatibility with 2.x."""
