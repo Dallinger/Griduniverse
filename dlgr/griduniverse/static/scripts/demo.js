@@ -604,6 +604,7 @@ pixels.frame(function() {
       dimness = g.pdf(distance(y, x, player.position[0], player.position[1])) * rescaling;
       player["dimness"] = dimness;
     });
+    newColor = color;
     if (!isSpectator) {
       dimness = g.pdf(distance(x, y, i, j)) * rescaling;
       newColor = [

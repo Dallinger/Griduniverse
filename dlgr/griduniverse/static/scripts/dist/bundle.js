@@ -2164,6 +2164,7 @@ pixels.frame(function() {
       dimness = g.pdf(distance(y, x, player.position[0], player.position[1])) * rescaling;
       player["dimness"] = dimness;
     });
+    newColor = color;
     if (!isSpectator) {
       dimness = g.pdf(distance(x, y, i, j)) * rescaling;
       newColor = [
@@ -16596,15 +16597,15 @@ Color.prototype = {
 		return (contrastRatio >= 4.5) ? 'AA' : '';
 	},
 
-	isDark: function () {
+	dark: function () {
 		// YIQ equation from http://24ways.org/2010/calculating-color-contrast
 		var rgb = this.rgb().color;
 		var yiq = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
 		return yiq < 128;
 	},
 
-	isLight: function () {
-		return !this.isDark();
+	light: function () {
+		return !this.dark();
 	},
 
 	negate: function () {
@@ -17185,10 +17186,11 @@ var conversions = __webpack_require__(7);
 	conversions that are not possible simply are not included.
 */
 
+// https://jsperf.com/object-keys-vs-for-in-with-closure/3
+var models = Object.keys(conversions);
+
 function buildGraph() {
 	var graph = {};
-	// https://jsperf.com/object-keys-vs-for-in-with-closure/3
-	var models = Object.keys(conversions);
 
 	for (var len = models.length, i = 0; i < len; i++) {
 		graph[models[i]] = {
