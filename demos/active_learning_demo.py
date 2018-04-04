@@ -1,6 +1,6 @@
 from dallinger.experiments import Griduniverse
-from learners import ActiveLearner
-from query_strategies import (
+from bams.learners import ActiveLearner
+from bams.query_strategies import (
     # BALD,
     HyperCubePool,
     RandomStrategy,
@@ -14,12 +14,12 @@ DEPTH = 1
 
 def scale_down(maxVal, dim):
     """Rescale 0 =< output =< 1"""
-    out = float(dim/maxVal)
+    out = float(dim/maxVal) if maxVal else 0
     return out
 
 def scale_up(maxVal, dim):
     """Rescale up to actual values"""
-    out = (dim/1.0) * maxVal
+    out = dim * maxVal
     return out
 
 def oracle(x):
@@ -31,9 +31,9 @@ def oracle(x):
     MAX_TIME_PER_ROUND = 20.0
     MAX_NUM_FOOD = 8
     experiment = Griduniverse()
-    participants = scale_up(MAX_PARTICIPANTS, x[0])
+    participants = scale_up(MAX_PARTICIPANTS, int(x[0]))
     time_per_round = scale_up(MAX_TIME_PER_ROUND, x[1])
-    num_food = scale_up(MAX_NUM_FOOD, x[2])
+    num_food = scale_up(MAX_NUM_FOOD, int(x[2]))
     MAX_PARTICIPANTS = max(MAX_PARTICIPANTS, participants)
     MAX_TIME_PER_ROUND = max(MAX_TIME_PER_ROUND, time_per_round)
     MAX_NUM_FOOD = max(MAX_NUM_FOOD, num_food)
