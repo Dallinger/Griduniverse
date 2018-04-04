@@ -33,8 +33,8 @@ class TestLabyrinth(object):
         assert len(walls) == 25
 
     def test_reducing_density_and_contiguity_reduces_wall_count_by_sum(self, labyrinth):
-        walls = labyrinth(columns=10, rows=10, density=0.5, contiguity=0.5)
-        assert len(walls) == 12  # 50 * .5. * .5, rounded down.
+        walls = labyrinth(columns=12, rows=12, density=0.5, contiguity=0.5)
+        assert len(walls) == 18  # 144 * .5. * .5
 
 
 class TestMazePrune(object):

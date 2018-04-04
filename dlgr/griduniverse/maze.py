@@ -34,9 +34,8 @@ def labyrinth(columns=25, rows=25, density=1.0, contiguity=1.0):
 
 def _generate(rows, columns):
     """Generate an initial maze with 50% wall and 50% space."""
-    c = (columns - 1) / 2
-    r = (rows - 1) / 2
-
+    c = (columns - 1) // 2
+    r = (rows - 1) // 2
     visited = [[0] * c + [1] for _ in range(r)] + [[1] * (c + 1)]
     ver = [["* "] * c + ['*'] for _ in range(r)] + [[]]
     hor = [["**"] * c + ['*'] for _ in range(r + 1)]
@@ -73,7 +72,7 @@ def _generate(rows, columns):
     positions = []
     for idx, value in enumerate(maze):
         if value:
-            positions.append([idx / columns, idx % columns])
+            positions.append([idx // columns, idx % columns])
 
     return positions
 
