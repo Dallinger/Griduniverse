@@ -6,50 +6,51 @@ from bams.query_strategies import (
     RandomStrategy,
 )
 
-NDIM = 3
+NDIM = 1
 POOL_SIZE = 500
 BUDGET = 10
 BASE_KERNELS = ["PER", "LIN"]
 DEPTH = 1
 
-def scale_down(maxVal, dim):
-    """Rescale 0 =< output =< 1"""
-    out = float(dim/maxVal) if maxVal else 0
-    return out
 
 def scale_up(maxVal, dim):
     """Rescale up to actual values"""
-    out = dim * maxVal
+    out = int(dim * maxVal)
+    return out
+
+def scale_down(maxVal, dim):
+    """Rescale 0 =< output =< 1"""
+    out = float(dim/maxVal) if maxVal else 0.0
     return out
 
 def oracle(x):
     """Run a GU game by scaling up the features so they can be input into the game.
     From these scaled up features, we may need to redefine our maximum thresholds.
     """
-    MAX_AVG_SCORE = 1.0
-    MAX_PARTICIPANTS = 1
-    MAX_TIME_PER_ROUND = 20.0
-    MAX_NUM_FOOD = 8
+    grid_config = {"participants": 1,
+                   "time_per_round": 20.0,
+                   "num_food": 100,
+                   "average_score":200.0,
+                }
     experiment = Griduniverse()
-    participants = scale_up(MAX_PARTICIPANTS, int(x[0]))
-    time_per_round = scale_up(MAX_TIME_PER_ROUND, x[1])
-    num_food = scale_up(MAX_NUM_FOOD, int(x[2]))
-    MAX_PARTICIPANTS = max(MAX_PARTICIPANTS, participants)
-    MAX_TIME_PER_ROUND = max(MAX_TIME_PER_ROUND, time_per_round)
-    MAX_NUM_FOOD = max(MAX_NUM_FOOD, num_food)
+    # Scale up
+    print x[0]
+    num_food = scale_up(grid_config['num_food'], float(x[0]))
+    print num_food
     data = experiment.run(
     mode=u'debug',
     recruiter=u'bots',
     bot_policy=u"AdvantageSeekingBot",
-    time_per_round = time_per_round,
+    time_per_round = grid_config['time_per_round'],
     num_food = num_food,
-    max_participants=participants,
-    num_dynos_worker=participants,
+    max_participants=grid_config['participants'],
+    num_dynos_worker=grid_config['participants'],
     webdriver_type=u'chrome',
     )
-    avg_score = float(experiment.analyze(data)['average_score'])
+    score = experiment.average_score(data)
+    print score
     # Scale back down
-    results = scale_down(MAX_AVG_SCORE, avg_score)
+    results = scale_down(grid_config['average_score'], score)
     return results
 
 learner = ActiveLearner(
