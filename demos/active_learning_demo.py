@@ -13,24 +13,24 @@ BASE_KERNELS = ["PER", "LIN"]
 DEPTH = 1
 
 
-def scale_up(maxVal, dim):
+def scale_up(threshold, dim):
     """Rescale up to actual values"""
-    out = int(dim * maxVal)
+    out = int(dim * threshold)
     return out
 
-def scale_down(maxVal, dim):
+def scale_down(threshold, dim):
     """Rescale 0 =< output =< 1"""
-    out = float(dim/maxVal) if maxVal else 0.0
+    out = float(dim/threshold) if threshold else 0.0
     return out
 
 def oracle(x):
     """Run a GU game by scaling up the features so they can be input into the game.
-    From these scaled up features, we may need to redefine our maximum thresholds.
+    Then scale them done so the active learner can understand them.
     """
     grid_config = {"participants": 1,
                    "time_per_round": 20.0,
                    "num_food": 100,
-                   "average_score":200.0,
+                   "average_score": 200.0,
                 }
     experiment = Griduniverse()
     # Scale up
