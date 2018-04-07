@@ -13,6 +13,7 @@ import uuid
 from cached_property import cached_property
 from faker import Factory
 from sqlalchemy import create_engine
+from sqlalchemy import func
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import (
     sessionmaker,
@@ -136,6 +137,7 @@ def extra_parameters():
         'build_walls': bool,
         'wall_building_cost': int,
         'donation_multiplier': float,
+        'num_recruits': int,
     }
 
     for key in types:
@@ -1100,7 +1102,8 @@ class Griduniverse(Experiment):
         super(Griduniverse, self).configure()
         self.num_participants = config.get('max_participants', 3)
         self.quorum = self.num_participants
-        self.initial_recruitment_size = config.get('max_participants', 3)
+        self.initial_recruitment_size = config.get('num_recruits',
+                                                   self.num_participants)
         self.network_factory = config.get('network', 'FullyConnected')
 
     @property
@@ -1642,3 +1645,14 @@ class Griduniverse(Experiment):
         id_matches = [p for p in players if int(p['id']) == player_id]
         if id_matches:
             return id_matches[0]
+
+    def is_complete(self):
+        """Don't consider the experiment finished until all initial
+        recruits have completed the experiment."""
+        finished_count = self.session.query(
+            dallinger.models.Participant
+        ).filter(
+            dallinger.models.Participant.status.in_(['approved', 'rejected'])
+        ).with_entities(func.count(dallinger.models.Participant.id)).scalar()
+
+        return finished_count >= self.initial_recruitment_size
