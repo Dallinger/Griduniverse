@@ -15,6 +15,21 @@ skip_on_ci = pytest.mark.skipif(
 )
 
 
+@pytest.fixture(scope='module', autouse=True)
+def reset_config():
+    yield
+
+    # Make sure dallinger_experiment module isn't kept between tests
+    import sys
+    if 'dallinger_experiment' in sys.modules:
+        del sys.modules['dallinger_experiment']
+
+    # Make sure extra parameters aren't kept between tests
+    from dallinger.config import get_config
+    config = get_config()
+    config._reset(register_defaults=True)
+
+
 @pytest.fixture(scope='session')
 def env():
     # Heroku requires a home directory to start up

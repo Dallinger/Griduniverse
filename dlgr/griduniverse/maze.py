@@ -6,8 +6,6 @@ import random
 class Wall(object):
     """A segment of colored wall occupying a single grid postion"""
     def __init__(self, **kwargs):
-        super(Wall, self).__init__()
-
         self.position = kwargs.get('position', [0, 0])
         self.color = kwargs.get('color', [0.5, 0.5, 0.5])
 
