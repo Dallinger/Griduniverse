@@ -323,7 +323,9 @@ class Gridworld(object):
                                                  probability_distribution,
                                                  None)
         if self.food_probability_function is None:
-            logger.info("Unknown food probability distribution: {}.".format(self.food_probability_distribution))
+            logger.info(
+                "Unknown food probability distribution: {}.".format(
+                    self.food_probability_distribution))
             self.food_probability_function = distributions.random_probability_distribution
 
     def can_occupy(self, position):
@@ -652,8 +654,8 @@ class Gridworld(object):
             on the grid. Donation rounds will disable movement and allow you to donate points.</p>
             """
         if self.donation_amount > 0:
-            text += """<img src='static/images/donate-click.gif' height='210'><br><p>It can be helpful to
-            donate points to others.
+            text += """<img src='static/images/donate-click.gif' height='210'><br>
+            <p>It can be helpful to donate points to others.
             """
             if self.donation_individual:
                 text += """ You can donate <strong>{g.donation_amount}</strong>
@@ -662,13 +664,15 @@ class Gridworld(object):
                 height='30'>, then clicking on their block on the grid.
                 """
             if self.donation_group:
-                text += """ To donate to a group, click on the <img src='static/images/donate-group.png'
-                class='donate' height='30'> button, then click on any player with the color of the team
+                text += """ To donate to a group, click on the
+                <img src='static/images/donate-group.png' class='donate' height='30'>
+                button, then click on any player with the color of the team
                 you want to donate to.
                 """
             if self.donation_public:
-                text += """ The <img src='static/images/donate-public.png' class='donate' height='30'>
-                 button splits your donation amongst every player in the game (including yourself).
+                text += """ The <img src='static/images/donate-public.png'
+                class='donate' height='30'> button splits your donation amongst
+                every player in the game (including yourself).
                 """
             text += "</p>"
         if self.show_chatroom:
@@ -775,7 +779,8 @@ class Gridworld(object):
         columns = self.columns
         empty_cell = False
         while (not empty_cell):
-            position = self.food_probability_function(rows, columns, *self.probability_function_args)
+            position = self.food_probability_function(
+                rows, columns, *self.probability_function_args)
             empty_cell = self._empty(position)
 
         return position
@@ -1494,7 +1499,9 @@ class Griduniverse(Experiment):
                 # Apply frequency-dependent payoff.
                 if self.grid.frequency_dependence:
                     for player in self.grid.players.values():
-                        relative_frequency = 1.0 * abundances[player.color] / len(self.grid.players)
+                        relative_frequency = (
+                            1.0 * abundances[player.color] / len(self.grid.players)
+                        )
                         payoff = fermi(
                             beta=self.grid.frequency_dependence,
                             p1=relative_frequency,

@@ -4,8 +4,14 @@ language: python
 dist: trusty
 sudo: required
 
-python:
-  - "2.7"
+matrix:
+  include:
+  - python: 2.7
+    env: TOXENV=py27
+  - python: 2.7
+    env: TOXENV=style
+  - python: 2.7
+    env: TOXENV=docs
 
 addons:
   chrome: stable
@@ -14,6 +20,8 @@ addons:
     sources:
     - heroku
     packages:
+    - pandoc
+    - enchant
     - heroku-toolbelt
     - redis-server
 services:
@@ -23,9 +31,8 @@ before_install:
   - google-chrome-stable --headless --disable-gpu --remote-debugging-port=9222 http://localhost:5000 &
 
 install: 
-  - pip install -r requirements.txt
-  - python setup.py develop
-  - pip install odo google-compute-engine
+  - pip install tox==2.9.1
+  - pip install google-compute-engine
   - wget -N http://chromedriver.storage.googleapis.com/2.37/chromedriver_linux64.zip -P ~/
   - unzip ~/chromedriver_linux64.zip -d ~/
   - rm ~/chromedriver_linux64.zip
@@ -46,4 +53,4 @@ env:
 
 # command to run tests, e.g. python setup.py test
 script:
-  - py.test
+  - tox

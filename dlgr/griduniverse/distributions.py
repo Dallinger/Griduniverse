@@ -8,11 +8,13 @@ def _is_valid_boundary(rows, columns, row, column):
         return True
     return False
 
+
 def random_probability_distribution(rows, columns, *args):
     """A probability distribution function always returns a [row, column] pair."""
     row = random.randint(0, rows - 1)
     column = random.randint(0, columns - 1)
     return [row, column]
+
 
 def sinusoidal_probability_distribution(rows, columns, *args):
     frequency = 10
@@ -29,6 +31,7 @@ def sinusoidal_probability_distribution(rows, columns, *args):
     column = value - (row * columns)
     return [int(row), int(column)]
 
+
 def horizontal_gradient_probability_distribution(rows, columns, *args):
     """Vertical gradient on the x axis"""
     size = columns - 1
@@ -36,12 +39,14 @@ def horizontal_gradient_probability_distribution(rows, columns, *args):
     row = random.triangular(0, size, size)
     return [int(row), int(column)]
 
+
 def vertical_gradient_probability_distribution(rows, columns, *args):
     """Vertical gradient on the y axis"""
     size = rows - 1
     row = random.randint(0, size)
     column = random.triangular(0, size, size)
     return [int(row), int(column)]
+
 
 def edge_bias_probability_distribution(rows, columns, *args):
     """Do the inverse to a normal distribution """
@@ -66,6 +71,7 @@ def edge_bias_probability_distribution(rows, columns, *args):
         valid = _is_valid_boundary(rows, columns, row, column)
     return [int(row), int(column)]
 
+
 def center_bias_probability_distribution(rows, columns, *args):
     """Do normal distribution in two dimensions"""
     mu = rows / 2  # mean
@@ -77,4 +83,3 @@ def center_bias_probability_distribution(rows, columns, *args):
         # Create some cutoff for values
         valid = _is_valid_boundary(rows, columns, row, column)
     return [int(row), int(column)]
-

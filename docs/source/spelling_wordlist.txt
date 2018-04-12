@@ -18,8 +18,10 @@ Hedonic
 hedonic
 io
 Metagame
+multi
 multiplayer
 online
+parameterized
 Schelling
 Screenshot
 Turing
