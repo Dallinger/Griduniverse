@@ -30,7 +30,9 @@ services:
 before_install:
   - google-chrome-stable --headless --disable-gpu --remote-debugging-port=9222 http://localhost:5000 &
 
-install: 
+install:
+  - pip install -r requirements.txt
+  - python setup.py develop
   - pip install tox==2.9.1
   - pip install google-compute-engine
   - wget -N http://chromedriver.storage.googleapis.com/2.37/chromedriver_linux64.zip -P ~/
