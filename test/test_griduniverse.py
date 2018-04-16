@@ -5,6 +5,7 @@ import collections
 import json
 import mock
 import pytest
+import time
 from dallinger.experiments import Griduniverse
 
 
@@ -73,6 +74,7 @@ class TestExperimentClass(object):
             'griduniverse_ctrl:'
             '{{"type":"move","player_id":{},"move":"left"}}'.format(participant.id)
         )
+        time.sleep(5)
         data = exp.retrieve_data()
         # Get the last recorded event
         event_detail = json.loads(data.infos.df['details'].values[-1])
@@ -86,6 +88,7 @@ class TestExperimentClass(object):
             'griduniverse_ctrl:'
             '{{"type":"move","player_id":{},"move":"left"}}'.format(participant.id)
         )
+        time.sleep(5)
         data = exp.retrieve_data()
         results = json.loads(exp.analyze(data))
         assert results[u'average_score'] >= 0.0
