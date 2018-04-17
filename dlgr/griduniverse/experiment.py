@@ -529,6 +529,39 @@ class Gridworld(object):
 
         return grid_data
 
+    def deserialize(self, state):
+        if self.rows != state['rows'] or self.columns != state['columns']:
+            raise ValueError(
+                'State has wrong grid size ({}x{}, configured as {}x{})'.format(
+                    state['rows'], state['columns'], self.rows, self.columns,
+                ))
+        self.round = state['round']
+        # @@@ can't set donation_active because it's a property
+        # self.donation_active = state['donation_active']
+
+        self.players = {}
+        for player_state in state['players']:
+            player_state['color_name'] = player_state.pop('color', None)
+            player = Player(
+                pseudonym_locale=self.pseudonyms_locale,
+                pseudonym_gender=self.pseudonyms_gender,
+                grid=self,
+                **player_state
+            )
+            self.players[player.id] = player
+
+        if 'walls' in state:
+            self.wall_locations = {}
+            for wall_state in state['walls']:
+                wall = Wall(**wall_state)
+                self.wall_locations[tuple(wall.position)] = wall
+
+        if 'food' in state:
+            self.food_locations = {}
+            for food_state in state['food']:
+                food = Food(maturation_speed=self.food_maturation_speed, **food_state)
+                self.food_locations[tuple(food.position)] = food
+
     def instructions(self):
         color_costs = ''
         order = ''
@@ -832,11 +865,9 @@ class Gridworld(object):
 class Food(object):
     """Food."""
     def __init__(self, **kwargs):
-        super(Food, self).__init__()
-
         self.id = kwargs.get('id', uuid.uuid4())
         self.position = kwargs.get('position', [0, 0])
-        self.color = kwargs.get('color', [0.5, 0.5, 0.5])
+        self.color = kwargs.get('color')
         self.maturation_speed = kwargs.get('maturation_speed', 0.1)
         self.creation_timestamp = time.time()
 
@@ -845,7 +876,7 @@ class Food(object):
             "id": self.id,
             "position": self.position,
             "maturity": self.maturity,
-            "color": self._maturity_to_rgb(self.maturity),
+            "color": self.color or self._maturity_to_rgb(self.maturity),
         }
 
     def _maturity_to_rgb(self, maturity):
@@ -903,7 +934,7 @@ class Player(object):
         self.profile = self.fake.simple_profile(
             sex=kwargs.get('pseudonym_gender', None)
         )
-        self.name = self.profile['name']
+        self.name = kwargs.get('name', self.profile['name'])
         self.username = self.profile['username']
         self.gender = self.profile['sex']
         self.birthdate = self.profile['birthdate']
@@ -1536,13 +1567,19 @@ class Griduniverse(Experiment):
         except IndexError:
             return engagement, difficulty
 
+    def replay_start(self):
+        self.grid = Gridworld(
+            log_event=self.record_event,
+            **config.as_dict()
+        )
+
     def replay_started(self):
         return self.grid.game_started
 
-    def events_for_replay(self):
+    def events_for_replay(self, session=None):
         info_cls = dallinger.models.Info
         from models import Event
-        events = Experiment.events_for_replay(self)
+        events = Experiment.events_for_replay(self, session=session)
         event_types = {'chat', 'new_round', 'donation_processed', 'color_changed'}
         return events.filter(
             or_(info_cls.type == 'state',
@@ -1567,6 +1604,7 @@ class Griduniverse(Experiment):
                 'remaining_time': self.grid.remaining_round_time,
                 'round': state['round'],
             }
+            self.grid.deserialize(state)
             self.publish(msg)
 
     def replay_finish(self):
