@@ -1239,6 +1239,8 @@ $(document).ready(function() {
       };
       // send directly to all clients
       socket.broadcast(msg);
+      // Also send to the server for logging
+      socket.send(msg);
     } catch(err) {
       console.error(err);
     } finally {
