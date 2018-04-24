@@ -16,7 +16,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.ui import Select
-import websocket
 
 from dallinger.bots import BotBase, HighPerformanceBotBase
 from dallinger.config import get_config
@@ -98,36 +97,26 @@ class BaseGridUniverseBot(BotBase):
 class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUniverseBot):
 
     def _make_socket(self):
-        self.socket = websocket.WebSocket()
-        self.socket.connect("{host}/chat?channel=griduniverse".format(
-            host=self.host.replace('http', 'ws', 1))
-        )
-        self.send({
+        from dallinger.heroku.worker import conn
+        self.redis = conn
+
+        from dallinger.experiment_server.sockets import chat_backend
+        chat_backend.subscribe(self, 'griduniverse')
+
+        self.publish({
             'type': 'connect',
             'player_id': self.participant_id
         })
 
     def send(self, message):
-        self.socket.send('griduniverse_ctrl:' + json.dumps(message) + '\n')
+        """Sends a message from the griduniverse channel to this bot."""
+        data = json.loads(message.split(':', 1)[1])
+        handler = 'handle_{}'.format(data['type'])
+        getattr(self, handler, lambda x: None)(data)
 
-    def recv(self, catch_up=True):
-        behind = True
-        while behind:
-            frame = self.socket.recv()
-            received_time = time.time()
-            if frame and frame.startswith('griduniverse:'):
-                data = json.loads(frame.split(':', 1)[1])
-                if catch_up:
-                    try:
-                        behind = data['server_time'] < received_time - MAXIMUM_STALE_MESSAGE
-                    except KeyError:
-                        behind = False
-                else:
-                    behind = False
-                handler = 'handle_{}'.format(data['type'])
-                getattr(self, handler, lambda x: None)(data)
-                if not behind:
-                    return data
+    def publish(self, message):
+        """Sends a message from this bot to the griduniverse_ctrl channel."""
+        self.redis.publish('griduniverse_ctrl', json.dumps(message))
 
     def handle_state(self, data):
         if 'grid' in data:
@@ -140,6 +129,9 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
             self.grid['grid'].update(data['grid'])
             data['grid'] = self.grid['grid']
         self.grid.update(data)
+    
+    def handle_stop(self, data):
+        self.grid['remaining_time'] = 0
 
     @property
     def is_still_on_grid(self):
@@ -177,19 +169,15 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
                 'timestamp': self.grid['server_time']
             }
         if message:
-            self.send(message)
-        self.recv()
+            self.publish(message)
 
     def wait_for_grid(self):
         self.grid = {}
         self._make_socket()
         while True:
-            message = self.recv()
-            if not message:
-                gevent.sleep(0.001)
-                continue
-            if message['type'] == 'state' and message.get('remaining_time', 0):
-                return True
+            if self.grid and self.grid['remaining_time']:
+                break
+            gevent.sleep(0.001)
 
     def get_js_variable(self, variable_name):
         # Emulate the state of various JS variables that would be present
@@ -227,9 +215,11 @@ class RandomBot(HighPerformanceBaseGridUniverseBot):
     def participate(self):
         """Participate by randomly hitting valid keys"""
         grid = self.wait_for_grid()
+        self.log('Bot player started')
         while self.is_still_on_grid:
             time.sleep(self.get_wait_time())
             self.send_next_key(grid)
+        self.log('Bot player stopped.')
         return True
 
 
