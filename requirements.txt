@@ -1,4 +1,4 @@
--e git://github.com/Dallinger/Dallinger.git@master#egg=dallinger[data]
+-e git://github.com/Dallinger/Dallinger.git@serverside-bots#egg=dallinger[data]
 setuptools
 networkx==1.11
 numpy==1.11.1

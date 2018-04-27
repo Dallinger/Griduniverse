@@ -23,6 +23,7 @@ from dallinger.config import get_config
 logger = logging.getLogger('griduniverse')
 config = get_config()
 
+
 class BaseGridUniverseBot(BotBase):
 
     def wait_for_grid(self):
@@ -127,7 +128,7 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
             self.grid['grid'].update(data['grid'])
             data['grid'] = self.grid['grid']
         self.grid.update(data)
-    
+
     def handle_stop(self, data):
         self.grid['remaining_time'] = 0
 
@@ -187,6 +188,7 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
 
     def get_player_id(self):
         return self.participant_id
+
 
 class RandomBot(HighPerformanceBaseGridUniverseBot):
     """A bot that plays griduniverse randomly"""
