@@ -23,8 +23,6 @@ from dallinger.config import get_config
 logger = logging.getLogger('griduniverse')
 config = get_config()
 
-MAXIMUM_STALE_MESSAGE = 0.1
-
 class BaseGridUniverseBot(BotBase):
 
     def wait_for_grid(self):
@@ -204,7 +202,7 @@ class RandomBot(HighPerformanceBaseGridUniverseBot):
         'y'
     ]
 
-    KEY_INTERVAL = 0.1
+    KEY_INTERVAL = 1
 
     def get_next_key(self):
         return random.choice(self.VALID_KEYS)
