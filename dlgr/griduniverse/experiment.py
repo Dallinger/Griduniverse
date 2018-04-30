@@ -1242,9 +1242,6 @@ class Griduniverse(Experiment):
 
     def publish(self, msg):
         """Publish a message to all griduniverse clients"""
-        # Include the time the message was published, for synchronisation
-        # of bot clocks
-        msg['server_time'] = time.time()
         redis.publish('griduniverse', json.dumps(msg))
 
     def handle_connect(self, msg):

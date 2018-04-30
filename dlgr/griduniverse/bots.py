@@ -144,28 +144,24 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
                 'type': "move",
                 'player_id': self.participant_id,
                 'move': 'up',
-                'timestamp': self.grid['server_time']
             }
         elif key == Keys.DOWN:
             message = {
                 'type': "move",
                 'player_id': self.participant_id,
                 'move': 'down',
-                'timestamp': self.grid['server_time']
             }
         elif key == Keys.LEFT:
             message = {
                 'type': "move",
                 'player_id': self.participant_id,
                 'move': 'left',
-                'timestamp': self.grid['server_time']
             }
         elif key == Keys.RIGHT:
             message = {
                 'type': "move",
                 'player_id': self.participant_id,
                 'move': 'right',
-                'timestamp': self.grid['server_time']
             }
         if message:
             self.publish(message)
@@ -223,7 +219,7 @@ class RandomBot(HighPerformanceBaseGridUniverseBot):
         return True
 
 
-class AdvantageSeekingBot(HighPerformanceBaseGridUniverseBot):
+class AdvantageSeekingBot(BaseGridUniverseBot):
     """A bot that seeks an advantage.
 
     The bot moves towards the food it has the biggest advantage over the other
