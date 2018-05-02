@@ -2,7 +2,7 @@
 mode = debug
 auto_recruit = true
 network = FullyConnected
-max_participants = 100
+max_participants = 3
 time_per_round = 30
 
 [HIT Configuration]
@@ -26,7 +26,7 @@ database_size = standard-0
 [Server Parameters]
 dyno_type = standard-2x
 num_dynos_web = 1
-num_dynos_worker = 5
+num_dynos_worker = 3
 host = 0.0.0.0
 notification_url = None
 clock_on = false
