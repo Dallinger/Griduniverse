@@ -1202,6 +1202,7 @@ class Griduniverse(Experiment):
         }
         if not config.get('replay', False):
             # Ignore these events in replay mode
+            mapping['server_time'] = time.time()
             mapping.update({
                 'chat': self.handle_chat_message,
                 'change_color': self.handle_change_color,
@@ -1237,7 +1238,6 @@ class Griduniverse(Experiment):
     def record_event(self, details, player_id=None):
         """Record an event in the Info table."""
         session = self.socket_session
-
         if player_id == 'spectator':
             return
         elif player_id:
@@ -1299,8 +1299,10 @@ class Griduniverse(Experiment):
             'type': 'chat',
             'message': msg,
         }
+
         self.grid.chat_message_history.append((
             self.grid.players[msg['player_id']],
+            msg['server_time'],
             msg['contents'],
         ))
         # We only publish if it wasn't already broadcast
@@ -1601,7 +1603,6 @@ class Griduniverse(Experiment):
         event_types = {'chat', 'new_round', 'donation_processed', 'color_changed'}
         return events.filter(
             or_(and_(info_cls.type == 'state',
-                     info_cls.creation_time >= (target - datetime.timedelta(seconds=5)),
                      or_(
                          info_cls.contents.contains('wall'),
                          info_cls.contents.contains('food'),
@@ -1614,6 +1615,13 @@ class Griduniverse(Experiment):
         )
 
     def replay_event(self, event):
+        if 'server_time' not in event.details:
+            # If we don't have a server time in the event we reconstruct it from
+            # the event metadata
+            event.details['server_time'] = (
+                time.mktime(event.creation_time.timetuple()) +
+                event.creation_time.microsecond / 1e6
+            )
         if event.type == 'event':
             self.publish(event.details)
             if event.details.get('type') == 'new_round':
@@ -1633,6 +1641,14 @@ class Griduniverse(Experiment):
             }
             self.grid.deserialize(state)
             self.publish(msg)
+
+    def revert_to_time(self, session=None, target=None):
+        self._replay_time_index = self._replay_range[0] - datetime.timedelta(minutes=1)
+        self.grid.chat_message_history = []
+        self.state_count = 0
+        self.grid.players = {}
+        self.grid.food_locations = {}
+        self.grid.wall_locations = {}
 
     def replay_finish(self):
         self.publish({'type': 'stop'})
