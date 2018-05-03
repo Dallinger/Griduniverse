@@ -158,12 +158,19 @@ class Gridworld(object):
     player_color_names = [
         "BLUE",
         "YELLOW",
+        "ORANGE",
         "RED",
+        "PURPLE",
+        "TEAL"
     ]
+
     player_colors = [
         [0.50, 0.86, 1.00],
         [1.00, 0.86, 0.50],
+        [0.91, 0.50, 0.02],
         [0.64, 0.11, 0.31],
+        [0.85, 0.60, 0.85],
+        [0.77, 0.96, 0.90]
     ]
 
     GREEN = [0.51, 0.69, 0.61]
