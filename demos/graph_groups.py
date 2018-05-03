@@ -4,6 +4,7 @@ import json
 import matplotlib
 import pandas as pd
 from dallinger.experiments import Griduniverse
+from dlgr.griduniverse.experiment import Gridworld
 
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -16,8 +17,11 @@ ORIG_CSV_LIMIT = csv.field_size_limit(ROWS*COLS*1024)
 
 BASE_ID = "b0d3daa{}-f7ed-43fa-ad6b-9928aa51f8e1"
 PARTICIPANTS = 6
-GROUP_COUNTS = [n for n in range(1, 7)
+
+# Repeat for each group counts into which we can divide participants
+GROUP_COUNTS = [n for n in range(1, len(Gridworld.player_colors) + 1)
                 if PARTICIPANTS % n == 0 and n != PARTICIPANTS]
+
 PLOT_VARS = ["average_score", "average_payoff"]
 print "Running with {} participants and group counts {}".format(
     PARTICIPANTS, GROUP_COUNTS
