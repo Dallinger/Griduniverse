@@ -43,7 +43,7 @@ chat_template = Template(u"""
 <tr>
 <th>Name</th> <th>Message</th>
 </tr>
-{% for sender,message in chat_messages %}
+{% for sender,timestamp,message in chat_messages %}
 <tr>
   <td><div style='width: 5px; height: 5px; background-color: {{ sender.color_name }};
                   float: left; margin: 10px 5px 0 0'></div> {{ sender.name }}</td>
@@ -121,4 +121,8 @@ class ExperimentWidget(widgets.VBox):
         tabs.set_title(0, 'Grid')
         tabs.set_title(1, 'Scores')
         tabs.set_title(2, 'Chat')
+        try:
+            tabs.selected_index = self.children[1].selected_index
+        except IndexError:
+            pass
         self.children = [header, tabs]
