@@ -4,6 +4,8 @@ auto_recruit = true
 network = FullyConnected
 max_participants = 3
 time_per_round = 30
+recruiter = multi
+recruiters = bots: 2, mturk: 1
 
 [HIT Configuration]
 title = Griduniverse
@@ -26,8 +28,9 @@ database_size = standard-0
 [Server Parameters]
 dyno_type = standard-2x
 num_dynos_web = 1
-num_dynos_worker = 3
+num_dynos_worker = 1
 host = 0.0.0.0
 notification_url = None
 clock_on = false
 logfile = -
+threads = 3
