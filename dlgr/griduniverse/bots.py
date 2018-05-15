@@ -1,10 +1,12 @@
 """Griduniverse bots."""
 import itertools
 import json
+import logging
 import operator
 import random
 import time
 
+import gevent
 from selenium.common.exceptions import StaleElementReferenceException
 from selenium.common.exceptions import WebDriverException
 from selenium.common.exceptions import NoSuchElementException
@@ -15,16 +17,17 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.ui import Select
 
-
-from dallinger.bots import BotBase
+from dallinger.bots import BotBase, HighPerformanceBotBase
 from dallinger.config import get_config
 
+logger = logging.getLogger('griduniverse')
 config = get_config()
 
 
 class BaseGridUniverseBot(BotBase):
 
     def wait_for_grid(self):
+        self.on_grid = True
         return WebDriverWait(self.driver, 15).until(
             EC.presence_of_element_located((By.ID, "grid"))
         )
@@ -55,7 +58,7 @@ class BaseGridUniverseBot(BotBase):
         try:
             return [tuple(item['position']) for item in self.state['food']
                     if item['maturity'] > 0.5]
-        except (AttributeError, TypeError):
+        except (AttributeError, TypeError, KeyError):
             return []
 
     @property
@@ -66,23 +69,124 @@ class BaseGridUniverseBot(BotBase):
 
     @property
     def my_position(self):
-        if self.player_positions:
-            return self.player_positions[self.player_id]
+        player_positions = self.player_positions
+        if player_positions and self.player_id in player_positions:
+            return player_positions[self.player_id]
         else:
             return None
+
+    @property
+    def is_still_on_grid(self):
+        return self.on_grid
 
     def send_next_key(self, grid):
         # This is a roundabout way of sending the key
         # to the grid element; it's needed to avoid a
         # "cannot focus element" error with chromedriver
-        if self.driver.desired_capabilities['browserName'] == 'chrome':
-            action = ActionChains(self.driver).move_to_element(grid)
-            action.click().send_keys(self.get_next_key()).perform()
-        else:
-            grid.send_keys(self.get_next_key())
+        try:
+            if self.driver.desired_capabilities['browserName'] == 'chrome':
+                action = ActionChains(self.driver).move_to_element(grid)
+                action.click().send_keys(self.get_next_key()).perform()
+            else:
+                grid.send_keys(self.get_next_key())
+        except StaleElementReferenceException:
+            self.on_grid = False
 
 
-class RandomBot(BaseGridUniverseBot):
+class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUniverseBot):
+
+    def _make_socket(self):
+        from dallinger.heroku.worker import conn
+        self.redis = conn
+
+        from dallinger.experiment_server.sockets import chat_backend
+        chat_backend.subscribe(self, 'griduniverse')
+
+        self.publish({
+            'type': 'connect',
+            'player_id': self.participant_id
+        })
+
+    def send(self, message):
+        """Sends a message from the griduniverse channel to this bot."""
+        data = json.loads(message.split(':', 1)[1])
+        handler = 'handle_{}'.format(data['type'])
+        getattr(self, handler, lambda x: None)(data)
+
+    def publish(self, message):
+        """Sends a message from this bot to the griduniverse_ctrl channel."""
+        self.redis.publish('griduniverse_ctrl', json.dumps(message))
+
+    def handle_state(self, data):
+        if 'grid' in data:
+            # grid is a json encoded dictionary, we want to selectively
+            # update this rather than overwrite it as not all grid changes
+            # are sent each time (such as food and walls)
+            data['grid'] = json.loads(data['grid'])
+            if 'grid' not in self.grid:
+                self.grid['grid'] = {}
+            self.grid['grid'].update(data['grid'])
+            data['grid'] = self.grid['grid']
+        self.grid.update(data)
+
+    def handle_stop(self, data):
+        self.grid['remaining_time'] = 0
+
+    @property
+    def is_still_on_grid(self):
+        return self.grid.get('remaining_time', 0) > 0.25
+
+    def send_next_key(self, grid=None):
+        key = self.get_next_key()
+        message = {}
+        if key == Keys.UP:
+            message = {
+                'type': "move",
+                'player_id': self.participant_id,
+                'move': 'up',
+            }
+        elif key == Keys.DOWN:
+            message = {
+                'type': "move",
+                'player_id': self.participant_id,
+                'move': 'down',
+            }
+        elif key == Keys.LEFT:
+            message = {
+                'type': "move",
+                'player_id': self.participant_id,
+                'move': 'left',
+            }
+        elif key == Keys.RIGHT:
+            message = {
+                'type': "move",
+                'player_id': self.participant_id,
+                'move': 'right',
+            }
+        if message:
+            self.publish(message)
+
+    def wait_for_grid(self):
+        self.grid = {}
+        self._make_socket()
+        while True:
+            if self.grid and self.grid['remaining_time']:
+                break
+            gevent.sleep(0.001)
+
+    def get_js_variable(self, variable_name):
+        # Emulate the state of various JS variables that would be present
+        # in the frontend using our accumulated state
+        if variable_name == 'state':
+            return self.grid['grid']
+        elif variable_name == 'ego':
+            return self.participant_id
+
+    def get_player_id(self):
+        return self.participant_id
+
+
+class RandomBot(HighPerformanceBaseGridUniverseBot):
     """A bot that plays griduniverse randomly"""
 
     VALID_KEYS = [
@@ -96,7 +200,7 @@ class RandomBot(BaseGridUniverseBot):
         'y'
     ]
 
-    KEY_INTERVAL = 0.1
+    KEY_INTERVAL = 1
 
     def get_next_key(self):
         return random.choice(self.VALID_KEYS)
@@ -107,12 +211,11 @@ class RandomBot(BaseGridUniverseBot):
     def participate(self):
         """Participate by randomly hitting valid keys"""
         grid = self.wait_for_grid()
-        try:
-            while True:
-                time.sleep(self.get_wait_time())
-                self.send_next_key(grid)
-        except StaleElementReferenceException:
-            pass
+        self.log('Bot player started')
+        while self.is_still_on_grid:
+            time.sleep(self.get_wait_time())
+            self.send_next_key(grid)
+        self.log('Bot player stopped.')
         return True
 
 
@@ -205,7 +308,9 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
         ignoring modeling of other players' behavior
         """
         positions = self.player_positions
-        my_position = positions[self.player_id]
+        my_position = self.my_position
+        if my_position is None:
+            return positions
         pad = 5
         rows = self.state['rows']
         if key == Keys.UP and my_position[0] > pad:
@@ -285,12 +390,12 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
         self.state = None
         self.player_id = None
         while (self.state is None) or (self.player_id is None):
-            time.sleep(0.500)
+            gevent.sleep(0.500)
             self.state = self.observe_state()
             self.player_id = self.get_player_id()
 
-        while True:
-            time.sleep(self.get_wait_time())
+        while self.is_still_on_grid:
+            gevent.sleep(self.get_wait_time())
             try:
                 observed_state = self.observe_state()
                 if observed_state:
