@@ -162,6 +162,7 @@ def a(db_session):
 
         def participant(self, **kw):
             defaults = {
+                'recruiter_id': 'hotair',
                 'worker_id': '1',
                 'assignment_id': '1',
                 'hit_id': '1',
@@ -196,7 +197,13 @@ def participants(db_session):
     from dallinger.models import Participant
     ps = []
     for i in range(10):
-        p = Participant(worker_id=str(i), hit_id='1', assignment_id='1', mode="test")
+        p = Participant(
+            recruiter_id='hotair',
+            worker_id=str(i),
+            hit_id='1',
+            assignment_id='1',
+            mode="test",
+        )
         ps.append(p)
         db_session.add(p)
         db_session.flush()
