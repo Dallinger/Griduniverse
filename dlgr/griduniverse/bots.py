@@ -26,6 +26,12 @@ config = get_config()
 
 class BaseGridUniverseBot(BotBase):
 
+    MEAN_KEY_INTERVAL = 1
+    MAX_KEY_INTERVAL = 10
+
+    def get_wait_time(self):
+        return max(random.expovariate(1.0 / self.MAX_KEY_INTERVAL), self.MAX_KEY_INTERVAL)
+
     def wait_for_grid(self):
         self.on_grid = True
         return WebDriverWait(self.driver, 15).until(
@@ -200,13 +206,8 @@ class RandomBot(HighPerformanceBaseGridUniverseBot):
         'y'
     ]
 
-    KEY_INTERVAL = 1
-
     def get_next_key(self):
         return random.choice(self.VALID_KEYS)
-
-    def get_wait_time(self):
-        return random.expovariate(1.0 / self.KEY_INTERVAL)
 
     def participate(self):
         """Participate by randomly hitting valid keys"""
@@ -219,14 +220,12 @@ class RandomBot(HighPerformanceBaseGridUniverseBot):
         return True
 
 
-class AdvantageSeekingBot(BaseGridUniverseBot):
+class AdvantageSeekingBot(HighPerformanceBaseGridUniverseBot):
     """A bot that seeks an advantage.
 
     The bot moves towards the food it has the biggest advantage over the other
     players at getting.
     """
-
-    KEY_INTERVAL = 0.1
 
     def get_logical_targets(self):
         """Find a logical place to move.
@@ -354,9 +353,6 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
             valid_keys = RandomBot.VALID_KEYS
         return random.choice(valid_keys)
 
-    def get_wait_time(self):
-        return random.expovariate(1.0 / self.KEY_INTERVAL)
-
     @staticmethod
     def manhattan_distance(coord1, coord2):
         x = coord1[0] - coord2[0]
@@ -385,6 +381,7 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
         the algorithm above.
         """
         grid = self.wait_for_grid()
+        self.log('Bot player started')
 
         # Wait for state to be available
         self.state = None
@@ -405,6 +402,8 @@ class AdvantageSeekingBot(BaseGridUniverseBot):
                     return False
             except (StaleElementReferenceException, AttributeError):
                 return True
+
+        self.log('Bot player stopped')
 
     def complete_questionnaire(self):
         """Complete the standard debriefing form randomly."""
