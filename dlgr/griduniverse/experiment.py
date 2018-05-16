@@ -26,11 +26,11 @@ from dallinger.config import get_config
 from dallinger.experiment import Experiment
 from dallinger.heroku.worker import conn as redis
 
-import distributions
-from maze import Wall
-from maze import labyrinth
-from bots import Bot
-from models import Event
+from . import distributions
+from .maze import Wall
+from .maze import labyrinth
+from .bots import Bot
+from .models import Event
 
 logger = logging.getLogger(__file__)
 config = get_config()
@@ -1180,7 +1180,7 @@ class Griduniverse(Experiment):
         """The reason offered to the participant for giving the bonus.
         """
         return (
-            "Thank for participating! You earned a bonus based on your "
+            "Thank you for participating! You earned a bonus based on your "
             "performance in Griduniverse!"
         )
 
@@ -1582,7 +1582,7 @@ class Griduniverse(Experiment):
 
     def events_for_replay(self, session=None):
         info_cls = dallinger.models.Info
-        from models import Event
+        from .models import Event
         events = Experiment.events_for_replay(self, session=session)
         event_types = {'chat', 'new_round', 'donation_processed', 'color_changed'}
         return events.filter(
