@@ -5,6 +5,8 @@ from traitlets import (
     Unicode,
 )
 
+from dallinger.jupyter import ExperimentWidget as DallingerExperimentWidget
+
 header_template = Template(u"""
 <h2>{{ name }}</h2>
 <div>Status: {{ status }}</div>
@@ -60,14 +62,9 @@ WALL = "<div style='width: 5px; height: 5px; background-color: darkgray'></div>"
 PLAYER = "<div style='width: 5px; height: 5px; background-color: %s'></div>"
 
 
-class ExperimentWidget(widgets.VBox):
+class ExperimentWidget(DallingerExperimentWidget):
 
     status = Unicode('Unknown')
-
-    def __init__(self, exp):
-        self.exp = exp
-        super(ExperimentWidget, self).__init__()
-        self.render()
 
     @observe('grid')
     def render(self, change=None):
@@ -117,10 +114,12 @@ class ExperimentWidget(widgets.VBox):
             )
             tab_list += [chat_tab]
 
+        tab_list += [self.config_tab, ]
         tabs = widgets.Tab(children=tab_list)
         tabs.set_title(0, 'Grid')
         tabs.set_title(1, 'Scores')
         tabs.set_title(2, 'Chat')
+        tabs.set_title(3, 'Config')
         try:
             tabs.selected_index = self.children[1].selected_index
         except IndexError:
