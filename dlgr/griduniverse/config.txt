@@ -4,8 +4,6 @@ auto_recruit = true
 network = FullyConnected
 max_participants = 3
 time_per_round = 30
-recruiter = multi
-recruiters = bots: 2, mturk: 1
 
 [HIT Configuration]
 title = Griduniverse
@@ -33,4 +31,3 @@ host = 0.0.0.0
 notification_url = None
 clock_on = false
 logfile = -
-threads = 3
