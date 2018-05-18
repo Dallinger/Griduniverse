@@ -109,6 +109,16 @@ Number of columns for the grid. Default is 25.
 Number of rows for the grid. Default is 25.
 
 
+### window_columns
+
+Number of columns for the window through which the player views the grid. Default is 25.
+
+
+### window_rows
+
+Number of columns for the window through which the player views the grid. Default is 25.
+
+
 ### block_size
 
 Size of each side of a block in the grid, in pixels. Defaults to 10.
@@ -123,6 +133,11 @@ Space between blocks, in pixels. Default is 1.
 
 The standard deviation (in blocks) of a gaussian visibility window centered on the
 player. Default is 40.
+
+
+### visibility_ramp_time
+
+Controls the rate at which visibility changes as time elapses. Default is 4.
 
 
 ### background_animation
@@ -162,6 +177,18 @@ means all movement is random.
 ### show_chatroom
 
 Whether the chatroom appears in the UI. Defaults to False.
+
+
+### spatial_chat
+
+If True, chat messages will only be visible to players who can see the sender. Defaults to False.
+
+
+### chat_visibility_threshold
+
+Controls the threshold of visibility needed to see chat messages when ``spatial_chat`` is on.
+A player's apparent dimness must be below this threshold in order for their chat messages to be seen.
+Defaults to 0.4.
 
 
 ### show_grid
@@ -221,6 +248,21 @@ If True, assigns a random hierarchy to player colors, so that higher colors in
 the hierarchy can spread to lower colors, but not vice versa. Default is False.
 
 
+### identity_signaling
+
+If True, a player can toggle whether or not their identity is visible to others. Defaults to False.
+
+
+### identity_starts_visible
+
+If True, a player's identity is shown when the game starts. Defaults to False.
+
+
+### use_identicons
+
+If True, players will be identified using unique icons. Defaults to False.
+
+
 ### walls_visible
 
 Whether the maze walls, if any, are visible. Defaults to True.
@@ -236,6 +278,16 @@ of 0 means no walls, while 1 means the most possible walls. Default is 0.
 
 Whether the maze walls are contiguous or have random holes. The default, 1,
 means contiguous.
+
+
+### build_walls
+
+Whether players can build a wall at their current position using the 'w' key. Default is False.
+
+
+### wall_building_cost
+
+The amount by which a player's score will be decreased in order to build a wall. Default is 0.
 
 
 ### initial_score
@@ -274,10 +326,57 @@ How big is the frequency dependent payoff. The payoff is multiplied by this
 value. Default is 0.
 
 
-### donation
+### intergroup_competition
 
-Amount of donation, in points, that a player can make to another by clicking on
-its color in the grid. Default is 0.
+Temperature influencing the calculation of payoffs based on competition between groups.
+When the parameter is 1, payoff is proportional to what was scored and so there is no extrinsic competition. Increasing the temperature introduces competition. For example, at 2, a pair of groups that score in a 2:1 ratio will get payoff in a 4:1 ratio, and therefore it pays to be in the highest-scoring group. Default is 1.
+
+
+### intragroup_competition
+
+Temperature influencing the calculation of payoffs based on competition within groups.
+When the parameter is 1, payoff is proportional to what was scored and so there is no extrinsic competition.
+When the temperature is 2, a pair of players within a group that score in a 2:1 ratio will get payoff in a 4:1 ratio, and therefore it pays to be a group's highest-scoring member. Default is 1.
+
+
+### leaderboard_group
+
+Whether to show a leaderboard of group scores at the end of each round. Default is False.
+
+
+### leaderboard_individual
+
+Whether to show a leaderboard of individual scores at the end of each round. Default is False.
+
+
+### leaderboard_time
+
+How long to pause the game when showing the leaderboard, in seconds. Default is 0.
+
+
+### donation_amount
+
+Amount of donation, in points, that a player can make at a time. Default is 0.
+
+
+### donation_multiplier
+
+A donation will be multiplied by this factor to determine the number of points that will be received. Default is 1.0.
+
+
+### donation_individual
+
+Whether a player can make a donation to another individual player by clicking on their block in the grid. Default is False.
+
+
+### donation_group
+
+Whether a player can make a donation divided among a group of players by clicking on a player with that group's color. Default is False.
+
+
+### donation_public
+
+Whether a player can make a donation divided among all players in the game. Default is False.
 
 
 ### num_food
@@ -365,10 +464,9 @@ URI to the group image to use when asking the DIFI question at the end. Default
 is "/static/images/group.jpg".
 
 
-### leach_survey
+### fun_survey
 
-If true, the Leach survey is applied as part of the ending questionnaire.
-Default is False.
+Whether to include a question on the questionnaire about how much fun the participant found the task. Default is False.
 
 
 ### pre_difi_question
@@ -386,3 +484,14 @@ The label to use for the group when asking the DIFI question at the start.
 
 URI to the group image to use when asking the DIFI question at the start. Default
 is "/static/images/group.jpg".
+
+
+### leach_survey
+
+If true, the Leach survey is applied as part of the ending questionnaire.
+Default is False.
+
+
+### bot_policy
+
+Which Bot class to run. Default: ``RandomBot``.

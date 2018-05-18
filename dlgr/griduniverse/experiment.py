@@ -251,7 +251,6 @@ class Gridworld(object):
         self.frequency_dependence = kwargs.get('frequency_dependence', 0)
         self.frequency_dependent_payoff_rate = kwargs.get(
             'frequency_dependent_payoff_rate', 0)
-        self.intergroup_competition = kwargs.get('intergroup_competition', 1)
         self.leaderboard_group = kwargs.get('leaderboard_group', False)
         self.leaderboard_individual = kwargs.get('leaderboard_individual', False)
         self.leaderboard_time = kwargs.get('leaderboard_time', 0)
