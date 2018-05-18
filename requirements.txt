@@ -1,4 +1,4 @@
--e git://github.com/Dallinger/Dallinger.git@master#egg=dallinger[data]
+-e git+https://github.com/Dallinger/Dallinger.git@stories/298-scrubbing-backwards3#egg=dallinger[data]
 setuptools
 networkx==1.11
 numpy==1.13.1
