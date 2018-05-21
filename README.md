@@ -494,4 +494,168 @@ Default is False.
 
 ### bot_policy
 
-Which Bot class to run. Default: ``RandomBot``.
+Which Bot class to run. Default: `RandomBot`.
+
+
+## Griduniverse bots
+
+Bots can be implemented to simulate different policies for interacting with
+the Griduniverse. Currently two bot policies are implemented:
+
+* `RandomBot`: Randomly moves in the 4 directions.
+* `AdvantageSeekingBot`: Seeks an advantage by moving toward the food
+  it has the biggest advantage over the other players at getting.
+
+Dallinger configuration settings related to running bots:
+
+* `bot_policy`: The name of the bot class to run (e.g. `RandomBot` or `AdvantageSeekingBot`).
+  Defaults to `RandomBot`.
+* `max_participants`: How many bots to run.
+* `num_dynos_worker`: How many bot worker processes to run.
+  Each process can run up to 20 bots, cooperatively multitasking using gevent.
+
+
+### Bot message protocol
+
+Bot players interact with the experiment using Redis pubsub channels.
+When a bot is started it subscribes to the `griduniverse` channel and
+starts listening for messages from the experiment server. When it
+wants to take an action it sends a message to the `griduniverse_ctrl`
+channel. Each message is a JSON-encoded object that looks like this:
+
+    {
+        "type": "chat",
+        "message": "Hello bots."
+    }
+
+It contains a `type` key which designates the type of message,
+and may contain other keys depending on the message type.
+
+Positions on the grid are given in the form `[y, x]`
+measuring from the top left of the grid. Colors are given in the form
+`[R, G, B]` where each component is in the range 0-1.
+
+Messages that may be received from the `griduniverse` channel are:
+
+* `state`: Indicates the current state of the experiment.
+  This message is sent repeatedly as the experiment runs.
+    * `grid`: State of the grid
+        * `players`: List of player info
+            * `id`
+            * `position`
+            * `score`
+            * `payoff`
+            * `color`
+            * `motion_auto`
+            * `motion_direction`
+            * `motion_speed_limit`
+            * `motion_timestamp`
+            * `name`
+            * `identity_visible`
+        * `round`: Number of the current game round
+        * `donation_active`: Boolean, true if donations are enabled.
+        * `rows`: Number of grid rows
+        * `columns`: Number of grid columns
+        * `walls`: List of wall info (not sent every time)
+            * `position`
+            * `color`
+        * `food`: List of food info (not sent every time)
+            * `id`
+            * `position`
+            * `maturity`
+            * `color`
+
+* `wall_built`: Reports that a wall was built.
+    * `wall`:
+        * `position`
+        * `color`
+
+* `color_changed`: Reports that a player's color changed.
+    * `player_id`: ID of the player
+    * `old_color`
+    * `new_color`
+
+* `donation_processed`: Reports that a donation of points was processed.
+    * `donor_id`: ID of the donor
+    * `recipient_id`: ID of a single player, OR `"all"` for a donation to all players,
+      or `"group:ID"` for a donation to all players in a particular group.
+    * `amount`: Number of points that were donated
+    * `received`: Number of points that were received
+
+* `chat`: A chat message from another player.
+    * `player_id`: ID of the sender
+    * `contents`: The message
+    * `timestamp`: Time at which the message was sent
+      (in milliseconds relative to the start of the experiment)
+
+* `new_round`: Indicates the start of a new round
+    * `round`: Number of the new round
+
+* `stop`: Indicates that the game is over.
+
+Messages that may be sent to the `griduniverse_ctrl` channel are:
+
+* `connect`: Sent just after the bot starts listening to the `griduniverse` channel
+  to let the server know that there is a new participant.
+    * `participant_id`: ID of the participant
+      (or `"spectator"` to receive messages without participating)
+
+* `move`: Requests a move of one square in a given direction.
+    * `player_id`: ID of the participant
+    * `move`: Desired direction (up/down/left/right)
+    * `timestamp`: Timestamp (in milliseconds relative to the start of the experiment)
+      at which the player last moved. Optional.
+
+* `plant_food`: Requests food to be planted at the given position.
+    * `player_id`: ID of the participant
+    * `position`: Coordinates [y, x]
+
+* `build_wall`: Requests a wall to be built at the given position.
+    * `player_id`: ID of the participant
+    * `position`: Coordinates [y, x]
+
+* `donation_submitted`: Requests donation of points.
+    * `donor_id`: ID of the player making the donation
+    * `recipient_id`: ID of a single player, OR `"all"` to donate to all players,
+      or `"group:ID"` to donate to all players in a particular group.
+    * `amount`: Number of points to donate
+
+* `change_color`: Requests a change in the player's color.
+    * `player_id`: ID of the participant
+    * `color`: Color [R, G, B]
+
+* `toggle_visible`: Sets visibility of the player's identity.
+    * `player_id`: ID of the participant
+    * `identity_visible`: Boolean indicating whether player should be visible
+
+### Implementing a bot
+
+Dallinger runs a bot by calling its `participate` method. A simple
+`participate` method could look like this:
+
+    def participate(self):
+        self.wait_for_grid()
+        self.log('Bot player started')
+        while self.is_still_on_grid:
+            time.sleep(self.get_wait_time())
+            self.send_next_key()
+        self.log('Bot player stopped.')
+
+Let's break down what this does one step at a time:
+
+* `self.wait_for_grid()`: Starts listening for messages,
+  and sends a `connect` message indicating that the bot is present.
+  Then waits until grid state has been received from the server
+  and the round has started.
+* `self.log('Bot player started')`: Writes an entry to the log.
+* `while self.is_still_on_grid:`: Loop while there is still time remaining in the round.
+* `time.sleep(self.get_wait_time())`: Waits for a randomized amount of time in between moves.
+* `self.send_next_key()`: Picks a direction to move and sends a `move` message to the server.
+
+For a bot that moves continually, use the above `participate` method
+and implement a `get_next_key` method that decides which direction key
+to send based on the current grid state. Note: the grid state is stored
+in `self.grid` whenever a `state` message is received.
+
+A bot can send an arbitrary message to the `griduniverse_ctrl` channel
+using `self.publish(message)`.
