@@ -162,6 +162,7 @@ def a(db_session):
 
         def participant(self, **kw):
             defaults = {
+                'recruiter_id': 'hotair',
                 'worker_id': '1',
                 'assignment_id': '1',
                 'hit_id': '1',
@@ -191,12 +192,12 @@ def a(db_session):
 
     return ModelFactory(db_session)
 
+
 @pytest.fixture
-def participants(db_session):
-    from dallinger.models import Participant
+def participants(db_session, a):
     ps = []
     for i in range(10):
-        p = Participant(worker_id=str(i), hit_id='1', assignment_id='1', mode="test")
+        p = a.participant(worker_id=str(i))
         ps.append(p)
         db_session.add(p)
         db_session.flush()
