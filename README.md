@@ -109,6 +109,16 @@ Number of columns for the grid. Default is 25.
 Number of rows for the grid. Default is 25.
 
 
+### window_columns
+
+Number of columns for the window through which the player views the grid. Default is 25.
+
+
+### window_rows
+
+Number of columns for the window through which the player views the grid. Default is 25.
+
+
 ### block_size
 
 Size of each side of a block in the grid, in pixels. Defaults to 10.
@@ -123,6 +133,11 @@ Space between blocks, in pixels. Default is 1.
 
 The standard deviation (in blocks) of a gaussian visibility window centered on the
 player. Default is 40.
+
+
+### visibility_ramp_time
+
+Controls the rate at which visibility changes as time elapses. Default is 4.
 
 
 ### background_animation
@@ -162,6 +177,18 @@ means all movement is random.
 ### show_chatroom
 
 Whether the chatroom appears in the UI. Defaults to False.
+
+
+### spatial_chat
+
+If True, chat messages will only be visible to players who can see the sender. Defaults to False.
+
+
+### chat_visibility_threshold
+
+Controls the threshold of visibility needed to see chat messages when ``spatial_chat`` is on.
+A player's apparent dimness must be below this threshold in order for their chat messages to be seen.
+Defaults to 0.4.
 
 
 ### show_grid
@@ -221,6 +248,21 @@ If True, assigns a random hierarchy to player colors, so that higher colors in
 the hierarchy can spread to lower colors, but not vice versa. Default is False.
 
 
+### identity_signaling
+
+If True, a player can toggle whether or not their identity is visible to others. Defaults to False.
+
+
+### identity_starts_visible
+
+If True, a player's identity is shown when the game starts. Defaults to False.
+
+
+### use_identicons
+
+If True, players will be identified using unique icons. Defaults to False.
+
+
 ### walls_visible
 
 Whether the maze walls, if any, are visible. Defaults to True.
@@ -236,6 +278,16 @@ of 0 means no walls, while 1 means the most possible walls. Default is 0.
 
 Whether the maze walls are contiguous or have random holes. The default, 1,
 means contiguous.
+
+
+### build_walls
+
+Whether players can build a wall at their current position using the 'w' key. Default is False.
+
+
+### wall_building_cost
+
+The amount by which a player's score will be decreased in order to build a wall. Default is 0.
 
 
 ### initial_score
@@ -274,10 +326,57 @@ How big is the frequency dependent payoff. The payoff is multiplied by this
 value. Default is 0.
 
 
-### donation
+### intergroup_competition
 
-Amount of donation, in points, that a player can make to another by clicking on
-its color in the grid. Default is 0.
+Temperature influencing the calculation of payoffs based on competition between groups.
+When the parameter is 1, payoff is proportional to what was scored and so there is no extrinsic competition. Increasing the temperature introduces competition. For example, at 2, a pair of groups that score in a 2:1 ratio will get payoff in a 4:1 ratio, and therefore it pays to be in the highest-scoring group. Default is 1.
+
+
+### intragroup_competition
+
+Temperature influencing the calculation of payoffs based on competition within groups.
+When the parameter is 1, payoff is proportional to what was scored and so there is no extrinsic competition.
+When the temperature is 2, a pair of players within a group that score in a 2:1 ratio will get payoff in a 4:1 ratio, and therefore it pays to be a group's highest-scoring member. Default is 1.
+
+
+### leaderboard_group
+
+Whether to show a leaderboard of group scores at the end of each round. Default is False.
+
+
+### leaderboard_individual
+
+Whether to show a leaderboard of individual scores at the end of each round. Default is False.
+
+
+### leaderboard_time
+
+How long to pause the game when showing the leaderboard, in seconds. Default is 0.
+
+
+### donation_amount
+
+Amount of donation, in points, that a player can make at a time. Default is 0.
+
+
+### donation_multiplier
+
+A donation will be multiplied by this factor to determine the number of points that will be received. Default is 1.0.
+
+
+### donation_individual
+
+Whether a player can make a donation to another individual player by clicking on their block in the grid. Default is False.
+
+
+### donation_group
+
+Whether a player can make a donation divided among a group of players by clicking on a player with that group's color. Default is False.
+
+
+### donation_public
+
+Whether a player can make a donation divided among all players in the game. Default is False.
 
 
 ### num_food
@@ -365,10 +464,9 @@ URI to the group image to use when asking the DIFI question at the end. Default
 is "/static/images/group.jpg".
 
 
-### leach_survey
+### fun_survey
 
-If true, the Leach survey is applied as part of the ending questionnaire.
-Default is False.
+Whether to include a question on the questionnaire about how much fun the participant found the task. Default is False.
 
 
 ### pre_difi_question
@@ -386,3 +484,178 @@ The label to use for the group when asking the DIFI question at the start.
 
 URI to the group image to use when asking the DIFI question at the start. Default
 is "/static/images/group.jpg".
+
+
+### leach_survey
+
+If true, the Leach survey is applied as part of the ending questionnaire.
+Default is False.
+
+
+### bot_policy
+
+Which Bot class to run. Default: `RandomBot`.
+
+
+## Griduniverse bots
+
+Bots can be implemented to simulate different policies for interacting with
+the Griduniverse. Currently two bot policies are implemented:
+
+* `RandomBot`: Randomly moves in the 4 directions.
+* `AdvantageSeekingBot`: Seeks an advantage by moving toward the food
+  it has the biggest advantage over the other players at getting.
+
+Dallinger configuration settings related to running bots:
+
+* `bot_policy`: The name of the bot class to run (e.g. `RandomBot` or `AdvantageSeekingBot`).
+  Defaults to `RandomBot`.
+* `max_participants`: How many bots to run.
+* `num_dynos_worker`: How many bot worker processes to run.
+  Each process can run up to 20 bots, cooperatively multitasking using gevent.
+
+
+### Bot message protocol
+
+Bot players interact with the experiment using Redis pubsub channels.
+When a bot is started it subscribes to the `griduniverse` channel and
+starts listening for messages from the experiment server. When it
+wants to take an action it sends a message to the `griduniverse_ctrl`
+channel. Each message is a JSON-encoded object that looks like this:
+
+    {
+        "type": "chat",
+        "message": "Hello bots."
+    }
+
+It contains a `type` key which designates the type of message,
+and may contain other keys depending on the message type.
+
+Positions on the grid are given in the form `[y, x]`
+measuring from the top left of the grid. Colors are given in the form
+`[R, G, B]` where each component is in the range 0-1.
+
+Messages that may be received from the `griduniverse` channel are:
+
+* `state`: Indicates the current state of the experiment.
+  This message is sent repeatedly as the experiment runs.
+    * `grid`: State of the grid
+        * `players`: List of player info
+            * `id`
+            * `position`
+            * `score`
+            * `payoff`
+            * `color`
+            * `motion_auto`
+            * `motion_direction`
+            * `motion_speed_limit`
+            * `motion_timestamp`
+            * `name`
+            * `identity_visible`
+        * `round`: Number of the current game round
+        * `donation_active`: Boolean, true if donations are enabled.
+        * `rows`: Number of grid rows
+        * `columns`: Number of grid columns
+        * `walls`: List of wall info (not sent every time)
+            * `position`
+            * `color`
+        * `food`: List of food info (not sent every time)
+            * `id`
+            * `position`
+            * `maturity`
+            * `color`
+
+* `wall_built`: Reports that a wall was built.
+    * `wall`:
+        * `position`
+        * `color`
+
+* `color_changed`: Reports that a player's color changed.
+    * `player_id`: ID of the player
+    * `old_color`
+    * `new_color`
+
+* `donation_processed`: Reports that a donation of points was processed.
+    * `donor_id`: ID of the donor
+    * `recipient_id`: ID of a single player, OR `"all"` for a donation to all players,
+      or `"group:ID"` for a donation to all players in a particular group.
+    * `amount`: Number of points that were donated
+    * `received`: Number of points that were received
+
+* `chat`: A chat message from another player.
+    * `player_id`: ID of the sender
+    * `contents`: The message
+    * `timestamp`: Time at which the message was sent
+      (in milliseconds relative to the start of the experiment)
+
+* `new_round`: Indicates the start of a new round
+    * `round`: Number of the new round
+
+* `stop`: Indicates that the game is over.
+
+Messages that may be sent to the `griduniverse_ctrl` channel are:
+
+* `connect`: Sent just after the bot starts listening to the `griduniverse` channel
+  to let the server know that there is a new participant.
+    * `participant_id`: ID of the participant
+      (or `"spectator"` to receive messages without participating)
+
+* `move`: Requests a move of one square in a given direction.
+    * `player_id`: ID of the participant
+    * `move`: Desired direction (up/down/left/right)
+    * `timestamp`: Timestamp (in milliseconds relative to the start of the experiment)
+      at which the player last moved. Optional.
+
+* `plant_food`: Requests food to be planted at the given position.
+    * `player_id`: ID of the participant
+    * `position`: Coordinates [y, x]
+
+* `build_wall`: Requests a wall to be built at the given position.
+    * `player_id`: ID of the participant
+    * `position`: Coordinates [y, x]
+
+* `donation_submitted`: Requests donation of points.
+    * `donor_id`: ID of the player making the donation
+    * `recipient_id`: ID of a single player, OR `"all"` to donate to all players,
+      or `"group:ID"` to donate to all players in a particular group.
+    * `amount`: Number of points to donate
+
+* `change_color`: Requests a change in the player's color.
+    * `player_id`: ID of the participant
+    * `color`: Color [R, G, B]
+
+* `toggle_visible`: Sets visibility of the player's identity.
+    * `player_id`: ID of the participant
+    * `identity_visible`: Boolean indicating whether player should be visible
+
+### Implementing a bot
+
+Dallinger runs a bot by calling its `participate` method. A simple
+`participate` method could look like this:
+
+    def participate(self):
+        self.wait_for_grid()
+        self.log('Bot player started')
+        while self.is_still_on_grid:
+            time.sleep(self.get_wait_time())
+            self.send_next_key()
+        self.log('Bot player stopped.')
+
+Let's break down what this does one step at a time:
+
+* `self.wait_for_grid()`: Starts listening for messages,
+  and sends a `connect` message indicating that the bot is present.
+  Then waits until grid state has been received from the server
+  and the round has started.
+* `self.log('Bot player started')`: Writes an entry to the log.
+* `while self.is_still_on_grid:`: Loop while there is still time remaining in the round.
+* `time.sleep(self.get_wait_time())`: Waits for a randomized amount of time in between moves.
+* `self.send_next_key()`: Picks a direction to move and sends a `move` message to the server.
+
+For a bot that moves continually, use the above `participate` method
+and implement a `get_next_key` method that decides which direction key
+to send based on the current grid state. Note: the grid state is stored
+in `self.grid` whenever a `state` message is received.
+
+A bot can send an arbitrary message to the `griduniverse_ctrl` channel
+using `self.publish(message)`.
