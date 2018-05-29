@@ -20,6 +20,8 @@ from selenium.webdriver.support.ui import Select
 from dallinger.bots import BotBase, HighPerformanceBotBase
 from dallinger.config import get_config
 
+from .maze_utils import positions_to_maze, maze_to_graph, find_path_astar
+
 logger = logging.getLogger('griduniverse')
 config = get_config()
 
@@ -64,6 +66,13 @@ class BaseGridUniverseBot(BotBase):
         try:
             return [tuple(item['position']) for item in self.state['food']
                     if item['maturity'] > 0.5]
+        except (AttributeError, TypeError, KeyError):
+            return []
+
+    @property
+    def wall_positions(self):
+        try:
+            return [tuple(item['position']) for item in self.state['walls']]
         except (AttributeError, TypeError, KeyError):
             return []
 
@@ -264,6 +273,10 @@ class AdvantageSeekingBot(HighPerformanceBaseGridUniverseBot):
     players at getting.
     """
 
+    def __init__(self, *args, **kwargs):
+        super(AdvantageSeekingBot, self).__init__(*args, **kwargs)
+        self.target_coordinates = (None, None)
+
     def get_logical_targets(self):
         """Find a logical place to move.
 
@@ -364,9 +377,13 @@ class AdvantageSeekingBot(HighPerformanceBaseGridUniverseBot):
         valid_keys = []
         my_position = self.my_position
         try:
-            # If there is a most logical target, we move towards it
-            target_id = self.get_logical_targets()[self.player_id]
-            food_position = self.food_positions[target_id]
+            if self.target_coordinates in self.food_positions:
+                food_position = self.target_coordinates
+            else:
+                # If there is a most logical target, we move towards it
+                target_id = self.get_logical_targets()[self.player_id]
+                food_position = self.food_positions[target_id]
+                self.target_coordinates = food_position
         except KeyError:
             # Otherwise, move in a direction that increases average spread.
             current_spread = self.get_player_spread()
@@ -375,14 +392,9 @@ class AdvantageSeekingBot(HighPerformanceBaseGridUniverseBot):
                 if self.get_player_spread(expected) > current_spread:
                     valid_keys.append(key)
         else:
-            if food_position[0] < my_position[0]:
-                valid_keys.append(Keys.UP)
-            elif food_position[0] > my_position[0]:
-                valid_keys.append(Keys.DOWN)
-            if food_position[1] < my_position[1]:
-                valid_keys.append(Keys.LEFT)
-            elif food_position[1] > my_position[1]:
-                valid_keys.append(Keys.RIGHT)
+            baseline_distance, directions = self.distance(my_position, food_position)
+            if baseline_distance:
+                valid_keys.append(directions[0])
         if not valid_keys:
             # If there are no food items available and no movement would
             # cause the average spread of players to increase, fall back to
@@ -396,6 +408,40 @@ class AdvantageSeekingBot(HighPerformanceBaseGridUniverseBot):
         y = coord1[1] - coord2[1]
         return abs(x) + abs(y)
 
+    def translate_directions(self, directions):
+        lookup = {
+            'N': Keys.UP,
+            'S': Keys.DOWN,
+            'E': Keys.RIGHT,
+            'W': Keys.LEFT,
+        }
+        return map(lookup.get, directions)
+
+    def distance(self, origin, endpoint):
+        try:
+            maze = self._maze
+            graph = self._graph
+        except AttributeError:
+            self._maze = maze = positions_to_maze(
+                self.wall_positions,
+                self.state['rows'],
+                self.state['columns']
+            )
+            self._graph = graph = maze_to_graph(maze)
+        result = find_path_astar(
+            maze,
+            tuple(origin),
+            tuple(endpoint),
+            max_iterations=10000,
+            graph=graph
+        )
+        if result:
+            distance = result[0]
+            directions = self.translate_directions(result[1])
+            return distance, directions
+        else:
+            return None, []
+
     def distances(self):
         """Compute distances to food.
 
@@ -407,7 +453,7 @@ class AdvantageSeekingBot(HighPerformanceBaseGridUniverseBot):
         for player_id, position in self.player_positions.items():
             player_distances = {}
             for j, food in enumerate(self.food_positions):
-                player_distances[j] = self.manhattan_distance(position, food)
+                player_distances[j], _ = self.distance(position, food)
             distances[player_id] = player_distances
         return distances
 
