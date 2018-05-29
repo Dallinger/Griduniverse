@@ -30,7 +30,7 @@ class BaseGridUniverseBot(BotBase):
     MAX_KEY_INTERVAL = 10
 
     def get_wait_time(self):
-        return max(random.expovariate(1.0 / self.MAX_KEY_INTERVAL), self.MAX_KEY_INTERVAL)
+        return min(random.expovariate(1.0 / self.MEAN_KEY_INTERVAL), self.MAX_KEY_INTERVAL)
 
     def wait_for_grid(self):
         self.on_grid = True
