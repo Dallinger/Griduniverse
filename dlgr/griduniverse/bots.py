@@ -200,9 +200,7 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
         The _quorum_reached attribute is set to True by handle_quorum() upon
         learning from the backend that we have a quorum.
         """
-        while True:
-            if self._quorum_reached:
-                break
+        while not self._quorum_reached:
             gevent.sleep(0.001)
 
     def wait_for_grid(self):
