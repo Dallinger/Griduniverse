@@ -415,7 +415,7 @@ class AdvantageSeekingBot(HighPerformanceBaseGridUniverseBot):
             'E': Keys.RIGHT,
             'W': Keys.LEFT,
         }
-        return map(lookup.get, directions)
+        return tuple(map(lookup.get, directions))
 
     def distance(self, origin, endpoint):
         try:
