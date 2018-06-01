@@ -15,8 +15,8 @@ try:
     readme = pypandoc.convert('README.md', 'rst')
     history = pypandoc.convert('CHANGELOG.md', 'rst')
 except (IOError, ImportError):
-    readme = open('README.md').read()
-    history = open('CHANGELOG.md').read()
+    readme = open('README.md', encoding='utf-8').read()
+    history = open('CHANGELOG.md', encoding='utf-8').read()
 
 # Get rid of Sphinx markup
 history = history.replace('.. :changelog:', '')
