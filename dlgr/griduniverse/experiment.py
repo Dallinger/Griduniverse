@@ -1601,6 +1601,9 @@ class Griduniverse(Experiment):
         from .models import Event
         events = Experiment.events_for_replay(self, session=session, target=target)
         event_types = {'chat', 'new_round', 'donation_processed', 'color_changed'}
+        if target is None:
+            # If we don't have a specific target time we can't optimise some states away
+            return events
         return events.filter(
             or_(and_(info_cls.type == 'state',
                      or_(
