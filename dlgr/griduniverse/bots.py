@@ -300,6 +300,9 @@ class AdvantageSeekingBot(HighPerformanceBaseGridUniverseBot):
         # the relevant player and food item
         for player, food_info in self.distances().items():
             for food_id, distance in food_info.items():
+                if distance is None:
+                    # This food item is unreachable
+                    continue
                 best_choices[player, food_id] = distance
         # Sort that list based on the distance, so the closest players/food
         # pairs are first, then discard the distance
