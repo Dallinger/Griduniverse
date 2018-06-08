@@ -101,6 +101,8 @@ class BaseGridUniverseBot(BotBase):
 
 class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUniverseBot):
 
+    _quorum_reached = False
+
     def _make_socket(self):
         from dallinger.heroku.worker import conn
         self.redis = conn
@@ -115,8 +117,12 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
 
     def send(self, message):
         """Sends a message from the griduniverse channel to this bot."""
-        data = json.loads(message.split(':', 1)[1])
-        handler = 'handle_{}'.format(data['type'])
+        channel, payload = message.split(':', 1)
+        data = json.loads(payload)
+        if channel == 'quorum':
+            handler = 'handle_quorum'
+        else:
+            handler = 'handle_{}'.format(data['type'])
         getattr(self, handler, lambda x: None)(data)
 
     def publish(self, message):
@@ -138,11 +144,19 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
     def handle_stop(self, data):
         self.grid['remaining_time'] = 0
 
+    def handle_quorum(self, data):
+        """Update an instance attribute when the quorum is reached, so it
+        can be checked in wait_for_quorum().
+        """
+        if 'q' in data and data['q'] == data['n']:
+            self.log("Quorum fulfilled... unleashing bot.")
+            self._quorum_reached = True
+
     @property
     def is_still_on_grid(self):
         return self.grid.get('remaining_time', 0) > 0.25
 
-    def send_next_key(self, grid=None):
+    def send_next_key(self):
         key = self.get_next_key()
         message = {}
         if key == Keys.UP:
@@ -172,7 +186,29 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
         if message:
             self.publish(message)
 
+    def on_signup(self, data):
+        """Take any needed action on response from /participant call."""
+        super(HighPerformanceBaseGridUniverseBot, self).on_signup(data)
+        # We may have been the player to complete the quorum, in which case
+        # we won't have to wait for status from the backend.
+        if data['quorum']['n'] == data['quorum']['q']:
+            self._quorum_reached = True
+
+    def wait_for_quorum(self):
+        """Sleep until a quorum of players has signed up.
+
+        The _quorum_reached attribute is set to True by handle_quorum() upon
+        learning from the backend that we have a quorum.
+        """
+        while not self._quorum_reached:
+            gevent.sleep(0.001)
+
     def wait_for_grid(self):
+        """Sleep until the game grid is up and running.
+
+        handle_state() will update self.grid when game state messages
+        are received from the backend.
+        """
         self.grid = {}
         self._make_socket()
         while True:
@@ -211,11 +247,12 @@ class RandomBot(HighPerformanceBaseGridUniverseBot):
 
     def participate(self):
         """Participate by randomly hitting valid keys"""
-        grid = self.wait_for_grid()
+        self.wait_for_quorum()
+        self.wait_for_grid()
         self.log('Bot player started')
         while self.is_still_on_grid:
             time.sleep(self.get_wait_time())
-            self.send_next_key(grid)
+            self.send_next_key()
         self.log('Bot player stopped.')
         return True
 
@@ -380,7 +417,8 @@ class AdvantageSeekingBot(HighPerformanceBaseGridUniverseBot):
         Wait a random amount of time, then send a key according to
         the algorithm above.
         """
-        grid = self.wait_for_grid()
+        self.wait_for_quorum()
+        self.wait_for_grid()
         self.log('Bot player started')
 
         # Wait for state to be available
@@ -397,7 +435,7 @@ class AdvantageSeekingBot(HighPerformanceBaseGridUniverseBot):
                 observed_state = self.observe_state()
                 if observed_state:
                     self.state = observed_state
-                    self.send_next_key(grid)
+                    self.send_next_key()
                 else:
                     return False
             except (StaleElementReferenceException, AttributeError):

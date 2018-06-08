@@ -41,6 +41,7 @@ jspm_packages
 .node_repl_history
 
 *.pyc
+*.pytest_cache
 snapshots/*
 
 !static/scripts/bundle.js
