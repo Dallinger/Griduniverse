@@ -1,5 +1,6 @@
 """The Griduniverse."""
 
+import datetime
 import flask
 import gevent
 import json
@@ -289,6 +290,9 @@ class Gridworld(object):
         self.food_planting_cost = kwargs.get('food_planting_cost', 1)
         self.food_probability_distribution = kwargs.get('food_probability_distribution', 'random')
         self.seasonal_growth_rate = kwargs.get('seasonal_growth_rate', 1)
+
+        # Chat
+        self.chat_message_history = []
 
         # Questionnaire
         self.difi_question = kwargs.get('difi_question', False)
@@ -1198,6 +1202,7 @@ class Griduniverse(Experiment):
         }
         if not config.get('replay', False):
             # Ignore these events in replay mode
+            mapping['server_time'] = time.time()
             mapping.update({
                 'chat': self.handle_chat_message,
                 'change_color': self.handle_change_color,
@@ -1233,7 +1238,6 @@ class Griduniverse(Experiment):
     def record_event(self, details, player_id=None):
         """Record an event in the Info table."""
         session = self.socket_session
-
         if player_id == 'spectator':
             return
         elif player_id:
@@ -1295,6 +1299,12 @@ class Griduniverse(Experiment):
             'type': 'chat',
             'message': msg,
         }
+
+        self.grid.chat_message_history.append((
+            self.grid.players[msg['player_id']],
+            msg['server_time'],
+            msg['contents'],
+        ))
         # We only publish if it wasn't already broadcast
         if not msg.get('broadcast', False):
             self.publish(message)
@@ -1586,23 +1596,41 @@ class Griduniverse(Experiment):
     def replay_started(self):
         return self.grid.game_started
 
-    def events_for_replay(self, session=None):
+    def events_for_replay(self, session=None, target=None):
         info_cls = dallinger.models.Info
         from .models import Event
-        events = Experiment.events_for_replay(self, session=session)
+        events = Experiment.events_for_replay(self, session=session, target=target)
         event_types = {'chat', 'new_round', 'donation_processed', 'color_changed'}
+        if target is None:
+            # If we don't have a specific target time we can't optimise some states away
+            return events
         return events.filter(
-            or_(info_cls.type == 'state',
+            or_(and_(info_cls.type == 'state',
+                     or_(
+                         info_cls.contents.contains('wall'),
+                         info_cls.contents.contains('food'),
+                        )),
+                and_(info_cls.type == 'state',
+                     info_cls.creation_time >= (target - datetime.timedelta(seconds=0.15))),
                 and_(info_cls.type == 'event',
                      or_(*[Event.details['type'].astext == t for t in event_types]))
                 )
         )
 
     def replay_event(self, event):
+        if 'server_time' not in event.details:
+            # If we don't have a server time in the event we reconstruct it from
+            # the event metadata
+            event.details['server_time'] = (
+                time.mktime(event.creation_time.timetuple()) +
+                event.creation_time.microsecond / 1e6
+            )
         if event.type == 'event':
             self.publish(event.details)
             if event.details.get('type') == 'new_round':
                 self.grid.check_round_completion()
+            elif event.details.get('type') == 'chat':
+                self.handle_chat_message(event.details)
 
         if event.type == 'state':
             self.state_count += 1
@@ -1616,6 +1644,14 @@ class Griduniverse(Experiment):
             }
             self.grid.deserialize(state)
             self.publish(msg)
+
+    def revert_to_time(self, session=None, target=None):
+        self._replay_time_index = self._replay_range[0] - datetime.timedelta(minutes=1)
+        self.grid.chat_message_history = []
+        self.state_count = 0
+        self.grid.players = {}
+        self.grid.food_locations = {}
+        self.grid.wall_locations = {}
 
     def replay_finish(self):
         self.publish({'type': 'stop'})
