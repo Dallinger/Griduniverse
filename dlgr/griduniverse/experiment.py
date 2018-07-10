@@ -1645,8 +1645,28 @@ class Griduniverse(Experiment):
             self.grid.deserialize(state)
             self.publish(msg)
 
+    @property
+    def usable_replay_range(self):
+        # Start when the first player connects
+        start_time = (
+            self.import_session.query(Event)
+            .filter(Event.details['type'].astext == 'connect')
+            .order_by(Event.creation_time)
+            [0].creation_time
+        )
+        # At the start of the following second, as Dallinger truncates milliseconds for start time
+        start_time += datetime.timedelta(seconds=1)
+        # End at the last move
+        end_time = (
+            self.import_session.query(Event)
+            .filter(Event.details['type'].astext == 'move')
+            .order_by(Event.creation_time.desc())
+            [0].creation_time
+        )
+        return (start_time, end_time)
+
     def revert_to_time(self, session=None, target=None):
-        self._replay_time_index = self._replay_range[0] - datetime.timedelta(minutes=1)
+        self._replay_time_index = self.usable_replay_range[0] - datetime.timedelta(minutes=1)
         self.grid.chat_message_history = []
         self.state_count = 0
         self.grid.players = {}
