@@ -396,3 +396,8 @@ import sys
 import os
 root = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(root)
+
+intersphinx_mapping = {
+    'dallinger': ('http://dallinger.readthedocs.io/en/latest', None),
+    'selenium': ('http://selenium-python.readthedocs.io', None)
+}

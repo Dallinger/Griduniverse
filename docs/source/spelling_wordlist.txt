@@ -1,6 +1,7 @@
 Asch
 Barto
 Braains
+Bryukhanov
 braains
 Chatroom
 chatroom
@@ -17,6 +18,7 @@ gridworld
 Hedonic
 hedonic
 io
+licence
 Metagame
 multi
 multiplayer
@@ -26,3 +28,15 @@ Schelling
 Screenshot
 Turing
 Voronoi
+Websocket
+Walnes
+Javascript
+Tschan
+Identicon
+js
+manhattan
+routable
+stateful
+rectilinear
+Redis
+Javascript

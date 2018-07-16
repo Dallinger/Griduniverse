@@ -27,20 +27,26 @@ config = get_config()
 
 
 class BaseGridUniverseBot(BotBase):
+    """A base class for GridUniverse bots that implements experiment
+    specific helper functions and runs under Selenium"""
 
-    MEAN_KEY_INTERVAL = 1
-    MAX_KEY_INTERVAL = 10
+    MEAN_KEY_INTERVAL = 1  #: The average number of seconds between key presses
+    MAX_KEY_INTERVAL = 10  #: The maximum number of seconds between key presses
 
     def get_wait_time(self):
+        """ Return a random wait time approximately average to
+        MEAN_KEY_INTERVAL but never more than MAX_KEY_INTERVAL"""
         return min(random.expovariate(1.0 / self.MEAN_KEY_INTERVAL), self.MAX_KEY_INTERVAL)
 
     def wait_for_grid(self):
+        """Blocks until the grid is visible"""
         self.on_grid = True
         return WebDriverWait(self.driver, 15).until(
             EC.presence_of_element_located((By.ID, "grid"))
         )
 
     def get_js_variable(self, variable_name):
+        """Return an arbitrary JavaScript variable from the browser"""
         try:
             script = 'return window.{};'.format(variable_name)
             result = self.driver.execute_script(script)
@@ -56,13 +62,16 @@ class BaseGridUniverseBot(BotBase):
             return json.loads(result)
 
     def observe_state(self):
+        """Return the current state the player sees"""
         return self.get_js_variable("state")
 
     def get_player_id(self):
+        """Return the current player's ID number"""
         return str(self.get_js_variable("ego"))
 
     @property
     def food_positions(self):
+        """Return a list of food coordinates"""
         try:
             return [tuple(item['position']) for item in self.state['food']
                     if item['maturity'] > 0.5]
@@ -71,6 +80,7 @@ class BaseGridUniverseBot(BotBase):
 
     @property
     def wall_positions(self):
+        """Return a list of wall coordinates"""
         try:
             return [tuple(item['position']) for item in self.state['walls']]
         except (AttributeError, TypeError, KeyError):
@@ -78,12 +88,14 @@ class BaseGridUniverseBot(BotBase):
 
     @property
     def player_positions(self):
+        """Return a dictionary that maps player id to their coordinates"""
         return {
             player['id']: player['position'] for player in self.state['players']
         }
 
     @property
     def my_position(self):
+        """The position of the current player or None if unknown"""
         player_positions = self.player_positions
         if player_positions and self.player_id in player_positions:
             return player_positions[self.player_id]
@@ -92,9 +104,11 @@ class BaseGridUniverseBot(BotBase):
 
     @property
     def is_still_on_grid(self):
+        """Is the grid currently being displayed"""
         return self.on_grid
 
     def send_next_key(self, grid):
+        """Send the next key due to be sent to the server"""
         # This is a roundabout way of sending the key
         # to the grid element; it's needed to avoid a
         # "cannot focus element" error with chromedriver
@@ -107,12 +121,158 @@ class BaseGridUniverseBot(BotBase):
         except StaleElementReferenceException:
             self.on_grid = False
 
+    def participate(self):
+        """Participate in the experiment.
+
+        Wait a random amount of time, then send a key according to
+        the algorithm above.
+        """
+        self.wait_for_quorum()
+        self.wait_for_grid()
+        self.log('Bot player started')
+
+        # Wait for state to be available
+        self.state = None
+        self.player_id = None
+        while (self.state is None) or (self.player_id is None):
+            gevent.sleep(0.500)
+            self.state = self.observe_state()
+            self.player_id = self.get_player_id()
+
+        while self.is_still_on_grid:
+            gevent.sleep(self.get_wait_time())
+            try:
+                observed_state = self.observe_state()
+                if observed_state:
+                    self.state = observed_state
+                    self.send_next_key()
+                else:
+                    return False
+            except (StaleElementReferenceException, AttributeError):
+                return True
+
+    def get_next_key(self):
+        """Subclasses must override this method to provide the logic to
+        determine what their next action should be"""
+        raise NotImplementedError
+
+    def get_expected_position(self, key):
+        """Predict future state given an action.
+
+        Given the current state of players, if we were to push the key
+        specified as a parameter, what would we expect the state to become,
+        ignoring modeling of other players' behavior.
+
+        :param key: A one character string, especially from
+                    :class:`selenium.webdriver.common.keys.Keys`
+        """
+        positions = self.player_positions
+        my_position = self.my_position
+        if my_position is None:
+            return positions
+
+        if key == Keys.UP:
+            my_position = (my_position[0] - 1, my_position[1])
+        elif key == Keys.DOWN:
+            my_position = (my_position[0] + 1, my_position[1])
+        elif key == Keys.LEFT:
+            my_position = (my_position[0], my_position[1] - 1)
+        elif key == Keys.RIGHT:
+            my_position = (my_position[0], my_position[1] + 1)
+
+        if my_position in self.wall_positions:
+            # if the new position is in a wall the movement fails
+            my_position = self.my_position
+        if my_position in self.player_positions.values():
+            # If the other position is occupied by a player we assume it fails, but it may not
+            my_position = self.my_position
+
+        positions[self.player_id] = my_position
+        return positions
+
+    @staticmethod
+    def manhattan_distance(coord1, coord2):
+        """Return the manhattan (rectilinear) distance between two coordinates."""
+        x = coord1[0] - coord2[0]
+        y = coord1[1] - coord2[1]
+        return abs(x) + abs(y)
+
+    def translate_directions(self, directions):
+        """Convert a string of letters representing cardinal directions
+        to a tuple of Selenium arrow keys"""
+        lookup = {
+            'N': Keys.UP,
+            'S': Keys.DOWN,
+            'E': Keys.RIGHT,
+            'W': Keys.LEFT,
+        }
+        return tuple(map(lookup.get, directions))
+
+    def distance(self, origin, endpoint):
+        """Find the number of unit movements needed to
+        travel from origin to endpoint, that is the rectilinear distance
+        respecting obstacles as well as a tuple of Selenium keys
+        that represent this path.
+
+        In particularly difficult mazes this may return an underestimate
+        of the true distance and an approximation of the correct path.
+
+        :param origin: The start position
+        :type origin: tuple(int, int)
+        :param endpoint: The target position
+        :type endpoint: tuple(int, int)
+        :return: tuple of distance and directions. Distance is None if no route possible.
+        :rtype: tuple(int, list(str)) or tuple(None, list(str))
+        """
+        try:
+            maze = self._maze
+            graph = self._graph
+        except AttributeError:
+            self._maze = maze = positions_to_maze(
+                self.wall_positions,
+                self.state['rows'],
+                self.state['columns']
+            )
+            self._graph = graph = maze_to_graph(maze)
+        result = find_path_astar(
+            maze,
+            tuple(origin),
+            tuple(endpoint),
+            max_iterations=10000,
+            graph=graph
+        )
+        if result:
+            distance = result[0]
+            directions = self.translate_directions(result[1])
+            return distance, directions
+        else:
+            return None, []
+
+    def distances(self):
+        """Compute distances to food.
+
+        Returns a dictionary keyed on player_id, with the value being another
+        dictionary which maps the index of a food item in the positions list
+        to the distance between that player and that food item.
+        """
+        distances = {}
+        for player_id, position in self.player_positions.items():
+            player_distances = {}
+            for j, food in enumerate(self.food_positions):
+                player_distances[j], _ = self.distance(position, food)
+            distances[player_id] = player_distances
+        return distances
+
 
 class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUniverseBot):
+    """A parent class for GridUniverse bots that causes them to be run as a HighPerformanceBot,
+    i.e. a bot that does not use Selenium but interacts directly over underlying network
+    protocols"""
 
     _quorum_reached = False
 
     def _make_socket(self):
+        """Connect to the Redis server and announce the connection"""
         from dallinger.heroku.worker import conn
         self.redis = conn
 
@@ -125,7 +285,7 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
         })
 
     def send(self, message):
-        """Sends a message from the griduniverse channel to this bot."""
+        """Redis handler to receive a message from the griduniverse channel to this bot."""
         channel, payload = message.split(':', 1)
         data = json.loads(payload)
         if channel == 'quorum':
@@ -135,10 +295,11 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
         getattr(self, handler, lambda x: None)(data)
 
     def publish(self, message):
-        """Sends a message from this bot to the griduniverse_ctrl channel."""
+        """Sends a message from this bot to the `griduniverse_ctrl` channel."""
         self.redis.publish('griduniverse_ctrl', json.dumps(message))
 
     def handle_state(self, data):
+        """Receive a grid state update an store it"""
         if 'grid' in data:
             # grid is a json encoded dictionary, we want to selectively
             # update this rather than overwrite it as not all grid changes
@@ -151,6 +312,8 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
         self.grid.update(data)
 
     def handle_stop(self, data):
+        """Receive an update that the round has finished and mark the
+        remaining time as zero"""
         self.grid['remaining_time'] = 0
 
     def handle_quorum(self, data):
@@ -163,9 +326,14 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
 
     @property
     def is_still_on_grid(self):
+        """Returns True if the bot is still on an active grid,
+        otherwise False"""
         return self.grid.get('remaining_time', 0) > 0.25
 
     def send_next_key(self):
+        """Determines the message to send that corresponds to
+        the requested Selenium key, such that the message is the
+        same as the one the browser Javascript would have sent"""
         key = self.get_next_key()
         message = {}
         if key == Keys.UP:
@@ -207,7 +375,7 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
         """Sleep until a quorum of players has signed up.
 
         The _quorum_reached attribute is set to True by handle_quorum() upon
-        learning from the backend that we have a quorum.
+        learning from the server that we have a quorum.
         """
         while not self._quorum_reached:
             gevent.sleep(0.001)
@@ -216,7 +384,7 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
         """Sleep until the game grid is up and running.
 
         handle_state() will update self.grid when game state messages
-        are received from the backend.
+        are received from the server.
         """
         self.grid = {}
         self._make_socket()
@@ -226,20 +394,24 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
             gevent.sleep(0.001)
 
     def get_js_variable(self, variable_name):
-        # Emulate the state of various JS variables that would be present
-        # in the frontend using our accumulated state
+        """Emulate the state of various JS variables that would be present
+        in the browser using our accumulated state.
+
+        The only values of variable_name supported are 'state' and 'ego'"""
         if variable_name == 'state':
             return self.grid['grid']
         elif variable_name == 'ego':
             return self.participant_id
 
     def get_player_id(self):
+        """Returns the current player's id"""
         return self.participant_id
 
 
 class RandomBot(HighPerformanceBaseGridUniverseBot):
     """A bot that plays griduniverse randomly"""
 
+    #: The Selenium keys that this bot will choose between
     VALID_KEYS = [
         Keys.UP,
         Keys.DOWN,
@@ -252,6 +424,7 @@ class RandomBot(HighPerformanceBaseGridUniverseBot):
     ]
 
     def get_next_key(self):
+        """Randomly press one of Up, Down, Left, Right, space, r, b or y"""
         return random.choice(self.VALID_KEYS)
 
     def participate(self):
@@ -267,15 +440,40 @@ class RandomBot(HighPerformanceBaseGridUniverseBot):
 
 
 class AdvantageSeekingBot(HighPerformanceBaseGridUniverseBot):
-    """A bot that seeks an advantage.
+    """A bot that actively tries to increase its score.
 
-    The bot moves towards the food it has the biggest advantage over the other
-    players at getting.
+    The bot moves towards the closest food that aren't the logical
+    target for another player.
     """
 
     def __init__(self, *args, **kwargs):
         super(AdvantageSeekingBot, self).__init__(*args, **kwargs)
         self.target_coordinates = (None, None)
+
+    def get_player_spread(self, positions=None):
+        """Mean distance between players.
+
+        When run after populating state data, this returns the mean
+        distance between all players on the board, to be used as a heuristic
+        for 'spreading out' if there are no logical targets.
+        """
+        # Allow passing positions in, to calculate the spread of a hypothetical
+        # future state, rather than the current state
+        if positions is None:
+            positions = self.player_positions
+        positions = positions.values()
+        # Find the distances between all pairs of players
+        pairs = itertools.combinations(positions, 2)
+        distances = itertools.starmap(self.manhattan_distance, pairs)
+        # Calculate and return the mean. distances is an iterator, so we
+        # convert it to a tuple so we can more easily do sums on its data
+        distances = tuple(distances)
+        if distances:
+            return float(sum(distances)) / len(distances)
+        else:
+            # There is only one player, so there are no distances between
+            # players.
+            return 0
 
     def get_logical_targets(self):
         """Find a logical place to move.
@@ -327,56 +525,25 @@ class AdvantageSeekingBot(HighPerformanceBaseGridUniverseBot):
             choices[player_id] = food_id
         return choices
 
-    def get_player_spread(self, positions=None):
-        """Mean distance between players.
-
-        When run after populating state data, this returns the mean
-        distance between all players on the board, to be used as a heuristic
-        for 'spreading out' if there are no logical targets.
-        """
-        # Allow passing positions in, to calculate the spread of a hypothetical
-        # future state, rather than the current state
-        if positions is None:
-            positions = self.player_positions
-        positions = positions.values()
-        # Find the distances between all pairs of players
-        pairs = itertools.combinations(positions, 2)
-        distances = itertools.starmap(self.manhattan_distance, pairs)
-        # Calculate and return the mean. distances is an iterator, so we
-        # convert it to a tuple so we can more easily do sums on its data
-        distances = tuple(distances)
-        if distances:
-            return float(sum(distances)) / len(distances)
-        else:
-            # There is only one player, so there are no distances between
-            # players.
-            return 0
-
-    def get_expected_position(self, key):
-        """Predict future state given an action.
-
-        Given the current state of players, if we were to push the key
-        specified as a parameter, what would we expect the state to become,
-        ignoring modeling of other players' behavior
-        """
-        positions = self.player_positions
-        my_position = self.my_position
-        if my_position is None:
-            return positions
-        pad = 5
-        rows = self.state['rows']
-        if key == Keys.UP and my_position[0] > pad:
-            my_position = (my_position[0] - 1, my_position[1])
-        if key == Keys.DOWN and my_position[0] < (rows - pad):
-            my_position = (my_position[0] + 1, my_position[1])
-        if key == Keys.LEFT and my_position[1] > pad:
-            my_position = (my_position[0], my_position[1] - 1)
-        if key == Keys.RIGHT and my_position[1] < (rows - pad):
-            my_position = (my_position[0], my_position[1] + 1)
-        positions[self.player_id] = my_position
-        return positions
-
     def get_next_key(self):
+        """Returns the best key to press in order to maximize point scoring, as follows:
+
+        If there is food on the grid and the bot is not currently making its way
+        towards a piece of food, find the logical target and store that coordinate
+        as the current target.
+
+        If there is a current target and there is food there, move towards that target
+        according to the optimal route, taking walls into account.
+
+        If there is a current target but no food there, unset the target and follow
+        the method normally.
+        ]
+        If there is no food on the grid, move away from other players, such that
+        the average distance between players is maximized. This makes it more
+        likely that players have an equal chance at finding new food items.
+
+        If there are no actions that get the player nearer to food or increase
+        player spread, press a random key."""
         valid_keys = []
         my_position = self.my_position
         try:
@@ -404,61 +571,6 @@ class AdvantageSeekingBot(HighPerformanceBaseGridUniverseBot):
             # the behavior of the RandomBot
             valid_keys = RandomBot.VALID_KEYS
         return random.choice(valid_keys)
-
-    @staticmethod
-    def manhattan_distance(coord1, coord2):
-        x = coord1[0] - coord2[0]
-        y = coord1[1] - coord2[1]
-        return abs(x) + abs(y)
-
-    def translate_directions(self, directions):
-        lookup = {
-            'N': Keys.UP,
-            'S': Keys.DOWN,
-            'E': Keys.RIGHT,
-            'W': Keys.LEFT,
-        }
-        return tuple(map(lookup.get, directions))
-
-    def distance(self, origin, endpoint):
-        try:
-            maze = self._maze
-            graph = self._graph
-        except AttributeError:
-            self._maze = maze = positions_to_maze(
-                self.wall_positions,
-                self.state['rows'],
-                self.state['columns']
-            )
-            self._graph = graph = maze_to_graph(maze)
-        result = find_path_astar(
-            maze,
-            tuple(origin),
-            tuple(endpoint),
-            max_iterations=10000,
-            graph=graph
-        )
-        if result:
-            distance = result[0]
-            directions = self.translate_directions(result[1])
-            return distance, directions
-        else:
-            return None, []
-
-    def distances(self):
-        """Compute distances to food.
-
-        Returns a dictionary keyed on player_id, with the value being another
-        dictionary which maps the index of a food item in the positions list
-        to the distance between that player and that food item.
-        """
-        distances = {}
-        for player_id, position in self.player_positions.items():
-            player_distances = {}
-            for j, food in enumerate(self.food_positions):
-                player_distances[j], _ = self.distance(position, food)
-            distances[player_id] = player_distances
-        return distances
 
     def participate(self):
         """Participate in the experiment.
