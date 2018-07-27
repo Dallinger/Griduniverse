@@ -566,6 +566,8 @@ class Gridworld(object):
         if 'walls' in state:
             self.wall_locations = {}
             for wall_state in state['walls']:
+                if isinstance(wall_state, list):
+                    wall_state = {'position': wall_state}
                 wall = Wall(**wall_state)
                 self.wall_locations[tuple(wall.position)] = wall
 

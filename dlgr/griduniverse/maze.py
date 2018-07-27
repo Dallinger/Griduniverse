@@ -5,15 +5,20 @@ import random
 
 class Wall(object):
     """A segment of colored wall occupying a single grid postion"""
+    DEFAULT_COLOR = [0.5, 0.5, 0.5]
+
     def __init__(self, **kwargs):
         self.position = kwargs.get('position', [0, 0])
-        self.color = kwargs.get('color', [0.5, 0.5, 0.5])
+        self.color = kwargs.get('color', self.DEFAULT_COLOR)
 
     def serialize(self):
-        return {
-            "position": self.position,
-            "color": self.color,
-        }
+        if self.color != self.DEFAULT_COLOR:
+            return {
+                "position": self.position,
+                "color": self.color,
+            }
+        else:
+            return self.position
 
 
 def labyrinth(columns=25, rows=25, density=1.0, contiguity=1.0):
