@@ -15,7 +15,6 @@ from cached_property import cached_property
 from faker import Factory
 from sqlalchemy import create_engine
 from sqlalchemy import func
-from sqlalchemy import and_, or_
 from sqlalchemy.orm import (
     sessionmaker,
     scoped_session,
@@ -1619,19 +1618,19 @@ class Griduniverse(Experiment):
         # Get the most recent eligible update that changed the food positions
         food_events = events.filter(
             info_cls.type == 'state',
-            Event.details['food'] != None,
+            Event.details['food'] != None,  # noqa: E711
         ).order_by(Event.creation_time.desc()).limit(1)
 
         # Get the most recent eligible update that changed the wall positions
         wall_events = events.filter(
             info_cls.type == 'state',
-            Event.details['walls'] != None,
+            Event.details['walls'] != None,  # noqa: E711
         ).order_by(Event.creation_time.desc()).limit(1)
 
         # Get the most recent eligible update that changed the player positions
         update_events = events.filter(
             info_cls.type == 'state',
-            Event.details['players'] != None,
+            Event.details['players'] != None,  # noqa: E711
         ).order_by(Event.creation_time.desc()).limit(1)
 
         # Get all eligible updates of the below types
