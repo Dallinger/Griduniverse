@@ -1487,11 +1487,13 @@ class Griduniverse(Experiment):
 
         while not self.grid.game_over:
             # Record grid state to database
+            state_data = self.grid.serialize(
+                include_walls=self.grid.walls_updated,
+                include_food=self.grid.food_updated
+            )
             state = self.environment.update(
-                json.dumps(self.grid.serialize(
-                    include_walls=self.grid.walls_updated,
-                    include_food=self.grid.food_updated
-                ))
+                json.dumps(state_data),
+                details=state_data
             )
             self.socket_session.add(state)
             self.socket_session.commit()
@@ -1636,10 +1638,13 @@ class Griduniverse(Experiment):
 
         if event.type == 'state':
             self.state_count += 1
-            state = json.loads(event.contents)
+            state = event.details
+            if not state:
+                # Allow loading older exports that didn't fill the details column
+                state = json.loads(event.contents)
             msg = {
                 'type': 'state',
-                'grid': event.contents,
+                'grid': state,
                 'count': self.state_count,
                 'remaining_time': self.grid.remaining_round_time,
                 'round': state['round'],
