@@ -2505,6 +2505,12 @@ function onGameStateChange(msg) {
   if (state.walls !== undefined && walls.length === 0) {
     for (k = 0; k < state.walls.length; k++) {
       cur_wall = state.walls[k];
+      if (cur_wall instanceof Array) {
+        cur_wall = {
+          position: cur_wall,
+          color: [0.5, 0.5, 0.5]
+        };
+      }
       walls.push(
         new Wall({
           position: cur_wall.position,

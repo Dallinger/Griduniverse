@@ -15,7 +15,6 @@ from cached_property import cached_property
 from faker import Factory
 from sqlalchemy import create_engine
 from sqlalchemy import func
-from sqlalchemy import and_, or_
 from sqlalchemy.orm import (
     sessionmaker,
     scoped_session,
@@ -566,6 +565,8 @@ class Gridworld(object):
         if 'walls' in state:
             self.wall_locations = {}
             for wall_state in state['walls']:
+                if isinstance(wall_state, list):
+                    wall_state = {'position': wall_state}
                 wall = Wall(**wall_state)
                 self.wall_locations[tuple(wall.position)] = wall
 
@@ -1485,11 +1486,13 @@ class Griduniverse(Experiment):
 
         while not self.grid.game_over:
             # Record grid state to database
+            state_data = self.grid.serialize(
+                include_walls=self.grid.walls_updated,
+                include_food=self.grid.food_updated
+            )
             state = self.environment.update(
-                json.dumps(self.grid.serialize(
-                    include_walls=self.grid.walls_updated,
-                    include_food=self.grid.food_updated
-                ))
+                json.dumps(state_data),
+                details=state_data
             )
             self.socket_session.add(state)
             self.socket_session.commit()
@@ -1599,22 +1602,56 @@ class Griduniverse(Experiment):
     def events_for_replay(self, session=None, target=None):
         info_cls = dallinger.models.Info
         from .models import Event
-        events = Experiment.events_for_replay(self, session=session, target=target)
-        event_types = {'chat', 'new_round', 'donation_processed', 'color_changed'}
+        # Get the base query from the parent class, but remove order_by fields as we override them
+        # in the subqueries
+        events = Experiment.events_for_replay(self, session=session, target=target).order_by(False)
         if target is None:
             # If we don't have a specific target time we can't optimise some states away
             return events
-        return events.filter(
-            or_(and_(info_cls.type == 'state',
-                     or_(
-                         info_cls.contents.contains('wall'),
-                         info_cls.contents.contains('food'),
-                        )),
-                and_(info_cls.type == 'state',
-                     info_cls.creation_time >= (target - datetime.timedelta(seconds=0.15))),
-                and_(info_cls.type == 'event',
-                     or_(*[Event.details['type'].astext == t for t in event_types]))
-                )
+
+        # We never care about events after the target time or before the current state
+        events = events.filter(
+            info_cls.creation_time <= target,
+            info_cls.creation_time > self._replay_time_index,
+        )
+
+        # Get the most recent eligible update that changed the food positions
+        food_events = events.filter(
+            info_cls.type == 'state',
+            Event.details['food'] != None,  # noqa: E711
+        ).order_by(Event.creation_time.desc()).limit(1)
+
+        # Get the most recent eligible update that changed the wall positions
+        wall_events = events.filter(
+            info_cls.type == 'state',
+            Event.details['walls'] != None,  # noqa: E711
+        ).order_by(Event.creation_time.desc()).limit(1)
+
+        # Get the most recent eligible update that changed the player positions
+        update_events = events.filter(
+            info_cls.type == 'state',
+            Event.details['players'] != None,  # noqa: E711
+        ).order_by(Event.creation_time.desc()).limit(1)
+
+        # Get all eligible updates of the below types
+        event_types = {'chat', 'new_round', 'donation_processed', 'color_changed'}
+        typed_events = events.filter(
+            info_cls.type == 'event',
+            Event.details['type'].astext.in_(event_types)
+        )
+
+        # Merge the above four queries, discarding duplicates, and put them in time ascending order
+        merged_events = food_events.union(
+            wall_events,
+            update_events,
+            typed_events
+        ).order_by(Event.creation_time.asc())
+
+        # Limit the query to the type, the effective time and the JSONB field containing the data
+        return merged_events.with_entities(
+            info_cls.type,
+            info_cls.creation_time,
+            info_cls.details
         )
 
     def replay_event(self, event):
@@ -1634,10 +1671,13 @@ class Griduniverse(Experiment):
 
         if event.type == 'state':
             self.state_count += 1
-            state = json.loads(event.contents)
+            state = event.details
+            if not state:
+                # Allow loading older exports that didn't fill the details column
+                state = json.loads(event.contents)
             msg = {
                 'type': 'state',
-                'grid': event.contents,
+                'grid': state,
                 'count': self.state_count,
                 'remaining_time': self.grid.remaining_round_time,
                 'round': state['round'],
