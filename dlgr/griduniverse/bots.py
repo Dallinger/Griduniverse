@@ -152,7 +152,7 @@ class BaseGridUniverseBot(BotBase):
                 return True
 
     def get_next_key(self):
-        """Subclasses must override this method to provide the logic to
+        """Classes inheriting from this must override this method to provide the logic to
         determine what their next action should be"""
         raise NotImplementedError
 

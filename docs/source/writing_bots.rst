@@ -78,7 +78,7 @@ There are four distinct phases to this example:
 3. The bot checks to see if there are any piece of food within 10 squares of its  location, according to the manhattan distance. This is an approximation for things being visible to human players. If there are any food items within range they will be set as the target.
 4. The bot finds the best route to the current target. If the target is not routable then it is unset and no movement is performed, otherwise the first step of the movement is performed.
 
-There are many ways this strategy could be improved, both for realism and code runtime, but it gives a simple view of a stateful bot that behaves in a useful way.
+There are many ways this strategy could be improved, both for realism and performance, but it gives a simple view of a stateful bot that behaves in a useful way.
 
 Balanced random movement
 ^^^^^^^^^^^^^^^^^^^^^^^^
