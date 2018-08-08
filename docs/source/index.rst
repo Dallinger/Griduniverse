@@ -30,6 +30,16 @@ exists as worlds in this universe. To build a successful model of
 collective identity formation is to create one that can explain many
 such worlds.
 
+
+.. toctree::
+    :maxdepth: 1
+    :caption: User Documentation
+
+    acknowledgments
+    bots
+    writing_bots
+
+
 Elements of the Griduniverse
 ----------------------------
 
