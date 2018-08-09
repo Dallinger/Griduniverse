@@ -191,8 +191,8 @@ class TestCommandline(object):
 
     @pytest.fixture
     def debugger_unpatched(self, output):
-        from dallinger.command_line import DebugSessionRunner
-        debugger = DebugSessionRunner(
+        from dallinger.deployment import DebugDeployment
+        debugger = DebugDeployment(
             output, verbose=True, bot=False, proxy_port=None, exp_config={}
         )
         return debugger
@@ -213,7 +213,7 @@ class TestCommandline(object):
             __enter__=mock.Mock(side_effect=OSError),
             __exit__=mock.Mock(return_value=False)
         )
-        with mock.patch('dallinger.command_line.HerokuLocalWrapper') as Wrapper:
+        with mock.patch('dallinger.deployment.HerokuLocalWrapper') as Wrapper:
             Wrapper.return_value = mock_wrapper
             with pytest.raises(OSError):
                 debugger.run()
