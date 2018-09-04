@@ -126,6 +126,7 @@ def db_session():
     yield session
     session.rollback()
     session.close()
+    session.connection().connection.close()
 
 
 @pytest.fixture
