@@ -10,7 +10,6 @@ import random
 import string
 import time
 import uuid
-import weakref
 
 from cached_property import cached_property
 from faker import Factory
@@ -183,12 +182,9 @@ class Gridworld(object):
     food_updated = True
 
     def __new__(cls, **kwargs):
-        if not hasattr(cls, 'instance') or cls.instance() is None:
-            instance = super(Gridworld, cls).__new__(cls)
-            cls.instance = weakref.ref(instance)
-        else:
-            instance = cls.instance()
-        return instance
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(Gridworld, cls).__new__(cls)
+        return cls.instance
 
     def __init__(self, **kwargs):
         # If Singleton is already initialized, do nothing
@@ -1109,7 +1105,7 @@ class Griduniverse(Experiment):
         if session:
             self.setup()
             self.grid = Gridworld(
-                log_event=weakref.proxy(self.record_event),
+                log_event=self.record_event,
                 **config.as_dict()
             )
             self.session.commit()
@@ -1596,7 +1592,7 @@ class Griduniverse(Experiment):
 
     def replay_start(self):
         self.grid = Gridworld(
-            log_event=weakref.proxy(self.record_event),
+            log_event=self.record_event,
             **config.as_dict()
         )
 

@@ -172,8 +172,8 @@ class TestGriduniverseBotExecution(object):
 
     def test_bot_api(self):
         """Run bots using headless chrome and collect data."""
-        experiment = Griduniverse()
-        data = experiment.run(
+        self.experiment = Griduniverse()
+        data = self.experiment.run(
             mode=u'debug',
             webdriver_type=u'chrome',
             recruiter=u'bots',
@@ -182,7 +182,7 @@ class TestGriduniverseBotExecution(object):
             num_dynos_worker=1,
             time_per_round=10.0,
         )
-        results = experiment.average_score(data)
+        results = self.experiment.average_score(data)
         assert results >= 0.0
 
 
@@ -199,15 +199,14 @@ class TestCommandline(object):
 
     @pytest.fixture
     def debugger(self, debugger_unpatched):
-        from dallinger.deployment import HerokuLocalWrapper
+        from dallinger.heroku.tools import HerokuLocalWrapper
         debugger = debugger_unpatched
         debugger.notify = mock.Mock(return_value=HerokuLocalWrapper.MONITOR_STOP)
         return debugger
 
     def test_startup(self, debugger):
         debugger.run()
-        log_output = "\n".join([a[0][0] for a in debugger.out.log.call_args_list])
-        assert "Server is running" in log_output
+        "Server is running" in str(debugger.out.log.call_args_list[0])
 
     def test_raises_if_heroku_wont_start(self, debugger):
         mock_wrapper = mock.Mock(
