@@ -1720,7 +1720,72 @@ class Griduniverse(Experiment):
         return json.dumps({
             "average_payoff": self.average_payoff(data),
             "average_score": self.average_score(data),
+            "number_of_actions": self.number_of_actions(data),
+            "averate_time_to_start": self.average_time_to_start(data),
         })
+
+    def number_of_actions(self, data):
+        """ Return a list of the number of actions taken for each participant
+        """
+        df = data.infos.df
+        dataState = df.loc[df['type'] == 'state']
+        if dataState.empty:
+            return []
+        dlist = data.infos.list
+        all_events = [x for x in dlist if x[10] == 'event']
+        moves = [x for x in all_events if 'move' in x[9]]
+
+        # get the unique origin_id for each player to differentiate players
+        origin_ids = [set(x[11] for x in moves)][0]
+        origin_ids = list(origin_ids)
+
+        player_move_data = []
+        for player in origin_ids:
+            # get all players moves
+            players_moves = [x for x in moves if x[11] == player]
+            if len(players_moves) != 0:
+                # extra player_id from a move data string
+                # '{"move": "up", "type": "move", "actual": "up", "player_id": 2}'
+                move_string = players_moves[0][9]
+                # find the ":" following the player_id
+                colon = move_string.find(':',move_string.find("player_id"))
+                player_id = move_string[colon+1:-1].strip() # get rid of ':' and '}' and white space
+                player_move_data.append({"player_id" : player_id, "total_moves": len(players_moves)})
+
+        return player_move_data
+
+    def average_time_to_start(self, data):
+        """ the average time to start the game.
+            compare the time of participant's first move info to the network creation time
+        """
+        df = data.infos.df
+        dataState = df.loc[df['type'] == 'state']
+        if dataState.empty:
+            return str(datetime.timedelta(0))
+        network_creation_time = data.networks.list[0][1]
+        dlist = data.infos.list
+        all_events = [x for x in dlist if x[10] == 'event']
+        moves = [x for x in all_events if 'move' in x[9]]
+        other_events = [x for x in all_events if 'move' not in x[9]]
+
+        # get the unique origin_id for each player to differentiate players
+        origin_ids = [set(x[11] for x in moves)][0]
+        origin_ids = list(origin_ids)
+
+        deltasum = datetime.timedelta(0) # init
+        deltas = []
+        for player in origin_ids:
+            # get all players moves
+            players_moves = [x for x in moves if x[11] == player]
+            if len(players_moves) != 0:  # is it possible that the player does not move?
+                # use the time of their first move
+                delta = players_moves[0][1] - network_creation_time
+                deltas.append(delta)
+                # add up the time diffs
+                deltasum += delta
+
+        # and divide by number of players that moved (which should hopefully match the number of players present)
+        return str(deltasum/len(deltas))
 
     def average_payoff(self, data):
         df = data.infos.df
