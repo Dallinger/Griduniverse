@@ -3,6 +3,7 @@
 import os
 import sys
 
+from setup_utils import update_pins
 from setuptools import setup, find_packages
 
 
@@ -64,6 +65,8 @@ setup_args = dict(
             'Griduniverse = dlgr.griduniverse.experiment:Griduniverse',
         ],
     },
+    extras_require={},
 )
 
+update_pins(setup_args)
 setup(**setup_args)

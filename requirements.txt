@@ -1,5 +1,6 @@
 -c constraints.txt
 Dallinger
+cached-property
 setuptools
 networkx
 numpy
