@@ -1732,38 +1732,83 @@ class Griduniverse(Experiment):
             "average_payoff": self.average_payoff(data),
             "average_score": self.average_score(data),
             "number_of_actions": self.number_of_actions(data),
-            "averate_time_to_start": self.average_time_to_start(data),
+            "average_time_to_start": self.average_time_to_start(data),
         })
 
-    def number_of_actions(self, data):
-        """ Return a list of the number of actions taken for each participant
+    def ssplit2(self, seq, splitters):
+        """ Split a list into nested lists on a value (or tuple of values)
+            Found at: https://stackoverflow.com/questions/4322705/split-a-list-into-nested-lists-on-a-value
+            auxilary function to number_of_actions
         """
-        df = data.infos.df
-        dataState = df.loc[df['type'] == 'state']
-        if dataState.empty:
-            return []
-        dlist = data.infos.list
-        all_events = [x for x in dlist if x[10] == 'event']
-        moves = [x for x in all_events if 'move' in x[9]]
+        seq = list(seq)
+        if splitters and seq:
+            splitters = set(splitters).intersection(seq)
+            if splitters:
+                result=[]
+                begin=0
+                for end in range(len(seq)):
+                    if seq[end] in splitters:
+                        if end > begin:
+                            result.append(seq[begin:end])
+                        begin=end+1
+                if begin < len(seq):
+                    result.append(seq[begin:])
+                return result
+        return [seq]
 
-        # get the unique origin_id for each player to differentiate players
-        origin_ids = [set(x[11] for x in moves)][0]
-        origin_ids = list(origin_ids)
-
+    def number_of_actions_per_round(self, origin_ids, moves):
+        """ Calculate number of moves/player for a specific round
+            auxilary function to number_of_actions
+        """
         player_move_data = []
         for player in origin_ids:
-            # get all players moves
-            players_moves = [x for x in moves if x[11] == player]
+            players_moves = [x for x in moves if x[11] == player] # get all the moves of a player
             if len(players_moves) != 0:
-                # extra player_id from a move data string
+                # extract player_id from a move data string
                 # '{"move": "up", "type": "move", "actual": "up", "player_id": 2}'
                 move_string = players_moves[0][9]
                 # find the ":" following the player_id
                 colon = move_string.find(':',move_string.find("player_id"))
                 player_id = move_string[colon+1:-1].strip() # get rid of ':' and '}' and white space
                 player_move_data.append({"player_id" : player_id, "total_moves": len(players_moves)})
-
         return player_move_data
+
+    def number_of_actions(self, data):
+        """ Return a dictionary containing the number of actions taken for each participant per round
+        """
+        df = data.infos.df
+        dataState = df.loc[df['type'] == 'state']
+        if dataState.empty:
+            return 0.0
+        dlist = data.infos.list
+        all_events = [x for x in dlist if x[10] == 'event']
+
+        # get the unique origin_id for each player to differentiate players
+        moves = [x for x in all_events if 'move' in x[9]]
+        origin_ids = [set(x[11] for x in moves)][0]
+        origin_ids = list(origin_ids)
+
+        round_breaks = [x for x in all_events if "new_round" in x[9]] # find all the round dividers/breaks
+        num_rounds = len(round_breaks) + 1
+        if num_rounds == 1:
+            return {"round_number": 1, "round_data" : self.number_of_actions_per_round(origin_ids, moves)}
+        else:
+            number_of_actions_data = []
+            moves_and_round_breaks = [x for x in all_events if 'move' in x[9] or 'new_round' in x[9]]
+            # split the move data of entire game into lists containing  move data for each round
+            rounds_moves = self.ssplit2(moves_and_round_breaks, tuple(round_breaks))
+            # parse each rounds moves, one at a time
+            round_number = 1
+            for moves in rounds_moves:
+                # note that the round number might not match how griduniverse numbers the rounds
+                # however the system used here to number rounds is verified to be accurate chronologically
+                # round 1 happened before round 2 etc
+                data_dict = {"round_number": round_number,
+                             "round_data" : self.number_of_actions_per_round(origin_ids, moves) }
+                number_of_actions_data.append(data_dict)
+                round_number += 1
+
+        return number_of_actions_data
 
     def average_time_to_start(self, data):
         """ the average time to start the game.
@@ -1772,12 +1817,11 @@ class Griduniverse(Experiment):
         df = data.infos.df
         dataState = df.loc[df['type'] == 'state']
         if dataState.empty:
-            return str(datetime.timedelta(0))
+            return 0.0
         network_creation_time = data.networks.list[0][1]
         dlist = data.infos.list
         all_events = [x for x in dlist if x[10] == 'event']
         moves = [x for x in all_events if 'move' in x[9]]
-        other_events = [x for x in all_events if 'move' not in x[9]]
 
         # get the unique origin_id for each player to differentiate players
         origin_ids = [set(x[11] for x in moves)][0]
