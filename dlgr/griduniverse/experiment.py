@@ -1779,7 +1779,7 @@ class Griduniverse(Experiment):
         df = data.infos.df
         dataState = df.loc[df['type'] == 'state']
         if dataState.empty:
-            return []
+            return {}
         dlist = data.infos.list
         all_events = [x for x in dlist if x[10] == 'event']
 
