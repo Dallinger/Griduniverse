@@ -1768,7 +1768,7 @@ class Griduniverse(Experiment):
         df = data.infos.df
         dataState = df.loc[df['type'] == 'state']
         if dataState.empty:
-            return 0.0
+            return []
         dlist = data.infos.list
         all_events = [x for x in dlist if x[10] == 'event']
 
@@ -1806,7 +1806,7 @@ class Griduniverse(Experiment):
         df = data.infos.df
         dataState = df.loc[df['type'] == 'state']
         if dataState.empty:
-            return 0.0
+            return str(datetime.timedelta(0))
         network_creation_time = data.networks.list[0][1]
         dlist = data.infos.list
         all_events = [x for x in dlist if x[10] == 'event']
