@@ -34,6 +34,21 @@ class BaseGridUniverseBot(BotBase):
     MEAN_KEY_INTERVAL = 1  #: The average number of seconds between key presses
     MAX_KEY_INTERVAL = 10  #: The maximum number of seconds between key presses
 
+    def complete_questionnaire(self):
+        """Complete the standard debriefing form randomly."""
+        difficulty = Select(self.driver.find_element_by_id('difficulty'))
+        difficulty.select_by_value(str(random.randint(1, 7)))
+        engagement = Select(self.driver.find_element_by_id('engagement'))
+        engagement.select_by_value(str(random.randint(1, 7)))
+        try:
+            fun = Select(self.driver.find_element_by_id('fun'))
+            # This is executed by the IEC_demo.py script...
+            # No need to fill out a random value.
+            fun.select_by_value(str(0))
+        except NoSuchElementException:
+            pass
+        return True
+
     def get_wait_time(self):
         """ Return a random wait time approximately average to
         MEAN_KEY_INTERVAL but never more than MAX_KEY_INTERVAL"""
@@ -428,6 +443,15 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
         """Returns the current player's id"""
         return self.participant_id
 
+    @property
+    def question_responses(self):
+        parent = super(HighPerformanceBaseGridUniverseBot, self).question_responses
+        print "Getting resposnes"
+        parent.update({
+            'fun': 3
+        })
+        return parent
+
 
 class RandomBot(HighPerformanceBaseGridUniverseBot):
     """A bot that plays griduniverse randomly"""
@@ -630,21 +654,6 @@ class AdvantageSeekingBot(HighPerformanceBaseGridUniverseBot):
                 return True
 
         self.log('Bot player stopped')
-
-    def complete_questionnaire(self):
-        """Complete the standard debriefing form randomly."""
-        difficulty = Select(self.driver.find_element_by_id('difficulty'))
-        difficulty.select_by_value(str(random.randint(1, 7)))
-        engagement = Select(self.driver.find_element_by_id('engagement'))
-        engagement.select_by_value(str(random.randint(1, 7)))
-        try:
-            fun = Select(self.driver.find_element_by_id('fun'))
-            # This is executed by the IEC_demo.py script...
-            # No need to fill out a random value.
-            fun.select_by_value(str(0))
-        except NoSuchElementException:
-            pass
-        return True
 
 
 def Bot(*args, **kwargs):
