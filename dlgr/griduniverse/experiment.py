@@ -926,6 +926,7 @@ class Player(object):
         self.payoff = kwargs.get('payoff', 0)
         self.pseudonym_locale = kwargs.get('pseudonym_locale', 'en_US')
         self.identity_visible = kwargs.get('identity_visible', True)
+        self.recruiter_id = kwargs.get('recruiter_id', '')
         self.add_wall = None
 
         # Determine the player's color. We don't have access to the specific
@@ -1056,6 +1057,7 @@ class Player(object):
             "motion_timestamp": self.motion_timestamp,
             "name": self.name,
             "identity_visible": self.identity_visible,
+            "recruiter_id": self.recruiter_id,
         }
 
 
@@ -1284,7 +1286,8 @@ class Griduniverse(Experiment):
                 # allocated to colours uniformly.
                 self.grid.spawn_player(
                     id=player_id,
-                    color_name=self.grid.limited_player_color_names[node.id % self.grid.num_colors]
+                    color_name=self.grid.limited_player_color_names[node.id % self.grid.num_colors],
+                    recruiter_id=participant.recruiter_id,
                 )
             else:
                 logger.info(
