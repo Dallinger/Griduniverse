@@ -5,7 +5,6 @@ import json
 import logging
 import operator
 import random
-import time
 
 import gevent
 from selenium.common.exceptions import StaleElementReferenceException
@@ -162,7 +161,9 @@ class BaseGridUniverseBot(BotBase):
         while self.is_still_on_grid:
 
             # The proposed finish time is how many seconds we think remain plus the current time
-            proposed_finish_time = datetime.datetime.now() + datetime.timedelta(seconds=self.grid['remaining_time'])
+            proposed_finish_time = datetime.datetime.now() + datetime.timedelta(
+                seconds=self.grid['remaining_time']
+            )
             # Update the expected finish time iff it is earlier than we thought
             expected_finish_time = min(expected_finish_time, proposed_finish_time)
 
@@ -439,12 +440,7 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
 
     @property
     def question_responses(self):
-        parent = super(HighPerformanceBaseGridUniverseBot, self).question_responses
-        print "Getting resposnes"
-        parent.update({
-            'fun': 3
-        })
-        return parent
+        return {"engagement": 4, "difficulty": 3, "fun": 3}
 
 
 class RandomBot(HighPerformanceBaseGridUniverseBot):
@@ -465,17 +461,6 @@ class RandomBot(HighPerformanceBaseGridUniverseBot):
     def get_next_key(self):
         """Randomly press one of Up, Down, Left, Right, space, r, b or y"""
         return random.choice(self.VALID_KEYS)
-
-    def participate(self):
-        """Participate by randomly hitting valid keys"""
-        self.wait_for_quorum()
-        self.wait_for_grid()
-        self.log('Bot player started')
-        while self.is_still_on_grid:
-            time.sleep(self.get_wait_time())
-            self.send_next_key()
-        self.log('Bot player stopped.')
-        return True
 
 
 class AdvantageSeekingBot(HighPerformanceBaseGridUniverseBot):
@@ -610,38 +595,6 @@ class AdvantageSeekingBot(HighPerformanceBaseGridUniverseBot):
             # the behavior of the RandomBot
             valid_keys = RandomBot.VALID_KEYS
         return random.choice(valid_keys)
-
-    def participate(self):
-        """Participate in the experiment.
-
-        Wait a random amount of time, then send a key according to
-        the algorithm above.
-        """
-        self.wait_for_quorum()
-        self.wait_for_grid()
-        self.log('Bot player started')
-
-        # Wait for state to be available
-        self.state = None
-        self.player_id = None
-        while (self.state is None) or (self.player_id is None):
-            gevent.sleep(0.500)
-            self.state = self.observe_state()
-            self.player_id = self.get_player_id()
-
-        while self.is_still_on_grid:
-            gevent.sleep(self.get_wait_time())
-            try:
-                observed_state = self.observe_state()
-                if observed_state:
-                    self.state = observed_state
-                    self.send_next_key()
-                else:
-                    return False
-            except (StaleElementReferenceException, AttributeError):
-                return True
-
-        self.log('Bot player stopped')
 
 
 def Bot(*args, **kwargs):
