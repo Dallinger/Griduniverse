@@ -3,7 +3,6 @@
 import datetime
 import flask
 import gevent
-import itertools
 import json
 import logging
 import math
@@ -1736,16 +1735,26 @@ class Griduniverse(Experiment):
             "average_time_to_start": self.average_time_to_start(data),
         })
 
-    def isplit(self, iterable, splitters):
+    def ssplit2(self, seq, splitters):
         """ Split a list into nested lists on a value (or tuple of values)
             Found at: https://stackoverflow.com/questions/4322705/split-a-list-into-nested-lists-on-a-value
             auxilary function to number_of_actions
         """
-        return [
-            list(g)
-            for k,g in itertools.groupby(iterable, lambda x:x in splitters)
-            if k not in splitters
-        ]
+        seq = list(seq)
+        if splitters and seq:
+            splitters = set(splitters).intersection(seq)
+            if splitters:
+                result=[]
+                begin=0
+                for end in range(len(seq)):
+                    if seq[end] in splitters:
+                        if end > begin:
+                            result.append(seq[begin:end])
+                        begin=end+1
+                if begin < len(seq):
+                    result.append(seq[begin:])
+                return result
+        return [seq]
 
     def number_of_actions_per_round(self, origin_ids, moves):
         """ Calculate number of moves/player for a specific round
@@ -1775,7 +1784,7 @@ class Griduniverse(Experiment):
         origin_ids = [set(x[11] for x in moves)][0]
 
         # split the move data of entire game into lists containing move data for each round
-        rounds_moves = self.isplit(moves_and_round_breaks, tuple(round_breaks))
+        rounds_moves = self.ssplit2(moves_and_round_breaks, tuple(round_breaks))
 
         # parse each rounds moves, one at a time
         round_number = 1
