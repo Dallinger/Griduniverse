@@ -1,4 +1,5 @@
 """Griduniverse bots."""
+import datetime
 import itertools
 import json
 import logging
@@ -139,7 +140,21 @@ class BaseGridUniverseBot(BotBase):
             self.state = self.observe_state()
             self.player_id = self.get_player_id()
 
+        # Pick an expected finish time far in the future, it will be updated the first time
+        # the bot gets a state
+        expected_finish_time = datetime.datetime.now() + datetime.timedelta(days=1)
+
         while self.is_still_on_grid:
+
+            # The proposed finish time is how many seconds we think remain plus the current time
+            proposed_finish_time = datetime.datetime.now() + datetime.timedelta(seconds=self.grid['remaining_time'])
+            # Update the expected finish time iff it is earlier than we thought
+            expected_finish_time = min(expected_finish_time, proposed_finish_time)
+
+            # If we expected to finish more than 30 seconds ago then bail out
+            if expected_finish_time + datetime.timedelta(seconds=30) < datetime.datetime.now():
+                return True
+
             gevent.sleep(self.get_wait_time())
             try:
                 observed_state = self.observe_state()
