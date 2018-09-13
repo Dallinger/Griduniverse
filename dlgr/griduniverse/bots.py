@@ -463,6 +463,78 @@ class RandomBot(HighPerformanceBaseGridUniverseBot):
         return random.choice(self.VALID_KEYS)
 
 
+class FoodSeekingBot(HighPerformanceBaseGridUniverseBot):
+    """A bot that actively tries to increase its score.
+
+    The bot moves towards the closest food.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(FoodSeekingBot, self).__init__(*args, **kwargs)
+        self.target_coordinates = (None, None)
+
+    def get_logical_targets(self):
+        """Find a logical place to move.
+
+        When run on a page view that has data extracted from the grid state
+        find the best targets for each of the players, where the best target
+        is the closest item of food.
+        """
+        best_choice = 100e10, None
+        for j, food in enumerate(self.food_positions):
+            distance, _ = self.distance(self.my_position, food)
+            if distance < best_choice[0]:
+                best_choice = distance, j
+        return {self.player_id: j}
+
+    def get_next_key(self):
+        """Returns the best key to press in order to maximize point scoring, as follows:
+
+        If there is food on the grid and the bot is not currently making its way
+        towards a piece of food, find the logical target and store that coordinate
+        as the current target.
+
+        If there is a current target and there is food there, move towards that target
+        according to the optimal route, taking walls into account.
+
+        If there is a current target but no food there, unset the target and follow
+        the method normally.
+        ]
+        If there is no food on the grid, move away from other players, such that
+        the average distance between players is maximized. This makes it more
+        likely that players have an equal chance at finding new food items.
+
+        If there are no actions that get the player nearer to food or increase
+        player spread, press a random key."""
+        valid_keys = []
+        my_position = self.my_position
+        try:
+            if self.target_coordinates in self.food_positions:
+                food_position = self.target_coordinates
+            else:
+                # If there is a most logical target, we move towards it
+                target_id = self.get_logical_targets()[self.player_id]
+                food_position = self.food_positions[target_id]
+                self.target_coordinates = food_position
+        except KeyError:
+            # Otherwise, move randomly avoiding walls
+            current_spread = self.get_player_spread()
+            for key in (Keys.UP, Keys.DOWN, Keys.LEFT, Keys.RIGHT):
+                expected = self.get_expected_position(key)
+                if expected != my_position:
+                    valid_keys.append(key)
+        else:
+            baseline_distance, directions = self.distance(my_position, food_position)
+            if baseline_distance:
+                valid_keys.append(directions[0])
+        if not valid_keys:
+            # If there are no food items available and no movement would
+            # cause the average spread of players to increase, fall back to
+            # the behavior of the RandomBot
+            valid_keys = RandomBot.VALID_KEYS
+        return random.choice(valid_keys)
+
+
 class AdvantageSeekingBot(HighPerformanceBaseGridUniverseBot):
     """A bot that actively tries to increase its score.
 
