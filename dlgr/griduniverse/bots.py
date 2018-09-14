@@ -481,8 +481,11 @@ class FoodSeekingBot(HighPerformanceBaseGridUniverseBot):
         is the closest item of food.
         """
         best_choice = 100e10, None
+        position = self.my_position
+        if position is None:
+            return {}
         for j, food in enumerate(self.food_positions):
-            distance, _ = self.distance(self.my_position, food)
+            distance, _ = self.distance(position, food)
             if distance < best_choice[0]:
                 best_choice = distance, j
         return {self.player_id: j}
@@ -518,7 +521,6 @@ class FoodSeekingBot(HighPerformanceBaseGridUniverseBot):
                 self.target_coordinates = food_position
         except KeyError:
             # Otherwise, move randomly avoiding walls
-            current_spread = self.get_player_spread()
             for key in (Keys.UP, Keys.DOWN, Keys.LEFT, Keys.RIGHT):
                 expected = self.get_expected_position(key)
                 if expected != my_position:

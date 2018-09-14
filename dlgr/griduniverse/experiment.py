@@ -1791,7 +1791,8 @@ class Griduniverse(Experiment):
         round_breaks = [x for x in all_events if "new_round" in x[9]] # find all the round dividers/breaks
         num_rounds = len(round_breaks) + 1
         if num_rounds == 1:
-            return {"round_number": 1, "round_data" : self.number_of_actions_per_round(origin_ids, moves)}
+            actions = self.number_of_actions_per_round(origin_ids, moves)
+            return {"round_number": 1, "round_data" : actions, "round_score": float(sum(player['total_moves'] for player in actions)) / len(actions)}
         else:
             number_of_actions_data = []
             moves_and_round_breaks = [x for x in all_events if 'move' in x[9] or 'new_round' in x[9]]

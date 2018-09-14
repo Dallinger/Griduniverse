@@ -1,5 +1,5 @@
 -c constraints.txt
-Dallinger
+-e git://github.com/Dallinger/Dallinger.git@bots-reliability#egg=dallinger[data]
 cached-property
 setuptools
 networkx
