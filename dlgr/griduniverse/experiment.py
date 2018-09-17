@@ -1550,7 +1550,7 @@ class Griduniverse(Experiment):
                     self.grid.spawn_food()
 
                 for i in range(len(self.grid.food_locations) - int(round(self.grid.num_food))):
-                    del self.grid.food_locations[random.choice(self.grid.food_locations.keys())]
+                    del self.grid.food_locations[random.choice(list(self.grid.food_locations))]
                     self.grid.food_updated = True
 
                 abundances = {}
