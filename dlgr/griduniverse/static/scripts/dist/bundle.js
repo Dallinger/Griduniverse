@@ -1760,6 +1760,7 @@ Player.prototype.move = function(direction) {
       waitTime = 1000 / this.motion_speed_limit;
 
   if (ts > this.motion_timestamp + waitTime) {
+    // Copy current position so we have something to safely mutate
     var newPosition = this.position.slice();
 
     switch (direction) {
@@ -1924,8 +1925,16 @@ var playerSet = (function () {
         if (oldPlayerData && oldPlayerData.id === this.ego_id) {
           /* Don't override current player motion timestamp */
           currentPlayerData.motion_timestamp = oldPlayerData.motion_timestamp;
+          // DEBUGGING
+          if (oldPlayerData.position !== currentPlayerData.position) {
+            console.log(
+              "Position out of sync! Local position: " + oldPlayerData.position +
+              " Server position: " + currentPlayerData.position
+            );
+          }
           /* Only override position from server if tremble is enabled,
-             otherwise motion jitter is likely and positions will sync anyway. */
+             otherwise motion jitter is likely.
+          */
           if (settings.motion_tremble_rate === 0) {
             currentPlayerData.position = oldPlayerData.position;
           }
@@ -1933,7 +1942,7 @@ var playerSet = (function () {
         var last_dimness = 1;
         if (this._players[currentPlayerData.id] !== undefined) {
           last_dimness = this._players[currentPlayerData.id].dimness;
-        } 
+        }
         this._players[currentPlayerData.id] = new Player(currentPlayerData, last_dimness);
       }
     };
@@ -2237,14 +2246,15 @@ function bindGameKeys(socket) {
 
   function moveInDir(direction) {
     var ego = players.ego();
-    ego.move(direction);
-    var msg = {
-      type: "move",
-      player_id: ego.id,
-      move: direction,
-      timestamp: ego.motion_timestamp
-    };
-    socket.send(msg);
+    if (ego.move(direction) ) {
+      var msg = {
+        type: "move",
+        player_id: ego.id,
+        move: direction,
+        timestamp: ego.motion_timestamp
+      };
+      socket.send(msg);
+    }
   }
 
   directions.forEach(function(direction) {
