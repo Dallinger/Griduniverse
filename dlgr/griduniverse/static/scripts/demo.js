@@ -677,14 +677,15 @@ function bindGameKeys(socket) {
 
   function moveInDir(direction) {
     var ego = players.ego();
-    ego.move(direction);
-    var msg = {
-      type: "move",
-      player_id: ego.id,
-      move: direction,
-      timestamp: ego.motion_timestamp
-    };
-    socket.send(msg);
+    if (ego.move(direction) ) {
+      var msg = {
+        type: "move",
+        player_id: ego.id,
+        move: direction,
+        timestamp: ego.motion_timestamp
+      };
+      socket.send(msg);
+    }
   }
 
   directions.forEach(function(direction) {
