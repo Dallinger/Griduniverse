@@ -38,6 +38,8 @@ config = get_config()
 # Make bot importable without triggering style warnings
 Bot = Bot
 
+EGO_PLAYER_ID = "30"
+
 
 class PluralFormatter(string.Formatter):
     def format_field(self, value, format_spec):
@@ -1027,6 +1029,12 @@ class Player(object):
                 msgs["wall"] = wall_msg
 
             return msgs
+        elif self.id == EGO_PLAYER_ID:
+            logger.info("MOVEMENT FAILED ON SERVER!!!")
+            logger.info("waited_long_enough: {}".format(waited_long_enough))
+            logger.info("can_afford_to_move: {}".format(can_afford_to_move))
+            logger.info("position open: {}".format(self.grid.can_occupy(new_position)))
+            logger.info("You're still at {}".format(self.position))
 
     def is_neighbor(self, player, d=1):
         """Determine whether other player is adjacent."""
