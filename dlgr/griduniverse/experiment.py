@@ -1001,14 +1001,14 @@ class Player(object):
         # Update motion.
         wait_time = 1.0 / self.motion_speed_limit
         if timestamp is None:
-            can_move = self.grid.elapsed_round_time > (self.motion_timestamp + wait_time)
+            waited_long_enough = self.grid.elapsed_round_time > (self.motion_timestamp + wait_time)
         else:
-            can_move = timestamp > (self.last_timestamp + wait_time)
+            waited_long_enough = timestamp > (self.last_timestamp + wait_time)
         can_afford_to_move = self.score >= self.motion_cost
 
         msgs = {"direction": direction}
 
-        if can_move and can_afford_to_move and self.grid.can_occupy(new_position):
+        if waited_long_enough and can_afford_to_move and self.grid.can_occupy(new_position):
             self.position = new_position
             self.motion_timestamp = self.grid.elapsed_round_time
             if timestamp:
@@ -1534,11 +1534,15 @@ class Griduniverse(Experiment):
             if (now - previous_second_timestamp) > 1.000:
 
                 # Grow or shrink the food stores.
+
+                # Alternate positive and negative growth rates
                 seasonal_growth = (
                     self.grid.seasonal_growth_rate **
                     (-1 if self.grid.round % 2 else 1)
                 )
 
+                # Compute how many food items we should have on the grid,
+                # ensuring it's not less than zero.
                 self.grid.num_food = max(min(
                     self.grid.num_food *
                     self.grid.food_growth_rate *
