@@ -1926,7 +1926,7 @@ var playerSet = (function () {
           /* Don't override current player motion timestamp */
           currentPlayerData.motion_timestamp = oldPlayerData.motion_timestamp;
           // DEBUGGING
-          if (oldPlayerData.position !== currentPlayerData.position) {
+          if (JSON.stringify(oldPlayerData.position) !== JSON.stringify(currentPlayerData.position)) {
             console.log(
               "Position out of sync! Local position: " + oldPlayerData.position +
               " Server position: " + currentPlayerData.position
