@@ -907,6 +907,14 @@ class Food(object):
         return time.time() - self.creation_timestamp
 
 
+class IllegalMove(Exception):
+    """A move sent from a client was denied by the server.
+    """
+
+    def __init__(self, message=''):
+        self.message = message
+
+
 class Player(object):
     """A player."""
 
@@ -969,11 +977,14 @@ class Player(object):
         direction = random.choice(directions)
         return direction
 
-    def move(self, direction, tremble_rate=0, timestamp=None):
+    def move(self, direction, tremble_rate=None, timestamp=None):
         """Move the player."""
 
         if not self.grid.movement_enabled:
             return
+
+        if tremble_rate is None:
+            tremble_rate = self.motion_tremble_rate
 
         if random.random() < tremble_rate:
             direction = self.tremble(direction)
@@ -1006,7 +1017,30 @@ class Player(object):
             waited_long_enough = timestamp > (self.last_timestamp + wait_time)
         can_afford_to_move = self.score >= self.motion_cost
 
+        if not waited_long_enough:
+            raise IllegalMove("Minimum wait time has not passed since last move!")
+        if not can_afford_to_move:
+            raise IllegalMove("Not enough points to move right now!")
+        if not self.grid.can_occupy(new_position):
+            raise IllegalMove("Position {} not open!".format(new_position))
+
         msgs = {"direction": direction}
+        self.position = new_position
+        self.motion_timestamp = self.grid.elapsed_round_time
+        if timestamp:
+            self.last_timestamp = timestamp
+        self.score -= self.motion_cost
+
+        # now that player moved, check if wall needs to be built
+        if self.add_wall is not None:
+            new_wall = Wall(position=self.add_wall)
+            self.grid.wall_locations[tuple(new_wall.position)] = new_wall
+            self.add_wall = None
+            wall_msg = {
+                'type': 'wall_built',
+                'wall': new_wall.serialize()
+            }
+            msgs["wall"] = wall_msg
 
         if waited_long_enough and can_afford_to_move and self.grid.can_occupy(new_position):
             self.position = new_position
@@ -1026,7 +1060,7 @@ class Player(object):
                 }
                 msgs["wall"] = wall_msg
 
-            return msgs
+        return msgs
 
     def is_neighbor(self, player, d=1):
         """Determine whether other player is adjacent."""
@@ -1361,16 +1395,23 @@ class Griduniverse(Experiment):
 
     def handle_move(self, msg):
         player = self.grid.players[msg['player_id']]
-        msgs = player.move(
-            msg['move'], timestamp=msg.get('timestamp'),
-            tremble_rate=player.motion_tremble_rate
-        )
-        if msgs:
-            msg["actual"] = msgs["direction"]
-            if msgs.get("wall"):
-                wall_msg = msgs.get("wall")
-                self.publish(wall_msg)
-                self.record_event(wall_msg)
+        try:
+            msgs = player.move(msg['move'], timestamp=msg.get('timestamp'))
+        except IllegalMove as ex:
+            if player.id == EGO_PLAYER_ID:
+                logger.info("MOVEMENT FAILED ON SERVER: {}".format(ex.message))
+            error_msg = {
+                'type': 'move_rejection',
+                'player_id': player.id,
+            }
+            self.publish(error_msg)
+        else:
+            if msgs is not None:
+                msg["actual"] = msgs["direction"]
+                if msgs.get("wall"):
+                    wall_msg = msgs.get("wall")
+                    self.publish(wall_msg)
+                    self.record_event(wall_msg)
 
     def handle_donation(self, msg):
         """Send a donation from one player to one or more other players."""
