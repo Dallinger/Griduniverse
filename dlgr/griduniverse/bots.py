@@ -619,6 +619,8 @@ class AdvantageSeekingBot(HighPerformanceBaseGridUniverseBot):
             pass
         return True
 
+class TeamAwareBot(AdvantageSeekingBot):
+    pass
 
 def Bot(*args, **kwargs):
     """Pick a bot implementation based on a configuration parameter.
