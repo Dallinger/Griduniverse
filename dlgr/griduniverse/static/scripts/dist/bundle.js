@@ -1736,6 +1736,7 @@ var Player = function (settings, dimness) {
   }
   this.id = settings.id;
   this.position = settings.position;
+  this.positionInSync = true;
   this.color = settings.color;
   this.motion_auto = settings.motion_auto;
   this.motion_direction = settings.motion_direction;
@@ -1914,36 +1915,38 @@ var playerSet = (function () {
       return Object.keys(this._players).length;
     };
 
-    PlayerSet.prototype.update = function (playerData) {
-      var currentPlayerData,
-          oldPlayerData,
+    PlayerSet.prototype.update = function (allPlayersData) {
+      var freshPlayerData,
+          existingPlayer,
           i;
 
-      for (i = 0; i < playerData.length; i++) {
-        currentPlayerData = playerData[i];
-        oldPlayerData = this._players[currentPlayerData.id];
-        if (oldPlayerData && oldPlayerData.id === this.ego_id) {
-          /* Don't override current player motion timestamp */
-          currentPlayerData.motion_timestamp = oldPlayerData.motion_timestamp;
+      for (i = 0; i < allPlayersData.length; i++) {
+        freshPlayerData = allPlayersData[i];
+        existingPlayer = this._players[freshPlayerData.id];
+        if (existingPlayer && existingPlayer.id === this.ego_id) {
           // DEBUGGING
-          if (JSON.stringify(oldPlayerData.position) !== JSON.stringify(currentPlayerData.position)) {
+          if (JSON.stringify(existingPlayer.position) !== JSON.stringify(freshPlayerData.position)) {
             console.log(
-              "Position out of sync! Local position: " + oldPlayerData.position +
-              " Server position: " + currentPlayerData.position
+              "Position out of sync! Local position: " + existingPlayer.position +
+              " Server position: " + freshPlayerData.position
             );
           }
-          /* Only override position from server if tremble is enabled,
-             otherwise motion jitter is likely.
-          */
-          if (settings.motion_tremble_rate === 0) {
-            currentPlayerData.position = oldPlayerData.position;
+
+          /* Don't override current player motion timestamp */
+          freshPlayerData.motion_timestamp = existingPlayer.motion_timestamp;
+
+          // Only override position from server if tremble is enabled,
+          // or if we know the Player's position is out of sync with the server.
+          // Otherwise, the ego player's motion is constantly jittery.
+          if (settings.motion_tremble_rate === 0 && existingPlayer.positionInSync) {
+            freshPlayerData.position = existingPlayer.position;
           }
         }
         var last_dimness = 1;
-        if (this._players[currentPlayerData.id] !== undefined) {
-          last_dimness = this._players[currentPlayerData.id].dimness;
+        if (this._players[freshPlayerData.id] !== undefined) {
+          last_dimness = this._players[freshPlayerData.id].dimness;
         }
-        this._players[currentPlayerData.id] = new Player(currentPlayerData, last_dimness);
+        this._players[freshPlayerData.id] = new Player(freshPlayerData, last_dimness);
       }
     };
 
@@ -2409,6 +2412,16 @@ function onColorChanged(msg) {
   pushMessage("<span class='name'>Moderator:</span> " + chatName(msg.player_id) + ' changed from team ' + msg.old_color + ' to team ' + msg.new_color + '.');
 }
 
+function onMoveRejected(msg) {
+  var offendingPlayerId = msg.player_id,
+      ego = players.ego();
+
+  if (ego && offendingPlayerId === ego.id) {
+    ego.positionInSync = false;
+    console.log("Marking your player (" + ego.id + ") as out of sync with server. Should sync on next state update");
+  }
+}
+
 function onDonationProcessed(msg) {
     var donor = players.get(msg.donor_id),
       recipient_id = msg.recipient_id,
@@ -2665,7 +2678,8 @@ $(document).ready(function() {
           'state': onGameStateChange,
           'new_round': displayLeaderboards,
           'stop': gameOverHandler(player_id),
-          'wall_built': addWall
+          'wall_built': addWall,
+          'move_rejection': onMoveRejected
         }
     };
     var socket = new GUSocket(socketSettings);
