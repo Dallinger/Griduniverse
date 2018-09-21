@@ -537,7 +537,7 @@ class AdvantageSeekingBot(HighPerformanceBaseGridUniverseBot):
 
         If there is a current target but no food there, unset the target and follow
         the method normally.
-        ]
+
         If there is no food on the grid, move away from other players, such that
         the average distance between players is maximized. This makes it more
         likely that players have an equal chance at finding new food items.
@@ -620,7 +620,54 @@ class AdvantageSeekingBot(HighPerformanceBaseGridUniverseBot):
         return True
 
 class TeamAwareBot(AdvantageSeekingBot):
-    pass
+
+
+    def get_next_key(self):
+        """Returns the best key to press in order to maximize point scoring, as follows:
+
+        If there is food on the grid and the bot is not currently making its way
+        towards a piece of food, find the logical target and store that coordinate
+        as the current target.
+
+        If there is a current target and there is food there, move towards that target
+        according to the optimal route, taking walls into account.
+
+        If there is a current target but no food there, unset the target and follow
+        the method normally.
+        ]
+        If there is no food on the grid, move away from other players, such that
+        the average distance between players is maximized. This makes it more
+        likely that players have an equal chance at finding new food items.
+
+        If there are no actions make the next best move that improves the advantage of the overall team."""
+        valid_keys = []
+        my_position = self.my_position
+        try:
+            if self.target_coordinates in self.food_positions:
+                food_position = self.target_coordinates
+            else:
+                # If there is a most logical target, we move towards it
+                target_id = self.get_logical_targets()[self.player_id]
+                food_position = self.food_positions[target_id]
+                self.target_coordinates = food_position
+        except KeyError:
+            # Otherwise, move in a direction that increases average spread.
+            current_spread = self.get_player_spread()
+            for key in (Keys.UP, Keys.DOWN, Keys.LEFT, Keys.RIGHT):
+                expected = self.get_expected_position(key)
+                if self.get_player_spread(expected) > current_spread:
+                    valid_keys.append(key)
+        else:
+            baseline_distance, directions = self.distance(my_position, food_position)
+            if baseline_distance:
+                valid_keys.append(directions[0])
+        if not valid_keys:
+            # If there are no food items available and no movement would
+            # cause the average spread of players to increase, fall back to
+            # the behavior of the RandomBot
+            valid_keys = RandomBot.VALID_KEYS
+        return random.choice(valid_keys)
+
 
 def Bot(*args, **kwargs):
     """Pick a bot implementation based on a configuration parameter.
