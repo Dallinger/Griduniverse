@@ -771,8 +771,21 @@ class Gridworld(object):
             for player_to in self.players.values():
                 player_to.score += self.public_good * consumed
 
+    def prune_excess_food(self):
+        """Bring available food supply down to configured limit (num_food).
+        """
+        for i in range(len(self.food_locations) - int(round(self.num_food))):
+            del self.food_locations[random.choice(list(self.food_locations))]
+            self.food_updated = True
+
+    def replenish_food(self):
+        """Top up food supply to meet configured num_food.
+        """
+        for i in range(int(round(self.num_food) - len(self.food_locations))):
+            self.spawn_food()
+
     def spawn_food(self, position=None):
-        """Respawn the food."""
+        """Respawn the food for a single position"""
         if not position:
             position = self._random_empty_position()
 
@@ -1575,12 +1588,8 @@ class Griduniverse(Experiment):
                     self.grid.rows * self.grid.columns,
                 ), 0)
 
-                for i in range(int(round(self.grid.num_food) - len(self.grid.food_locations))):
-                    self.grid.spawn_food()
-
-                for i in range(len(self.grid.food_locations) - int(round(self.grid.num_food))):
-                    del self.grid.food_locations[random.choice(list(self.grid.food_locations))]
-                    self.grid.food_updated = True
+                self.grid.replenish_food()
+                self.grid.prune_excess_food()
 
                 abundances = {}
                 for player in self.grid.players.values():
