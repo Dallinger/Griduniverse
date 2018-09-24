@@ -140,6 +140,30 @@ class TestChat(object):
         assert len(history) == 1
         assert 'hello!' in history[0]
 
+    def test_republishes_non_broadcasts(self, exp, a, pubsub):
+        participant = a.participant()
+        exp.handle_connect({'player_id': participant.id})
+
+        exp.send(
+            'griduniverse_ctrl:'
+            '{{"type":"chat","player_id":{},"contents":"hello!"}}'.format(participant.id)
+        )
+
+        pubsub.publish.assert_called()
+
+    def test_does_not_republish_broadcasts(self, exp, a, pubsub):
+        participant = a.participant()
+        exp.handle_connect({'player_id': participant.id})
+
+        exp.send(
+            'griduniverse_ctrl:'
+            '{{"type":"chat","player_id":{},"contents":"hello!","broadcast":"true"}}'.format(
+                participant.id
+            )
+        )
+
+        pubsub.publish.assert_not_called()
+
 
 @pytest.mark.usefixtures('env')
 class TestDonation(object):
