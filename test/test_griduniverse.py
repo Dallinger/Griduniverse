@@ -53,6 +53,10 @@ class TestExperimentClass(object):
     def test_recruit_does_not_raise(self, exp):
         exp.recruit()
 
+
+@pytest.mark.usefixtures('env')
+class TestPlayerConnects(object):
+
     def test_handle_connect_creates_node(self, exp, a):
         participant = a.participant()
         exp.handle_connect({'player_id': participant.id})
@@ -66,6 +70,31 @@ class TestExperimentClass(object):
     def test_handle_connect_is_noop_for_spectators(self, exp):
         exp.handle_connect({'player_id': 'spectator'})
         assert exp.node_by_player_id == {}
+
+    def test_colors_distributed_evenly(self, exp, participants):
+        exp.grid.num_players = 9
+        exp.networks()[0].max_size = 10
+        players = [
+            exp.handle_connect({'player_id': participant.id}) or exp.grid.players[participant.id]
+            for participant in participants[:9]
+        ]
+        colors = collections.Counter([player.color_idx for player in players])
+        assert colors == {0: 3, 1: 3, 2: 3}
+
+    def test_colors_distributed_almost_evenly_if_on_edge(self, exp, participants):
+        exp.grid.num_colors = 2
+        exp.grid.num_players = 9
+        exp.networks()[0].max_size = 10
+        players = [
+            exp.handle_connect({'player_id': participant.id}) or exp.grid.players[participant.id]
+            for participant in participants[:9]
+        ]
+        colors = collections.Counter([player.color_idx for player in players])
+        assert colors == {0: 5, 1: 4}
+
+
+@pytest.mark.usefixtures('env')
+class TestRecordsPlayerActivity(object):
 
     def test_records_player_events(self, exp, a):
         participant = a.participant()
@@ -93,6 +122,23 @@ class TestExperimentClass(object):
         results = json.loads(exp.analyze(data))
         assert results[u'average_score'] >= 0.0
         assert results[u'average_payoff'] >= 0.0
+
+
+@pytest.mark.usefixtures('env')
+class TestChat(object):
+
+    def test_appends_to_chat_history(self, exp, a):
+        participant = a.participant()
+        exp.handle_connect({'player_id': participant.id})
+
+        exp.send(
+            'griduniverse_ctrl:'
+            '{{"type":"chat","player_id":{},"contents":"hello!"}}'.format(participant.id)
+        )
+
+
+@pytest.mark.usefixtures('env')
+class TestDonation(object):
 
     def test_group_donations_distributed_evenly_across_team(self, exp, a):
         donor = a.participant()
@@ -144,27 +190,6 @@ class TestExperimentClass(object):
 
         assert donor_player.score == 1
         assert opponent_player.score == 1
-
-    def test_colors_distributed_evenly(self, exp, participants):
-        exp.grid.num_players = 9
-        exp.networks()[0].max_size = 10
-        players = [
-            exp.handle_connect({'player_id': participant.id}) or exp.grid.players[participant.id]
-            for participant in participants[:9]
-        ]
-        colors = collections.Counter([player.color_idx for player in players])
-        assert colors == {0: 3, 1: 3, 2: 3}
-
-    def test_colors_distributed_almost_evenly_if_on_edge(self, exp, participants):
-        exp.grid.num_colors = 2
-        exp.grid.num_players = 9
-        exp.networks()[0].max_size = 10
-        players = [
-            exp.handle_connect({'player_id': participant.id}) or exp.grid.players[participant.id]
-            for participant in participants[:9]
-        ]
-        colors = collections.Counter([player.color_idx for player in players])
-        assert colors == {0: 5, 1: 4}
 
 
 @pytest.mark.usefixtures('env')
