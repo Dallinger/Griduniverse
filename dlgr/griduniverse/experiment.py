@@ -1205,7 +1205,6 @@ class Griduniverse(Experiment):
         }
         if not config.get('replay', False):
             # Ignore these events in replay mode
-            mapping['server_time'] = time.time()
             mapping.update({
                 'chat': self.handle_chat_message,
                 'change_color': self.handle_change_color,
@@ -1226,17 +1225,26 @@ class Griduniverse(Experiment):
 
             'griduniverse_ctrl:{"type":"move","player_id":0,"move":"left"}'
         """
-        if raw_message.startswith(self.channel + ":"):
-            logger.info("We received a message for our channel: {}".format(
-                raw_message))
-            body = raw_message.replace(self.channel + ":", "")
-            message = json.loads(body)
+        message = self.parse_message(raw_message)
+        if message is not None:
+            message['server_time'] = time.time()
             self.dispatch((message))
             if 'player_id' in message:
                 self.record_event(message, message['player_id'])
-        else:
-            logger.info("Received a message, but not our channel: {}".format(
-                raw_message))
+
+    def parse_message(self, raw_message):
+        if raw_message.startswith(self.channel + ":"):
+            logger.info(
+                "We received a message for our channel: {}".format(raw_message)
+            )
+            body = raw_message.replace(self.channel + ":", "")
+            message = json.loads(body)
+
+            return message
+
+        logger.info(
+            "Received a message, but not our channel: {}".format(raw_message)
+        )
 
     def record_event(self, details, player_id=None):
         """Record an event in the Info table."""
