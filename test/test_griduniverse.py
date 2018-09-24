@@ -136,6 +136,10 @@ class TestChat(object):
             '{{"type":"chat","player_id":{},"contents":"hello!"}}'.format(participant.id)
         )
 
+        history = exp.grid.chat_message_history
+        assert len(history) == 1
+        assert 'hello!' in history[0]
+
 
 @pytest.mark.usefixtures('env')
 class TestDonation(object):

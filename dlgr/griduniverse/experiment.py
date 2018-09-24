@@ -1205,7 +1205,7 @@ class Griduniverse(Experiment):
         }
         if not config.get('replay', False):
             # Ignore these events in replay mode
-            mapping['server_time'] = time.time()
+            msg['server_time'] = time.time()
             mapping.update({
                 'chat': self.handle_chat_message,
                 'change_color': self.handle_change_color,
