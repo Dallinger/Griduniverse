@@ -364,14 +364,6 @@ var playerSet = (function () {
         freshPlayerData = allPlayersData[i];
         existingPlayer = this._players[freshPlayerData.id];
         if (existingPlayer && existingPlayer.id === this.ego_id) {
-          // DEBUGGING
-          if (JSON.stringify(existingPlayer.position) !== JSON.stringify(freshPlayerData.position)) {
-            console.log(
-              "Position out of sync! Local position: " + existingPlayer.position +
-              " Server position: " + freshPlayerData.position
-            );
-          }
-
           /* Don't override current player motion timestamp */
           freshPlayerData.motion_timestamp = existingPlayer.motion_timestamp;
 
@@ -724,14 +716,12 @@ function bindGameKeys(socket) {
 
         // New direction may be pressed before previous dir key is released
         if (repeatIntervalId) {
-          console.log("Clearing interval for new keydown");
           clearInterval(repeatIntervalId);
         }
 
         moveInDir(direction); // Move once immediately so there's no lag
         lastDirection = direction;
         repeatIntervalId = setInterval(moveInDir, repeatDelayMS, direction);
-        console.log("Repeating new direction: " + direction + " (" + repeatIntervalId + ")");
       },
       'keydown'
     );
@@ -741,7 +731,6 @@ function bindGameKeys(socket) {
       function(e) {
         e.preventDefault();
         if (direction) {
-          console.log("Calling clearInterval() for " + direction + " (" + repeatIntervalId + ")");
           clearInterval(repeatIntervalId);
           lastDirection = null;
         }
