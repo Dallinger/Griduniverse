@@ -372,6 +372,8 @@ var playerSet = (function () {
           // Otherwise, the ego player's motion is constantly jittery.
           if (settings.motion_tremble_rate === 0 && existingPlayer.positionInSync) {
             freshPlayerData.position = existingPlayer.position;
+          } else {
+            console.log("Overriding position from server!");
           }
         }
         var last_dimness = 1;
@@ -380,6 +382,17 @@ var playerSet = (function () {
         }
         this._players[freshPlayerData.id] = new Player(freshPlayerData, last_dimness);
       }
+    };
+
+    PlayerSet.prototype.startScheduledAutosyncOfEgoPosition = function () {
+      var self = this;
+      setInterval(function () {
+        var ego = self.ego();
+        if (ego) {
+          ego.positionInSync = false;
+          console.log("Scheduled marking of (" + ego.id + ") as out of sync with server.");
+        }
+      }, 5000);
     };
 
     PlayerSet.prototype.maxScore = function () {
@@ -703,14 +716,12 @@ function bindGameKeys(socket) {
 
         // New direction may be pressed before previous dir key is released
         if (repeatIntervalId) {
-          console.log("Clearing interval for new keydown");
           clearInterval(repeatIntervalId);
         }
 
         moveInDir(direction); // Move once immediately so there's no lag
         lastDirection = direction;
         repeatIntervalId = setInterval(moveInDir, repeatDelayMS, direction);
-        console.log("Repeating new direction: " + direction + " (" + repeatIntervalId + ")");
       },
       'keydown'
     );
@@ -720,7 +731,6 @@ function bindGameKeys(socket) {
       function(e) {
         e.preventDefault();
         if (direction) {
-          console.log("Calling clearInterval() for " + direction + " (" + repeatIntervalId + ")");
           clearInterval(repeatIntervalId);
           lastDirection = null;
         }
@@ -1122,9 +1132,10 @@ $(document).ready(function() {
         player_id: isSpectator ? 'spectator' : player_id
       };
       socket.send(data);
-    });
+  });
 
   players.ego_id = player_id;
+  players.startScheduledAutosyncOfEgoPosition();
   $('#donate label').data('orig-text', $('#donate label').text());
 
   setInterval(function () {
