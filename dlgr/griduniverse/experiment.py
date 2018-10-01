@@ -1055,24 +1055,6 @@ class Player(object):
             }
             msgs["wall"] = wall_msg
 
-        if waited_long_enough and can_afford_to_move and self.grid.can_occupy(new_position):
-            self.position = new_position
-            self.motion_timestamp = self.grid.elapsed_round_time
-            if timestamp:
-                self.last_timestamp = timestamp
-            self.score -= self.motion_cost
-
-            # now that player moved, check if wall needs to be built
-            if self.add_wall is not None:
-                new_wall = Wall(position=self.add_wall)
-                self.grid.wall_locations[tuple(new_wall.position)] = new_wall
-                self.add_wall = None
-                wall_msg = {
-                    'type': 'wall_built',
-                    'wall': new_wall.serialize()
-                }
-                msgs["wall"] = wall_msg
-
         return msgs
 
     def is_neighbor(self, player, d=1):
@@ -1410,7 +1392,7 @@ class Griduniverse(Experiment):
         player = self.grid.players[msg['player_id']]
         try:
             msgs = player.move(msg['move'], timestamp=msg.get('timestamp'))
-        except IllegalMove as ex:
+        except IllegalMove:
             error_msg = {
                 'type': 'move_rejection',
                 'player_id': player.id,
