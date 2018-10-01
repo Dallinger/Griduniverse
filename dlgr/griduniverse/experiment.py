@@ -1554,6 +1554,10 @@ class Griduniverse(Experiment):
             self.grid.food_updated = False
             gevent.sleep(0.010)
 
+            # TODO: Most of this code belongs in Gridworld; we're just looking
+            # at properties of that class and then telling it to do things based
+            # on the values.
+
             # Log food updates every hundred rounds to capture maturity changes
             if self.grid.food_maturation_threshold and (count % 100) == 0:
                 self.grid.food_updated = True
