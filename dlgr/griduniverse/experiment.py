@@ -1411,8 +1411,6 @@ class Griduniverse(Experiment):
         try:
             msgs = player.move(msg['move'], timestamp=msg.get('timestamp'))
         except IllegalMove as ex:
-            if player.id == EGO_PLAYER_ID:
-                logger.info("MOVEMENT FAILED ON SERVER: {}".format(ex.message))
             error_msg = {
                 'type': 'move_rejection',
                 'player_id': player.id,
