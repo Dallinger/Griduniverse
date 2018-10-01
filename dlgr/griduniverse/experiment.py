@@ -1263,17 +1263,10 @@ class Griduniverse(Experiment):
 
     def parse_message(self, raw_message):
         if raw_message.startswith(self.channel + ":"):
-            logger.info(
-                "We received a message for our channel: {}".format(raw_message)
-            )
             body = raw_message.replace(self.channel + ":", "")
             message = json.loads(body)
 
             return message
-
-        logger.info(
-            "Received a message, but not our channel: {}".format(raw_message)
-        )
 
     def record_event(self, details, player_id=None):
         """Record an event in the Info table."""
