@@ -1106,8 +1106,8 @@ function gameOverHandler(player_id) {
 }
 
 $(document).ready(function() {
-    var player_id = dallinger.getUrlParameter('participant_id');
-    isSpectator = typeof player_id === 'undefined';
+  var player_id = dallinger.getUrlParameter('participant_id');
+      isSpectator = typeof player_id === 'undefined';
   var socketSettings = {
         'endpoint': 'chat',
         'broadcast': CHANNEL,
@@ -1123,8 +1123,8 @@ $(document).ready(function() {
           'wall_built': addWall,
           'move_rejection': onMoveRejected
         }
-    };
-    var socket = new GUSocket(socketSettings);
+  };
+  var socket = new GUSocket(socketSettings);
 
   socket.open().done(function () {
       var data = {
