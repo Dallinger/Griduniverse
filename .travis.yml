@@ -19,12 +19,9 @@ addons:
   chrome: stable
   postgresql: "9.4"
   apt:
-    sources:
-    - heroku
     packages:
     - pandoc
     - enchant
-    - heroku-toolbelt
     - redis-server
 services:
   - redis-server
