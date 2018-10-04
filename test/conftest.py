@@ -156,6 +156,12 @@ def exp(db_session, active_config, fresh_gridworld):
 
 
 @pytest.fixture
+def fake_gsleep():
+    with mock.patch('gevent.sleep') as fake_sleep:
+        yield fake_sleep
+
+
+@pytest.fixture
 def a(db_session):
     """ Provides a standard way of building model objects in tests.
 
