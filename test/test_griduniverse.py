@@ -70,12 +70,11 @@ class TestExperimentClass(object):
         exp.publish = mock.Mock()
         with mock.patch('gevent.sleep') as _fake_sleep:
             def count_down(counter):
-                if counter[0] <= 0:
-                    return True
-                counter[0] -= 1
-                return False
-            start_counter = [3]
-            end_counter = [3]
+                for c in counter:
+                    return False
+                return True
+            end_counter = (i for i in range(3))
+            start_counter = (i for i in range(3))
             # Each of these will loop three times before while condition is met
             type(exp.grid).game_started = mock.PropertyMock(
                 side_effect=lambda: count_down(start_counter)
@@ -118,11 +117,10 @@ class TestExperimentClass(object):
         exp.publish = mock.Mock()
         with mock.patch('gevent.sleep') as _fake_sleep:
             def count_down(counter):
-                if counter[0] <= 0:
-                    return True
-                counter[0] -= 1
-                return False
-            end_counter = [2]
+                for c in counter:
+                    return False
+                return True
+            end_counter = (i for i in range(2))
             # This will loop 3 times before the loop is broken
             type(exp.grid).game_over = mock.PropertyMock(
                 side_effect=lambda: count_down(end_counter)
