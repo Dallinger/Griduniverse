@@ -1763,10 +1763,11 @@ class Griduniverse(Experiment):
 
     def _last_state_for_player(self, player_id):
         most_recent_grid_state = self.environment.state()
-        players = json.loads(most_recent_grid_state.contents)['players']
-        id_matches = [p for p in players if int(p['id']) == player_id]
-        if id_matches:
-            return id_matches[0]
+        if most_recent_grid_state is not None:
+            players = json.loads(most_recent_grid_state.contents)['players']
+            id_matches = [p for p in players if int(p['id']) == player_id]
+            if id_matches:
+                return id_matches[0]
 
     def is_complete(self):
         """Don't consider the experiment finished until all initial
