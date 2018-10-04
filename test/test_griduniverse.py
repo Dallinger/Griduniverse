@@ -138,6 +138,17 @@ class TestExperimentClass(object):
             # publish called with grid state message once per loop
             assert exp.publish.call_count == 3
 
+    def test_bonus(self, participants, exp):
+        # With no experiment state, bonus returns 0
+        assert exp.bonus(participants[0]) == 0.0
+
+        with mock.patch('dlgr.griduniverse.experiment.Griduniverse.environment') as env:
+            state_mock = mock.Mock()
+            env.state.return_value = state_mock
+            # State contents is JSON grid state
+            state_mock.contents = '{"players": [{"id": "1", "payoff": 100.0}]}'
+            assert exp.bonus(participants[0]) == 100.0
+
 
 @pytest.mark.usefixtures('env')
 class TestGridWorld(object):
