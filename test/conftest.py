@@ -143,6 +143,16 @@ def fresh_gridworld():
 
 
 @pytest.fixture
+def gridworld(fresh_gridworld, active_config):
+    from dlgr.griduniverse.experiment import Gridworld
+    gw = Gridworld(
+        log_event=mock.Mock(),
+        **active_config.as_dict()
+    )
+    yield gw
+
+
+@pytest.fixture
 def exp(db_session, active_config, fresh_gridworld):
     from dallinger.experiments import Griduniverse
     gu = Griduniverse(db_session)
@@ -153,6 +163,12 @@ def exp(db_session, active_config, fresh_gridworld):
     yield gu
     gu.socket_session.rollback()
     gu.socket_session.close()
+
+
+@pytest.fixture
+def fake_gsleep():
+    with mock.patch('gevent.sleep') as fake_sleep:
+        yield fake_sleep
 
 
 @pytest.fixture

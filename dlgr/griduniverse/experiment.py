@@ -1257,7 +1257,15 @@ class Griduniverse(Experiment):
         else:
             node = self.environment
 
-        info = Event(origin=node, details=details)
+        try:
+            info = Event(origin=node, details=details)
+        except ValueError:
+            logger.info(
+                "Tried to record an event after node#{} failure: {}".format(
+                    node.id, details
+                )
+            )
+            return
         session.add(info)
         session.commit()
 

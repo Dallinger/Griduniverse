@@ -6,7 +6,6 @@ import json
 import mock
 import pytest
 import time
-from dallinger.experiments import Griduniverse
 
 
 class TestDependenciesLoaded(object):
@@ -52,6 +51,123 @@ class TestExperimentClass(object):
 
     def test_recruit_does_not_raise(self, exp):
         exp.recruit()
+
+
+@pytest.mark.usefixtures('env', 'fake_gsleep')
+class TestGameLoops(object):
+
+    @pytest.fixture
+    def loop_exp_3x(self, exp):
+        exp.grid = mock.Mock()
+        exp.grid.num_food = 10
+        exp.grid.round = 0
+        exp.grid.seasonal_growth_rate = 1
+        exp.grid.food_growth_rate = 1.0
+        exp.grid.rows = exp.grid.columns = 25
+        exp.grid.players = {'1': mock.Mock()}
+        exp.grid.players['1'].score = 10
+        exp.grid.contagion = 1
+        exp.grid.tax = 1.0
+        exp.grid.food_locations = []
+        exp.grid.frequency_dependence = 1
+        exp.grid.frequency_dependent_payoff_rate = 0
+        exp.grid.start_timestamp = time.time()
+        exp.socket_session = mock.Mock()
+        exp.publish = mock.Mock()
+        exp.grid.serialize.return_value = {}
+
+        def count_down(counter):
+            for c in counter:
+                return False
+            return True
+        end_counter = (i for i in range(3))
+        start_counter = (i for i in range(3))
+        # Each of these will loop three times before while condition is met
+        type(exp.grid).game_started = mock.PropertyMock(
+            side_effect=lambda: count_down(start_counter)
+        )
+        type(exp.grid).game_over = mock.PropertyMock(
+            side_effect=lambda: count_down(end_counter)
+        )
+        yield exp
+
+    def test_loop_builds_labrynth(self, loop_exp_3x):
+        exp = loop_exp_3x
+        exp.game_loop()
+        # labryinth built once
+        assert exp.grid.build_labyrinth.call_count == 1
+
+    def test_loop_spawns_food(self, loop_exp_3x):
+        exp = loop_exp_3x
+        exp.game_loop()
+        # Spawn food called once for each num_food
+        assert exp.grid.spawn_food.call_count == exp.grid.num_food
+
+    def test_loop_spawns_food_during_timed_events(self, loop_exp_3x):
+        # Spawn food called twice for each num_food, once at start and again
+        # on timed events to replenish empty list
+        exp = loop_exp_3x
+
+        # Ensure one timed events round
+        exp.grid.start_timestamp -= 2
+
+        exp.game_loop()
+        assert exp.grid.spawn_food.call_count == exp.grid.num_food * 2
+
+    def test_loop_serialized_and_saves(self, loop_exp_3x):
+        # Grid serialized and added to DB session once per loop
+        exp = loop_exp_3x
+        exp.game_loop()
+        assert exp.grid.serialize.call_count == 3
+        assert exp.socket_session.add.call_count == 3
+        # Session commited once per loop and again at end
+        assert exp.socket_session.commit.call_count == 4
+
+    def test_loop_resets_state(self, loop_exp_3x):
+        # Wall and food state unset, food count reset during loop
+        exp = loop_exp_3x
+        exp.game_loop()
+        assert exp.grid.walls_updated is False
+        assert exp.grid.food_updated is False
+
+    def test_loop_taxes_points(self, loop_exp_3x):
+        # Player is taxed one point during the timed event round
+        exp = loop_exp_3x
+
+        # Ensure one timed events round
+        exp.grid.start_timestamp -= 2
+
+        exp.game_loop()
+        assert exp.grid.players['1'].score == 9.0
+
+    def test_loop_computes_payoffs(self, loop_exp_3x):
+        # Payoffs computed once per loop before checking round completion
+        exp = loop_exp_3x
+        exp.game_loop()
+        assert exp.grid.compute_payoffs.call_count == 3
+        assert exp.grid.check_round_completion.call_count == 3
+
+    def test_loop_publishes_stop_event(self, loop_exp_3x):
+        # publish called with stop event at end of round
+        exp = loop_exp_3x
+        exp.game_loop()
+        exp.publish.assert_called_once_with({'type': 'stop'})
+
+    def test_send_state_thread(self, loop_exp_3x):
+        # State thread will loop 4 times before the loop is broken
+        exp = loop_exp_3x
+        exp.grid.serialize.return_value = {
+            'grid': 'serialized',
+            'walls': [],
+            'food': [],
+            'players': [{'id': '1'}],
+        }
+
+        exp.send_state_thread()
+        # Grid serialized once per loop
+        assert exp.grid.serialize.call_count == 4
+        # publish called with grid state message once per loop
+        assert exp.publish.call_count == 4
 
 
 @pytest.mark.usefixtures('env')
@@ -218,36 +334,3 @@ class TestDonation(object):
 
         assert donor_player.score == 1
         assert opponent_player.score == 1
-
-
-@pytest.mark.usefixtures('exp_dir', 'env')
-class TestCommandline(object):
-
-    @pytest.fixture
-    def debugger_unpatched(self, output):
-        from dallinger.deployment import DebugDeployment
-        debugger = DebugDeployment(
-            output, verbose=True, bot=False, proxy_port=None, exp_config={}
-        )
-        return debugger
-
-    @pytest.fixture
-    def debugger(self, debugger_unpatched):
-        from dallinger.heroku.tools import HerokuLocalWrapper
-        debugger = debugger_unpatched
-        debugger.notify = mock.Mock(return_value=HerokuLocalWrapper.MONITOR_STOP)
-        return debugger
-
-    def test_startup(self, debugger):
-        debugger.run()
-        "Server is running" in str(debugger.out.log.call_args_list[0])
-
-    def test_raises_if_heroku_wont_start(self, debugger):
-        mock_wrapper = mock.Mock(
-            __enter__=mock.Mock(side_effect=OSError),
-            __exit__=mock.Mock(return_value=False)
-        )
-        with mock.patch('dallinger.deployment.HerokuLocalWrapper') as Wrapper:
-            Wrapper.return_value = mock_wrapper
-            with pytest.raises(OSError):
-                debugger.run()
