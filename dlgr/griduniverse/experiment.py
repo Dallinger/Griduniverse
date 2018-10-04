@@ -1769,4 +1769,9 @@ class Griduniverse(Experiment):
             dallinger.models.Participant.status.in_(['approved', 'rejected'])
         ).with_entities(func.count(dallinger.models.Participant.id)).scalar()
 
-        return finished_count >= self.initial_recruitment_size
+        last_commit = self.session.query(
+            max(dallinger.models.Info.creation_time)
+        )
+        time_passed = datetime.now() - last_commit
+        timeout = 10000
+        return time_passed >= timeout or finished_count >= self.initial_recruitment_size
