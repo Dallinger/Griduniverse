@@ -143,6 +143,16 @@ def fresh_gridworld():
 
 
 @pytest.fixture
+def gridworld(fresh_gridworld, active_config):
+    from dlgr.griduniverse.experiment import Gridworld
+    gw = Gridworld(
+        log_event=mock.Mock(),
+        **active_config.as_dict()
+    )
+    yield gw
+
+
+@pytest.fixture
 def exp(db_session, active_config, fresh_gridworld):
     from dallinger.experiments import Griduniverse
     gu = Griduniverse(db_session)
