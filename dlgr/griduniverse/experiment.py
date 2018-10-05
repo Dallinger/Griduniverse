@@ -1010,11 +1010,15 @@ class Player(object):
                 new_position[1] = self.position[1] + 1
 
         # Update motion.
-        wait_time = 1.0 / self.motion_speed_limit
-        if timestamp is None:
-            waited_long_enough = self.grid.elapsed_round_time > (self.motion_timestamp + wait_time)
+        if self.motion_speed_limit <= 0:
+            waited_long_enough = True
         else:
-            waited_long_enough = timestamp > (self.last_timestamp + wait_time)
+            wait_time = 1.0 / self.motion_speed_limit
+            if timestamp is None:
+                elapsed = self.grid.elapsed_round_time
+                waited_long_enough = elapsed > (self.motion_timestamp + wait_time)
+            else:
+                waited_long_enough = timestamp > (self.last_timestamp + wait_time)
         can_afford_to_move = self.score >= self.motion_cost
 
         if not waited_long_enough:
@@ -1054,6 +1058,8 @@ class Player(object):
 
     def neighbors(self, d=1):
         """Return all adjacent players."""
+        if self.grid is None:
+            return []
         return [
             p for p in self.grid.players.values() if (
                 self.is_neighbor(p, d=d) and (p is not self)
@@ -1583,7 +1589,7 @@ class Griduniverse(Experiment):
                 # TODO: self.grid.prune_excess_food()
                 for i in range(len(self.grid.food_locations) - int(round(self.grid.num_food))):
                     del self.grid.food_locations[random.choice(self.grid.food_locations.keys())]
-                    self.grid.food_updated = True                #
+                    self.grid.food_updated = True
 
                 abundances = {}
                 for player in self.grid.players.values():
