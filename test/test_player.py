@@ -77,6 +77,18 @@ class TestMovement(object):
 
         assert message['direction'] == 'right'
 
+    def test_can_add_wall_on_move(self, gridworld):
+        player = gridworld.spawn_player('1')
+        player.position = [0, 0]
+        player.add_wall = [0, 0]
+        player.motion_speed_limit = 0
+
+        message = player.move('right')
+
+        assert message['direction'] == 'right'
+        assert message['wall'] == {'type': 'wall_built', 'wall': [0, 0]}
+        assert gridworld.has_wall([0, 0])
+
     def test_cannot_move_immediately_if_speed_limit_enforced(self, gridworld):
         from dlgr.griduniverse.experiment import IllegalMove
         player = gridworld.spawn_player('1')
