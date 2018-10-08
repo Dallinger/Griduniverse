@@ -770,7 +770,7 @@ class Gridworld(object):
                 player_to.score += self.public_good * consumed
 
     def spawn_food(self, position=None):
-        """Respawn the food."""
+        """Respawn the food for a single position"""
         if not position:
             position = self._random_empty_position()
 
@@ -907,6 +907,14 @@ class Food(object):
         return time.time() - self.creation_timestamp
 
 
+class IllegalMove(Exception):
+    """A move sent from a client was denied by the server.
+    """
+
+    def __init__(self, message=''):
+        self.message = message
+
+
 class Player(object):
     """A player."""
 
@@ -969,11 +977,14 @@ class Player(object):
         direction = random.choice(directions)
         return direction
 
-    def move(self, direction, tremble_rate=0, timestamp=None):
+    def move(self, direction, tremble_rate=None, timestamp=None):
         """Move the player."""
 
         if not self.grid.movement_enabled:
             return
+
+        if tremble_rate is None:
+            tremble_rate = self.motion_tremble_rate
 
         if random.random() < tremble_rate:
             direction = self.tremble(direction)
@@ -999,34 +1010,43 @@ class Player(object):
                 new_position[1] = self.position[1] + 1
 
         # Update motion.
-        wait_time = 1.0 / self.motion_speed_limit
-        if timestamp is None:
-            can_move = self.grid.elapsed_round_time > (self.motion_timestamp + wait_time)
+        if self.motion_speed_limit <= 0:
+            waited_long_enough = True
         else:
-            can_move = timestamp > (self.last_timestamp + wait_time)
+            wait_time = 1.0 / self.motion_speed_limit
+            if timestamp is None:
+                elapsed = self.grid.elapsed_round_time
+                waited_long_enough = elapsed > (self.motion_timestamp + wait_time)
+            else:
+                waited_long_enough = timestamp > (self.last_timestamp + wait_time)
         can_afford_to_move = self.score >= self.motion_cost
 
+        if not waited_long_enough:
+            raise IllegalMove("Minimum wait time has not passed since last move!")
+        if not can_afford_to_move:
+            raise IllegalMove("Not enough points to move right now!")
+        if not self.grid.can_occupy(new_position):
+            raise IllegalMove("Position {} not open!".format(new_position))
+
         msgs = {"direction": direction}
+        self.position = new_position
+        self.motion_timestamp = self.grid.elapsed_round_time
+        if timestamp:
+            self.last_timestamp = timestamp
+        self.score -= self.motion_cost
 
-        if can_move and can_afford_to_move and self.grid.can_occupy(new_position):
-            self.position = new_position
-            self.motion_timestamp = self.grid.elapsed_round_time
-            if timestamp:
-                self.last_timestamp = timestamp
-            self.score -= self.motion_cost
+        # now that player moved, check if wall needs to be built
+        if self.add_wall is not None:
+            new_wall = Wall(position=self.add_wall)
+            self.grid.wall_locations[tuple(new_wall.position)] = new_wall
+            self.add_wall = None
+            wall_msg = {
+                'type': 'wall_built',
+                'wall': new_wall.serialize()
+            }
+            msgs["wall"] = wall_msg
 
-            # now that player moved, check if wall needs to be built
-            if self.add_wall is not None:
-                new_wall = Wall(position=self.add_wall)
-                self.grid.wall_locations[tuple(new_wall.position)] = new_wall
-                self.add_wall = None
-                wall_msg = {
-                    'type': 'wall_built',
-                    'wall': new_wall.serialize()
-                }
-                msgs["wall"] = wall_msg
-
-            return msgs
+        return msgs
 
     def is_neighbor(self, player, d=1):
         """Determine whether other player is adjacent."""
@@ -1038,6 +1058,8 @@ class Player(object):
 
     def neighbors(self, d=1):
         """Return all adjacent players."""
+        if self.grid is None:
+            return []
         return [
             p for p in self.grid.players.values() if (
                 self.is_neighbor(p, d=d) and (p is not self)
@@ -1234,17 +1256,10 @@ class Griduniverse(Experiment):
 
     def parse_message(self, raw_message):
         if raw_message.startswith(self.channel + ":"):
-            logger.info(
-                "We received a message for our channel: {}".format(raw_message)
-            )
             body = raw_message.replace(self.channel + ":", "")
             message = json.loads(body)
 
             return message
-
-        logger.info(
-            "Received a message, but not our channel: {}".format(raw_message)
-        )
 
     def record_event(self, details, player_id=None):
         """Record an event in the Info table."""
@@ -1361,16 +1376,21 @@ class Griduniverse(Experiment):
 
     def handle_move(self, msg):
         player = self.grid.players[msg['player_id']]
-        msgs = player.move(
-            msg['move'], timestamp=msg.get('timestamp'),
-            tremble_rate=player.motion_tremble_rate
-        )
-        if msgs:
-            msg["actual"] = msgs["direction"]
-            if msgs.get("wall"):
-                wall_msg = msgs.get("wall")
-                self.publish(wall_msg)
-                self.record_event(wall_msg)
+        try:
+            msgs = player.move(msg['move'], timestamp=msg.get('timestamp'))
+        except IllegalMove:
+            error_msg = {
+                'type': 'move_rejection',
+                'player_id': player.id,
+            }
+            self.publish(error_msg)
+        else:
+            if msgs is not None:
+                msg["actual"] = msgs["direction"]
+                if msgs.get("wall"):
+                    wall_msg = msgs.get("wall")
+                    self.publish(wall_msg)
+                    self.record_event(wall_msg)
 
     def handle_donation(self, msg):
         """Send a donation from one player to one or more other players."""
@@ -1520,6 +1540,10 @@ class Griduniverse(Experiment):
             self.grid.food_updated = False
             gevent.sleep(0.010)
 
+            # TODO: Most of this code belongs in Gridworld; we're just looking
+            # at properties of that class and then telling it to do things based
+            # on the values.
+
             # Log food updates every hundred rounds to capture maturity changes
             if self.grid.food_maturation_threshold and (count % 100) == 0:
                 self.grid.food_updated = True
@@ -1542,11 +1566,15 @@ class Griduniverse(Experiment):
             if (now - previous_second_timestamp) > 1.000:
 
                 # Grow or shrink the food stores.
+
+                # Alternate positive and negative growth rates
                 seasonal_growth = (
                     self.grid.seasonal_growth_rate **
                     (-1 if self.grid.round % 2 else 1)
                 )
 
+                # Compute how many food items we should have on the grid,
+                # ensuring it's not less than zero.
                 self.grid.num_food = max(min(
                     self.grid.num_food *
                     self.grid.food_growth_rate *
@@ -1554,9 +1582,11 @@ class Griduniverse(Experiment):
                     self.grid.rows * self.grid.columns,
                 ), 0)
 
+                # TODO: self.grid.replenish_food()
                 for i in range(int(round(self.grid.num_food) - len(self.grid.food_locations))):
                     self.grid.spawn_food()
 
+                # TODO: self.grid.prune_excess_food()
                 for i in range(len(self.grid.food_locations) - int(round(self.grid.num_food))):
                     del self.grid.food_locations[random.choice(self.grid.food_locations.keys())]
                     self.grid.food_updated = True

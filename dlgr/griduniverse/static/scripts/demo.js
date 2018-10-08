@@ -176,6 +176,7 @@ var Player = function (settings, dimness) {
   }
   this.id = settings.id;
   this.position = settings.position;
+  this.positionInSync = true;
   this.color = settings.color;
   this.motion_auto = settings.motion_auto;
   this.motion_direction = settings.motion_direction;
@@ -353,29 +354,45 @@ var playerSet = (function () {
       return Object.keys(this._players).length;
     };
 
-    PlayerSet.prototype.update = function (playerData) {
-      var currentPlayerData,
-          oldPlayerData,
+    PlayerSet.prototype.update = function (allPlayersData) {
+      var freshPlayerData,
+          existingPlayer,
           i;
 
-      for (i = 0; i < playerData.length; i++) {
-        currentPlayerData = playerData[i];
-        oldPlayerData = this._players[currentPlayerData.id];
-        if (oldPlayerData && oldPlayerData.id === this.ego_id) {
+      for (i = 0; i < allPlayersData.length; i++) {
+        freshPlayerData = allPlayersData[i];
+        existingPlayer = this._players[freshPlayerData.id];
+        if (existingPlayer && existingPlayer.id === this.ego_id) {
+
           /* Don't override current player motion timestamp */
-          currentPlayerData.motion_timestamp = oldPlayerData.motion_timestamp;
-          /* Only override position from server if tremble is enabled,
-             otherwise motion jitter is likely and positions will sync anyway. */
-          if (settings.motion_tremble_rate === 0) {
-            currentPlayerData.position = oldPlayerData.position;
+          freshPlayerData.motion_timestamp = existingPlayer.motion_timestamp;
+
+          // Only override position from server if tremble is enabled,
+          // or if we know the Player's position is out of sync with the server.
+          // Otherwise, the ego player's motion is constantly jittery.
+          if (settings.motion_tremble_rate === 0 && existingPlayer.positionInSync) {
+            freshPlayerData.position = existingPlayer.position;
+          } else {
+            console.log("Overriding position from server!");
           }
         }
         var last_dimness = 1;
-        if (this._players[currentPlayerData.id] !== undefined) {
-          last_dimness = this._players[currentPlayerData.id].dimness;
-        } 
-        this._players[currentPlayerData.id] = new Player(currentPlayerData, last_dimness);
+        if (this._players[freshPlayerData.id] !== undefined) {
+          last_dimness = this._players[freshPlayerData.id].dimness;
+        }
+        this._players[freshPlayerData.id] = new Player(freshPlayerData, last_dimness);
       }
+    };
+
+    PlayerSet.prototype.startScheduledAutosyncOfEgoPosition = function () {
+      var self = this;
+      setInterval(function () {
+        var ego = self.ego();
+        if (ego) {
+          ego.positionInSync = false;
+          console.log("Scheduled marking of (" + ego.id + ") as out of sync with server.");
+        }
+      }, 5000);
     };
 
     PlayerSet.prototype.maxScore = function () {
@@ -677,14 +694,15 @@ function bindGameKeys(socket) {
 
   function moveInDir(direction) {
     var ego = players.ego();
-    ego.move(direction);
-    var msg = {
-      type: "move",
-      player_id: ego.id,
-      move: direction,
-      timestamp: ego.motion_timestamp
-    };
-    socket.send(msg);
+    if (ego.move(direction) ) {
+      var msg = {
+        type: "move",
+        player_id: ego.id,
+        move: direction,
+        timestamp: ego.motion_timestamp
+      };
+      socket.send(msg);
+    }
   }
 
   directions.forEach(function(direction) {
@@ -698,14 +716,12 @@ function bindGameKeys(socket) {
 
         // New direction may be pressed before previous dir key is released
         if (repeatIntervalId) {
-          console.log("Clearing interval for new keydown");
           clearInterval(repeatIntervalId);
         }
 
         moveInDir(direction); // Move once immediately so there's no lag
         lastDirection = direction;
         repeatIntervalId = setInterval(moveInDir, repeatDelayMS, direction);
-        console.log("Repeating new direction: " + direction + " (" + repeatIntervalId + ")");
       },
       'keydown'
     );
@@ -715,7 +731,6 @@ function bindGameKeys(socket) {
       function(e) {
         e.preventDefault();
         if (direction) {
-          console.log("Calling clearInterval() for " + direction + " (" + repeatIntervalId + ")");
           clearInterval(repeatIntervalId);
           lastDirection = null;
         }
@@ -837,6 +852,16 @@ function onColorChanged(msg) {
     return;
   }
   pushMessage("<span class='name'>Moderator:</span> " + chatName(msg.player_id) + ' changed from team ' + msg.old_color + ' to team ' + msg.new_color + '.');
+}
+
+function onMoveRejected(msg) {
+  var offendingPlayerId = msg.player_id,
+      ego = players.ego();
+
+  if (ego && offendingPlayerId === ego.id) {
+    ego.positionInSync = false;
+    console.log("Marking your player (" + ego.id + ") as out of sync with server. Should sync on next state update");
+  }
 }
 
 function onDonationProcessed(msg) {
@@ -1081,8 +1106,8 @@ function gameOverHandler(player_id) {
 }
 
 $(document).ready(function() {
-    var player_id = dallinger.getUrlParameter('participant_id');
-    isSpectator = typeof player_id === 'undefined';
+  var player_id = dallinger.getUrlParameter('participant_id');
+      isSpectator = typeof player_id === 'undefined';
   var socketSettings = {
         'endpoint': 'chat',
         'broadcast': CHANNEL,
@@ -1095,10 +1120,11 @@ $(document).ready(function() {
           'state': onGameStateChange,
           'new_round': displayLeaderboards,
           'stop': gameOverHandler(player_id),
-          'wall_built': addWall
+          'wall_built': addWall,
+          'move_rejection': onMoveRejected
         }
-    };
-    var socket = new GUSocket(socketSettings);
+  };
+  var socket = new GUSocket(socketSettings);
 
   socket.open().done(function () {
       var data = {
@@ -1106,9 +1132,10 @@ $(document).ready(function() {
         player_id: isSpectator ? 'spectator' : player_id
       };
       socket.send(data);
-    });
+  });
 
   players.ego_id = player_id;
+  players.startScheduledAutosyncOfEgoPosition();
   $('#donate label').data('orig-text', $('#donate label').text());
 
   setInterval(function () {
