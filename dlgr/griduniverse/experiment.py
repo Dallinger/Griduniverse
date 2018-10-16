@@ -927,6 +927,7 @@ class Player(object):
         self.payoff = kwargs.get('payoff', 0)
         self.pseudonym_locale = kwargs.get('pseudonym_locale', 'en_US')
         self.identity_visible = kwargs.get('identity_visible', True)
+        self.recruiter_id = kwargs.get('recruiter_id', '')
         self.add_wall = None
 
         # Determine the player's color. We don't have access to the specific
@@ -1057,6 +1058,7 @@ class Player(object):
             "motion_timestamp": self.motion_timestamp,
             "name": self.name,
             "identity_visible": self.identity_visible,
+            "recruiter_id": self.recruiter_id,
         }
 
 
@@ -1204,7 +1206,6 @@ class Griduniverse(Experiment):
         }
         if not config.get('replay', False):
             # Ignore these events in replay mode
-            mapping['server_time'] = time.time()
             mapping.update({
                 'chat': self.handle_chat_message,
                 'change_color': self.handle_change_color,
@@ -1225,17 +1226,26 @@ class Griduniverse(Experiment):
 
             'griduniverse_ctrl:{"type":"move","player_id":0,"move":"left"}'
         """
-        if raw_message.startswith(self.channel + ":"):
-            logger.info("We received a message for our channel: {}".format(
-                raw_message))
-            body = raw_message.replace(self.channel + ":", "")
-            message = json.loads(body)
+        message = self.parse_message(raw_message)
+        if message is not None:
+            message['server_time'] = time.time()
             self.dispatch((message))
             if 'player_id' in message:
                 self.record_event(message, message['player_id'])
-        else:
-            logger.info("Received a message, but not our channel: {}".format(
-                raw_message))
+
+    def parse_message(self, raw_message):
+        if raw_message.startswith(self.channel + ":"):
+            logger.info(
+                "We received a message for our channel: {}".format(raw_message)
+            )
+            body = raw_message.replace(self.channel + ":", "")
+            message = json.loads(body)
+
+            return message
+
+        logger.info(
+            "Received a message, but not our channel: {}".format(raw_message)
+        )
 
     def record_event(self, details, player_id=None):
         """Record an event in the Info table."""
@@ -1285,7 +1295,8 @@ class Griduniverse(Experiment):
                 # allocated to colours uniformly.
                 self.grid.spawn_player(
                     id=player_id,
-                    color_name=self.grid.limited_player_color_names[node.id % self.grid.num_colors]
+                    color_name=self.grid.limited_player_color_names[node.id % self.grid.num_colors],
+                    recruiter_id=participant.recruiter_id,
                 )
             else:
                 logger.info(

@@ -129,6 +129,13 @@ def db_session():
 
 
 @pytest.fixture
+def pubsub():
+    from dallinger.heroku.worker import conn
+    with mock.patch('dlgr.griduniverse.experiment.redis', autospec=conn) as mock_redis:
+        yield mock_redis
+
+
+@pytest.fixture
 def fresh_gridworld():
     from dlgr.griduniverse.experiment import Gridworld
     if hasattr(Gridworld, 'instance'):
