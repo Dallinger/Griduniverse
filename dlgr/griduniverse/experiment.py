@@ -1804,7 +1804,7 @@ class Griduniverse(Experiment):
         moves = [x for x in dlist if x[10] == 'event' and 'move' in x[9]]
 
         # get the unique origin_id for each player to differentiate players
-        origin_ids = [set(x[11] for x in moves)][0]
+        origin_ids = set(x[11] for x in moves)
 
         deltasum = datetime.timedelta(0) # init
         delta_count = 0
