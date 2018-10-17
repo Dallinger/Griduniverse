@@ -221,7 +221,7 @@ class TestPlayerConnects(object):
 
 
 @pytest.mark.usefixtures('env')
-class TestRecordsPlayerActivity(object):
+class TestRecordPlayerActivity(object):
 
     def test_records_player_events(self, exp, a):
         participant = a.participant()
@@ -249,6 +249,49 @@ class TestRecordsPlayerActivity(object):
         results = json.loads(exp.analyze(data))
         assert results[u'average_score'] >= 0.0
         assert results[u'average_payoff'] >= 0.0
+
+    def test_record_event_with_participant(self, exp, a):
+        # Adds event to player node
+        participant = a.participant()
+        exp.handle_connect({'player_id': participant.id})
+        exp.socket_session.add = mock.Mock()
+        exp.socket_session.commit = mock.Mock()
+        exp.record_event({'data': ['some data']},
+                         player_id=participant.id)
+        exp.socket_session.add.assert_called_once()
+        exp.socket_session.commit.assert_called_once()
+        info = exp.socket_session.add.call_args[0][0]
+        assert info.details['data'] == ['some data']
+        assert info.origin.id == exp.node_by_player_id[participant.id]
+
+    def test_record_event_without_participant(self, exp):
+        # Adds event to enviroment node
+        node = exp.environment
+        exp.socket_session.add = mock.Mock()
+        exp.socket_session.commit = mock.Mock()
+        exp.record_event({'data': ['some data']})
+        exp.socket_session.add.assert_called_once()
+        exp.socket_session.commit.assert_called_once()
+        info = exp.socket_session.add.call_args[0][0]
+        assert info.details['data'] == ['some data']
+        assert info.origin.id == node.id
+
+    def test_record_event_with_failed_node(self, exp, a):
+        # Does not save event, but logs failure
+        node = exp.environment
+        node.failed = True
+        exp.socket_session.add = mock.Mock()
+        exp.socket_session.commit = mock.Mock()
+        with mock.patch('dlgr.griduniverse.experiment.logger.info') as logger:
+            exp.record_event({'data': ['some data']})
+            assert exp.socket_session.add.call_count == 0
+            assert exp.socket_session.commit.call_count == 0
+            logger.assert_called_once()
+            assert logger.call_args.startswith(
+                'Tried to record an event after node#{} failure:'.format(
+                    node.id
+                )
+            )
 
 
 @pytest.mark.usefixtures('env')
