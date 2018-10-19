@@ -1737,64 +1737,65 @@ class Griduniverse(Experiment):
         })
 
     def isplit(self, seq, splitters):
-        """ Split a list into nested lists on a value (or tuple or list of values)
-            Found at: https://stackoverflow.com/questions/4322705/split-a-list-into-nested-lists-on-a-value
-            auxilary function to number_of_actions
-        """
+        """Split a list into nested lists on a value (or tuple or list of values)
+        https://stackoverflow.com/questions/4322705/split-a-list-into-nested-lists-on-a-value
+        auxilary function to number_of_actions"""
         return [
             list(g)
-            for k,g in itertools.groupby(seq, lambda x:x in splitters)
+            for k, g in itertools.groupby(seq, lambda x:x in splitters)
             if not k
         ]
 
     def number_of_actions_per_round(self, origin_ids, moves):
-        """ Calculate number of moves/player for a specific round
-            auxilary function to number_of_actions
+        """Calculate number of moves/player for a specific round
+        auxilary function to number_of_actions
         """
         player_move_data = []
         for player in origin_ids:
-            players_moves = [x for x in moves if x[11] == player] # get all the moves of a player
+            players_moves = [x for x in moves if x[11] == player]  # Get all the moves of a player
             if len(players_moves) != 0:
                 player_id = json.loads(players_moves[0][9])["player_id"]
-                player_move_data.append({"player_id" : player_id, "total_moves": len(players_moves)})
+                player_move_data.append({"player_id": player_id,
+                                         "total_moves": len(players_moves)})
         return player_move_data
 
     def number_of_actions(self, data):
-        """ Return a dictionary containing the number of actions taken for each participant per round
-        """
+        """Return a dictionary containing the # of actions taken for each participant per round
+"""
         df = data.infos.df
         dataState = df.loc[df['type'] == 'state']
         if dataState.empty:
             return []
         dlist = data.infos.list
-        moves_and_round_breaks = [x for x in dlist if x[10] == 'event' and ('move' in x[9] or 'new_round' in x[9])]
-        round_breaks = [x for x in moves_and_round_breaks if "new_round" in x[9]] # find all the round dividers/breaks
+        moves_and_round_breaks = [x for x in dlist if x[10] == 'event' and
+                                  ('move' in x[9] or 'new_round' in x[9])]
+        # Find all the round dividers/breaks
+        round_breaks = [x for x in moves_and_round_breaks if "new_round" in x[9]]
 
-        # get the unique origin_id for each player to differentiate players
+        # Get the unique origin_id for each player to differentiate players
         moves = [x for x in moves_and_round_breaks if 'move' in x[9]]
         origin_ids = [set(x[11] for x in moves)][0]
 
-        # split the move data of entire game into lists containing move data for each round
+        # Split the move data of entire game into lists containing move data for each round
         rounds_moves = self.isplit(moves_and_round_breaks, round_breaks)
 
-        # parse each rounds moves, one at a time
+        # Parse each rounds moves, one at a time
         round_number = 1
         number_of_actions_data = []
         for moves in rounds_moves:
-            # note that the round number might not match how griduniverse numbers the rounds
-            # however the system used here to number rounds is verified to be accurate chronologically
-            # round 1 happened before round 2 etc
+            # Note that the round number might not match how griduniverse numbers the rounds
+            # However the system used here to # rounds is verified to be accurate chronologically
+            # Round 1 happened before round 2 etc
             data_dict = {"round_number": round_number,
-                         "round_data" : self.number_of_actions_per_round(origin_ids, moves)}
+                         "round_data": self.number_of_actions_per_round(origin_ids, moves)}
             number_of_actions_data.append(data_dict)
             round_number += 1
 
         return number_of_actions_data
 
     def average_time_to_start(self, data):
-        """ the average time to start the game.
-            compare the time of participant's first move info to the network creation time
-        """
+        """The average time to start the game.
+        Compare the time of participant's first move info to the network creation timr"""
         df = data.infos.df
         dataState = df.loc[df['type'] == 'state']
         if dataState.empty:
@@ -1803,24 +1804,24 @@ class Griduniverse(Experiment):
         dlist = data.infos.list
         moves = [x for x in dlist if x[10] == 'event' and 'move' in x[9]]
 
-        # get the unique origin_id for each player to differentiate players
+        # Get the unique origin_id for each player to differentiate players
         origin_ids = set(x[11] for x in moves)
 
-        deltasum = datetime.timedelta(0) # init
+        deltasum = datetime.timedelta(0)  # init
         delta_count = 0
         for player in origin_ids:
-            players_moves = [x for x in moves if x[11] == player] # get all the moves of a player
-            if len(players_moves) != 0:  # is it possible that the player does not move?
-                # use the time of their first move
+            players_moves = [x for x in moves if x[11] == player]  # get all the moves of a player
+            if len(players_moves) != 0:  # Is it possible that the player does not move?
+                # Use the time of their first move
                 delta = players_moves[0][1] - network_creation_time
                 delta_count += 1
-                # add up the time diffs
+                # Add up the time diffs
                 deltasum += delta
 
-        # and divide by number of players that moved (which should hopefully match the number of players present)
+        # Divide by number of players that moved (which should match the # of players present)
         if delta_count != 0:
-            return str(deltasum/delta_count)
-        return str(deltasum) # in case nobody moved
+            return str(deltasum / delta_count)
+        return str(deltasum)  # in case nobody moved
 
     def average_payoff(self, data):
         df = data.infos.df
