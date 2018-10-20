@@ -271,6 +271,8 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
 
     _quorum_reached = False
 
+    _skip_experiment = False
+
     def _make_socket(self):
         """Connect to the Redis server and announce the connection"""
         from dallinger.heroku.worker import conn
@@ -370,6 +372,10 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
         # we won't have to wait for status from the backend.
         if data['quorum']['n'] == data['quorum']['q']:
             self._quorum_reached = True
+        # overrecruitment is handled by web ui, so high perf bots need to
+        # do that handling here instead.
+        if data['participant']['status'] == u'overrecruited':
+            self._skip_experiment = True
 
     def wait_for_quorum(self):
         """Sleep until a quorum of players has signed up.
@@ -430,6 +436,9 @@ class RandomBot(HighPerformanceBaseGridUniverseBot):
     def participate(self):
         """Participate by randomly hitting valid keys"""
         self.wait_for_quorum()
+        if self._skip_experiment:
+            self.log('Participant overrecruited. Skipping experiment.')
+            return True
         self.wait_for_grid()
         self.log('Bot player started')
         while self.is_still_on_grid:
@@ -579,6 +588,9 @@ class AdvantageSeekingBot(HighPerformanceBaseGridUniverseBot):
         the algorithm above.
         """
         self.wait_for_quorum()
+        if self._skip_experiment:
+            self.log('Participant overrecruited. Skipping experiment.')
+            return True
         self.wait_for_grid()
         self.log('Bot player started')
 
