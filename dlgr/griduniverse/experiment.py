@@ -1748,8 +1748,7 @@ class Griduniverse(Experiment):
 
     def number_of_actions_per_round(self, origin_ids, moves):
         """Calculate number of moves/player for a specific round
-        auxilary function to number_of_actions
-        """
+        auxilary function to number_of_actions"""
         player_move_data = []
         for player in origin_ids:
             players_moves = [x for x in moves if x[11] == player]  # Get all the moves of a player
@@ -1760,8 +1759,8 @@ class Griduniverse(Experiment):
         return player_move_data
 
     def number_of_actions(self, data):
-        """Return a dictionary containing the # of actions taken for each participant per round
-"""
+        """Return a dictionary containing the # of actions taken
+        for each participant per round"""
         df = data.infos.df
         dataState = df.loc[df['type'] == 'state']
         if dataState.empty:
