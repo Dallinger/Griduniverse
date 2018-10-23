@@ -8,6 +8,38 @@ from dlgr.griduniverse.bots import RandomBot, AdvantageSeekingBot
 
 
 @pytest.fixture
+def overrecruited_response():
+    return {
+        'status': 'OK',
+        'participant': {
+            'id': 4,
+            'status': 'overrecruited'
+        },
+        'quorum': {
+            'q': 1,
+            'n': 1,
+            'overrecruited': True
+        }
+    }
+
+
+@pytest.fixture
+def working_response():
+    return {
+        'status': 'OK',
+        'participant': {
+            'id': 4,
+            'status': 'working'
+        },
+        'quorum': {
+            'q': 5,
+            'n': 1,
+            'overrecruited': False
+        }
+    }
+
+
+@pytest.fixture
 def grid_state():
     # WWWWWWWWWW
     # WF.W.....W
@@ -115,17 +147,42 @@ class TestRandomMovementBot(object):
             {'type': 'move', 'player_id': '', 'move': 'down'}
         )
 
+    def test_skips_experiment_if_overrecruited(self, bot, overrecruited_response):
+        bot.on_signup(overrecruited_response)
+
+        assert bot._skip_experiment
+        assert bot.participate()  # Harmless no-op
+
+    def test_runs_experiment_if_not_overrecruited(self, bot, working_response):
+        bot.on_signup(working_response)
+
+        assert not bot._skip_experiment
+
 
 class TestAdvantageSeekingBot(object):
 
     @pytest.fixture
-    def bot_in_maze(self, grid_state):
-        bot = AdvantageSeekingBot('http://example.com')
+    def bot(self):
+        return AdvantageSeekingBot('http://example.com')
+
+    @pytest.fixture
+    def bot_in_maze(self, bot, grid_state):
         bot.grid = {}
         bot.participant_id = 1
         bot.handle_state({'grid': grid_state})
         bot.state = bot.observe_state()
         return bot
+
+    def test_skips_experiment_if_overrecruited(self, bot, overrecruited_response):
+        bot.on_signup(overrecruited_response)
+
+        assert bot._skip_experiment
+        assert bot.participate()  # Harmless no-op
+
+    def test_runs_experiment_if_not_overrecruited(self, bot, working_response):
+        bot.on_signup(working_response)
+
+        assert not bot._skip_experiment
 
     def test_advantage_seeking_bot_understands_distances(self, bot_in_maze):
         assert bot_in_maze.food_positions == [(1, 1), (2, 4), (4, 4)]
