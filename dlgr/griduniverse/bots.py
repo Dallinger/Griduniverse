@@ -1,10 +1,10 @@
 """Griduniverse bots."""
+import datetime
 import itertools
 import json
 import logging
 import operator
 import random
-import time
 
 import gevent
 from selenium.common.exceptions import StaleElementReferenceException
@@ -32,6 +32,22 @@ class BaseGridUniverseBot(BotBase):
 
     MEAN_KEY_INTERVAL = 1  #: The average number of seconds between key presses
     MAX_KEY_INTERVAL = 10  #: The maximum number of seconds between key presses
+    END_BUFFER_SECONDS = 30  #: Seconds to wait after expected game end before giving up
+
+    def complete_questionnaire(self):
+        """Complete the standard debriefing form randomly."""
+        difficulty = Select(self.driver.find_element_by_id('difficulty'))
+        difficulty.select_by_value(str(random.randint(1, 7)))
+        engagement = Select(self.driver.find_element_by_id('engagement'))
+        engagement.select_by_value(str(random.randint(1, 7)))
+        try:
+            fun = Select(self.driver.find_element_by_id('fun'))
+            # This is executed by the IEC_demo.py script...
+            # No need to fill out a random value.
+            fun.select_by_value(str(0))
+        except NoSuchElementException:
+            pass
+        return True
 
     def get_wait_time(self):
         """ Return a random wait time approximately average to
@@ -128,6 +144,9 @@ class BaseGridUniverseBot(BotBase):
         the algorithm above.
         """
         self.wait_for_quorum()
+        if self._skip_experiment:
+            self.log('Participant overrecruited. Skipping experiment.')
+            return True
         self.wait_for_grid()
         self.log('Bot player started')
 
@@ -139,7 +158,24 @@ class BaseGridUniverseBot(BotBase):
             self.state = self.observe_state()
             self.player_id = self.get_player_id()
 
+        # Pick an expected finish time far in the future, it will be updated the first time
+        # the bot gets a state
+        expected_finish_time = datetime.datetime.now() + datetime.timedelta(days=1)
+
         while self.is_still_on_grid:
+
+            # The proposed finish time is how many seconds we think remain plus the current time
+            proposed_finish_time = datetime.datetime.now() + datetime.timedelta(
+                seconds=self.grid['remaining_time']
+            )
+            # Update the expected finish time iff it is earlier than we thought
+            expected_finish_time = min(expected_finish_time, proposed_finish_time)
+
+            # If we expected to finish more than 30 seconds ago then bail out
+            now = datetime.datetime.now()
+            if expected_finish_time + datetime.timedelta(seconds=self.END_BUFFER_SECONDS) < now:
+                return True
+
             gevent.sleep(self.get_wait_time())
             try:
                 observed_state = self.observe_state()
@@ -413,6 +449,10 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
         """Returns the current player's id"""
         return self.participant_id
 
+    @property
+    def question_responses(self):
+        return {"engagement": 4, "difficulty": 3, "fun": 3}
+
 
 class RandomBot(HighPerformanceBaseGridUniverseBot):
     """A bot that plays griduniverse randomly"""
@@ -433,19 +473,79 @@ class RandomBot(HighPerformanceBaseGridUniverseBot):
         """Randomly press one of Up, Down, Left, Right, space, r, b or y"""
         return random.choice(self.VALID_KEYS)
 
-    def participate(self):
-        """Participate by randomly hitting valid keys"""
-        self.wait_for_quorum()
-        if self._skip_experiment:
-            self.log('Participant overrecruited. Skipping experiment.')
-            return True
-        self.wait_for_grid()
-        self.log('Bot player started')
-        while self.is_still_on_grid:
-            time.sleep(self.get_wait_time())
-            self.send_next_key()
-        self.log('Bot player stopped.')
-        return True
+
+class FoodSeekingBot(HighPerformanceBaseGridUniverseBot):
+    """A bot that actively tries to increase its score.
+
+    The bot moves towards the closest food.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(FoodSeekingBot, self).__init__(*args, **kwargs)
+        self.target_coordinates = (None, None)
+
+    def get_logical_targets(self):
+        """Find a logical place to move.
+
+        When run on a page view that has data extracted from the grid state
+        find the best targets for each of the players, where the best target
+        is the closest item of food.
+        """
+        best_choice = 100e10, None
+        position = self.my_position
+        if position is None:
+            return {}
+        for j, food in enumerate(self.food_positions):
+            distance, _ = self.distance(position, food)
+            if distance and distance < best_choice[0]:
+                best_choice = distance, j
+        return {self.player_id: best_choice[1]}
+
+    def get_next_key(self):
+        """Returns the best key to press in order to maximize point scoring, as follows:
+
+        If there is food on the grid and the bot is not currently making its way
+        towards a piece of food, find the logical target and store that coordinate
+        as the current target.
+
+        If there is a current target and there is food there, move towards that target
+        according to the optimal route, taking walls into account.
+
+        If there is a current target but no food there, unset the target and follow
+        the method normally.
+        ]
+        If there is no food on the grid, move away from other players, such that
+        the average distance between players is maximized. This makes it more
+        likely that players have an equal chance at finding new food items.
+
+        If there are no actions that get the player nearer to food or increase
+        player spread, press a random key."""
+        valid_keys = []
+        my_position = self.my_position
+        try:
+            if self.target_coordinates in self.food_positions:
+                food_position = self.target_coordinates
+            else:
+                # If there is a most logical target, we move towards it
+                target_id = self.get_logical_targets()[self.player_id]
+                food_position = self.food_positions[target_id]
+                self.target_coordinates = food_position
+        except KeyError:
+            # Otherwise, move randomly avoiding walls
+            for key in (Keys.UP, Keys.DOWN, Keys.LEFT, Keys.RIGHT):
+                expected = self.get_expected_position(key)
+                if expected != my_position:
+                    valid_keys.append(key)
+        else:
+            baseline_distance, directions = self.distance(my_position, food_position)
+            if baseline_distance:
+                valid_keys.append(directions[0])
+        if not valid_keys:
+            # If there are no food items available and no movement would
+            # cause the average spread of players to increase, fall back to
+            # the behavior of the RandomBot
+            valid_keys = RandomBot.VALID_KEYS
+        return random.choice(valid_keys)
 
 
 class AdvantageSeekingBot(HighPerformanceBaseGridUniverseBot):
@@ -580,56 +680,6 @@ class AdvantageSeekingBot(HighPerformanceBaseGridUniverseBot):
             # the behavior of the RandomBot
             valid_keys = RandomBot.VALID_KEYS
         return random.choice(valid_keys)
-
-    def participate(self):
-        """Participate in the experiment.
-
-        Wait a random amount of time, then send a key according to
-        the algorithm above.
-        """
-        self.wait_for_quorum()
-        if self._skip_experiment:
-            self.log('Participant overrecruited. Skipping experiment.')
-            return True
-        self.wait_for_grid()
-        self.log('Bot player started')
-
-        # Wait for state to be available
-        self.state = None
-        self.player_id = None
-        while (self.state is None) or (self.player_id is None):
-            gevent.sleep(0.500)
-            self.state = self.observe_state()
-            self.player_id = self.get_player_id()
-
-        while self.is_still_on_grid:
-            gevent.sleep(self.get_wait_time())
-            try:
-                observed_state = self.observe_state()
-                if observed_state:
-                    self.state = observed_state
-                    self.send_next_key()
-                else:
-                    return False
-            except (StaleElementReferenceException, AttributeError):
-                return True
-
-        self.log('Bot player stopped')
-
-    def complete_questionnaire(self):
-        """Complete the standard debriefing form randomly."""
-        difficulty = Select(self.driver.find_element_by_id('difficulty'))
-        difficulty.select_by_value(str(random.randint(1, 7)))
-        engagement = Select(self.driver.find_element_by_id('engagement'))
-        engagement.select_by_value(str(random.randint(1, 7)))
-        try:
-            fun = Select(self.driver.find_element_by_id('fun'))
-            # This is executed by the IEC_demo.py script...
-            # No need to fill out a random value.
-            fun.select_by_value(str(0))
-        except NoSuchElementException:
-            pass
-        return True
 
 
 def Bot(*args, **kwargs):

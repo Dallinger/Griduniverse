@@ -1,10 +1,11 @@
 import json
 import mock
 import pytest
+import time
 
 from selenium.webdriver.common.keys import Keys
 
-from dlgr.griduniverse.bots import RandomBot, AdvantageSeekingBot
+from dlgr.griduniverse.bots import RandomBot, AdvantageSeekingBot, FoodSeekingBot
 
 
 @pytest.fixture
@@ -46,7 +47,7 @@ def grid_state():
     # W.2W.....W
     # WWWW.....W
     # W.FWF....W
-    # W..W.1...W
+    # W..W.1.3.W
     # W..W.....W
     # W..W.....W
     # W........W
@@ -59,20 +60,20 @@ def grid_state():
             u'position': position
         } for food_id, position in enumerate([
             [1, 1],
-            [2, 4],
+            [4, 2],
             [4, 4]
         ])
     ]
     wall_positions = [
-        [3, 1],
-        [3, 2],
-        [3, 3],
-        [3, 4],
-        [3, 5],
-        [3, 6],
-        [3, 7],
-        [2, 3],
         [1, 3],
+        [2, 3],
+        [3, 3],
+        [4, 3],
+        [5, 3],
+        [6, 3],
+        [7, 3],
+        [3, 2],
+        [3, 1],
     ]
     for i in range(10):
         # Add bounding box
@@ -112,6 +113,19 @@ def grid_state():
                 u'name': u'Kelsey Houston',
                 u'payoff': 0.0,
                 u'position': [2, 2],
+                u'score': 0.0
+            },
+            {
+                u'color': u'YELLOW',
+                u'id': 3,
+                u'identity_visible': True,
+                u'motion_auto': False,
+                u'motion_direction': u'right',
+                u'motion_speed_limit': 8,
+                u'motion_timestamp': 0,
+                u'name': u'Rani Baker',
+                u'payoff': 0.0,
+                u'position': [5, 7],
                 u'score': 0.0
             }
         ],
@@ -169,7 +183,7 @@ class TestAdvantageSeekingBot(object):
     def bot_in_maze(self, bot, grid_state):
         bot.grid = {}
         bot.participant_id = 1
-        bot.handle_state({'grid': grid_state})
+        bot.handle_state({'grid': grid_state, u'remaining_time': 60})
         bot.state = bot.observe_state()
         return bot
 
@@ -185,8 +199,8 @@ class TestAdvantageSeekingBot(object):
         assert not bot._skip_experiment
 
     def test_advantage_seeking_bot_understands_distances(self, bot_in_maze):
-        assert bot_in_maze.food_positions == [(1, 1), (2, 4), (4, 4)]
-        assert bot_in_maze.player_positions == {1: [5, 5], 2: [2, 2]}
+        assert bot_in_maze.food_positions == [(1, 1), (4, 2), (4, 4)]
+        assert bot_in_maze.player_positions == {1: [5, 5], 2: [2, 2], 3: [5, 7]}
         assert bot_in_maze.distances() == {
             1: {
                 0: None,
@@ -196,10 +210,14 @@ class TestAdvantageSeekingBot(object):
                 0: 2,
                 1: None,
                 2: None
+            }, 3: {
+                0: None,
+                1: 12,
+                2: 4
             }
         }
 
-    def test_advantage_seeking_bot_goes_for_closest_food(self, bot_in_maze):
+    def test_advantage_seeking_bot_goes_for_closest_food_not_already_a_target(self, bot_in_maze):
         bot_in_maze.player_id = 1
         assert bot_in_maze.get_next_key() == Keys.UP
         assert bot_in_maze.target_coordinates == (4, 4)
@@ -207,3 +225,65 @@ class TestAdvantageSeekingBot(object):
         bot_in_maze.target_coordinates = (None, None)
         assert bot_in_maze.get_next_key() == Keys.UP
         assert bot_in_maze.target_coordinates == (1, 1)
+
+        bot_in_maze.player_id = 3
+        bot_in_maze.target_coordinates = (None, None)
+        assert bot_in_maze.get_next_key() == Keys.DOWN
+        assert bot_in_maze.target_coordinates == (4, 2)
+
+    def test_bot_does_not_get_stuck_if_end_of_game_message_is_missed(self, bot_in_maze):
+        bot_in_maze.on_grid = True
+        bot_in_maze._quorum_reached = True
+        bot_in_maze.END_BUFFER_SECONDS = 1
+        HPBGUB = 'dlgr.griduniverse.bots.HighPerformanceBaseGridUniverseBot'
+
+        with mock.patch(HPBGUB + '.wait_for_grid') as wait_for_grid:
+            wait_for_grid.return_value = True
+            bot_in_maze.grid['remaining_time'] = 2
+            before_participate = time.time()
+            with mock.patch(HPBGUB + '.send_next_key') as send_next_key:
+                send_next_key.return_value = None
+                bot_in_maze.participate()
+            after_participate = time.time()
+            assert after_participate - before_participate < 5  # 2s left, 1s grace, 0.8s overhead
+
+
+class TestFoodSeekingBot(object):
+
+    @pytest.fixture
+    def bot(self):
+        return FoodSeekingBot('http://example.com')
+
+    @pytest.fixture
+    def bot_in_maze(self, bot, grid_state):
+        bot.grid = {}
+        bot.participant_id = 1
+        bot.handle_state({'grid': grid_state, u'remaining_time': 60})
+        bot.state = bot.observe_state()
+        return bot
+
+    def test_skips_experiment_if_overrecruited(self, bot, overrecruited_response):
+        bot.on_signup(overrecruited_response)
+
+        assert bot._skip_experiment
+        assert bot.participate()  # Harmless no-op
+
+    def test_runs_experiment_if_not_overrecruited(self, bot, working_response):
+        bot.on_signup(working_response)
+
+        assert not bot._skip_experiment
+
+    def test_advantage_seeking_bot_goes_for_closest_food(self, bot_in_maze):
+        bot_in_maze.player_id = 1
+        assert bot_in_maze.get_next_key() == Keys.UP
+        assert bot_in_maze.target_coordinates == (4, 4)
+
+        bot_in_maze.player_id = 2
+        bot_in_maze.target_coordinates = (None, None)
+        assert bot_in_maze.get_next_key() == Keys.UP
+        assert bot_in_maze.target_coordinates == (1, 1)
+
+        bot_in_maze.player_id = 3
+        bot_in_maze.target_coordinates = (None, None)
+        assert bot_in_maze.get_next_key() == Keys.UP
+        assert bot_in_maze.target_coordinates == (4, 4)
