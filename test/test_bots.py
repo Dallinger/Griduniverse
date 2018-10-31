@@ -1,6 +1,7 @@
 import json
 import mock
 import pytest
+import time
 
 from selenium.webdriver.common.keys import Keys
 
@@ -169,7 +170,7 @@ class TestAdvantageSeekingBot(object):
     def bot_in_maze(self, bot, grid_state):
         bot.grid = {}
         bot.participant_id = 1
-        bot.handle_state({'grid': grid_state})
+        bot.handle_state({'grid': grid_state, u'remaining_time': 60})
         bot.state = bot.observe_state()
         return bot
 
@@ -207,3 +208,17 @@ class TestAdvantageSeekingBot(object):
         bot_in_maze.target_coordinates = (None, None)
         assert bot_in_maze.get_next_key() == Keys.UP
         assert bot_in_maze.target_coordinates == (1, 1)
+
+    def test_bot_does_not_get_stuck_if_end_of_game_message_is_missed(self, bot_in_maze):
+        bot_in_maze.on_grid = True
+        bot_in_maze._quorum_reached = True
+        bot_in_maze.END_BUFFER_SECONDS = 1
+
+        with mock.patch('dlgr.griduniverse.bots.HighPerformanceBaseGridUniverseBot.wait_for_grid') as wait_for_grid:
+            wait_for_grid.return_value = True
+            bot_in_maze.grid['remaining_time'] = 2
+            before_participate = time.time()
+            with mock.patch('dlgr.griduniverse.bots.HighPerformanceBaseGridUniverseBot.send_next_key') as send_next_key:
+                bot_in_maze.participate()
+            after_participate = time.time()
+            assert after_participate - before_participate < 5  # 2 seconds left, 1 second grace, 0.8ish seconds overhead

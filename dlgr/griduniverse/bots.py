@@ -32,6 +32,7 @@ class BaseGridUniverseBot(BotBase):
 
     MEAN_KEY_INTERVAL = 1  #: The average number of seconds between key presses
     MAX_KEY_INTERVAL = 10  #: The maximum number of seconds between key presses
+    END_BUFFER_SECONDS = 30  #: Seconds to wait after expected game end before giving up
 
     def complete_questionnaire(self):
         """Complete the standard debriefing form randomly."""
@@ -171,7 +172,8 @@ class BaseGridUniverseBot(BotBase):
             expected_finish_time = min(expected_finish_time, proposed_finish_time)
 
             # If we expected to finish more than 30 seconds ago then bail out
-            if expected_finish_time + datetime.timedelta(seconds=30) < datetime.datetime.now():
+            now = datetime.datetime.now()
+            if expected_finish_time + datetime.timedelta(seconds=self.END_BUFFER_SECONDS) < now:
                 return True
 
             gevent.sleep(self.get_wait_time())
