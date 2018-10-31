@@ -497,9 +497,9 @@ class FoodSeekingBot(HighPerformanceBaseGridUniverseBot):
             return {}
         for j, food in enumerate(self.food_positions):
             distance, _ = self.distance(position, food)
-            if distance < best_choice[0]:
+            if distance and distance < best_choice[0]:
                 best_choice = distance, j
-        return {self.player_id: j}
+        return {self.player_id: best_choice[1]}
 
     def get_next_key(self):
         """Returns the best key to press in order to maximize point scoring, as follows:
