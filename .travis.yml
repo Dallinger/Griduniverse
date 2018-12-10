@@ -35,8 +35,6 @@ before_install:
 install:
   - pip install tox==3.1.2
   - pip install google-compute-engine
-  - sudo apt-get --yes install snapd
-  - sudo snap install --classic heroku
   - wget -N http://chromedriver.storage.googleapis.com/2.37/chromedriver_linux64.zip -P ~/
   - unzip ~/chromedriver_linux64.zip -d ~/
   - rm ~/chromedriver_linux64.zip
