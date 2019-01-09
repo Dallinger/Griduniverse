@@ -39,8 +39,6 @@ before_install:
   - google-chrome-stable --headless --disable-gpu --remote-debugging-port=9222 http://localhost:5000 &
 
 install:
-  - sudo apt-get --yes install snapd
-  - sudo snap install --classic heroku
   - pip install tox==3.1.2
   - pip install google-compute-engine
   - wget -N http://chromedriver.storage.googleapis.com/2.37/chromedriver_linux64.zip -P ~/
