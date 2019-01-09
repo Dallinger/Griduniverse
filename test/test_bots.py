@@ -245,7 +245,7 @@ class TestAdvantageSeekingBot(object):
                 send_next_key.return_value = None
                 bot_in_maze.participate()
             after_participate = time.time()
-            assert after_participate - before_participate < 5  # 2s left, 1s grace, 0.8s overhead
+            assert after_participate - before_participate < 6  # 2s left, 1s grace, ~1s overhead
 
 
 class TestFoodSeekingBot(object):
