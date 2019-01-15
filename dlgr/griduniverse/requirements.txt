@@ -1,3 +1,3 @@
--e git://github.com/Dallinger/Dallinger.git@bots-reliability#egg=dallinger[data]
-numpy==1.12.0
+-e git://github.com/Dallinger/Dallinger.git@master#egg=dallinger[data]
+numpy==1.15.4
 faker==0.7.10
