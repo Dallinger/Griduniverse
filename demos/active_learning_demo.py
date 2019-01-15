@@ -1,3 +1,4 @@
+from __future__ import print_function
 from dallinger.experiments import Griduniverse
 from bams.learners import ActiveLearner
 from bams.query_strategies import (
@@ -9,7 +10,7 @@ from bams.query_strategies import (
 NDIM = 1
 POOL_SIZE = 500
 BUDGET = 10
-BASE_KERNELS = ["PER", "LIN"]
+BASE_KERNELS = ["PER", "LIN", "K"]
 DEPTH = 1
 
 
@@ -34,9 +35,9 @@ def oracle(x):
                 }
     experiment = Griduniverse()
     # Scale up
-    print x[0]
+    print(x[0])
     num_food = scale_up(grid_config['num_food'], float(x[0]))
-    print num_food
+    print(num_food)
     data = experiment.run(
     mode=u'debug',
     recruiter=u'bots',
@@ -48,7 +49,7 @@ def oracle(x):
     webdriver_type=u'chrome',
     )
     score = experiment.average_score(data)
-    print score
+    print(score)
     # Scale back down
     results = scale_down(grid_config['average_score'], score)
     return results
