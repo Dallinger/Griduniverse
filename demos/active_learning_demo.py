@@ -1,4 +1,4 @@
-from __future__ import  division, print_function
+from __future__ import  division, print_function, absolute_import
 from dallinger.experiments import Griduniverse
 from bams.learners import ActiveLearner
 from bams.query_strategies import (
