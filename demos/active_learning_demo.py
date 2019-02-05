@@ -10,7 +10,7 @@ from bams.query_strategies import (
 NDIM = 1
 POOL_SIZE = 500
 BUDGET = 10
-BASE_KERNELS = ["PER", "LIN", "K"]
+BASE_KERNELS = ["PER", "LIN"]
 DEPTH = 1
 
 
