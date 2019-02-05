@@ -26,7 +26,7 @@ def scale_down(threshold, dim):
 
 def oracle(x):
     """Run a GU game by scaling up the features so they can be input into the game.
-    Then scale them done so the active learner can understand them.
+    Then scale them down so the active learner can understand them.
     """
     grid_config = {"participants": 1,
                    "time_per_round": 20.0,
