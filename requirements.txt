@@ -1,5 +1,5 @@
 -c constraints.txt
-Dallinger
+-e git://github.com/Dallinger/Dallinger.git@pulse-recruiter#egg=dallinger
 cached-property
 setuptools
 networkx
