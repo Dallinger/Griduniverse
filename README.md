@@ -62,22 +62,6 @@ At various points, the game may pause and players will be asked to respond to th
 
 Players will be asked various questions that exist outside the Griduniverse. At the beginning of the study, they will be asked to consent. At the end of the study, they will be asked to answer questions about the difficulty of the game and their engagement with it.
 
-## Case study of a Gridworld, 1: the zombie game
-
-Over the past several years, a vibrant ecosystem of accessible web technologies (e.g. WebSockets) has led to the proliferation of interactive multiplayer online games. One such class of these games are the so-called “io” games (http://iogames.space/), named for the top-level domain on which they are often hosted (.io). In a typical io game, a moderate number of people (10-100) compete for resources in a fast-paced action game that lasts several minutes. The game is then repeated. Our team recently found an io game with great relevance to the problem of collective identity formation: braains.io.
-
-Braains is a game in the popular zombie genre, inspired by horror films, B movies, and literature. In the game, a set of 3-100 players are placed in a random position in a multi-roomed house with a yard. Players have a birds-eye view of a house and can control their position using their keyboard. Before the game begins, all players are assigned the identity of “human” and are free to roam about the house and move objects within it. A timer at the top of the screen counts down until the game begins. When the game begins, one player is selected at random and is reassigned a new identity: “zombie”, taking on a new appearance. The player’s identity determines the payoff structure of the game. Zombies are rewarded for touching humans, who then become zombies. Humans are rewarded for each second that they are not a zombie.
-
-Braains is an interesting case study in human social behavior and collective identity because of the rich array of behavior exhibited in the game. For example, a social dilemma often arises during the initial phase of the game. Players can collaborate to barricade rooms in such a way that they are inpenetrable by zombies (Fig. 4). Some rooms, however, can only be successfully barricaded by someone outside the room. That person pays the cost of helping but, by nature of the barricade, is prevented from receiving its benefits. This is a Volunteer’s Dilemma, as described by Schelling (1971). Later in the game, players begin to become infected by zombies. At the moment of infection, a player’s outward identity changes instantaneously. They are immediately stigmatized by their group, who runs from them. How do perceptions of identity change at this moment? When does a player come to feel a sense of belonging to the zombies? There are many questions that can be asked.
-
-A minimal version of Braains is one world in the Griduniverse.
-
-
-Fig. 4. Screenshot of the Braains game. A group of humans act collectively to prevent intrusion from zombies, who similarly take collective action, but with opposite intentions.
-
-Case study of a Gridworld, 1: the minimal group paradigm
-
-The minimal group paradigm is an experimental paradigm from social psychology that considers the minimal conditions needed to induce in-group favoritism. The paradigm begins by assigning one of two identities to a set of players. Identities may be assigned randomly (e.g., red or blue as determined by a coin flip) or based on some dimension along which people vary (e.g., odd or even birth month). Players are then given the opportunity to divide a resource among pairs of other players. The choices are manipulated to tease apart various factors that may affect the resource allocation.
 
 ## GridUniverse configuration parameters
 
