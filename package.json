@@ -19,7 +19,7 @@
   "devDependencies": {
     "browser-sync": "^2.18.8",
     "browser-sync-webpack-plugin": "^2.0.0",
-    "webpack": "^4.0.0"
+    "webpack": "^4.29.5"
   },
   "scripts": {
     "build": "webpack",
