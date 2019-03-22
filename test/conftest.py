@@ -77,6 +77,7 @@ def stub_config():
         u'mode': u'debug',
         u'num_dynos_web': 2,
         u'num_dynos_worker': 2,
+        u'replay': False,
         u'threads': u'1',
         u'whimsical': True
     }
