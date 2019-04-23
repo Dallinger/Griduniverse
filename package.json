@@ -4,7 +4,7 @@
   "description": "Welcome to the Griduniverse.",
   "main": "index.js",
   "dependencies": {
-    "color": "^3.0.0",
+    "color": "^3.1.1",
     "flatten": "^1.0.2",
     "gaussian": "^1.1.0",
     "identityfusion": "^1.0.4",
