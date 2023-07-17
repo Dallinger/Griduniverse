@@ -23,7 +23,6 @@ from dallinger.config import get_config
 from .maze_utils import positions_to_maze, maze_to_graph, find_path_astar
 
 logger = logging.getLogger('griduniverse')
-config = get_config()
 
 
 class BaseGridUniverseBot(BotBase):
@@ -688,6 +687,7 @@ def Bot(*args, **kwargs):
     This can be set in config.txt in this directory or by environment variable.
     """
 
+    config = get_config()
     bot_implementation = config.get('bot_policy', u'RandomBot')
     bot_class = globals().get(bot_implementation, None)
     if bot_class and issubclass(bot_class, BotBase):

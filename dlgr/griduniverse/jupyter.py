@@ -97,29 +97,32 @@ class ExperimentWidget(DallingerExperimentWidget):
                 grid_template.render(
                     rows=grid,
                 ),
+                description='Grid',
             )
             tab_list += [grid_tab]
 
             scores_tab = widgets.HTML(
                 scores_template.render(
                     players=sorted(self.exp.grid.players.values(), key=lambda player: player.id),
-                )
+                ),
+                description='Scores',
             )
             tab_list += [scores_tab]
 
             chat_tab = widgets.HTML(
                 chat_template.render(
                     chat_messages=self.exp.grid.chat_message_history,
-                )
+                ),
+                description='Chat',
             )
             tab_list += [chat_tab]
 
+        self.config_tab.description = "Config"
         tab_list += [self.config_tab, ]
         tabs = widgets.Tab(children=tab_list)
-        tabs.set_title(0, 'Grid')
-        tabs.set_title(1, 'Scores')
-        tabs.set_title(2, 'Chat')
-        tabs.set_title(3, 'Config')
+        for i, tab in enumerate(tab_list):
+            tabs.set_title(i, tab.description)
+
         try:
             tabs.selected_index = self.children[1].selected_index
         except IndexError:

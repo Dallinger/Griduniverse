@@ -22,10 +22,10 @@ from sqlalchemy.orm import (
 )
 
 import dallinger
+from dallinger import db
 from dallinger.compat import unicode
 from dallinger.config import get_config
 from dallinger.experiment import Experiment
-from dallinger.heroku.worker import conn as redis
 
 from . import distributions
 from .maze import Wall
@@ -34,7 +34,6 @@ from .bots import Bot
 from .models import Event
 
 logger = logging.getLogger(__file__)
-config = get_config()
 
 # Make bot importable without triggering style warnings
 Bot = Bot
@@ -56,6 +55,7 @@ formatter = PluralFormatter()
 
 
 def extra_parameters():
+    config = get_config()
 
     types = {
         'network': unicode,
@@ -1099,6 +1099,7 @@ extra_routes = flask.Blueprint(
 @extra_routes.route("/consent")
 def consent():
     """Return the consent form. Here for backwards-compatibility with 2.x."""
+    config = get_config()
     return flask.render_template(
         "consent.html",
         hit_id=flask.request.args['hit_id'],
@@ -1111,6 +1112,7 @@ def consent():
 @extra_routes.route("/grid")
 def serve_grid():
     """Return the game stage."""
+    config = get_config()
     return flask.render_template(
         "grid.html",
         app_id=config.get('id')
@@ -1125,23 +1127,25 @@ class Griduniverse(Experiment):
 
     def __init__(self, session=None):
         """Initialize the experiment."""
+        self.config = get_config()
         super(Griduniverse, self).__init__(session)
         self.experiment_repeats = 1
+        self.redis_conn = db.redis_conn
         if session:
             self.setup()
             self.grid = Gridworld(
                 log_event=self.record_event,
-                **config.as_dict()
+                **self.config.as_dict()
             )
             self.session.commit()
 
     def configure(self):
         super(Griduniverse, self).configure()
-        self.num_participants = config.get('max_participants', 3)
+        self.num_participants = self.config.get('max_participants', 3)
         self.quorum = self.num_participants
-        self.initial_recruitment_size = config.get('num_recruits',
-                                                   self.num_participants)
-        self.network_factory = config.get('network', 'FullyConnected')
+        self.initial_recruitment_size = self.config.get('num_recruits',
+                                                        self.num_participants)
+        self.network_factory = self.config.get('network', 'FullyConnected')
 
     @property
     def environment(self):
@@ -1159,7 +1163,7 @@ class Griduniverse(Experiment):
 
     @property
     def background_tasks(self):
-        if config.get('replay', False):
+        if self.config.get('replay', False):
             return []
         return [
             self.send_state_thread,
@@ -1226,7 +1230,7 @@ class Griduniverse(Experiment):
             'connect': self.handle_connect,
             'disconnect': self.handle_disconnect,
         }
-        if not config.get('replay', False):
+        if not self.config.get('replay', False):
             # Ignore these events in replay mode
             mapping.update({
                 'chat': self.handle_chat_message,
@@ -1287,11 +1291,11 @@ class Griduniverse(Experiment):
 
     def publish(self, msg):
         """Publish a message to all griduniverse clients"""
-        redis.publish('griduniverse', json.dumps(msg))
+        self.redis_conn.publish('griduniverse', json.dumps(msg))
 
     def handle_connect(self, msg):
         player_id = msg['player_id']
-        if config.get('replay', False):
+        if self.config.get('replay', False):
             # Force all participants to be specatators
             msg['player_id'] = 'spectator'
             if not self.grid.start_timestamp:
@@ -1464,7 +1468,7 @@ class Griduniverse(Experiment):
             gevent.sleep(0.1)
 
         while True:
-            gevent.sleep(config.get('state_interval', 0.050))
+            gevent.sleep(self.config.get('state_interval', 0.050))
 
             # Send all food data once every 40 loops
             update_walls = update_food = False
@@ -1510,7 +1514,7 @@ class Griduniverse(Experiment):
     def game_loop(self):
         """Update the world state."""
         gevent.sleep(0.1)
-        if not config.get('replay', False):
+        if not self.config.get('replay', False):
             self.grid.build_labyrinth()
             logger.info('Spawning food')
             for i in range(self.grid.num_food):
@@ -1643,7 +1647,7 @@ class Griduniverse(Experiment):
     def replay_start(self):
         self.grid = Gridworld(
             log_event=self.record_event,
-            **config.as_dict()
+            **self.config.as_dict()
         )
 
     def replay_started(self):

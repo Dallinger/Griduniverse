@@ -50,6 +50,6 @@ def update_pins(setup_args):
         os.environ["DYNO"]
     except KeyError:
         setup_args.update({
-            "setup_requires": ['setuptools-markdown==0.2'],
+            "setup_requires": ['setuptools-markdown==0.4.1'],
             "long_description_markdown_filename": 'README.md',
         })

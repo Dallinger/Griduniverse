@@ -1,11 +1,11 @@
-var flatten = require("flatten");
+var lodash = require("lodash");
 var isarray = require("is-array");
 var isnumber = require("is-number");
 var isstring = require("is-string");
 var parse = require("parse-color");
 
 function convert(data) {
-  data = isarray(data[0]) && data[0].length !== 3 ? flatten(data, 1) : data;
+  data = isarray(data[0]) && data[0].length !== 3 ? lodash.flatten(data, 1) : data;
 
   if (isnumber(data[0])) {
     data = data.map(function(d) {
