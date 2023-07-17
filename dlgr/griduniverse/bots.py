@@ -310,10 +310,10 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
 
     def _make_socket(self):
         """Connect to the Redis server and announce the connection"""
-        from dallinger.heroku.worker import conn
-        self.redis = conn
-
+        import dallinger.db
         from dallinger.experiment_server.sockets import chat_backend
+
+        self.redis = dallinger.db.redis_conn
         chat_backend.subscribe(self, 'griduniverse')
 
         self.publish({

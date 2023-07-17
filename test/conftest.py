@@ -130,11 +130,13 @@ def db_session():
 
 
 @pytest.fixture
-def pubsub():
-    from dallinger.heroku.worker import conn
-    with mock.patch('dlgr.griduniverse.experiment.redis', autospec=conn) as mock_redis:
+def pubsub(exp):
+    import dallinger.db
+    with mock.patch('dlgr.griduniverse.experiment.db.redis_conn', autospec=dallinger.db.redis_conn) as mock_redis:
+        orig_conn = exp.redis_conn
+        exp.redis_conn = mock_redis
         yield mock_redis
-
+        exp.redis_conn = orig_conn
 
 @pytest.fixture
 def fresh_gridworld():
