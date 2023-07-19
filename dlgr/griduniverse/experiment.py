@@ -7,10 +7,12 @@ import itertools
 import json
 import logging
 import math
+import os
 import random
 import string
 import time
 import uuid
+import yaml
 
 from cached_property import cached_property
 from faker import Factory
@@ -34,6 +36,9 @@ from .bots import Bot
 from .models import Event
 
 logger = logging.getLogger(__file__)
+
+
+GAME_CONFIG_FILE = 'game_config.yml'
 
 # Make bot importable without triggering style warnings
 Bot = Bot
@@ -1139,6 +1144,16 @@ class Griduniverse(Experiment):
         self.initial_recruitment_size = self.config.get('num_recruits',
                                                         self.num_participants)
         self.network_factory = self.config.get('network', 'FullyConnected')
+
+        game_config_file = os.path.join(os.getcwd(), GAME_CONFIG_FILE)
+        with open(game_config_file, 'r') as game_config_stream:
+            self.game_config = yaml.safe_load(game_config_stream)
+        self.object_config = {
+            o['object_id']: o for o in self.game_config.get('objects', ())
+        }
+        self.transition_config = {
+            (t['actor_start'], t['target_start']): t for t in self.game_config.get('transitions', ())
+        }
 
     @classmethod
     def extra_parameters(cls):
