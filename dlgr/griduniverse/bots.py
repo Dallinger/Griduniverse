@@ -23,7 +23,6 @@ from dallinger.config import get_config
 from .maze_utils import positions_to_maze, maze_to_graph, find_path_astar
 
 logger = logging.getLogger('griduniverse')
-config = get_config()
 
 
 class BaseGridUniverseBot(BotBase):
@@ -311,10 +310,10 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
 
     def _make_socket(self):
         """Connect to the Redis server and announce the connection"""
-        from dallinger.heroku.worker import conn
-        self.redis = conn
-
+        import dallinger.db
         from dallinger.experiment_server.sockets import chat_backend
+
+        self.redis = dallinger.db.redis_conn
         chat_backend.subscribe(self, 'griduniverse')
 
         self.publish({
@@ -688,6 +687,7 @@ def Bot(*args, **kwargs):
     This can be set in config.txt in this directory or by environment variable.
     """
 
+    config = get_config()
     bot_implementation = config.get('bot_policy', u'RandomBot')
     bot_class = globals().get(bot_implementation, None)
     if bot_class and issubclass(bot_class, BotBase):

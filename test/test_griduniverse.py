@@ -10,10 +10,6 @@ import time
 
 class TestDependenciesLoaded(object):
 
-    def test_odo_importable(self):
-        import odo
-        assert odo is not None
-
     def test_tablib_importable(self):
         import tablib
         assert tablib is not None

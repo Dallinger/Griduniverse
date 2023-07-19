@@ -22,10 +22,10 @@ from sqlalchemy.orm import (
 )
 
 import dallinger
+from dallinger import db
 from dallinger.compat import unicode
 from dallinger.config import get_config
 from dallinger.experiment import Experiment
-from dallinger.heroku.worker import conn as redis
 
 from . import distributions
 from .maze import Wall
@@ -34,10 +34,94 @@ from .bots import Bot
 from .models import Event
 
 logger = logging.getLogger(__file__)
-config = get_config()
 
 # Make bot importable without triggering style warnings
 Bot = Bot
+
+GU_PARAMS = {
+    'network': unicode,
+    'max_participants': int,
+    'bot_policy': unicode,
+    'num_rounds': int,
+    'time_per_round': float,
+    'instruct': bool,
+    'columns': int,
+    'rows': int,
+    'window_columns': int,
+    'window_rows': int,
+    'block_size': int,
+    'padding': int,
+    'chat_visibility_threshold': float,
+    'spatial_chat': bool,
+    'visibility': int,
+    'visibility_ramp_time': int,
+    'background_animation': bool,
+    'player_overlap': bool,
+    'leaderboard_group': bool,
+    'leaderboard_individual': bool,
+    'leaderboard_time': int,
+    'motion_speed_limit': float,
+    'motion_auto': bool,
+    'motion_cost': float,
+    'motion_tremble_rate': float,
+    'show_chatroom': bool,
+    'show_grid': bool,
+    'others_visible': bool,
+    'num_colors': int,
+    'mutable_colors': bool,
+    'costly_colors': bool,
+    'pseudonyms': bool,
+    'pseudonyms_locale': unicode,
+    'pseudonyms_gender': unicode,
+    'contagion': int,
+    'contagion_hierarchy': bool,
+    'walls_density': float,
+    'walls_contiguity': float,
+    'walls_visible': bool,
+    'initial_score': int,
+    'dollars_per_point': float,
+    'tax': float,
+    'relative_deprivation': float,
+    'frequency_dependence': float,
+    'frequency_dependent_payoff_rate': float,
+    'donation_amount': int,
+    'donation_individual': bool,
+    'donation_group': bool,
+    'donation_ingroup': bool,
+    'donation_public': bool,
+    'num_food': int,
+    'respawn_food': bool,
+    'food_visible': bool,
+    'food_reward': int,
+    'food_pg_multiplier': float,
+    'food_growth_rate': float,
+    'food_maturation_speed': float,
+    'food_maturation_threshold': float,
+    'food_planting': bool,
+    'food_planting_cost': int,
+    'food_probability_distribution': unicode,
+    'seasonal_growth_rate': float,
+    'difi_question': bool,
+    'difi_group_label': unicode,
+    'difi_group_image': unicode,
+    'fun_survey': bool,
+    'pre_difi_question': bool,
+    'pre_difi_group_label': unicode,
+    'pre_difi_group_image': unicode,
+    'leach_survey': bool,
+    'intergroup_competition': float,
+    'intragroup_competition': float,
+    'identity_signaling': bool,
+    'identity_starts_visible': bool,
+    'score_visible': bool,
+    'alternate_consumption_donation': bool,
+    'use_identicons': bool,
+    'build_walls': bool,
+    'wall_building_cost': int,
+    'donation_multiplier': float,
+    'num_recruits': int,
+    'state_interval': float,
+}
 
 
 class PluralFormatter(string.Formatter):
@@ -53,97 +137,6 @@ class PluralFormatter(string.Formatter):
 
 
 formatter = PluralFormatter()
-
-
-def extra_parameters():
-
-    types = {
-        'network': unicode,
-        'max_participants': int,
-        'bot_policy': unicode,
-        'num_rounds': int,
-        'time_per_round': float,
-        'instruct': bool,
-        'columns': int,
-        'rows': int,
-        'window_columns': int,
-        'window_rows': int,
-        'block_size': int,
-        'padding': int,
-        'chat_visibility_threshold': float,
-        'spatial_chat': bool,
-        'visibility': int,
-        'visibility_ramp_time': int,
-        'background_animation': bool,
-        'player_overlap': bool,
-        'leaderboard_group': bool,
-        'leaderboard_individual': bool,
-        'leaderboard_time': int,
-        'motion_speed_limit': float,
-        'motion_auto': bool,
-        'motion_cost': float,
-        'motion_tremble_rate': float,
-        'show_chatroom': bool,
-        'show_grid': bool,
-        'others_visible': bool,
-        'num_colors': int,
-        'mutable_colors': bool,
-        'costly_colors': bool,
-        'pseudonyms': bool,
-        'pseudonyms_locale': unicode,
-        'pseudonyms_gender': unicode,
-        'contagion': int,
-        'contagion_hierarchy': bool,
-        'walls_density': float,
-        'walls_contiguity': float,
-        'walls_visible': bool,
-        'initial_score': int,
-        'dollars_per_point': float,
-        'tax': float,
-        'relative_deprivation': float,
-        'frequency_dependence': float,
-        'frequency_dependent_payoff_rate': float,
-        'donation_amount': int,
-        'donation_individual': bool,
-        'donation_group': bool,
-        'donation_ingroup': bool,
-        'donation_public': bool,
-        'num_food': int,
-        'respawn_food': bool,
-        'food_visible': bool,
-        'food_reward': int,
-        'food_pg_multiplier': float,
-        'food_growth_rate': float,
-        'food_maturation_speed': float,
-        'food_maturation_threshold': float,
-        'food_planting': bool,
-        'food_planting_cost': int,
-        'food_probability_distribution': unicode,
-        'seasonal_growth_rate': float,
-        'difi_question': bool,
-        'difi_group_label': unicode,
-        'difi_group_image': unicode,
-        'fun_survey': bool,
-        'pre_difi_question': bool,
-        'pre_difi_group_label': unicode,
-        'pre_difi_group_image': unicode,
-        'leach_survey': bool,
-        'intergroup_competition': float,
-        'intragroup_competition': float,
-        'identity_signaling': bool,
-        'identity_starts_visible': bool,
-        'score_visible': bool,
-        'alternate_consumption_donation': bool,
-        'use_identicons': bool,
-        'build_walls': bool,
-        'wall_building_cost': int,
-        'donation_multiplier': float,
-        'num_recruits': int,
-        'state_interval': float,
-    }
-
-    for key in types:
-        config.register(key, types[key])
 
 
 def softmax(vector, temperature=1):
@@ -1099,6 +1092,7 @@ extra_routes = flask.Blueprint(
 @extra_routes.route("/consent")
 def consent():
     """Return the consent form. Here for backwards-compatibility with 2.x."""
+    config = get_config()
     return flask.render_template(
         "consent.html",
         hit_id=flask.request.args['hit_id'],
@@ -1111,6 +1105,7 @@ def consent():
 @extra_routes.route("/grid")
 def serve_grid():
     """Return the game stage."""
+    config = get_config()
     return flask.render_template(
         "grid.html",
         app_id=config.get('id')
@@ -1125,23 +1120,31 @@ class Griduniverse(Experiment):
 
     def __init__(self, session=None):
         """Initialize the experiment."""
+        self.config = get_config()
         super(Griduniverse, self).__init__(session)
         self.experiment_repeats = 1
+        self.redis_conn = db.redis_conn
         if session:
             self.setup()
             self.grid = Gridworld(
                 log_event=self.record_event,
-                **config.as_dict()
+                **self.config.as_dict()
             )
             self.session.commit()
 
     def configure(self):
         super(Griduniverse, self).configure()
-        self.num_participants = config.get('max_participants', 3)
+        self.num_participants = self.config.get('max_participants', 3)
         self.quorum = self.num_participants
-        self.initial_recruitment_size = config.get('num_recruits',
-                                                   self.num_participants)
-        self.network_factory = config.get('network', 'FullyConnected')
+        self.initial_recruitment_size = self.config.get('num_recruits',
+                                                        self.num_participants)
+        self.network_factory = self.config.get('network', 'FullyConnected')
+
+    @classmethod
+    def extra_parameters(cls):
+        config = get_config()
+        for key in GU_PARAMS:
+            config.register(key, GU_PARAMS[key])
 
     @property
     def environment(self):
@@ -1159,7 +1162,7 @@ class Griduniverse(Experiment):
 
     @property
     def background_tasks(self):
-        if config.get('replay', False):
+        if self.config.get('replay', False):
             return []
         return [
             self.send_state_thread,
@@ -1226,7 +1229,7 @@ class Griduniverse(Experiment):
             'connect': self.handle_connect,
             'disconnect': self.handle_disconnect,
         }
-        if not config.get('replay', False):
+        if not self.config.get('replay', False):
             # Ignore these events in replay mode
             mapping.update({
                 'chat': self.handle_chat_message,
@@ -1287,11 +1290,11 @@ class Griduniverse(Experiment):
 
     def publish(self, msg):
         """Publish a message to all griduniverse clients"""
-        redis.publish('griduniverse', json.dumps(msg))
+        self.redis_conn.publish('griduniverse', json.dumps(msg))
 
     def handle_connect(self, msg):
         player_id = msg['player_id']
-        if config.get('replay', False):
+        if self.config.get('replay', False):
             # Force all participants to be specatators
             msg['player_id'] = 'spectator'
             if not self.grid.start_timestamp:
@@ -1464,7 +1467,7 @@ class Griduniverse(Experiment):
             gevent.sleep(0.1)
 
         while True:
-            gevent.sleep(config.get('state_interval', 0.050))
+            gevent.sleep(self.config.get('state_interval', 0.050))
 
             # Send all food data once every 40 loops
             update_walls = update_food = False
@@ -1510,7 +1513,7 @@ class Griduniverse(Experiment):
     def game_loop(self):
         """Update the world state."""
         gevent.sleep(0.1)
-        if not config.get('replay', False):
+        if not self.config.get('replay', False):
             self.grid.build_labyrinth()
             logger.info('Spawning food')
             for i in range(self.grid.num_food):
@@ -1643,7 +1646,7 @@ class Griduniverse(Experiment):
     def replay_start(self):
         self.grid = Gridworld(
             log_event=self.record_event,
-            **config.as_dict()
+            **self.config.as_dict()
         )
 
     def replay_started(self):

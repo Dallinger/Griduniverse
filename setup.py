@@ -1,29 +1,20 @@
 #!/usr/bin/env python
 
 import os
+import pathlib
 import sys
 
-from setup_utils import update_pins
 from setuptools import setup, find_packages
-
 
 if sys.argv[-1] == 'publish':
     os.system('python setup.py sdist upload')
     sys.exit()
 
-try:
-    import pypandoc
-    readme = pypandoc.convert('README.md', 'rst')
-    history = pypandoc.convert('CHANGELOG.md', 'rst')
-except (IOError, ImportError):
-    try:
-        # Python 3
-        readme = open('README.md', encoding='utf-8').read()
-        history = open('CHANGELOG.md', encoding='utf-8').read()
-    except TypeError:
-        # Python 2
-        readme = open('README.md').read()
-        history = open('CHANGELOG.md').read()
+# The directory containing this file
+HERE = pathlib.Path(__file__).parent
+
+readme = (HERE / "README.md").read_text(encoding="utf-8")
+history = (HERE / "CHANGELOG.md").read_text(encoding="utf-8")
 
 # Get rid of Sphinx markup
 history = history.replace('.. :changelog:', '')
@@ -32,7 +23,8 @@ doclink = """
 Documentation
 -------------
 
-The full documentation is at http://dallinger-griduniverse.rtfd.org."""
+The full documentation is at http://dallinger-griduniverse.rtfd.org.
+"""
 
 setup_args = dict(
     name='dlgr.griduniverse',
@@ -42,6 +34,7 @@ setup_args = dict(
                 'games expansive enough to capture a diversity of relevant '
                 'dynamics, yet simple enough to permit rigorous analysis.',
     long_description=readme + '\n\n' + doclink + '\n\n' + history,
+    long_description_content_type="text/markdown",
     author='Jordan Suchow',
     author_email='suchow@berkeley.edu',
     url='https://github.com/suchow/Griduniverse',
@@ -49,7 +42,16 @@ setup_args = dict(
     package_dir={'': '.'},
     namespace_packages=['dlgr'],
     include_package_data=True,
-    install_requires=[],
+    install_requires=[
+        'dallinger',
+        'cached-property',
+        "async-timeout",
+        'networkx',
+        'numpy',
+        'faker',
+        "pip>=20",
+        "pip-tools",
+    ],
     license='MIT',
     zip_safe=False,
     keywords='Dallinger Griduniverse',
@@ -65,8 +67,21 @@ setup_args = dict(
             'Griduniverse = dlgr.griduniverse.experiment:Griduniverse',
         ],
     },
-    extras_require={},
+    extras_require={
+        'dev': [
+            'alabaster',
+            'coverage',
+            'coverage_pth',
+            'codecov',
+            'flake8',
+            'google-compute-engine',
+            'pytest',
+            'recommonmark',
+            'Sphinx',
+            'sphinxcontrib-spelling',
+            'tox',
+            'mock',
+        ],
+    },
 )
-
-update_pins(setup_args)
 setup(**setup_args)
