@@ -22,6 +22,7 @@ from dallinger import db
 from dallinger.compat import unicode
 from dallinger.config import get_config
 from dallinger.experiment import Experiment
+from dallinger.experiment_server.worker_events import WorkerEvent
 from faker import Factory
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -134,6 +135,47 @@ class PluralFormatter(string.Formatter):
 
 
 formatter = PluralFormatter()
+
+
+class GURecordEvent(WorkerEvent):
+
+    def __call__(self):
+        session = self.session
+        details = self.details
+        node = self.node
+        if self.participant and not self.node:
+            nodes = self.participant.nodes()
+            if nodes:
+                node = nodes[0]
+        elif not node:
+            node = session.query(dallinger.nodes.Environment).one()
+
+        try:
+            info = Event(origin=node, details=details)
+        except ValueError:
+            logger.info(
+                "Tried to record an event after node#{} failure: {}".format(
+                    node.id, self.details
+                )
+            )
+            return
+        session.add(info)
+        session.commit()
+
+
+class GUUpdateEnvironmentState(WorkerEvent):
+
+    def __call__(self):
+        session = self.session
+        details = self.details
+        environment = self.node
+
+        state = environment.update(
+            json.dumps(details),
+            details=details
+        )
+        session.add(state)
+        session.commit()
 
 
 def softmax(vector, temperature=1):
@@ -1392,26 +1434,20 @@ class Griduniverse(Experiment):
 
     def record_event(self, details, player_id=None):
         """Record an event in the Info table."""
-        session = self.socket_session
-        if player_id == "spectator":
+        if player_id == 'spectator':
             return
         elif player_id:
             node_id = self.node_by_player_id[player_id]
-            node = session.query(dallinger.models.Node).get(node_id)
         else:
             node = self.environment
+            node_id = node.id
 
-        try:
-            info = Event(origin=node, details=details)
-        except ValueError:
-            logger.info(
-                "Tried to record an event after node#{} failure: {}".format(
-                    node.id, details
-                )
-            )
-            return
-        session.add(info)
-        session.commit()
+        from dallinger.experiment_server.worker_events import worker_function, _get_queue
+        q = _get_queue("high")
+        q.enqueue(
+            worker_function, 'GURecordEvent', None, player_id,
+            node_id=node_id, details=details
+        )
 
     def publish(self, msg):
         """Publish a message to all griduniverse clients"""
@@ -1664,9 +1700,14 @@ class Griduniverse(Experiment):
                 include_walls=self.grid.walls_updated,
                 include_items=self.grid.items_updated,
             )
-            state = self.environment.update(json.dumps(state_data), details=state_data)
-            self.socket_session.add(state)
-            self.socket_session.commit()
+
+            from dallinger.experiment_server.worker_events import worker_function, _get_queue
+            q = _get_queue("high")
+            q.enqueue(
+                worker_function, "GUUpdateEnvironmentState", None, None,
+                node_id=self.environment.id, details=state_data,
+                receive_timestamp=time.time()
+            )
             count += 1
             self.grid.walls_updated = False
             self.grid.items_updated = False
