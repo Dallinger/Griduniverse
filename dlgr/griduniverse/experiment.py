@@ -1145,7 +1145,7 @@ class Griduniverse(Experiment):
                                                         self.num_participants)
         self.network_factory = self.config.get('network', 'FullyConnected')
 
-        game_config_file = os.path.join(os.getcwd(), GAME_CONFIG_FILE)
+        game_config_file = os.path.join(os.path.dirname(__file__), GAME_CONFIG_FILE)
         with open(game_config_file, 'r') as game_config_stream:
             self.game_config = yaml.safe_load(game_config_stream)
         self.object_config = {
