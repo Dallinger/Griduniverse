@@ -5,6 +5,7 @@ on:
 
 jobs:
   test:
+    name: Run tests
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -23,7 +24,9 @@ jobs:
         pip install -r dev-requirements.txt
     - name: Install dallinger
       run: |
-        pip install git+https://github.com/Dallinger/Dallinger.git@issues/5330-websocket-updates#egg=dallinger
+        pip install git+https://github.com/Dallinger/Dallinger.git@issues/5330-websocket-updates#egg=dallinger[docker]
+    - name: Start dallinger services as docker containers
+      run: dallinger docker start-services
     - name: Run pytest
       run: pytest --junit-xml=test-results.xml
     - name: Surface failing tests
