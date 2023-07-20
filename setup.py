@@ -47,6 +47,7 @@ setup_args = dict(
         "numpy",
         "faker",
         "PyYAML",
+        "cached-property",
     ],
     license="MIT",
     zip_safe=False,

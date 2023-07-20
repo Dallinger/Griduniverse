@@ -28,7 +28,9 @@ black==23.7.0
     # via dlgr-griduniverse
 blinker==1.6.2
     # via flask
-boto3==1.28.11
+boto==2.49.0
+    # via google-compute-engine
+boto3==1.28.7
     # via dallinger
 botocore==1.31.11
     # via
@@ -311,6 +313,8 @@ sqlalchemy-postgres-copy==0.5.0
     # via dallinger
 stack-data==0.6.2
     # via ipython
+tablib==3.5.0
+    # via dlgr-griduniverse
 tabulate==0.9.0
     # via dallinger
 tenacity==8.2.2

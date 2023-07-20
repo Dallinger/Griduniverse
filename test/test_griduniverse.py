@@ -13,10 +13,10 @@ from dlgr.griduniverse.experiment import Player
 
 
 class TestDependenciesLoaded(object):
-    def test_tablib_importable(self):
-        import tablib
+    def test_faker_importable(self):
+        import faker
 
-        assert tablib is not None
+        assert faker is not None
 
 
 class TestItem(object):
