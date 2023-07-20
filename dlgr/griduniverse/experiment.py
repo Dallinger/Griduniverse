@@ -147,7 +147,7 @@ class GURecordEvent(WorkerEvent):
             nodes = self.participant.nodes()
             if nodes:
                 node = nodes[0]
-        elif not node:
+        if not node:
             node = session.query(dallinger.nodes.Environment).one()
 
         try:
@@ -1442,7 +1442,10 @@ class Griduniverse(Experiment):
             node = self.environment
             node_id = node.id
 
-        from dallinger.experiment_server.worker_events import worker_function, _get_queue
+        from dallinger.experiment_server.worker_events import (
+            _get_queue,
+            worker_function,
+        )
         q = _get_queue("high")
         q.enqueue(
             worker_function, 'GURecordEvent', None, player_id,
@@ -1678,6 +1681,10 @@ class Griduniverse(Experiment):
 
     def game_loop(self):
         """Update the world state."""
+        from dallinger.experiment_server.worker_events import (
+            _get_queue,
+            worker_function,
+        )
         gevent.sleep(0.1)
         if not self.config.get("replay", False):
             self.grid.build_labyrinth()
@@ -1694,6 +1701,8 @@ class Griduniverse(Experiment):
         previous_second_timestamp = self.grid.start_timestamp
         count = 0
 
+        q = _get_queue("high")
+
         while not self.grid.game_over:
             # Record grid state to database
             state_data = self.grid.serialize(
@@ -1701,8 +1710,6 @@ class Griduniverse(Experiment):
                 include_items=self.grid.items_updated,
             )
 
-            from dallinger.experiment_server.worker_events import worker_function, _get_queue
-            q = _get_queue("high")
             q.enqueue(
                 worker_function, "GUUpdateEnvironmentState", None, None,
                 node_id=self.environment.id, details=state_data,

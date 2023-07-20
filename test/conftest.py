@@ -174,6 +174,18 @@ def pubsub(exp):
 
 
 @pytest.fixture
+def queue_getter():
+    with mock.patch("dallinger.experiment_server.worker_events._get_queue") as mock_queue_getter:
+        mock_queue_getter.return_value = mock.Mock()
+        yield mock_queue_getter
+
+
+@pytest.fixture
+def queue(queue_getter):
+    yield queue_getter.return_value
+
+
+@pytest.fixture
 def fresh_gridworld():
     from dlgr.griduniverse.experiment import Gridworld
 
