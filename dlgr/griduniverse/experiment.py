@@ -1154,6 +1154,11 @@ class Griduniverse(Experiment):
         self.transition_config = {
             (t['actor_start'], t['target_start']): t for t in self.game_config.get('transitions', ())
         }
+        # This is accessed by the grid.html template to load the configuration on the client side:
+        self.object_config_json = json.dumps(self.object_config)
+        self.transition_config_json = json.dumps(
+            {"{}_{}".format(k[0], k[1]): v for k, v in self.transition_config.items()}
+        )
 
     @classmethod
     def extra_parameters(cls):
@@ -1239,7 +1244,7 @@ class Griduniverse(Experiment):
         )
 
     def dispatch(self, msg):
-        """Route to the appropriate method based on message type"""
+        """Route incoming messages to the appropriate method based on message type"""
         mapping = {
             'connect': self.handle_connect,
             'disconnect': self.handle_disconnect,
