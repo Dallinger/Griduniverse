@@ -561,7 +561,6 @@ pixels.frame(function() {
   // Update the background.
   var ego = players.ego(),
       w = getWindowPosition(),
-      limitVisibility,
       dimness,
       rescaling,
       i, j, x, y;
