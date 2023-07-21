@@ -797,13 +797,15 @@ class Gridworld(object):
                         object_id = obj.get("object_id", 1)
 
         object_props = self.object_config[object_id]
-        self.object_locations[tuple(position)] = Object(
+        new_object = Object(
             id=(len(self.object_locations) + len(self.food_consumed)),
             position=position,
             maturation_speed=self.maturation_speed,
             **object_props
         )
+        self.object_locations[tuple(position)] = new_object
         self.objects_updated = True
+        logger.warning(f"Spawning new object: {new_object}")
         self.log_event({
             'type': 'spawn object',
             'position': position,
@@ -916,6 +918,12 @@ class Object(object):
         self.n_uses = kwargs.get('n_uses', 1)
         self.maturation_speed = kwargs.get('maturation_speed', 0.1)
         self.creation_timestamp = time.time()
+
+    def __repr__(self):
+        return (
+            f"Object(name='{self.name}', object_id={self.object_id}, id={self.id}, "
+            f"position={self.position}, creation_timestamp={self.creation_timestamp})"
+        )
 
     def serialize(self):
         return {
