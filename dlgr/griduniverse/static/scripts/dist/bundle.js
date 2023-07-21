@@ -1747,7 +1747,7 @@ var color2name = function (color) {
  */
 function Resource(data) {
   obj = {
-    type_id:  data.type_id,
+    type_id:  data.object_id,
     id:  data.id,
     position:  data.position,
     color:  data.color,
@@ -2170,10 +2170,13 @@ pixels.frame(function() {
   });
 
   for (i = 0; i < resources.length; i++) {
-    // Players digests the resource if possible.
     var currentResource = resources[i];
     if (players.isPlayerAt(currentResource.position)) {
-      resourcesConsumed.push(resources.splice(i, 1));  // XXX this does nothing, AFAICT (Jesse)
+      if (! currentResource.interactive) {
+        // Non-interactive resources get consumed immediately
+        resourcesConsumed.push(resources.splice(i, 1));  // XXX this push does nothing, AFAICT (Jesse)
+      }
+      // Else: show info about the resource in some way
     } else {
       section.plot(currentResource.position[1], currentResource.position[0], currentResource.color);
     }
@@ -2545,15 +2548,15 @@ function onGameStateChange(msg) {
   updateDonationStatus(state.donation_active);
 
   // Update resources
-  if (state.food !== undefined && state.food !== null) {
+  if (state.objects !== undefined && state.objects !== null) {
     resources = [];
-    for (j = 0; j < state.food.length; j++) {
+    for (j = 0; j < state.objects.length; j++) {
       resources.push(
         Resource({
-          id: state.food[j].id,
-          type_id: state.food[j].type_id,
-          position: state.food[j].position,
-          color: state.food[j].color
+          id: state.objects[j].id,
+          type_id: state.objects[j].type_id,
+          position: state.objects[j].position,
+          color: state.objects[j].color
         })
       );
     }
