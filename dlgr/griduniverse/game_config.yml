@@ -1,7 +1,5 @@
 ---
-
 objects:
-
   - calories: null
     crossable: true
     interactive: true
@@ -74,9 +72,16 @@ objects:
     portable: false
     spawn_rate: 0.1
 
+  - calories: 5
+    crossable: true
+    interactive: false
+    n_uses: 1
+    name: Food
+    object_id: 9
+    portable: true
+    spawn_rate: null
 
 transitions:
-
   - actor_end: 5
     actor_start: 2
     last_use: false
