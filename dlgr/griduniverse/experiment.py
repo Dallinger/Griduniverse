@@ -887,6 +887,7 @@ class Food(object):
     def serialize(self):
         return {
             "id": self.id,
+            "type_id": 9,
             "position": self.position,
             "maturity": self.maturity,
             "color": self.color or self._maturity_to_rgb(self.maturity),
