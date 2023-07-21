@@ -94,17 +94,16 @@ GU_PARAMS = {
     'donation_group': bool,
     'donation_ingroup': bool,
     'donation_public': bool,
-    'num_food': int,
-    'respawn_food': bool,
-    'food_visible': bool,
-    'food_reward': int,
-    'food_pg_multiplier': float,
-    'food_growth_rate': float,
-    'food_maturation_speed': float,
-    'food_maturation_threshold': float,
-    'food_planting': bool,
-    'food_planting_cost': int,
-    'food_probability_distribution': unicode,
+    'object_count': int,
+    'respawn': bool,
+    'reward': int,
+    'public_good_multiplier': float,
+    'growth_rate': float,
+    'maturation_speed': float,
+    'maturation_threshold': float,
+    'food_planting': bool,  # legacy, only for original game
+    'food_planting_cost': int,  # legacy, only for original game
+    'probability_distribution': unicode,
     'seasonal_growth_rate': float,
     'difi_question': bool,
     'difi_group_label': unicode,
@@ -126,6 +125,14 @@ GU_PARAMS = {
     'donation_multiplier': float,
     'num_recruits': int,
     'state_interval': float,
+}
+
+DEFAULT_OBJECT_CONFIG = {
+    1: {
+        "object_id": 1,
+        "name": "Food",
+        "calories": 1,
+    }
 }
 
 
@@ -176,9 +183,9 @@ class Gridworld(object):
     GREEN = [0.51, 0.69, 0.61]
     WHITE = [1.00, 1.00, 1.00]
     wall_locations = None
-    food_locations = None
+    object_locations = None
     walls_updated = True
-    food_updated = True
+    objects_updated = True
 
     def __new__(cls, **kwargs):
         if not hasattr(cls, 'instance'):
@@ -274,19 +281,18 @@ class Gridworld(object):
         self.alternate_consumption_donation = kwargs.get(
             'alternate_consumption_donation', False)
 
-        # Food
-        self.num_food = kwargs.get('num_food', 8)
-        self.respawn_food = kwargs.get('respawn_food', True)
-        self.food_visible = kwargs.get('food_visible', True)
-        self.food_reward = kwargs.get('food_reward', 1)
-        self.food_pg_multiplier = kwargs.get('food_pg_multiplier', 1)
-        self.food_growth_rate = kwargs.get('food_growth_rate', 1.00)
-        self.food_maturation_speed = kwargs.get('food_maturation_speed', 1)
-        self.food_maturation_threshold = kwargs.get(
-            'food_maturation_threshold', 0.0)
+        # Objects
+        self.object_count = kwargs.get('object_count', 8)
+        self.respawn = kwargs.get('respawn', True)
+        self.reward = kwargs.get('reward', 1)
+        self.public_good_multiplier = kwargs.get('public_good_multiplier', 1)
+        self.growth_rate = kwargs.get('growth_rate', 1.00)
+        self.maturation_speed = kwargs.get('maturation_speed', 1)
+        self.maturation_threshold = kwargs.get(
+            'maturation_threshold', 0.0)
         self.food_planting = kwargs.get('food_planting', False)
         self.food_planting_cost = kwargs.get('food_planting_cost', 1)
-        self.food_probability_distribution = kwargs.get('food_probability_distribution', 'random')
+        self.probability_distribution = kwargs.get('probability_distribution', 'random')
         self.seasonal_growth_rate = kwargs.get('seasonal_growth_rate', 1)
 
         # Chat
@@ -304,13 +310,13 @@ class Gridworld(object):
 
         # Set some variables.
         self.players = {}
-        self.food_locations = {}
-        self.food_consumed = []
+        self.object_locations = {}
+        self.food_consumed = []  # For now, everything with calories is food
         self.start_timestamp = kwargs.get('start_timestamp', None)
 
         self.round = 0
         self.public_good = (
-            (self.food_reward * self.food_pg_multiplier) / self.num_players
+            (self.reward * self.public_good_multiplier) / self.num_players
         )
 
         if self.contagion_hierarchy:
@@ -321,23 +327,26 @@ class Gridworld(object):
             self.color_costs = [2**i for i in range(self.num_colors)]
             random.shuffle(self.color_costs)
 
-        # get food spawning probability distribution function and args
-        self.food_probability_info = {}
+        # get object spawning probability distribution function and args
         self.probability_function_args = []
-        parts = self.food_probability_distribution.split()
+        parts = self.probability_distribution.split()
         if len(parts) > 1:
-            self.food_probability_distribution = parts[0]
+            self.probability_distribution = parts[0]
             self.probability_function_args = parts[1:]
         probability_distribution = "{}_probability_distribution".format(
-            self.food_probability_distribution)
-        self.food_probability_function = getattr(distributions,
-                                                 probability_distribution,
-                                                 None)
-        if self.food_probability_function is None:
+            self.probability_distribution)
+        self.probability_function = getattr(distributions,
+                                            probability_distribution,
+                                            None)
+        if self.probability_function is None:
             logger.info(
-                "Unknown food probability distribution: {}.".format(
-                    self.food_probability_distribution))
-            self.food_probability_function = distributions.random_probability_distribution
+                "Unknown object probability distribution: {}.".format(
+                    self.probability_distribution))
+            self.probability_function = distributions.random_probability_distribution
+
+        # Objects and transitions
+        self.object_config = kwargs.get("object_config", DEFAULT_OBJECT_CONFIG)
+        self.transition_config = kwargs.get("transition_config", {})
 
     def can_occupy(self, position):
         if self.player_overlap:
@@ -524,7 +533,7 @@ class Gridworld(object):
     def game_over(self):
         return self.round >= self.num_rounds
 
-    def serialize(self, include_walls=True, include_food=True):
+    def serialize(self, include_walls=True, include_objects=True):
         grid_data = {
             "players": [player.serialize() for player in self.players.values()],
             "round": self.round,
@@ -535,8 +544,8 @@ class Gridworld(object):
 
         if include_walls:
             grid_data['walls'] = [w.serialize() for w in self.wall_locations.values()]
-        if include_food:
-            grid_data['food'] = [f.serialize() for f in self.food_locations.values()]
+        if include_objects:
+            grid_data['objects'] = [f.serialize() for f in self.object_locations.values()]
 
         return grid_data
 
@@ -569,11 +578,11 @@ class Gridworld(object):
                 wall = Wall(**wall_state)
                 self.wall_locations[tuple(wall.position)] = wall
 
-        if 'food' in state:
-            self.food_locations = {}
-            for food_state in state['food']:
-                food = Food(maturation_speed=self.food_maturation_speed, **food_state)
-                self.food_locations[tuple(food.position)] = food
+        if 'objects' in state:
+            self.object_locations = {}
+            for object_state in state['objects']:
+                obj = Object(maturation_speed=self.maturation_speed, **object_state)
+                self.object_locations[tuple(obj.position)] = obj
 
     def instructions(self):
         color_costs = ''
@@ -670,23 +679,23 @@ class Gridworld(object):
             text += """ Movement commands will be ignored almost all of the time,
                 and the player will move in a random direction instead."""
         text += """</p><p>Players gain points by getting to squares that have
-            food on them. Each piece of food is worth {g.food_reward}
-            {g.food_reward:plural, point, points}. When the game starts there
-            are <strong>{g.num_food}</strong> {g.num_food:plural, piece, pieces}
+            food on them. Each piece of food is worth {g.reward}
+            {g.reward:plural, point, points}. When the game starts there
+            are <strong>{g.object_count}</strong> {g.object_count:plural, piece, pieces}
             of food on the grid. Food is represented by a green"""
-        if self.food_maturation_threshold > 0:
+        if self.maturation_threshold > 0:
             text += " or brown"
         text += " square: <img src='static/images/food-green.png' height='20'>"
-        if self.food_maturation_threshold > 0:
+        if self.maturation_threshold > 0:
             text += " <img src='static/images/food-brown.png' height='20'>"
-        if self.respawn_food:
+        if self.respawn:
             text += "<br>Food is automatically respawned after it is consumed."
-            if self.food_maturation_threshold > 0:
+            if self.maturation_threshold > 0:
                 text += """It will appear immediately, but not be consumable for
                     some time, because it has a maturation period. It will show
                     up as brown initially, and then as green when it matures."""
         text += """<br>The location where the food will appear after respawning is
-            is determined by the <strong>{g.food_probability_distribution}</strong>
+            is determined by the <strong>{g.probability_distribution}</strong>
             probability distribution."""
         if self.food_planting:
             text += " Players can plant more food by pressing the spacebar."
@@ -742,24 +751,28 @@ class Gridworld(object):
         consumed = 0
         for player in self.players.values():
             position = tuple(player.position)
-            if position in self.food_locations:
-                food = self.food_locations[position]
+            if position in self.object_locations:
+                food = self.object_locations[position]
+                # any object with calories is food for now. Other objects are ignored.
+                if not food.calories:
+                    continue
                 if food.maturity < self.food_maturation_threshold:
                     continue
-                del self.food_locations[position]
+                del self.object_locations[position]
                 # Update existence and count of food.
                 self.food_consumed.append(food)
-                self.food_updated = True
-                if self.respawn_food:
-                    self.spawn_food()
+                self.objects_updated = True
+                if self.respawn:
+                    # respawn same type of object.
+                    self.spawn_object(object_id=food.object_id)
                 else:
-                    self.num_food -= 1
+                    self.object_count -= 1
 
                 # Update scores.
                 if player.color_idx > 0:
-                    reward = self.food_reward
+                    reward = self.reward
                 else:
-                    reward = self.food_reward * self.relative_deprivation
+                    reward = self.reward * self.relative_deprivation
 
                 player.score += reward
                 consumed += 1
@@ -768,32 +781,44 @@ class Gridworld(object):
             for player_to in self.players.values():
                 player_to.score += self.public_good * consumed
 
-    def spawn_food(self, position=None):
-        """Respawn the food for a single position"""
+    def spawn_object(self, position=None, object_id=None):
+        """Respawn an object for a single position"""
         if not position:
             position = self._random_empty_position()
 
-        self.food_locations[tuple(position)] = Food(
-            id=(len(self.food_locations) + len(self.food_consumed)),
+        if not object_id:
+            # No specific object type, pick randomly.
+            object_id = None
+            while object_id is None:
+                # As many loops as it takes until one is chosen.
+                for obj in self.object_config.values():
+                    spawn_rate = random.random()
+                    if spawn_rate < obj.get("spawn_rate", 0.1):
+                        object_id = obj.get("object_id", 1)
+
+        object_props = self.object_config[object_id]
+        self.object_locations[tuple(position)] = Object(
+            id=(len(self.object_locations) + len(self.food_consumed)),
             position=position,
-            maturation_speed=self.food_maturation_speed,
+            maturation_speed=self.maturation_speed,
+            **object_props
         )
-        self.food_updated = True
+        self.objects_updated = True
         self.log_event({
-            'type': 'spawn_food',
+            'type': 'spawn object',
             'position': position,
         })
 
-    def food_changed(self, last_food):
-        locations = self.food_locations
-        if len(last_food) != len(locations):
+    def objects_changed(self, last_objects):
+        locations = self.object_locations
+        if len(last_objects) != len(locations):
             return True
-        for food in last_food:
-            position = tuple(food['position'])
+        for obj in last_objects:
+            position = tuple(obj['position'])
             if position not in locations:
                 return True
             found = locations[position]
-            if found.id != food['id'] or found.maturity != food['maturity']:
+            if found.id != obj['id'] or found.maturity != obj['maturity']:
                 return True
         return False
 
@@ -825,7 +850,7 @@ class Gridworld(object):
         columns = self.columns
         empty_cell = False
         while (not empty_cell):
-            position = self.food_probability_function(
+            position = self.probability_function(
                 rows, columns, *self.probability_function_args)
             empty_cell = self._empty(position)
 
@@ -835,7 +860,7 @@ class Gridworld(object):
         """Determine whether a particular cell is empty."""
         return not (
             self.has_player(position) or
-            self.has_food(position) or
+            self.has_object(position) or
             self.has_wall(position)
         )
 
@@ -845,8 +870,8 @@ class Gridworld(object):
                 return True
         return False
 
-    def has_food(self, position):
-        return tuple(position) in self.food_locations
+    def has_object(self, position):
+        return tuple(position) in self.object_locations
 
     def has_wall(self, position):
         return tuple(position) in self.wall_locations
@@ -875,19 +900,35 @@ class Gridworld(object):
             return 1
 
 
-class Food(object):
-    """Food."""
+class Object(object):
+    """Objects."""
     def __init__(self, **kwargs):
         self.id = kwargs.get('id', uuid.uuid4())
+        self.object_id = kwargs.get('object_id', 1)
+        self.name = kwargs.get('name')
         self.position = kwargs.get('position', [0, 0])
+        self.calories = kwargs.get('calories', 0)
         self.color = kwargs.get('color')
+        self.spawn_rate = kwargs.get('spawn_rate', 0.1)
+        self.portable = kwargs.get('portable', False)
+        self.crossable = kwargs.get('crossable', False)
+        self.interactive = kwargs.get('interactive', False)
+        self.n_uses = kwargs.get('n_uses', 1)
         self.maturation_speed = kwargs.get('maturation_speed', 0.1)
         self.creation_timestamp = time.time()
 
     def serialize(self):
         return {
             "id": self.id,
+            "object_id": self.object_id,
+            "name": self.name,
             "position": self.position,
+            "calories": self.calories,
+            "spawn_rate": self.spawn_rate,
+            "portable": self.portable,
+            "crossable": self.crossable,
+            "interactive": self.interactive,
+            "n_uses": self.n_uses,
             "maturity": self.maturity,
             "color": self.color or self._maturity_to_rgb(self.maturity),
         }
@@ -1133,6 +1174,8 @@ class Griduniverse(Experiment):
             self.setup()
             self.grid = Gridworld(
                 log_event=self.record_event,
+                object_config=self.object_config,
+                transition_config=self.transition_config,
                 **self.config.as_dict()
             )
             self.session.commit()
@@ -1452,9 +1495,9 @@ class Griduniverse(Experiment):
         player = self.grid.players[msg['player_id']]
         position = msg['position']
         can_afford = player.score >= self.grid.food_planting_cost
-        if (can_afford and not self.grid.has_food(position)):
+        if (can_afford and not self.grid.has_object(position)):
             player.score -= self.grid.food_planting_cost
-            self.grid.spawn_food(position=position)
+            self.grid.spawn_object(position=position)
 
     def handle_toggle_visible(self, msg):
         player = self.grid.players[msg['player_id']]
@@ -1475,7 +1518,7 @@ class Griduniverse(Experiment):
         last_player_count = 0
         gevent.sleep(1.00)
         last_walls = []
-        last_food = []
+        last_objects = []
 
         # Sleep until we have walls
         while (self.grid.walls_density and not self.grid.wall_locations):
@@ -1484,34 +1527,34 @@ class Griduniverse(Experiment):
         while True:
             gevent.sleep(self.config.get('state_interval', 0.050))
 
-            # Send all food data once every 40 loops
-            update_walls = update_food = False
+            # Send all object data once every 40 loops
+            update_walls = update_objects = False
             if (count % 50) == 0:
-                update_food = True
+                update_objects = True
             count += 1
 
             player_count = len(self.grid.players)
             if not last_player_count or player_count != last_player_count:
                 update_walls = True
-                update_food = True
+                update_objects = True
                 last_player_count = player_count
 
             if not last_walls:
                 update_walls = True
 
-            if not last_food or self.grid.food_changed(last_food):
-                update_food = True
+            if not last_objects or self.grid.objects_changed(last_objects):
+                update_objects = True
 
             grid_state = self.grid.serialize(
                 include_walls=update_walls,
-                include_food=update_food
+                include_objects=update_objects
             )
 
             if update_walls:
                 last_walls = grid_state['walls']
 
-            if update_food:
-                last_food = grid_state['food']
+            if update_objects:
+                last_objects = grid_state['objects']
 
             message = {
                 'type': 'state',
@@ -1530,11 +1573,11 @@ class Griduniverse(Experiment):
         gevent.sleep(0.1)
         if not self.config.get('replay', False):
             self.grid.build_labyrinth()
-            logger.info('Spawning food')
-            for i in range(self.grid.num_food):
+            logger.info('Spawning objects')
+            for i in range(self.grid.object_count):
                 if (i % 250) == 0:
                     gevent.sleep(0.00001)
-                self.grid.spawn_food()
+                self.grid.spawn_object()
 
         while not self.grid.game_started:
             gevent.sleep(0.01)
@@ -1546,7 +1589,7 @@ class Griduniverse(Experiment):
             # Record grid state to database
             state_data = self.grid.serialize(
                 include_walls=self.grid.walls_updated,
-                include_food=self.grid.food_updated
+                include_objects=self.grid.objects_updated
             )
             state = self.environment.update(
                 json.dumps(state_data),
@@ -1556,16 +1599,16 @@ class Griduniverse(Experiment):
             self.socket_session.commit()
             count += 1
             self.grid.walls_updated = False
-            self.grid.food_updated = False
+            self.grid.objects_updated = False
             gevent.sleep(0.010)
 
             # TODO: Most of this code belongs in Gridworld; we're just looking
             # at properties of that class and then telling it to do things based
             # on the values.
 
-            # Log food updates every hundred rounds to capture maturity changes
-            if self.grid.food_maturation_threshold and (count % 100) == 0:
-                self.grid.food_updated = True
+            # Log object updates every hundred rounds to capture maturity changes
+            if self.grid.maturation_threshold and (count % 100) == 0:
+                self.grid.objects_updated = True
             now = time.time()
 
             # Update motion.
@@ -1594,21 +1637,21 @@ class Griduniverse(Experiment):
 
                 # Compute how many food items we should have on the grid,
                 # ensuring it's not less than zero.
-                self.grid.num_food = max(min(
-                    self.grid.num_food *
-                    self.grid.food_growth_rate *
+                self.grid.object_count = max(min(
+                    self.grid.object_count *
+                    self.grid.growth_rate *
                     seasonal_growth,
                     self.grid.rows * self.grid.columns,
                 ), 0)
 
                 # TODO: self.grid.replenish_food()
-                for i in range(int(round(self.grid.num_food) - len(self.grid.food_locations))):
-                    self.grid.spawn_food()
+                for i in range(int(round(self.grid.object_count) - len(self.grid.object_locations))):
+                    self.grid.spawn_object()
 
                 # TODO: self.grid.prune_excess_food()
-                for i in range(len(self.grid.food_locations) - int(round(self.grid.num_food))):
-                    del self.grid.food_locations[random.choice(self.grid.food_locations.keys())]
-                    self.grid.food_updated = True
+                for i in range(len(self.grid.object_locations) - int(round(self.grid.object_count))):
+                    del self.grid.object_locations[random.choice(self.grid.object_locations.keys())]
+                    self.grid.objects_updated = True
 
                 abundances = {}
                 for player in self.grid.players.values():
@@ -1684,9 +1727,9 @@ class Griduniverse(Experiment):
         )
 
         # Get the most recent eligible update that changed the food positions
-        food_events = events.filter(
+        object_events = events.filter(
             info_cls.type == 'state',
-            Event.details['food'] != None,  # noqa: E711
+            Event.details['objects'] != None,  # noqa: E711
         ).order_by(Event.creation_time.desc()).limit(1)
 
         # Get the most recent eligible update that changed the wall positions
@@ -1709,7 +1752,7 @@ class Griduniverse(Experiment):
         )
 
         # Merge the above four queries, discarding duplicates, and put them in time ascending order
-        merged_events = food_events.union(
+        merged_events = object_events.union(
             wall_events,
             update_events,
             typed_events
@@ -1778,7 +1821,7 @@ class Griduniverse(Experiment):
         self.grid.chat_message_history = []
         self.state_count = 0
         self.grid.players = {}
-        self.grid.food_locations = {}
+        self.grid.object_locations = {}
         self.grid.wall_locations = {}
 
     def replay_finish(self):

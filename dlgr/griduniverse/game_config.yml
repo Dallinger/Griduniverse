@@ -45,7 +45,7 @@ objects:
     name: Sharp Stone
     object_id: 5
     portable: true
-    spawn_rate: null
+    spawn_rate: 0.1
 
   - calories: 5
     crossable: true
@@ -54,7 +54,7 @@ objects:
     name: Wild Carrot
     object_id: 6
     portable: true
-    spawn_rate: null
+    spawn_rate: 0.1
 
   - calories: 3
     crossable: true
@@ -63,7 +63,7 @@ objects:
     name: Gooseberry
     object_id: 7
     portable: true
-    spawn_rate: null
+    spawn_rate: 0.1
 
   - calories: null
     crossable: false
@@ -72,7 +72,7 @@ objects:
     name: Empty Gooseberry Bush
     object_id: 8
     portable: false
-    spawn_rate: null
+    spawn_rate: 0.1
 
 
 transitions:
