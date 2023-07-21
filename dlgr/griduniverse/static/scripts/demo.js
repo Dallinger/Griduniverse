@@ -583,12 +583,13 @@ pixels.frame(function() {
   });
 
   for (i = 0; i < resources.length; i++) {
-    // Players digests the resource if possible.
-    // TODO: Check resource config for "edibility" (interactive: false)
     var currentResource = resources[i];
     if (players.isPlayerAt(currentResource.position)) {
-      // TODO: this push does nothing, AFAICT; only the splice matters (Jesse)
-      resourcesConsumed.push(resources.splice(i, 1));  // XXX this push does nothing, AFAICT (Jesse)
+      if (! currentResource.interactive) {
+        // Non-interactive resources get consumed immediately
+        resourcesConsumed.push(resources.splice(i, 1));  // XXX this push does nothing, AFAICT (Jesse)
+      }
+      // Else: show info about the resource in some way
     } else {
       section.plot(currentResource.position[1], currentResource.position[0], currentResource.color);
     }
