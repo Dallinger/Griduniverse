@@ -756,7 +756,7 @@ class Gridworld(object):
                 # any object with calories is food for now. Other objects are ignored.
                 if not food.calories:
                     continue
-                if food.maturity < self.food_maturation_threshold:
+                if food.maturity < self.maturation_threshold:
                     continue
                 del self.object_locations[position]
                 # Update existence and count of food.
