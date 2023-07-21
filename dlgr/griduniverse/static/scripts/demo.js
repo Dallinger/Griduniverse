@@ -160,7 +160,7 @@ var color2name = function (color) {
  */
 function Resource(data) {
   obj = {
-    type_id:  data.type_id,
+    type_id:  data.object_id,
     id:  data.id,
     position:  data.position,
     color:  data.color,
@@ -961,15 +961,15 @@ function onGameStateChange(msg) {
   updateDonationStatus(state.donation_active);
 
   // Update resources
-  if (state.food !== undefined && state.food !== null) {
+  if (state.objects !== undefined && state.objects !== null) {
     resources = [];
-    for (j = 0; j < state.food.length; j++) {
+    for (j = 0; j < state.objects.length; j++) {
       resources.push(
         Resource({
-          id: state.food[j].id,
-          type_id: state.food[j].type_id,
-          position: state.food[j].position,
-          color: state.food[j].color
+          id: state.objects[j].id,
+          type_id: state.objects[j].type_id,
+          position: state.objects[j].position,
+          color: state.objects[j].color
         })
       );
     }
