@@ -121,8 +121,8 @@ var mouse = position(pixels.canvas);
 
 var isSpectator = false;
 var start = performance.now();
-var food = [];
-var foodConsumed = [];
+var resources = [];
+var resourcesConsumed = [];
 var walls = [];
 var wall_map = {};
 var row, column, rand;
@@ -151,15 +151,23 @@ var color2name = function (color) {
   return settings.player_color_names[idx];
 };
 
-var Food = function (settings) {
-  if (!(this instanceof Food)) {
-    return new Food();
-  }
-  this.id = settings.id;
-  this.position = settings.position;
-  this.color = settings.color;
-  return this;
-};
+/**
+ * Representation of a game resource, which for the moment is limited to a
+ * simple Food type.
+ *
+ * @param {*} data Information passed from the server, including the type ID
+ * @returns Object with merged server state + object definition values
+ */
+function Resource(data) {
+  obj = {
+    type_id:  data.type_id,
+    id:  data.id,
+    position:  data.position,
+    color:  data.color,
+  };
+
+  return Object.assign(obj, settings.object_config[obj.type_id]);
+}
 
 var Wall = function (settings) {
   if (!(this instanceof Wall)) {
@@ -574,15 +582,13 @@ pixels.frame(function() {
     return newColor;
   });
 
-  for (i = 0; i < food.length; i++) {
-    // Players digest the food.
-    var cur_food = food[i];
-    if (players.isPlayerAt(cur_food.position)) {
-      foodConsumed.push(food.splice(i, 1));
+  for (i = 0; i < resources.length; i++) {
+    // Players digests the resource if possible.
+    var currentResource = resources[i];
+    if (players.isPlayerAt(currentResource.position)) {
+      resourcesConsumed.push(resources.splice(i, 1));  // XXX this does nothing, AFAICT (Jesse)
     } else {
-      if (settings.food_visible) {
-        section.plot(cur_food.position[1], cur_food.position[0], cur_food.color);
-      }
+      section.plot(currentResource.position[1], currentResource.position[0], currentResource.color);
     }
   }
 
@@ -951,13 +957,14 @@ function onGameStateChange(msg) {
 
   updateDonationStatus(state.donation_active);
 
-  // Update food.
+  // Update resources
   if (state.food !== undefined && state.food !== null) {
-    food = [];
+    resources = [];
     for (j = 0; j < state.food.length; j++) {
-      food.push(
-        new Food({
+      resources.push(
+        Resource({
           id: state.food[j].id,
+          type_id: state.food[j].type_id,
           position: state.food[j].position,
           color: state.food[j].color
         })
