@@ -121,8 +121,8 @@ var mouse = position(pixels.canvas);
 
 var isSpectator = false;
 var start = performance.now();
-var resources = [];
-var resourcesConsumed = [];
+var items = [];
+var itemsConsumed = [];
 var walls = [];
 var wall_map = {};
 var row, column, rand;
@@ -152,21 +152,21 @@ var color2name = function (color) {
 };
 
 /**
- * Representation of a game resource, which for the moment is limited to a
+ * Representation of a game item, which for the moment is limited to a
  * simple Food type.
  *
  * @param {*} data Information passed from the server, including the type ID
- * @returns Object with merged server state + object definition values
+ * @returns Object with merged server state + item definition values
  */
-function Resource(data) {
-  obj = {
-    type_id:  data.object_id,
+function Item(data) {
+  item = {
+    type_id:  data.item_id,
     id:  data.id,
     position:  data.position,
     color:  data.color,
   };
 
-  return Object.assign(obj, settings.object_config[obj.type_id]);
+  return Object.assign(item, settings.item_config[item.type_id]);
 }
 
 var Wall = function (settings) {
@@ -582,16 +582,16 @@ pixels.frame(function() {
     return newColor;
   });
 
-  for (i = 0; i < resources.length; i++) {
-    var currentResource = resources[i];
-    if (players.isPlayerAt(currentResource.position)) {
-      if (! currentResource.interactive) {
-        // Non-interactive resources get consumed immediately
-        resourcesConsumed.push(resources.splice(i, 1));  // XXX this push does nothing, AFAICT (Jesse)
+  for (i = 0; i < items.length; i++) {
+    var currentItem = items[i];
+    if (players.isPlayerAt(currentItem.position)) {
+      if (! currentItem.interactive) {
+        // Non-interactive items get consumed immediately
+        itemsConsumed.push(items.splice(i, 1));  // XXX this push does nothing, AFAICT (Jesse)
       }
-      // Else: show info about the resource in some way
+      // Else: show info about the item in some way
     } else {
-      section.plot(currentResource.position[1], currentResource.position[0], currentResource.color);
+      section.plot(currentItem.position[1], currentItem.position[0], currentItem.color);
     }
   }
 
@@ -960,16 +960,16 @@ function onGameStateChange(msg) {
 
   updateDonationStatus(state.donation_active);
 
-  // Update resources
-  if (state.objects !== undefined && state.objects !== null) {
-    resources = [];
-    for (j = 0; j < state.objects.length; j++) {
-      resources.push(
-        Resource({
-          id: state.objects[j].id,
-          type_id: state.objects[j].type_id,
-          position: state.objects[j].position,
-          color: state.objects[j].color
+  // Update items
+  if (state.items !== undefined && state.items !== null) {
+    items = [];
+    for (j = 0; j < state.items.length; j++) {
+      items.push(
+        Item({
+          id: state.items[j].id,
+          type_id: state.items[j].type_id,
+          position: state.items[j].position,
+          color: state.items[j].color
         })
       );
     }

@@ -94,7 +94,7 @@ GU_PARAMS = {
     'donation_group': bool,
     'donation_ingroup': bool,
     'donation_public': bool,
-    'object_count': int,
+    'item_count': int,
     'respawn': bool,
     'reward': int,
     'public_good_multiplier': float,
@@ -127,9 +127,9 @@ GU_PARAMS = {
     'state_interval': float,
 }
 
-DEFAULT_OBJECT_CONFIG = {
+DEFAULT_ITEM_CONFIG = {
     1: {
-        "object_id": 1,
+        "item_id": 1,
         "name": "Food",
         "calories": 1,
     }
@@ -183,9 +183,9 @@ class Gridworld(object):
     GREEN = [0.51, 0.69, 0.61]
     WHITE = [1.00, 1.00, 1.00]
     wall_locations = None
-    object_locations = None
+    item_locations = None
     walls_updated = True
-    objects_updated = True
+    items_updated = True
 
     def __new__(cls, **kwargs):
         if not hasattr(cls, 'instance'):
@@ -281,8 +281,8 @@ class Gridworld(object):
         self.alternate_consumption_donation = kwargs.get(
             'alternate_consumption_donation', False)
 
-        # Objects
-        self.object_count = kwargs.get('object_count', 8)
+        # Items
+        self.item_count = kwargs.get('item_count', 8)
         self.respawn = kwargs.get('respawn', True)
         self.reward = kwargs.get('reward', 1)
         self.public_good_multiplier = kwargs.get('public_good_multiplier', 1)
@@ -310,7 +310,7 @@ class Gridworld(object):
 
         # Set some variables.
         self.players = {}
-        self.object_locations = {}
+        self.item_locations = {}
         self.food_consumed = []  # For now, everything with calories is food
         self.start_timestamp = kwargs.get('start_timestamp', None)
 
@@ -327,7 +327,7 @@ class Gridworld(object):
             self.color_costs = [2**i for i in range(self.num_colors)]
             random.shuffle(self.color_costs)
 
-        # get object spawning probability distribution function and args
+        # get item spawning probability distribution function and args
         self.probability_function_args = []
         parts = self.probability_distribution.split()
         if len(parts) > 1:
@@ -340,12 +340,12 @@ class Gridworld(object):
                                             None)
         if self.probability_function is None:
             logger.info(
-                "Unknown object probability distribution: {}.".format(
+                "Unknown item probability distribution: {}.".format(
                     self.probability_distribution))
             self.probability_function = distributions.random_probability_distribution
 
-        # Objects and transitions
-        self.object_config = kwargs.get("object_config", DEFAULT_OBJECT_CONFIG)
+        # Items and transitions
+        self.item_config = kwargs.get("item_config", DEFAULT_ITEM_CONFIG)
         self.transition_config = kwargs.get("transition_config", {})
 
     def can_occupy(self, position):
@@ -533,7 +533,7 @@ class Gridworld(object):
     def game_over(self):
         return self.round >= self.num_rounds
 
-    def serialize(self, include_walls=True, include_objects=True):
+    def serialize(self, include_walls=True, include_items=True):
         grid_data = {
             "players": [player.serialize() for player in self.players.values()],
             "round": self.round,
@@ -544,8 +544,8 @@ class Gridworld(object):
 
         if include_walls:
             grid_data['walls'] = [w.serialize() for w in self.wall_locations.values()]
-        if include_objects:
-            grid_data['objects'] = [f.serialize() for f in self.object_locations.values()]
+        if include_items:
+            grid_data['items'] = [f.serialize() for f in self.item_locations.values()]
 
         return grid_data
 
@@ -578,11 +578,11 @@ class Gridworld(object):
                 wall = Wall(**wall_state)
                 self.wall_locations[tuple(wall.position)] = wall
 
-        if 'objects' in state:
-            self.object_locations = {}
-            for object_state in state['objects']:
-                obj = Object(maturation_speed=self.maturation_speed, **object_state)
-                self.object_locations[tuple(obj.position)] = obj
+        if 'items' in state:
+            self.item_locations = {}
+            for item_state in state['items']:
+                obj = Item(maturation_speed=self.maturation_speed, **item_state)
+                self.item_locations[tuple(obj.position)] = obj
 
     def instructions(self):
         color_costs = ''
@@ -681,7 +681,7 @@ class Gridworld(object):
         text += """</p><p>Players gain points by getting to squares that have
             food on them. Each piece of food is worth {g.reward}
             {g.reward:plural, point, points}. When the game starts there
-            are <strong>{g.object_count}</strong> {g.object_count:plural, piece, pieces}
+            are <strong>{g.item_count}</strong> {g.item_count:plural, piece, pieces}
             of food on the grid. Food is represented by a green"""
         if self.maturation_threshold > 0:
             text += " or brown"
@@ -751,22 +751,22 @@ class Gridworld(object):
         consumed = 0
         for player in self.players.values():
             position = tuple(player.position)
-            if position in self.object_locations:
-                food = self.object_locations[position]
-                # any object with calories is food for now. Other objects are ignored.
+            if position in self.item_locations:
+                food = self.item_locations[position]
+                # any item with calories is food for now. Other items are ignored.
                 if not food.calories:
                     continue
                 if food.maturity < self.maturation_threshold:
                     continue
-                del self.object_locations[position]
+                del self.item_locations[position]
                 # Update existence and count of food.
                 self.food_consumed.append(food)
-                self.objects_updated = True
+                self.items_updated = True
                 if self.respawn:
-                    # respawn same type of object.
-                    self.spawn_object(object_id=food.object_id)
+                    # respawn same type of item.
+                    self.spawn_item(item_id=food.item_id)
                 else:
-                    self.object_count -= 1
+                    self.item_count -= 1
 
                 # Update scores.
                 if player.color_idx > 0:
@@ -781,41 +781,41 @@ class Gridworld(object):
             for player_to in self.players.values():
                 player_to.score += self.public_good * consumed
 
-    def spawn_object(self, position=None, object_id=None):
-        """Respawn an object for a single position"""
+    def spawn_item(self, position=None, item_id=None):
+        """Respawn an item for a single position"""
         if not position:
             position = self._random_empty_position()
 
-        if not object_id:
-            # No specific object type, pick randomly.
-            object_id = None
-            while object_id is None:
+        if not item_id:
+            # No specific item type, pick randomly.
+            item_id = None
+            while item_id is None:
                 # As many loops as it takes until one is chosen.
-                for obj in self.object_config.values():
+                for obj in self.item_config.values():
                     spawn_rate = random.random()
                     if spawn_rate < obj.get("spawn_rate", 0.1):
-                        object_id = obj.get("object_id", 1)
+                        item_id = obj.get("item_id", 1)
 
-        object_props = self.object_config[object_id]
-        new_object = Object(
-            id=(len(self.object_locations) + len(self.food_consumed)),
+        item_props = self.item_config[item_id]
+        new_item = Item(
+            id=(len(self.item_locations) + len(self.food_consumed)),
             position=position,
             maturation_speed=self.maturation_speed,
-            **object_props
+            **item_props
         )
-        self.object_locations[tuple(position)] = new_object
-        self.objects_updated = True
-        logger.warning(f"Spawning new object: {new_object}")
+        self.item_locations[tuple(position)] = new_item
+        self.items_updated = True
+        logger.warning(f"Spawning new item: {new_item}")
         self.log_event({
-            'type': 'spawn object',
+            'type': 'spawn item',
             'position': position,
         })
 
-    def objects_changed(self, last_objects):
-        locations = self.object_locations
-        if len(last_objects) != len(locations):
+    def items_changed(self, last_items):
+        locations = self.item_locations
+        if len(last_items) != len(locations):
             return True
-        for obj in last_objects:
+        for obj in last_items:
             position = tuple(obj['position'])
             if position not in locations:
                 return True
@@ -862,7 +862,7 @@ class Gridworld(object):
         """Determine whether a particular cell is empty."""
         return not (
             self.has_player(position) or
-            self.has_object(position) or
+            self.has_item(position) or
             self.has_wall(position)
         )
 
@@ -872,8 +872,8 @@ class Gridworld(object):
                 return True
         return False
 
-    def has_object(self, position):
-        return tuple(position) in self.object_locations
+    def has_item(self, position):
+        return tuple(position) in self.item_locations
 
     def has_wall(self, position):
         return tuple(position) in self.wall_locations
@@ -902,11 +902,11 @@ class Gridworld(object):
             return 1
 
 
-class Object(object):
-    """Objects."""
+class Item(object):
+    """Items."""
     def __init__(self, **kwargs):
         self.id = kwargs.get('id', uuid.uuid4())
-        self.object_id = kwargs.get('object_id', 1)
+        self.item_id = kwargs.get('item_id', 1)
         self.name = kwargs.get('name')
         self.position = kwargs.get('position', [0, 0])
         self.calories = kwargs.get('calories', 0)
@@ -921,14 +921,14 @@ class Object(object):
 
     def __repr__(self):
         return (
-            f"Object(name='{self.name}', object_id={self.object_id}, id={self.id}, "
+            f"Item(name='{self.name}', item_id={self.item_id}, id={self.id}, "
             f"position={self.position}, creation_timestamp={self.creation_timestamp})"
         )
 
     def serialize(self):
         return {
             "id": self.id,
-            "object_id": self.object_id,
+            "item_id": self.item_id,
             "name": self.name,
             "position": self.position,
             "calories": self.calories,
@@ -1182,7 +1182,7 @@ class Griduniverse(Experiment):
             self.setup()
             self.grid = Gridworld(
                 log_event=self.record_event,
-                object_config=self.object_config,
+                item_config=self.item_config,
                 transition_config=self.transition_config,
                 **self.config.as_dict()
             )
@@ -1199,14 +1199,14 @@ class Griduniverse(Experiment):
         game_config_file = os.path.join(os.path.dirname(__file__), GAME_CONFIG_FILE)
         with open(game_config_file, 'r') as game_config_stream:
             self.game_config = yaml.safe_load(game_config_stream)
-        self.object_config = {
-            o['object_id']: o for o in self.game_config.get('objects', ())
+        self.item_config = {
+            o['item_id']: o for o in self.game_config.get('items', ())
         }
         self.transition_config = {
             (t['actor_start'], t['target_start']): t for t in self.game_config.get('transitions', ())
         }
         # This is accessed by the grid.html template to load the configuration on the client side:
-        self.object_config_json = json.dumps(self.object_config)
+        self.item_config_json = json.dumps(self.item_config)
         self.transition_config_json = json.dumps(
             {"{}_{}".format(k[0], k[1]): v for k, v in self.transition_config.items()}
         )
@@ -1508,9 +1508,9 @@ class Griduniverse(Experiment):
         player = self.grid.players[msg['player_id']]
         position = msg['position']
         can_afford = player.score >= self.grid.food_planting_cost
-        if (can_afford and not self.grid.has_object(position)):
+        if (can_afford and not self.grid.has_item(position)):
             player.score -= self.grid.food_planting_cost
-            self.grid.spawn_object(position=position)
+            self.grid.spawn_item(position=position)
 
     def handle_toggle_visible(self, msg):
         player = self.grid.players[msg['player_id']]
@@ -1531,7 +1531,7 @@ class Griduniverse(Experiment):
         last_player_count = 0
         gevent.sleep(1.00)
         last_walls = []
-        last_objects = []
+        last_items = []
 
         # Sleep until we have walls
         while (self.grid.walls_density and not self.grid.wall_locations):
@@ -1540,34 +1540,34 @@ class Griduniverse(Experiment):
         while True:
             gevent.sleep(self.config.get('state_interval', 0.050))
 
-            # Send all object data once every 40 loops
-            update_walls = update_objects = False
+            # Send all item data once every 40 loops
+            update_walls = update_items = False
             if (count % 50) == 0:
-                update_objects = True
+                update_items = True
             count += 1
 
             player_count = len(self.grid.players)
             if not last_player_count or player_count != last_player_count:
                 update_walls = True
-                update_objects = True
+                update_items = True
                 last_player_count = player_count
 
             if not last_walls:
                 update_walls = True
 
-            if not last_objects or self.grid.objects_changed(last_objects):
-                update_objects = True
+            if not last_items or self.grid.items_changed(last_items):
+                update_items = True
 
             grid_state = self.grid.serialize(
                 include_walls=update_walls,
-                include_objects=update_objects
+                include_items=update_items
             )
 
             if update_walls:
                 last_walls = grid_state['walls']
 
-            if update_objects:
-                last_objects = grid_state['objects']
+            if update_items:
+                last_items = grid_state['items']
 
             message = {
                 'type': 'state',
@@ -1586,11 +1586,11 @@ class Griduniverse(Experiment):
         gevent.sleep(0.1)
         if not self.config.get('replay', False):
             self.grid.build_labyrinth()
-            logger.info('Spawning objects')
-            for i in range(self.grid.object_count):
+            logger.info('Spawning items')
+            for i in range(self.grid.item_count):
                 if (i % 250) == 0:
                     gevent.sleep(0.00001)
-                self.grid.spawn_object()
+                self.grid.spawn_item()
 
         while not self.grid.game_started:
             gevent.sleep(0.01)
@@ -1602,7 +1602,7 @@ class Griduniverse(Experiment):
             # Record grid state to database
             state_data = self.grid.serialize(
                 include_walls=self.grid.walls_updated,
-                include_objects=self.grid.objects_updated
+                include_items=self.grid.items_updated
             )
             state = self.environment.update(
                 json.dumps(state_data),
@@ -1612,16 +1612,16 @@ class Griduniverse(Experiment):
             self.socket_session.commit()
             count += 1
             self.grid.walls_updated = False
-            self.grid.objects_updated = False
+            self.grid.items_updated = False
             gevent.sleep(0.010)
 
             # TODO: Most of this code belongs in Gridworld; we're just looking
             # at properties of that class and then telling it to do things based
             # on the values.
 
-            # Log object updates every hundred rounds to capture maturity changes
+            # Log item updates every hundred rounds to capture maturity changes
             if self.grid.maturation_threshold and (count % 100) == 0:
-                self.grid.objects_updated = True
+                self.grid.items_updated = True
             now = time.time()
 
             # Update motion.
@@ -1650,21 +1650,21 @@ class Griduniverse(Experiment):
 
                 # Compute how many food items we should have on the grid,
                 # ensuring it's not less than zero.
-                self.grid.object_count = max(min(
-                    self.grid.object_count *
+                self.grid.item_count = max(min(
+                    self.grid.item_count *
                     self.grid.growth_rate *
                     seasonal_growth,
                     self.grid.rows * self.grid.columns,
                 ), 0)
 
                 # TODO: self.grid.replenish_food()
-                for i in range(int(round(self.grid.object_count) - len(self.grid.object_locations))):
-                    self.grid.spawn_object()
+                for i in range(int(round(self.grid.item_count) - len(self.grid.item_locations))):
+                    self.grid.spawn_item()
 
                 # TODO: self.grid.prune_excess_food()
-                for i in range(len(self.grid.object_locations) - int(round(self.grid.object_count))):
-                    del self.grid.object_locations[random.choice(self.grid.object_locations.keys())]
-                    self.grid.objects_updated = True
+                for i in range(len(self.grid.item_locations) - int(round(self.grid.item_count))):
+                    del self.grid.item_locations[random.choice(self.grid.item_locations.keys())]
+                    self.grid.items_updated = True
 
                 abundances = {}
                 for player in self.grid.players.values():
@@ -1740,9 +1740,9 @@ class Griduniverse(Experiment):
         )
 
         # Get the most recent eligible update that changed the food positions
-        object_events = events.filter(
+        item_events = events.filter(
             info_cls.type == 'state',
-            Event.details['objects'] != None,  # noqa: E711
+            Event.details['items'] != None,  # noqa: E711
         ).order_by(Event.creation_time.desc()).limit(1)
 
         # Get the most recent eligible update that changed the wall positions
@@ -1765,7 +1765,7 @@ class Griduniverse(Experiment):
         )
 
         # Merge the above four queries, discarding duplicates, and put them in time ascending order
-        merged_events = object_events.union(
+        merged_events = item_events.union(
             wall_events,
             update_events,
             typed_events
@@ -1834,7 +1834,7 @@ class Griduniverse(Experiment):
         self.grid.chat_message_history = []
         self.state_count = 0
         self.grid.players = {}
-        self.grid.object_locations = {}
+        self.grid.item_locations = {}
         self.grid.wall_locations = {}
 
     def replay_finish(self):

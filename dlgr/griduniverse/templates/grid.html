@@ -4,7 +4,7 @@
 <script type="text/javascript">
     // Parameters
     settings = {};
-    settings.object_config = {{ experiment.object_config_json | safe}};
+    settings.item_config = {{ experiment.item_config_json | safe}};
     settings.transition_config = {{ experiment.transition_config_json | safe}};
     settings.block_size = {{ experiment.grid.block_size }};
     settings.padding = {{ experiment.grid.padding }};
@@ -31,7 +31,7 @@
     settings.identity_signaling = {% if experiment.grid.identity_signaling %}true{% else %}false{% endif %};
     settings.identity_starts_visible = {% if experiment.grid.identity_starts_visible %}true{% else %}false{% endif %};
     settings.motion_speed_limit = {{ experiment.grid.motion_speed_limit }};
-    // Visibility will be configured per-object type
+    // Visibility will be configured per-item type
     settings.show_chatroom = {% if experiment.grid.show_chatroom %}true{% else %}false{% endif %};
     settings.pseudonyms = {% if experiment.grid.pseudonyms %}true{% else %}false{% endif %};
     settings.walls_visible = {% if experiment.grid.walls_visible %}true{% else %}false{% endif %};
