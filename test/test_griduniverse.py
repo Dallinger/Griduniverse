@@ -8,6 +8,13 @@ import pytest
 import time
 
 
+class TestDependenciesLoaded(object):
+
+    def test_tablib_importable(self):
+        import tablib
+        assert tablib is not None
+
+
 @pytest.mark.usefixtures('env')
 class TestExperimentClass(object):
 
@@ -59,16 +66,16 @@ class TestGameLoops(object):
     @pytest.fixture
     def loop_exp_3x(self, exp):
         exp.grid = mock.Mock()
-        exp.grid.num_food = 10
+        exp.grid.item_count = 10
         exp.grid.round = 0
         exp.grid.seasonal_growth_rate = 1
-        exp.grid.food_growth_rate = 1.0
+        exp.grid.growth_rate = 1.0
         exp.grid.rows = exp.grid.columns = 25
         exp.grid.players = {'1': mock.Mock()}
         exp.grid.players['1'].score = 10
         exp.grid.contagion = 1
         exp.grid.tax = 1.0
-        exp.grid.food_locations = []
+        exp.grid.item_locations = []
         exp.grid.frequency_dependence = 1
         exp.grid.frequency_dependent_payoff_rate = 0
         exp.grid.start_timestamp = time.time()
@@ -97,14 +104,14 @@ class TestGameLoops(object):
         # labryinth built once
         assert exp.grid.build_labyrinth.call_count == 1
 
-    def test_loop_spawns_food(self, loop_exp_3x):
+    def test_loop_spawns_item(self, loop_exp_3x):
         exp = loop_exp_3x
         exp.game_loop()
-        # Spawn food called once for each num_food
-        assert exp.grid.spawn_food.call_count == exp.grid.num_food
+        # Spawn item called once for each item_count
+        assert exp.grid.spawn_item.call_count == exp.grid.item_count
 
-    def test_loop_spawns_food_during_timed_events(self, loop_exp_3x):
-        # Spawn food called twice for each num_food, once at start and again
+    def test_loop_spawns_item_during_timed_events(self, loop_exp_3x):
+        # Spawn item called twice for each item_count, once at start and again
         # on timed events to replenish empty list
         exp = loop_exp_3x
 
@@ -112,7 +119,7 @@ class TestGameLoops(object):
         exp.grid.start_timestamp -= 2
 
         exp.game_loop()
-        assert exp.grid.spawn_food.call_count == exp.grid.num_food * 2
+        assert exp.grid.spawn_item.call_count == exp.grid.item_count * 2
 
     def test_loop_serialized_and_saves(self, loop_exp_3x):
         # Grid serialized and added to DB session once per loop
@@ -124,11 +131,11 @@ class TestGameLoops(object):
         assert exp.socket_session.commit.call_count == 4
 
     def test_loop_resets_state(self, loop_exp_3x):
-        # Wall and food state unset, food count reset during loop
+        # Wall and item state unset, item count reset during loop
         exp = loop_exp_3x
         exp.game_loop()
         assert exp.grid.walls_updated is False
-        assert exp.grid.food_updated is False
+        assert exp.grid.items_updated is False
 
     def test_loop_taxes_points(self, loop_exp_3x):
         # Player is taxed one point during the timed event round
@@ -159,7 +166,7 @@ class TestGameLoops(object):
         exp.grid.serialize.return_value = {
             'grid': 'serialized',
             'walls': [],
-            'food': [],
+            'items': [],
             'players': [{'id': '1'}],
         }
 

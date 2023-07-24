@@ -23,4 +23,4 @@ class TestReplayState(object):
     def test_forward_scrub_updates_state(self, scrubber, experiment):
         target = datetime(2018, 4, 5, 10, 32, 0, 0)
         scrubber(target)
-        assert len(experiment.grid.food_locations) > 0
+        assert len(experiment.grid.item_locations) > 0

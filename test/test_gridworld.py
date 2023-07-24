@@ -5,24 +5,24 @@ import pytest
 @pytest.mark.usefixtures('env')
 class TestFoodSupply(object):
 
-    def test_spawn_food_at_position(self, gridworld):
+    def test_spawn_item_at_position(self, gridworld):
         # reset food state
-        gridworld.food_updated = False
-        assert len(gridworld.food_locations.keys()) == 0
-        assert gridworld.food_locations.get((0, 0)) is None
+        gridworld.items_updated = False
+        assert len(gridworld.item_locations.keys()) == 0
+        assert gridworld.item_locations.get((0, 0)) is None
         # Spawn food at specific location
-        gridworld.spawn_food(position=(0, 0))
-        assert gridworld.food_updated is True
-        assert gridworld.food_locations.get((0, 0)) is not None
+        gridworld.spawn_item(position=(0, 0))
+        assert gridworld.items_updated is True
+        assert gridworld.item_locations.get((0, 0)) is not None
 
-    def test_spawn_food_at_random(self, gridworld):
+    def test_spawn_item_at_random(self, gridworld):
         # reset food state
-        gridworld.food_updated = False
-        assert len(gridworld.food_locations.keys()) == 0
+        gridworld.items_updated = False
+        assert len(gridworld.item_locations.keys()) == 0
         # Spawn food at random location with no arguments
-        gridworld.spawn_food()
-        assert gridworld.food_updated is True
-        assert len(gridworld.food_locations.keys()) == 1
+        gridworld.spawn_item()
+        assert gridworld.items_updated is True
+        assert len(gridworld.item_locations.keys()) == 1
 
 
 @pytest.mark.usefixtures('env')
@@ -39,24 +39,24 @@ class TestSerialize(object):
         assert values['rows'] == gridworld.rows
         assert values['columns'] == gridworld.columns
 
-    def test_serializes_food_and_walls(self, gridworld):
+    def test_serializes_items_and_walls(self, gridworld):
         values = gridworld.serialize()
         assert values.get('walls') == []
-        assert values.get('food') == []
+        assert values.get('items') == []
         wall = mock.Mock()
-        food = mock.Mock()
+        items = mock.Mock()
         wall.serialize.return_value = 'Serialized Wall'
-        food.serialize.return_value = 'Serialized Food'
+        items.serialize.return_value = 'Serialized Item'
         gridworld.wall_locations[(1, 1)] = wall
-        gridworld.food_locations[(2, 2)] = food
+        gridworld.item_locations[(2, 2)] = items
         values = gridworld.serialize()
         assert values.get('walls') == ['Serialized Wall']
-        assert values.get('food') == ['Serialized Food']
+        assert values.get('items') == ['Serialized Item']
 
     def test_food_and_wall_serialization_disabled(self, gridworld):
         gridworld.wall_locations[(1, 1)] = 'ignored'
-        gridworld.food_locations[(2, 2)] = 'ignored'
-        values = gridworld.serialize(include_walls=False, include_food=False)
+        gridworld.item_locations[(2, 2)] = 'ignored'
+        values = gridworld.serialize(include_walls=False, include_items=False)
         assert values.get('walls') is None
         assert values.get('food') is None
 
