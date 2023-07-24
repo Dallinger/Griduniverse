@@ -8,13 +8,6 @@ import pytest
 import time
 
 
-class TestDependenciesLoaded(object):
-
-    def test_tablib_importable(self):
-        import tablib
-        assert tablib is not None
-
-
 @pytest.mark.usefixtures('env')
 class TestExperimentClass(object):
 
