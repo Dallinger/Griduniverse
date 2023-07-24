@@ -3,7 +3,7 @@ import pytest
 
 
 @pytest.mark.usefixtures('env')
-class TestFoodSupply(object):
+class TestItemSpawning(object):
 
     def test_spawn_item_at_position(self, gridworld):
         # reset food state

@@ -800,8 +800,7 @@ class Gridworld(object):
         new_item = Item(
             id=(len(self.item_locations) + len(self.food_consumed)),
             position=position,
-            maturation_speed=self.maturation_speed,
-            **item_props
+            item_config=item_props,
         )
         self.item_locations[tuple(position)] = new_item
         self.items_updated = True
@@ -903,21 +902,25 @@ class Gridworld(object):
 
 
 class Item(object):
-    """Items."""
-    def __init__(self, **kwargs):
-        self.id = kwargs.get('id', uuid.uuid4())
-        self.item_id = kwargs.get('item_id', 1)
-        self.name = kwargs.get('name')
-        self.position = kwargs.get('position', [0, 0])
-        self.calories = kwargs.get('calories', 0)
-        self.color = kwargs.get('color')
-        self.spawn_rate = kwargs.get('spawn_rate', 0.1)
-        self.portable = kwargs.get('portable', False)
-        self.crossable = kwargs.get('crossable', False)
-        self.interactive = kwargs.get('interactive', False)
-        self.n_uses = kwargs.get('n_uses', 1)
-        self.maturation_speed = kwargs.get('maturation_speed', 0.1)
-        self.creation_timestamp = time.time()
+    """A generic object supporting configuration via a game_config.yml
+    definition.
+
+    All instances sharing an item_id will share a reference to the same
+    item_config, and values will be looked up from this common key/value map.
+
+    Only values that vary by instance will be stored on the object itself.
+    """
+    def __init__(self, item_config, id=None, position=(0, 0), creation_timestamp=None):
+        self._item_config = item_config
+        self.item_id = item_config['item_id']
+        self.id = id if id is not None else uuid.uuid4()
+        ct = creation_timestamp
+        self.creation_timestamp = ct if ct is not None else time.time()
+        self.position = position
+
+    def __getattr__(self, name):
+        # Look up value from the item type's shared definition.
+        return self._item_config[name]
 
     def __repr__(self):
         return (
@@ -929,16 +932,10 @@ class Item(object):
         return {
             "id": self.id,
             "item_id": self.item_id,
-            "name": self.name,
             "position": self.position,
-            "calories": self.calories,
-            "spawn_rate": self.spawn_rate,
-            "portable": self.portable,
-            "crossable": self.crossable,
-            "interactive": self.interactive,
-            "n_uses": self.n_uses,
             "maturity": self.maturity,
-            "color": self.color or self._maturity_to_rgb(self.maturity),
+            # TODO: REMOVE ME
+            "color": self._maturity_to_rgb(self.maturity),
         }
 
     def _maturity_to_rgb(self, maturity):
@@ -1206,6 +1203,8 @@ class Griduniverse(Experiment):
             (t['actor_start'], t['target_start']): t for t in self.game_config.get('transitions', ())
         }
         # This is accessed by the grid.html template to load the configuration on the client side:
+        # TODO: could this instead be passed as an arg to the template in
+        # the /grid route?
         self.item_config_json = json.dumps(self.item_config)
         self.transition_config_json = json.dumps(
             {"{}_{}".format(k[0], k[1]): v for k, v in self.transition_config.items()}

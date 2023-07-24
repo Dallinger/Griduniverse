@@ -9,6 +9,7 @@ items:
     item_id: 9
     portable: true
     spawn_rate: 0.1
+    maturation_speed: 1
 
   # One Hour, One Life items
   # - calories: null

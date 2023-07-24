@@ -6,6 +6,7 @@ import json
 import mock
 import pytest
 import time
+import uuid
 
 
 class TestDependenciesLoaded(object):
@@ -13,6 +14,72 @@ class TestDependenciesLoaded(object):
     def test_tablib_importable(self):
         import tablib
         assert tablib is not None
+
+
+class TestItem(object):
+
+    @pytest.fixture
+    def item_config(self):
+        return {
+            'calories': 5,
+            'crossable': True,
+            'interactive': False,
+            'n_uses': 1,
+            'name': 'Food',
+            'item_id': 9,
+            'portable': True,
+            'spawn_rate': None
+        }
+
+    @property
+    def subject(self):
+        from dlgr.griduniverse.experiment import Item
+        return Item
+
+    def test_initialized_with_some_default_values(self, item_config):
+        item = self.subject(item_config)
+
+        assert isinstance(item.creation_timestamp, float)
+        assert isinstance(item.id, uuid.UUID)
+        assert item.position == (0, 0)
+
+    def test_instance_specific_values_can_be_specified(self, item_config):
+        item = self.subject(item_config, id=42, position=(2, 4), creation_timestamp=21.2)
+
+        assert item.id == 42
+        assert item.position == (2, 4)
+        assert item.creation_timestamp == 21.2
+
+    def test_repr(self, item_config):
+        item = self.subject(item_config, id=42, position=(2, 4), creation_timestamp=21.2)
+
+        assert item.__repr__() == "Item(name='Food', item_id=9, id=42, position=(2, 4), creation_timestamp=21.2)"
+
+    def test_inherits_shared_type_properties_from_config(self, item_config):
+        item = self.subject(item_config)
+        assert item.item_id == item_config["item_id"]
+        assert item.name == "Food"
+        assert item.calories == 5
+
+    def test_type_properties_stored_by_reference(self, item_config):
+        item = self.subject(item_config)
+
+        assert item.calories == 5
+        # Update shared type definition:
+        item_config["calories"] = 6
+        # Change seen in instance:
+        assert item.calories == 6
+
+    def test_type_properties_cannot_by_shadowed(self, item_config):
+        # XXX It would be a good idea to prevent this, but I found
+        # using __getattr__ and __setattr__ together very tricky,
+        # so not working currently.
+        item = self.subject(item_config)
+
+        assert item.calories == 5
+
+        with pytest.raises(ValueError):
+            item.calories = 6
 
 
 @pytest.mark.usefixtures('env')
