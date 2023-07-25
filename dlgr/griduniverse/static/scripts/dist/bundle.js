@@ -1736,24 +1736,80 @@ var color2idx = function (color) {
 var color2name = function (color) {
   var idx = color2idx(color);
   return settings.player_color_names[idx];
-};
+}
 
+function hexToRgbPercentages(hexColor) {
+  if (hexColor.startsWith("#")) {
+    hexColor = hexColor.substring(1);
+  }
+
+  // Check if the hex color has a valid length (either 3 or 6 characters)
+  if (hexColor.length !== 3 && hexColor.length !== 6) {
+    throw new Error("Invalid hex color format. It should be either 3 or 6 characters long.");
+  }
+
+  // If the hex color is 3 characters long, expand it to 6 characters by
+  // duplicating each character
+  if (hexColor.length === 3) {
+    hexColor = hexColor
+      .split("")
+      .map((char) => char + char)
+      .join("");
+  }
+
+  // Convert the hex color to RGB percentage values
+  const red = parseInt(hexColor.substring(0, 2), 16) / 255;
+  const green = parseInt(hexColor.substring(2, 4), 16) / 255;
+  const blue = parseInt(hexColor.substring(4, 6), 16) / 255;
+
+  return [red, green, blue];
+}
+
+function rgbOnScale(startColor, endColor, percentage) {
+
+  const result = [];
+  for (let i = 0; i < 3; i++) {
+    result[i] = endColor[i] + percentage * (startColor[i] - endColor[i]);
+  }
+
+  console.log("Item color: " + result);
+  return result;
+}
 /**
  * Representation of a game item, which for the moment is limited to a
  * simple Food type.
- *
- * @param {*} data Information passed from the server, including the type ID
- * @returns Object with merged server state + item definition values
  */
-function Item(data) {
-  item = {
-    type_id:  data.item_id,
-    id:  data.id,
-    position:  data.position,
-    color:  data.color,
-  };
+class Item {
+  constructor(id, itemId, position, maturity) {
+    this.id = id;
+    this.itemId = itemId;
+    this.position = position;
+    this.maturity = maturity;
+    Object.assign(this, settings.item_config[this.itemId]);
+  }
 
-  return Object.assign(item, settings.item_config[item.type_id]);
+  /**
+   * Calculate a color based on sprite definition and maturity
+   */
+  get color() {
+    let immature, mature;
+
+    if (this.sprite.includes(",")) {
+      [immature, mature] = this.sprite.split(",");
+      // For now, assume these are hex colors
+    } else {
+      immature = mature = this.sprite;
+    }
+
+    return rgbOnScale(
+      hexToRgbPercentages(immature),
+      hexToRgbPercentages(mature),
+      this.maturity
+    );
+  }
+
+
+
 }
 
 var Wall = function (settings) {
@@ -2552,12 +2608,12 @@ function onGameStateChange(msg) {
     items = [];
     for (j = 0; j < state.items.length; j++) {
       items.push(
-        Item({
-          id: state.items[j].id,
-          type_id: state.items[j].type_id,
-          position: state.items[j].position,
-          color: state.items[j].color
-        })
+        new Item(
+          state.items[j].id,
+          state.items[j].item_id,
+          state.items[j].position,
+          state.items[j].maturity,
+        )
       );
     }
   }

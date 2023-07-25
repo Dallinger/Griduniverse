@@ -934,14 +934,7 @@ class Item(object):
             "item_id": self.item_id,
             "position": self.position,
             "maturity": self.maturity,
-            # TODO: REMOVE ME
-            "color": self._maturity_to_rgb(self.maturity),
         }
-
-    def _maturity_to_rgb(self, maturity):
-        B = [0.48, 0.42, 0.33]  # Brown
-        G = [0.54, 0.61, 0.06]  # Green
-        return [B[i] + maturity * (G[i] - B[i]) for i in range(3)]
 
     @property
     def maturity(self):

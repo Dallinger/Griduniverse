@@ -10,6 +10,7 @@ items:
     portable: true
     spawn_rate: 0.1
     maturation_speed: 1
+    sprite: "#8a9b0f,#7a6b54"
 
   # One Hour, One Life items
   # - calories: null
