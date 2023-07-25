@@ -198,6 +198,8 @@ class Item {
     this.itemId = itemId;
     this.position = position;
     this.maturity = maturity;
+    // XXX Maybe we can avoid this copy of every shared value
+    // to every instance, but going with it for now.
     Object.assign(this, settings.item_config[this.itemId]);
   }
 
