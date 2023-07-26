@@ -583,7 +583,9 @@ class Gridworld(object):
         if 'items' in state:
             self.item_locations = {}
             for item_state in state['items']:
-                obj = Item(**item_state)
+                # TODO verify this works at some point!
+                item_props = self.item_config[item_state["item_id"]]
+                obj = Item(item_props, **item_state)
                 self.item_locations[tuple(obj.position)] = obj
 
     def instructions(self):
