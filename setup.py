@@ -66,6 +66,7 @@ setup_args = dict(
     extras_require={
         'dev': [
             'alabaster',
+            'black',
             'coverage',
             'coverage_pth',
             'codecov',

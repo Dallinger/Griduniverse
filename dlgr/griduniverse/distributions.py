@@ -49,7 +49,7 @@ def vertical_gradient_probability_distribution(rows, columns, *args):
 
 
 def edge_bias_probability_distribution(rows, columns, *args):
-    """Do the inverse to a normal distribution """
+    """Do the inverse to a normal distribution"""
     mu = rows / 2  # mean
     sigma = 15  # standard deviation
     row = numpy.random.normal(mu, sigma)
@@ -57,7 +57,7 @@ def edge_bias_probability_distribution(rows, columns, *args):
     valid = False
     while not valid:
         if row > mu and column > mu:
-            row = (mu + numpy.random.normal(mu, sigma))
+            row = mu + numpy.random.normal(mu, sigma)
             column = random.randint(0, columns - 1)
         elif row > mu and column < mu:
             row = abs(numpy.random.normal(mu, sigma) - mu)

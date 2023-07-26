@@ -38,91 +38,91 @@ from .models import Event
 logger = logging.getLogger(__file__)
 
 
-GAME_CONFIG_FILE = 'game_config.yml'
+GAME_CONFIG_FILE = "game_config.yml"
 
 # Make bot importable without triggering style warnings
 Bot = Bot
 
 GU_PARAMS = {
-    'network': unicode,
-    'max_participants': int,
-    'bot_policy': unicode,
-    'num_rounds': int,
-    'time_per_round': float,
-    'instruct': bool,
-    'columns': int,
-    'rows': int,
-    'window_columns': int,
-    'window_rows': int,
-    'block_size': int,
-    'padding': int,
-    'chat_visibility_threshold': float,
-    'spatial_chat': bool,
-    'visibility': int,
-    'visibility_ramp_time': int,
-    'background_animation': bool,
-    'player_overlap': bool,
-    'leaderboard_group': bool,
-    'leaderboard_individual': bool,
-    'leaderboard_time': int,
-    'motion_speed_limit': float,
-    'motion_auto': bool,
-    'motion_cost': float,
-    'motion_tremble_rate': float,
-    'show_chatroom': bool,
-    'show_grid': bool,
-    'others_visible': bool,
-    'num_colors': int,
-    'mutable_colors': bool,
-    'costly_colors': bool,
-    'pseudonyms': bool,
-    'pseudonyms_locale': unicode,
-    'pseudonyms_gender': unicode,
-    'contagion': int,
-    'contagion_hierarchy': bool,
-    'walls_density': float,
-    'walls_contiguity': float,
-    'walls_visible': bool,
-    'initial_score': int,
-    'dollars_per_point': float,
-    'tax': float,
-    'relative_deprivation': float,
-    'frequency_dependence': float,
-    'frequency_dependent_payoff_rate': float,
-    'donation_amount': int,
-    'donation_individual': bool,
-    'donation_group': bool,
-    'donation_ingroup': bool,
-    'donation_public': bool,
-    'item_count': int,
-    'respawn': bool,
-    'reward': int,
-    'public_good_multiplier': float,
-    'growth_rate': float,
-    'food_planting': bool,  # legacy, only for original game
-    'food_planting_cost': int,  # legacy, only for original game
-    'probability_distribution': unicode,
-    'seasonal_growth_rate': float,
-    'difi_question': bool,
-    'difi_group_label': unicode,
-    'difi_group_image': unicode,
-    'fun_survey': bool,
-    'pre_difi_question': bool,
-    'pre_difi_group_label': unicode,
-    'pre_difi_group_image': unicode,
-    'leach_survey': bool,
-    'intergroup_competition': float,
-    'intragroup_competition': float,
-    'identity_signaling': bool,
-    'identity_starts_visible': bool,
-    'score_visible': bool,
-    'alternate_consumption_donation': bool,
-    'use_identicons': bool,
-    'build_walls': bool,
-    'wall_building_cost': int,
-    'donation_multiplier': float,
-    'num_recruits': int,
-    'state_interval': float,
+    "network": unicode,
+    "max_participants": int,
+    "bot_policy": unicode,
+    "num_rounds": int,
+    "time_per_round": float,
+    "instruct": bool,
+    "columns": int,
+    "rows": int,
+    "window_columns": int,
+    "window_rows": int,
+    "block_size": int,
+    "padding": int,
+    "chat_visibility_threshold": float,
+    "spatial_chat": bool,
+    "visibility": int,
+    "visibility_ramp_time": int,
+    "background_animation": bool,
+    "player_overlap": bool,
+    "leaderboard_group": bool,
+    "leaderboard_individual": bool,
+    "leaderboard_time": int,
+    "motion_speed_limit": float,
+    "motion_auto": bool,
+    "motion_cost": float,
+    "motion_tremble_rate": float,
+    "show_chatroom": bool,
+    "show_grid": bool,
+    "others_visible": bool,
+    "num_colors": int,
+    "mutable_colors": bool,
+    "costly_colors": bool,
+    "pseudonyms": bool,
+    "pseudonyms_locale": unicode,
+    "pseudonyms_gender": unicode,
+    "contagion": int,
+    "contagion_hierarchy": bool,
+    "walls_density": float,
+    "walls_contiguity": float,
+    "walls_visible": bool,
+    "initial_score": int,
+    "dollars_per_point": float,
+    "tax": float,
+    "relative_deprivation": float,
+    "frequency_dependence": float,
+    "frequency_dependent_payoff_rate": float,
+    "donation_amount": int,
+    "donation_individual": bool,
+    "donation_group": bool,
+    "donation_ingroup": bool,
+    "donation_public": bool,
+    "item_count": int,
+    "respawn": bool,
+    "reward": int,
+    "public_good_multiplier": float,
+    "growth_rate": float,
+    "food_planting": bool,  # legacy, only for original game
+    "food_planting_cost": int,  # legacy, only for original game
+    "probability_distribution": unicode,
+    "seasonal_growth_rate": float,
+    "difi_question": bool,
+    "difi_group_label": unicode,
+    "difi_group_image": unicode,
+    "fun_survey": bool,
+    "pre_difi_question": bool,
+    "pre_difi_group_label": unicode,
+    "pre_difi_group_image": unicode,
+    "leach_survey": bool,
+    "intergroup_competition": float,
+    "intragroup_competition": float,
+    "identity_signaling": bool,
+    "identity_starts_visible": bool,
+    "score_visible": bool,
+    "alternate_consumption_donation": bool,
+    "use_identicons": bool,
+    "build_walls": bool,
+    "wall_building_cost": int,
+    "donation_multiplier": float,
+    "num_recruits": int,
+    "state_interval": float,
 }
 
 DEFAULT_ITEM_CONFIG = {
@@ -136,9 +136,9 @@ DEFAULT_ITEM_CONFIG = {
 
 class PluralFormatter(string.Formatter):
     def format_field(self, value, format_spec):
-        if format_spec.startswith('plural'):
-            words = format_spec.split(',')
-            if value == 1 or value == '1' or value == 1.0:
+        if format_spec.startswith("plural"):
+            words = format_spec.split(",")
+            if value == 1 or value == "1" or value == 1.0:
                 return words[1]
             else:
                 return words[2]
@@ -160,14 +160,8 @@ def softmax(vector, temperature=1):
 
 class Gridworld(object):
     """A Gridworld in the Griduniverse."""
-    player_color_names = [
-        "BLUE",
-        "YELLOW",
-        "ORANGE",
-        "RED",
-        "PURPLE",
-        "TEAL"
-    ]
+
+    player_color_names = ["BLUE", "YELLOW", "ORANGE", "RED", "PURPLE", "TEAL"]
 
     player_colors = [
         [0.50, 0.86, 1.00],
@@ -175,7 +169,7 @@ class Gridworld(object):
         [0.91, 0.50, 0.02],
         [0.64, 0.11, 0.31],
         [0.85, 0.60, 0.85],
-        [0.77, 0.96, 0.90]
+        [0.77, 0.96, 0.90],
     ]
 
     GREEN = [0.51, 0.69, 0.61]
@@ -186,133 +180,138 @@ class Gridworld(object):
     items_updated = True
 
     def __new__(cls, **kwargs):
-        if not hasattr(cls, 'instance'):
+        if not hasattr(cls, "instance"):
             cls.instance = super(Gridworld, cls).__new__(cls)
         return cls.instance
 
     def __init__(self, **kwargs):
         # If Singleton is already initialized, do nothing
-        if hasattr(self, 'num_players'):
+        if hasattr(self, "num_players"):
             return
 
-        self.log_event = kwargs.get('log_event', lambda x: None)
+        self.log_event = kwargs.get("log_event", lambda x: None)
 
         # Players
-        self.num_players = kwargs.get('max_participants', 3)
+        self.num_players = kwargs.get("max_participants", 3)
 
         # Rounds
-        self.num_rounds = kwargs.get('num_rounds', 1)
-        self.time_per_round = kwargs.get('time_per_round', 300)
+        self.num_rounds = kwargs.get("num_rounds", 1)
+        self.time_per_round = kwargs.get("time_per_round", 300)
 
         # Instructions
-        self.instruct = kwargs.get('instruct', True)
+        self.instruct = kwargs.get("instruct", True)
 
         # Grid
-        self.columns = kwargs.get('columns', 25)
-        self.rows = kwargs.get('rows', 25)
-        self.window_columns = kwargs.get('window_columns', min(self.columns, 25))
-        self.window_rows = kwargs.get('window_rows', min(self.rows, 25))
-        self.block_size = kwargs.get('block_size', 10)
-        self.padding = kwargs.get('padding', 1)
-        self.chat_visibility_threshold = kwargs.get('chat_visibility_threshold', 0.4)
-        self.spatial_chat = kwargs.get('spatial_chat', False)
-        self.visibility = kwargs.get('visibility', 40)
-        self.visibility_ramp_time = kwargs.get('visibility_ramp_time', 4)
-        self.background_animation = kwargs.get('background_animation', True)
-        self.player_overlap = kwargs.get('player_overlap', False)
+        self.columns = kwargs.get("columns", 25)
+        self.rows = kwargs.get("rows", 25)
+        self.window_columns = kwargs.get("window_columns", min(self.columns, 25))
+        self.window_rows = kwargs.get("window_rows", min(self.rows, 25))
+        self.block_size = kwargs.get("block_size", 10)
+        self.padding = kwargs.get("padding", 1)
+        self.chat_visibility_threshold = kwargs.get("chat_visibility_threshold", 0.4)
+        self.spatial_chat = kwargs.get("spatial_chat", False)
+        self.visibility = kwargs.get("visibility", 40)
+        self.visibility_ramp_time = kwargs.get("visibility_ramp_time", 4)
+        self.background_animation = kwargs.get("background_animation", True)
+        self.player_overlap = kwargs.get("player_overlap", False)
 
         # Motion
-        self.motion_speed_limit = kwargs.get('motion_speed_limit', 8)
-        self.motion_auto = kwargs.get('motion_auto', False)
-        self.motion_cost = kwargs.get('motion_cost', 0)
-        self.motion_tremble_rate = kwargs.get('motion_tremble_rate', 0)
+        self.motion_speed_limit = kwargs.get("motion_speed_limit", 8)
+        self.motion_auto = kwargs.get("motion_auto", False)
+        self.motion_cost = kwargs.get("motion_cost", 0)
+        self.motion_tremble_rate = kwargs.get("motion_tremble_rate", 0)
 
         # Components
-        self.show_chatroom = kwargs.get('show_chatroom', False)
-        self.show_grid = kwargs.get('show_grid', True)
+        self.show_chatroom = kwargs.get("show_chatroom", False)
+        self.show_grid = kwargs.get("show_grid", True)
 
         # Identity
-        self.others_visible = kwargs.get('others_visible', True)
-        self.num_colors = kwargs.get('num_colors', 3)
-        self.mutable_colors = kwargs.get('mutable_colors', False)
-        self.costly_colors = kwargs.get('costly_colors', False)
-        self.pseudonyms = kwargs.get('pseudonyms', True)
-        self.pseudonyms_locale = kwargs.get('pseudonyms_locale', 'en_US')
-        self.pseudonyms_gender = kwargs.get('pseudonyms_gender', None)
-        self.contagion = kwargs.get('contagion', 0)
-        self.contagion_hierarchy = kwargs.get('contagion_hierarchy', False)
-        self.identity_signaling = kwargs.get('identity_signaling', False)
-        self.identity_starts_visible = kwargs.get('identity_starts_visible',
-                                                  False)
-        self.use_identicons = kwargs.get('use_identicons', False)
+        self.others_visible = kwargs.get("others_visible", True)
+        self.num_colors = kwargs.get("num_colors", 3)
+        self.mutable_colors = kwargs.get("mutable_colors", False)
+        self.costly_colors = kwargs.get("costly_colors", False)
+        self.pseudonyms = kwargs.get("pseudonyms", True)
+        self.pseudonyms_locale = kwargs.get("pseudonyms_locale", "en_US")
+        self.pseudonyms_gender = kwargs.get("pseudonyms_gender", None)
+        self.contagion = kwargs.get("contagion", 0)
+        self.contagion_hierarchy = kwargs.get("contagion_hierarchy", False)
+        self.identity_signaling = kwargs.get("identity_signaling", False)
+        self.identity_starts_visible = kwargs.get("identity_starts_visible", False)
+        self.use_identicons = kwargs.get("use_identicons", False)
 
         # Walls
-        self.walls_visible = kwargs.get('walls_visible', True)
-        self.walls_density = kwargs.get('walls_density', 0.0)
-        self.walls_contiguity = kwargs.get('walls_contiguity', 1.0)
-        self.build_walls = kwargs.get('build_walls', False)
-        self.wall_building_cost = kwargs.get('wall_building_cost', 0)
+        self.walls_visible = kwargs.get("walls_visible", True)
+        self.walls_density = kwargs.get("walls_density", 0.0)
+        self.walls_contiguity = kwargs.get("walls_contiguity", 1.0)
+        self.build_walls = kwargs.get("build_walls", False)
+        self.wall_building_cost = kwargs.get("wall_building_cost", 0)
         self.wall_locations = {}
 
         # Payoffs
-        self.initial_score = kwargs.get('initial_score', 0)
-        self.dollars_per_point = kwargs.get('dollars_per_point', 0.02)
-        self.tax = kwargs.get('tax', 0.00)
-        self.relative_deprivation = kwargs.get('relative_deprivation', 1)
-        self.frequency_dependence = kwargs.get('frequency_dependence', 0)
+        self.initial_score = kwargs.get("initial_score", 0)
+        self.dollars_per_point = kwargs.get("dollars_per_point", 0.02)
+        self.tax = kwargs.get("tax", 0.00)
+        self.relative_deprivation = kwargs.get("relative_deprivation", 1)
+        self.frequency_dependence = kwargs.get("frequency_dependence", 0)
         self.frequency_dependent_payoff_rate = kwargs.get(
-            'frequency_dependent_payoff_rate', 0)
-        self.leaderboard_group = kwargs.get('leaderboard_group', False)
-        self.leaderboard_individual = kwargs.get('leaderboard_individual', False)
-        self.leaderboard_time = kwargs.get('leaderboard_time', 0)
+            "frequency_dependent_payoff_rate", 0
+        )
+        self.leaderboard_group = kwargs.get("leaderboard_group", False)
+        self.leaderboard_individual = kwargs.get("leaderboard_individual", False)
+        self.leaderboard_time = kwargs.get("leaderboard_time", 0)
 
         # Donations
-        self.donation_amount = kwargs.get('donation_amount', 0)
-        self.donation_multiplier = kwargs.get('donation_multiplier', 1.0)
-        self.donation_individual = kwargs.get('donation_individual', False)
-        self.donation_group = kwargs.get('donation_group', False)
-        self.donation_ingroup = kwargs.get('donation_ingroup', False)
-        self.donation_public = kwargs.get('donation_public', False)
-        self.intergroup_competition = kwargs.get('intergroup_competition', 1)
-        self.intragroup_competition = kwargs.get('intragroup_competition', 1)
-        self.score_visible = kwargs.get('score_visible', False)
+        self.donation_amount = kwargs.get("donation_amount", 0)
+        self.donation_multiplier = kwargs.get("donation_multiplier", 1.0)
+        self.donation_individual = kwargs.get("donation_individual", False)
+        self.donation_group = kwargs.get("donation_group", False)
+        self.donation_ingroup = kwargs.get("donation_ingroup", False)
+        self.donation_public = kwargs.get("donation_public", False)
+        self.intergroup_competition = kwargs.get("intergroup_competition", 1)
+        self.intragroup_competition = kwargs.get("intragroup_competition", 1)
+        self.score_visible = kwargs.get("score_visible", False)
         self.alternate_consumption_donation = kwargs.get(
-            'alternate_consumption_donation', False)
+            "alternate_consumption_donation", False
+        )
 
         # Items
-        self.item_count = kwargs.get('item_count', 8)
-        self.respawn = kwargs.get('respawn', True)
-        self.reward = kwargs.get('reward', 1)
-        self.public_good_multiplier = kwargs.get('public_good_multiplier', 1)
-        self.growth_rate = kwargs.get('growth_rate', 1.00)
-        self.food_planting = kwargs.get('food_planting', False)
-        self.food_planting_cost = kwargs.get('food_planting_cost', 1)
-        self.probability_distribution = kwargs.get('probability_distribution', 'random')
-        self.seasonal_growth_rate = kwargs.get('seasonal_growth_rate', 1)
+        self.item_count = kwargs.get("item_count", 8)
+        self.respawn = kwargs.get("respawn", True)
+        self.reward = kwargs.get("reward", 1)
+        self.public_good_multiplier = kwargs.get("public_good_multiplier", 1)
+        self.growth_rate = kwargs.get("growth_rate", 1.00)
+        self.food_planting = kwargs.get("food_planting", False)
+        self.food_planting_cost = kwargs.get("food_planting_cost", 1)
+        self.probability_distribution = kwargs.get("probability_distribution", "random")
+        self.seasonal_growth_rate = kwargs.get("seasonal_growth_rate", 1)
 
         # Chat
         self.chat_message_history = []
 
         # Questionnaire
-        self.difi_question = kwargs.get('difi_question', False)
-        self.difi_group_label = kwargs.get('difi_group_label', 'Group')
-        self.difi_group_image = kwargs.get('difi_group_image', '/static/images/group.jpg')
-        self.fun_survey = kwargs.get('fun_survey', False)
-        self.pre_difi_question = kwargs.get('pre_difi_question', False)
-        self.pre_difi_group_label = kwargs.get('pre_difi_group_label', 'Group')
-        self.pre_difi_group_image = kwargs.get('pre_difi_group_image', '/static/images/group.jpg')
-        self.leach_survey = kwargs.get('leach_survey', False)
+        self.difi_question = kwargs.get("difi_question", False)
+        self.difi_group_label = kwargs.get("difi_group_label", "Group")
+        self.difi_group_image = kwargs.get(
+            "difi_group_image", "/static/images/group.jpg"
+        )
+        self.fun_survey = kwargs.get("fun_survey", False)
+        self.pre_difi_question = kwargs.get("pre_difi_question", False)
+        self.pre_difi_group_label = kwargs.get("pre_difi_group_label", "Group")
+        self.pre_difi_group_image = kwargs.get(
+            "pre_difi_group_image", "/static/images/group.jpg"
+        )
+        self.leach_survey = kwargs.get("leach_survey", False)
 
         # Set some variables.
         self.players = {}
         self.item_locations = {}
         self.items_consumed = []  # For now, everything with calories is food
-        self.start_timestamp = kwargs.get('start_timestamp', None)
+        self.start_timestamp = kwargs.get("start_timestamp", None)
 
         self.round = 0
         self.public_good = (
-            (self.reward * self.public_good_multiplier) / self.num_players
-        )
+            self.reward * self.public_good_multiplier
+        ) / self.num_players
 
         if self.contagion_hierarchy:
             self.contagion_hierarchy = range(self.num_colors)
@@ -329,14 +328,17 @@ class Gridworld(object):
             self.probability_distribution = parts[0]
             self.probability_function_args = parts[1:]
         probability_distribution = "{}_probability_distribution".format(
-            self.probability_distribution)
-        self.probability_function = getattr(distributions,
-                                            probability_distribution,
-                                            None)
+            self.probability_distribution
+        )
+        self.probability_function = getattr(
+            distributions, probability_distribution, None
+        )
         if self.probability_function is None:
             logger.info(
                 "Unknown item probability distribution: {}.".format(
-                    self.probability_distribution))
+                    self.probability_distribution
+                )
+            )
             self.probability_function = distributions.random_probability_distribution
 
         # Items and transitions
@@ -351,17 +353,16 @@ class Gridworld(object):
     @property
     def includes_maturing_items(self):
         return any(
-            item["maturation_threshold"] > 0.0
-            for item in self.item_config.values()
+            item["maturation_threshold"] > 0.0 for item in self.item_config.values()
         )
 
     @property
     def limited_player_colors(self):
-        return self.player_colors[:self.num_colors]
+        return self.player_colors[: self.num_colors]
 
     @property
     def limited_player_color_names(self):
-        return self.player_color_names[:self.num_colors]
+        return self.player_color_names[: self.num_colors]
 
     @property
     def elapsed_round_time(self):
@@ -384,12 +385,10 @@ class Gridworld(object):
     @property
     def donation_enabled(self):
         return (
-            (
-                self.group_donation_enabled or
-                self.donation_individual or
-                self.donation_public
-            ) and bool(self.donation_amount)
-        )
+            self.group_donation_enabled
+            or self.donation_individual
+            or self.donation_public
+        ) and bool(self.donation_amount)
 
     @property
     def is_even_round(self):
@@ -477,11 +476,11 @@ class Gridworld(object):
         group_scores = []
         for p in players:
             group_info = player_groups.setdefault(
-                p.color_idx, {'players': [], 'scores': [], 'total': 0}
+                p.color_idx, {"players": [], "scores": [], "total": 0}
             )
-            group_info['players'].append(p)
-            group_info['scores'].append(p.score)
-            group_info['total'] += p.score
+            group_info["players"].append(p)
+            group_info["scores"].append(p.score)
+            group_info["total"] += p.score
             total_payoff += p.score
 
         for g in range(len(self.player_colors)):
@@ -489,9 +488,9 @@ class Gridworld(object):
             if not group_info:
                 group_scores.append(0)
                 continue
-            ingroup_players = group_info['players']
-            ingroup_scores = group_info['scores']
-            group_scores.append(group_info['total'])
+            ingroup_players = group_info["players"]
+            ingroup_scores = group_info["scores"]
+            group_scores.append(group_info["total"])
             intra_proportions = softmax(
                 ingroup_scores,
                 temperature=self.intragroup_competition,
@@ -510,16 +509,16 @@ class Gridworld(object):
     def build_labyrinth(self):
         if self.walls_density and not self.wall_locations:
             start = time.time()
-            logger.info('Building labyrinth:')
+            logger.info("Building labyrinth:")
             walls = labyrinth(
                 columns=self.columns,
                 rows=self.rows,
                 density=self.walls_density,
                 contiguity=self.walls_contiguity,
             )
-            logger.info('Built {} walls in {} seconds.'.format(
-                len(walls), time.time() - start
-            ))
+            logger.info(
+                "Built {} walls in {} seconds.".format(len(walls), time.time() - start)
+            )
             self.wall_locations = {tuple(w.position): w for w in walls}
 
     def _start_if_ready(self):
@@ -545,52 +544,56 @@ class Gridworld(object):
         }
 
         if include_walls:
-            grid_data['walls'] = [w.serialize() for w in self.wall_locations.values()]
+            grid_data["walls"] = [w.serialize() for w in self.wall_locations.values()]
         if include_items:
-            grid_data['items'] = [f.serialize() for f in self.item_locations.values()]
+            grid_data["items"] = [f.serialize() for f in self.item_locations.values()]
 
         return grid_data
 
     def deserialize(self, state):
-        if self.rows != state['rows'] or self.columns != state['columns']:
+        if self.rows != state["rows"] or self.columns != state["columns"]:
             raise ValueError(
-                'State has wrong grid size ({}x{}, configured as {}x{})'.format(
-                    state['rows'], state['columns'], self.rows, self.columns,
-                ))
-        self.round = state['round']
+                "State has wrong grid size ({}x{}, configured as {}x{})".format(
+                    state["rows"],
+                    state["columns"],
+                    self.rows,
+                    self.columns,
+                )
+            )
+        self.round = state["round"]
         # @@@ can't set donation_active because it's a property
         # self.donation_active = state['donation_active']
 
         self.players = {}
-        for player_state in state['players']:
-            player_state['color_name'] = player_state.pop('color', None)
+        for player_state in state["players"]:
+            player_state["color_name"] = player_state.pop("color", None)
             player = Player(
                 pseudonym_locale=self.pseudonyms_locale,
                 pseudonym_gender=self.pseudonyms_gender,
                 grid=self,
-                **player_state
+                **player_state,
             )
             self.players[player.id] = player
 
-        if 'walls' in state:
+        if "walls" in state:
             self.wall_locations = {}
-            for wall_state in state['walls']:
+            for wall_state in state["walls"]:
                 if isinstance(wall_state, list):
-                    wall_state = {'position': wall_state}
+                    wall_state = {"position": wall_state}
                 wall = Wall(**wall_state)
                 self.wall_locations[tuple(wall.position)] = wall
 
-        if 'items' in state:
+        if "items" in state:
             self.item_locations = {}
-            for item_state in state['items']:
+            for item_state in state["items"]:
                 # TODO verify this works at some point!
                 item_props = self.item_config[item_state["item_id"]]
                 obj = Item(item_props, **item_state)
                 self.item_locations[tuple(obj.position)] = obj
 
     def instructions(self):
-        color_costs = ''
-        order = ''
+        color_costs = ""
+        order = ""
         text = """<p>The objective of the game is to maximize your final payoff.
             The game is played on a {g.columns} x {g.rows} grid, where each
             player occupies one block. <br><img src='static/images/gameplay.gif'
@@ -615,7 +618,9 @@ class Gridworld(object):
             text += """ The game has {g.num_rounds} rounds, each lasting
                 <strong>{g.time_per_round} seconds</strong>.</p>"""
         else:
-            text += " The game duration is <strong>{g.time_per_round}</strong> seconds.</p>"
+            text += (
+                " The game duration is <strong>{g.time_per_round}</strong> seconds.</p>"
+            )
         if self.num_players > 1:
             text += """<p>There are <strong>{g.num_players} players</strong> participating
                 in the game."""
@@ -628,10 +633,13 @@ class Gridworld(object):
                 if self.mutable_colors:
                     text += " Players can change color using the 'c' key."
                     if self.costly_colors:
-                        costs = ['{c}, {p} points'.format(c=c, p=p)
-                                 for p, c in zip(self.color_costs,
-                                                 self.limited_player_color_names)]
-                        color_costs = '; '.join(costs)
+                        costs = [
+                            "{c}, {p} points".format(c=c, p=p)
+                            for p, c in zip(
+                                self.color_costs, self.limited_player_color_names
+                            )
+                        ]
+                        color_costs = "; ".join(costs)
                         text += """ Changing color has a different cost in
                             points for each color: {color_costs}."""
                 if self.contagion > 0:
@@ -640,8 +648,12 @@ class Gridworld(object):
                         blocks are of a different color, that player will take
                         on the color of the plurality."""
                     if self.contagion_hierarchy:
-                        order = ', '.join([self.limited_player_color_names[h]
-                                           for h in self.contagion_hierarchy])
+                        order = ", ".join(
+                            [
+                                self.limited_player_color_names[h]
+                                for h in self.contagion_hierarchy
+                            ]
+                        )
                         text += """ However, there is a hierarchy of colors, so
                             that only players of some colors are susceptible to
                             changing color in  this way. The hierarchy, from
@@ -739,11 +751,13 @@ class Gridworld(object):
         if self.dollars_per_point > 0:
             text += """<p>You will receive <strong>${g.dollars_per_point}</strong> for each point
                 that you score at the end of the game.</p>"""
-        return formatter.format(text,
-                                g=self,
-                                order=order,
-                                color_costs=color_costs,
-                                color_list=', '.join(self.limited_player_color_names))
+        return formatter.format(
+            text,
+            g=self,
+            order=order,
+            color_costs=color_costs,
+            color_list=", ".join(self.limited_player_color_names),
+        )
 
     def consume(self):
         """Players consume the non-interactive items"""
@@ -803,21 +817,23 @@ class Gridworld(object):
         self.item_locations[tuple(position)] = new_item
         self.items_updated = True
         logger.warning(f"Spawning new item: {new_item}")
-        self.log_event({
-            'type': 'spawn item',
-            'position': position,
-        })
+        self.log_event(
+            {
+                "type": "spawn item",
+                "position": position,
+            }
+        )
 
     def items_changed(self, last_items):
         locations = self.item_locations
         if len(last_items) != len(locations):
             return True
         for obj in last_items:
-            position = tuple(obj['position'])
+            position = tuple(obj["position"])
             if position not in locations:
                 return True
             found = locations[position]
-            if found.id != obj['id'] or found.maturity != obj['maturity']:
+            if found.id != obj["id"] or found.maturity != obj["maturity"]:
                 return True
         return False
 
@@ -834,9 +850,10 @@ class Gridworld(object):
             pseudonym_locale=self.pseudonyms_locale,
             pseudonym_gender=self.pseudonyms_gender,
             grid=self,
-            identity_visible=(not self.identity_signaling or
-                              self.identity_starts_visible),
-            **kwargs
+            identity_visible=(
+                not self.identity_signaling or self.identity_starts_visible
+            ),
+            **kwargs,
         )
         self.players[id] = player
         self._start_if_ready()
@@ -848,9 +865,10 @@ class Gridworld(object):
         rows = self.rows
         columns = self.columns
         empty_cell = False
-        while (not empty_cell):
+        while not empty_cell:
             position = self.probability_function(
-                rows, columns, *self.probability_function_args)
+                rows, columns, *self.probability_function_args
+            )
             empty_cell = self._empty(position)
 
         return position
@@ -858,9 +876,9 @@ class Gridworld(object):
     def _empty(self, position):
         """Determine whether a particular cell is empty."""
         return not (
-            self.has_player(position) or
-            self.has_item(position) or
-            self.has_wall(position)
+            self.has_player(position)
+            or self.has_item(position)
+            or self.has_wall(position)
         )
 
     def has_player(self, position):
@@ -884,17 +902,16 @@ class Gridworld(object):
                 colors.append(player.color)
                 plurality_color = max(colors, key=colors.count)
                 if colors.count(plurality_color) > len(colors) / 2.0:
-                    if (self.rank(plurality_color) <= self.rank(player.color)):
+                    if self.rank(plurality_color) <= self.rank(player.color):
                         color_updates.append((player, plurality_color))
 
-        for (player, color) in color_updates:
+        for player, color in color_updates:
             player.color = color
 
     def rank(self, color):
         """Where does this color fall on the color hierarchy?"""
         if self.contagion_hierarchy:
-            return self.contagion_hierarchy[
-                Gridworld.player_colors.index(color)]
+            return self.contagion_hierarchy[Gridworld.player_colors.index(color)]
         else:
             return 1
 
@@ -908,9 +925,10 @@ class Item(object):
 
     Only values that vary by instance will be stored on the object itself.
     """
+
     def __init__(self, item_config, id=None, position=(0, 0), creation_timestamp=None):
         self._item_config = item_config
-        self.item_id = item_config['item_id']
+        self.item_id = item_config["item_id"]
         self.id = id if id is not None else uuid.uuid4()
         ct = creation_timestamp
         self.creation_timestamp = ct if ct is not None else time.time()
@@ -944,10 +962,9 @@ class Item(object):
 
 
 class IllegalMove(Exception):
-    """A move sent from a client was denied by the server.
-    """
+    """A move sent from a client was denied by the server."""
 
-    def __init__(self, message=''):
+    def __init__(self, message=""):
         self.message = message
 
 
@@ -957,20 +974,20 @@ class Player(object):
     def __init__(self, **kwargs):
         super(Player, self).__init__()
 
-        self.id = kwargs.get('id', uuid.uuid4())
-        self.position = kwargs.get('position', [0, 0])
-        self.motion_auto = kwargs.get('motion_auto', False)
-        self.motion_direction = kwargs.get('motion_direction', 'right')
-        self.motion_speed_limit = kwargs.get('motion_speed_limit', 8)
-        self.num_possible_colors = kwargs.get('num_possible_colors', 2)
-        self.motion_cost = kwargs.get('motion_cost', 0)
-        self.motion_tremble_rate = kwargs.get('motion_tremble_rate', 0)
-        self.grid = kwargs.get('grid', None)
-        self.score = kwargs.get('score', 0)
-        self.payoff = kwargs.get('payoff', 0)
-        self.pseudonym_locale = kwargs.get('pseudonym_locale', 'en_US')
-        self.identity_visible = kwargs.get('identity_visible', True)
-        self.recruiter_id = kwargs.get('recruiter_id', '')
+        self.id = kwargs.get("id", uuid.uuid4())
+        self.position = kwargs.get("position", [0, 0])
+        self.motion_auto = kwargs.get("motion_auto", False)
+        self.motion_direction = kwargs.get("motion_direction", "right")
+        self.motion_speed_limit = kwargs.get("motion_speed_limit", 8)
+        self.num_possible_colors = kwargs.get("num_possible_colors", 2)
+        self.motion_cost = kwargs.get("motion_cost", 0)
+        self.motion_tremble_rate = kwargs.get("motion_tremble_rate", 0)
+        self.grid = kwargs.get("grid", None)
+        self.score = kwargs.get("score", 0)
+        self.payoff = kwargs.get("payoff", 0)
+        self.pseudonym_locale = kwargs.get("pseudonym_locale", "en_US")
+        self.identity_visible = kwargs.get("identity_visible", True)
+        self.recruiter_id = kwargs.get("recruiter_id", "")
         self.add_wall = None
 
         # Determine the player's color. We don't have access to the specific
@@ -978,10 +995,10 @@ class Player(object):
         # We just find the index in the master list. This means it is possible
         # to explicitly instantiate a player with an invalid colour, but only
         # intentionally.
-        if 'color' in kwargs:
-            self.color_idx = Gridworld.player_colors.index(kwargs['color'])
-        elif 'color_name' in kwargs:
-            self.color_idx = Gridworld.player_color_names.index(kwargs['color_name'])
+        if "color" in kwargs:
+            self.color_idx = Gridworld.player_colors.index(kwargs["color"])
+        elif "color_name" in kwargs:
+            self.color_idx = Gridworld.player_color_names.index(kwargs["color_name"])
         else:
             self.color_idx = random.randint(0, self.num_possible_colors - 1)
 
@@ -991,24 +1008,19 @@ class Player(object):
         # Determine the player's profile.
         self.fake = Factory.create(self.pseudonym_locale)
         self.profile = self.fake.simple_profile(
-            sex=kwargs.get('pseudonym_gender', None)
+            sex=kwargs.get("pseudonym_gender", None)
         )
-        self.name = kwargs.get('name', self.profile['name'])
-        self.username = self.profile['username']
-        self.gender = self.profile['sex']
-        self.birthdate = self.profile['birthdate']
+        self.name = kwargs.get("name", self.profile["name"])
+        self.username = self.profile["username"]
+        self.gender = self.profile["sex"]
+        self.birthdate = self.profile["birthdate"]
 
         self.motion_timestamp = 0
         self.last_timestamp = 0
 
     def tremble(self, direction):
         """Change direction with some probability."""
-        directions = [
-            "up",
-            "down",
-            "left",
-            "right"
-        ]
+        directions = ["up", "down", "left", "right"]
         directions.remove(direction)
         direction = random.choice(directions)
         return direction
@@ -1076,30 +1088,26 @@ class Player(object):
             new_wall = Wall(position=self.add_wall)
             self.grid.wall_locations[tuple(new_wall.position)] = new_wall
             self.add_wall = None
-            wall_msg = {
-                'type': 'wall_built',
-                'wall': new_wall.serialize()
-            }
+            wall_msg = {"type": "wall_built", "wall": new_wall.serialize()}
             msgs["wall"] = wall_msg
 
         return msgs
 
     def is_neighbor(self, player, d=1):
         """Determine whether other player is adjacent."""
-        manhattan_distance = (
-            abs(self.position[0] - player.position[0]) +
-            abs(self.position[1] - player.position[1])
+        manhattan_distance = abs(self.position[0] - player.position[0]) + abs(
+            self.position[1] - player.position[1]
         )
-        return (manhattan_distance <= d)
+        return manhattan_distance <= d
 
     def neighbors(self, d=1):
         """Return all adjacent players."""
         if self.grid is None:
             return []
         return [
-            p for p in self.grid.players.values() if (
-                self.is_neighbor(p, d=d) and (p is not self)
-            )
+            p
+            for p in self.grid.players.values()
+            if (self.is_neighbor(p, d=d) and (p is not self))
         ]
 
     def serialize(self):
@@ -1125,10 +1133,8 @@ def fermi(beta, p1, p2):
 
 
 extra_routes = flask.Blueprint(
-    'extra_routes',
-    __name__,
-    template_folder='templates',
-    static_folder='static')
+    "extra_routes", __name__, template_folder="templates", static_folder="static"
+)
 
 
 @extra_routes.route("/consent")
@@ -1137,10 +1143,10 @@ def consent():
     config = get_config()
     return flask.render_template(
         "consent.html",
-        hit_id=flask.request.args['hit_id'],
-        assignment_id=flask.request.args['assignment_id'],
-        worker_id=flask.request.args['worker_id'],
-        mode=config.get('mode'),
+        hit_id=flask.request.args["hit_id"],
+        assignment_id=flask.request.args["assignment_id"],
+        worker_id=flask.request.args["worker_id"],
+        mode=config.get("mode"),
     )
 
 
@@ -1148,17 +1154,15 @@ def consent():
 def serve_grid():
     """Return the game stage."""
     config = get_config()
-    return flask.render_template(
-        "grid.html",
-        app_id=config.get('id')
-    )
+    return flask.render_template("grid.html", app_id=config.get("id"))
 
 
 class Griduniverse(Experiment):
     """Define the structure of the experiment."""
-    channel = 'griduniverse_ctrl'
+
+    channel = "griduniverse_ctrl"
     state_count = 0
-    replay_path = '/grid'
+    replay_path = "/grid"
 
     def __init__(self, session=None):
         """Initialize the experiment."""
@@ -1172,26 +1176,26 @@ class Griduniverse(Experiment):
                 log_event=self.record_event,
                 item_config=self.item_config,
                 transition_config=self.transition_config,
-                **self.config.as_dict()
+                **self.config.as_dict(),
             )
             self.session.commit()
 
     def configure(self):
         super(Griduniverse, self).configure()
-        self.num_participants = self.config.get('max_participants', 3)
+        self.num_participants = self.config.get("max_participants", 3)
         self.quorum = self.num_participants
-        self.initial_recruitment_size = self.config.get('num_recruits',
-                                                        self.num_participants)
-        self.network_factory = self.config.get('network', 'FullyConnected')
+        self.initial_recruitment_size = self.config.get(
+            "num_recruits", self.num_participants
+        )
+        self.network_factory = self.config.get("network", "FullyConnected")
 
         game_config_file = os.path.join(os.path.dirname(__file__), GAME_CONFIG_FILE)
-        with open(game_config_file, 'r') as game_config_stream:
+        with open(game_config_file, "r") as game_config_stream:
             self.game_config = yaml.safe_load(game_config_stream)
-        self.item_config = {
-            o['item_id']: o for o in self.game_config.get('items', ())
-        }
+        self.item_config = {o["item_id"]: o for o in self.game_config.get("items", ())}
         self.transition_config = {
-            (t['actor_start'], t['target_start']): t for t in self.game_config.get('transitions', ())
+            (t["actor_start"], t["target_start"]): t
+            for t in self.game_config.get("transitions", ())
         }
         # This is accessed by the grid.html template to load the configuration on the client side:
         # TODO: could this instead be passed as an arg to the template in
@@ -1215,6 +1219,7 @@ class Griduniverse(Experiment):
     @cached_property
     def socket_session(self):
         from dallinger.db import db_url
+
         engine = create_engine(db_url, pool_size=1000)
         session = scoped_session(
             sessionmaker(autocommit=False, autoflush=True, bind=engine)
@@ -1223,7 +1228,7 @@ class Griduniverse(Experiment):
 
     @property
     def background_tasks(self):
-        if self.config.get('replay', False):
+        if self.config.get("replay", False):
             return []
         return [
             self.send_state_thread,
@@ -1232,17 +1237,12 @@ class Griduniverse(Experiment):
 
     def create_network(self):
         """Create a new network by reading the configuration file."""
-        class_ = getattr(
-            dallinger.networks,
-            self.network_factory
-        )
+        class_ = getattr(dallinger.networks, self.network_factory)
         return class_(max_size=self.num_participants + 1)
 
     def create_node(self, participant, network):
         try:
-            return dallinger.models.Node(
-                network=network, participant=participant
-            )
+            return dallinger.models.Node(network=network, participant=participant)
         finally:
             if not self.networks(full=False):
                 # If there are no spaces left in our networks we can close
@@ -1274,11 +1274,10 @@ class Griduniverse(Experiment):
         if not data:
             return 0.0
 
-        return float("{0:.2f}".format(data['payoff']))
+        return float("{0:.2f}".format(data["payoff"]))
 
     def bonus_reason(self):
-        """The reason offered to the participant for giving the bonus.
-        """
+        """The reason offered to the participant for giving the bonus."""
         return (
             "Thank you for participating! You earned a bonus based on your "
             "performance in Griduniverse!"
@@ -1287,23 +1286,25 @@ class Griduniverse(Experiment):
     def dispatch(self, msg):
         """Route incoming messages to the appropriate method based on message type"""
         mapping = {
-            'connect': self.handle_connect,
-            'disconnect': self.handle_disconnect,
+            "connect": self.handle_connect,
+            "disconnect": self.handle_disconnect,
         }
-        if not self.config.get('replay', False):
+        if not self.config.get("replay", False):
             # Ignore these events in replay mode
-            mapping.update({
-                'chat': self.handle_chat_message,
-                'change_color': self.handle_change_color,
-                'move': self.handle_move,
-                'donation_submitted': self.handle_donation,
-                'plant_food': self.handle_plant_food,
-                'toggle_visible': self.handle_toggle_visible,
-                'build_wall': self.handle_build_wall,
-            })
+            mapping.update(
+                {
+                    "chat": self.handle_chat_message,
+                    "change_color": self.handle_change_color,
+                    "move": self.handle_move,
+                    "donation_submitted": self.handle_donation,
+                    "plant_food": self.handle_plant_food,
+                    "toggle_visible": self.handle_toggle_visible,
+                    "build_wall": self.handle_build_wall,
+                }
+            )
 
-        if msg['type'] in mapping:
-            mapping[msg['type']](msg)
+        if msg["type"] in mapping:
+            mapping[msg["type"]](msg)
 
     def send(self, raw_message):
         """Socket interface; point of entry for incoming messages.
@@ -1314,10 +1315,10 @@ class Griduniverse(Experiment):
         """
         message = self.parse_message(raw_message)
         if message is not None:
-            message['server_time'] = time.time()
+            message["server_time"] = time.time()
             self.dispatch((message))
-            if 'player_id' in message:
-                self.record_event(message, message['player_id'])
+            if "player_id" in message:
+                self.record_event(message, message["player_id"])
 
     def parse_message(self, raw_message):
         if raw_message.startswith(self.channel + ":"):
@@ -1329,7 +1330,7 @@ class Griduniverse(Experiment):
     def record_event(self, details, player_id=None):
         """Record an event in the Info table."""
         session = self.socket_session
-        if player_id == 'spectator':
+        if player_id == "spectator":
             return
         elif player_id:
             node_id = self.node_by_player_id[player_id]
@@ -1351,24 +1352,26 @@ class Griduniverse(Experiment):
 
     def publish(self, msg):
         """Publish a message to all griduniverse clients"""
-        self.redis_conn.publish('griduniverse', json.dumps(msg))
+        self.redis_conn.publish("griduniverse", json.dumps(msg))
 
     def handle_connect(self, msg):
-        player_id = msg['player_id']
-        if self.config.get('replay', False):
+        player_id = msg["player_id"]
+        if self.config.get("replay", False):
             # Force all participants to be specatators
-            msg['player_id'] = 'spectator'
+            msg["player_id"] = "spectator"
             if not self.grid.start_timestamp:
                 self.grid.start_timestamp = time.time()
-        if player_id == 'spectator':
-            logger.info('A spectator has connected.')
+        if player_id == "spectator":
+            logger.info("A spectator has connected.")
             return
 
         logger.info("Client {} has connected.".format(player_id))
         client_count = len(self.grid.players)
         logger.info("Grid num players: {}".format(self.grid.num_players))
         if client_count < self.grid.num_players:
-            participant = self.session.query(dallinger.models.Participant).get(player_id)
+            participant = self.session.query(dallinger.models.Participant).get(
+                player_id
+            )
             network = self.get_network_for_participant(participant)
             if network:
                 logger.info("Found an open network. Adding participant node...")
@@ -1382,40 +1385,42 @@ class Griduniverse(Experiment):
                 # allocated to colours uniformly.
                 self.grid.spawn_player(
                     id=player_id,
-                    color_name=self.grid.limited_player_color_names[node.id % self.grid.num_colors],
+                    color_name=self.grid.limited_player_color_names[
+                        node.id % self.grid.num_colors
+                    ],
                     recruiter_id=participant.recruiter_id,
                 )
             else:
-                logger.info(
-                    "No free network found for player {}".format(player_id)
-                )
+                logger.info("No free network found for player {}".format(player_id))
 
     def handle_disconnect(self, msg):
-        logger.info('Client {} has disconnected.'.format(msg['player_id']))
+        logger.info("Client {} has disconnected.".format(msg["player_id"]))
 
     def handle_chat_message(self, msg):
         """Publish the given message to all clients."""
         message = {
-            'type': 'chat',
-            'message': msg,
+            "type": "chat",
+            "message": msg,
         }
 
-        self.grid.chat_message_history.append((
-            self.grid.players[msg['player_id']],
-            msg['server_time'],
-            msg['contents'],
-        ))
+        self.grid.chat_message_history.append(
+            (
+                self.grid.players[msg["player_id"]],
+                msg["server_time"],
+                msg["contents"],
+            )
+        )
         # We only publish if it wasn't already broadcast
-        if not msg.get('broadcast', False):
+        if not msg.get("broadcast", False):
             self.publish(message)
 
     def handle_change_color(self, msg):
-        player = self.grid.players[msg['player_id']]
-        color_name = msg['color']
+        player = self.grid.players[msg["player_id"]]
+        color_name = msg["color"]
         color_idx = Gridworld.player_color_names.index(color_name)
         old_color = Gridworld.player_color_names[player.color_idx]
-        msg['old_color'] = old_color
-        msg['new_color'] = color_name
+        msg["old_color"] = old_color
+        msg["new_color"] = color_name
 
         if player.color_idx == color_idx:
             return  # Requested color change is no change at all.
@@ -1426,27 +1431,27 @@ class Griduniverse(Experiment):
             else:
                 player.score -= self.grid.color_costs[color_idx]
 
-        player.color = msg['color']
+        player.color = msg["color"]
         player.color_idx = color_idx
         player.color_name = color_name
         message = {
-            'type': 'color_changed',
-            'player_id': msg['player_id'],
-            'old_color': old_color,
-            'new_color': player.color_name,
+            "type": "color_changed",
+            "player_id": msg["player_id"],
+            "old_color": old_color,
+            "new_color": player.color_name,
         }
         # Put the message back on the channel
         self.publish(message)
-        self.record_event(message, message['player_id'])
+        self.record_event(message, message["player_id"])
 
     def handle_move(self, msg):
-        player = self.grid.players[msg['player_id']]
+        player = self.grid.players[msg["player_id"]]
         try:
-            msgs = player.move(msg['move'], timestamp=msg.get('timestamp'))
+            msgs = player.move(msg["move"], timestamp=msg.get("timestamp"))
         except IllegalMove:
             error_msg = {
-                'type': 'move_rejection',
-                'player_id': player.id,
+                "type": "move_rejection",
+                "player_id": player.id,
             }
             self.publish(error_msg)
         else:
@@ -1463,19 +1468,19 @@ class Griduniverse(Experiment):
             return
 
         recipients = []
-        recipient_id = msg['recipient_id']
+        recipient_id = msg["recipient_id"]
 
-        if recipient_id.startswith('group:') and self.grid.group_donation_enabled:
+        if recipient_id.startswith("group:") and self.grid.group_donation_enabled:
             color_id = recipient_id[6:]
             recipients = self.grid.players_with_color(color_id)
-        elif recipient_id == 'all' and self.grid.donation_public:
+        elif recipient_id == "all" and self.grid.donation_public:
             recipients = self.grid.players.values()
         elif self.grid.donation_individual:
             recipient = self.grid.players.get(recipient_id)
             if recipient:
                 recipients.append(recipient)
-        donor = self.grid.players[msg['donor_id']]
-        donation = msg['amount']
+        donor = self.grid.players[msg["donor_id"]]
+        donation = msg["amount"]
 
         if donor.score >= donation and len(recipients):
             donor.score -= donation
@@ -1485,32 +1490,32 @@ class Griduniverse(Experiment):
             for recipient in recipients:
                 recipient.score += donated
             message = {
-                'type': 'donation_processed',
-                'donor_id': msg['donor_id'],
-                'recipient_id': msg['recipient_id'],
-                'amount': donation,
-                'received': donated
+                "type": "donation_processed",
+                "donor_id": msg["donor_id"],
+                "recipient_id": msg["recipient_id"],
+                "amount": donation,
+                "received": donated,
             }
             self.publish(message)
-            self.record_event(message, message['donor_id'])
+            self.record_event(message, message["donor_id"])
 
     def handle_plant_food(self, msg):
-        player = self.grid.players[msg['player_id']]
-        position = msg['position']
+        player = self.grid.players[msg["player_id"]]
+        position = msg["position"]
         can_afford = player.score >= self.grid.food_planting_cost
-        if (can_afford and not self.grid.has_item(position)):
+        if can_afford and not self.grid.has_item(position):
             player.score -= self.grid.food_planting_cost
             self.grid.spawn_item(position=position)
 
     def handle_toggle_visible(self, msg):
-        player = self.grid.players[msg['player_id']]
-        player.identity_visible = msg['identity_visible']
+        player = self.grid.players[msg["player_id"]]
+        player.identity_visible = msg["identity_visible"]
 
     def handle_build_wall(self, msg):
-        player = self.grid.players[msg['player_id']]
-        position = msg['position']
+        player = self.grid.players[msg["player_id"]]
+        position = msg["position"]
         can_afford = player.score >= self.grid.wall_building_cost
-        msg['success'] = can_afford
+        msg["success"] = can_afford
         if can_afford:
             player.score -= self.grid.wall_building_cost
             player.add_wall = position
@@ -1524,11 +1529,11 @@ class Griduniverse(Experiment):
         last_items = []
 
         # Sleep until we have walls
-        while (self.grid.walls_density and not self.grid.wall_locations):
+        while self.grid.walls_density and not self.grid.wall_locations:
             gevent.sleep(0.1)
 
         while True:
-            gevent.sleep(self.config.get('state_interval', 0.050))
+            gevent.sleep(self.config.get("state_interval", 0.050))
 
             # Send all item data once every 40 loops
             update_walls = update_items = False
@@ -1549,22 +1554,21 @@ class Griduniverse(Experiment):
                 update_items = True
 
             grid_state = self.grid.serialize(
-                include_walls=update_walls,
-                include_items=update_items
+                include_walls=update_walls, include_items=update_items
             )
 
             if update_walls:
-                last_walls = grid_state['walls']
+                last_walls = grid_state["walls"]
 
             if update_items:
-                last_items = grid_state['items']
+                last_items = grid_state["items"]
 
             message = {
-                'type': 'state',
-                'grid': json.dumps(grid_state),
-                'count': count,
-                'remaining_time': self.grid.remaining_round_time,
-                'round': self.grid.round,
+                "type": "state",
+                "grid": json.dumps(grid_state),
+                "count": count,
+                "remaining_time": self.grid.remaining_round_time,
+                "round": self.grid.round,
             }
 
             self.publish(message)
@@ -1574,9 +1578,9 @@ class Griduniverse(Experiment):
     def game_loop(self):
         """Update the world state."""
         gevent.sleep(0.1)
-        if not self.config.get('replay', False):
+        if not self.config.get("replay", False):
             self.grid.build_labyrinth()
-            logger.info('Spawning items')
+            logger.info("Spawning items")
             for i in range(self.grid.item_count):
                 if (i % 250) == 0:
                     gevent.sleep(0.00001)
@@ -1592,12 +1596,9 @@ class Griduniverse(Experiment):
             # Record grid state to database
             state_data = self.grid.serialize(
                 include_walls=self.grid.walls_updated,
-                include_items=self.grid.items_updated
+                include_items=self.grid.items_updated,
             )
-            state = self.environment.update(
-                json.dumps(state_data),
-                details=state_data
-            )
+            state = self.environment.update(json.dumps(state_data), details=state_data)
             self.socket_session.add(state)
             self.socket_session.commit()
             count += 1
@@ -1629,31 +1630,36 @@ class Griduniverse(Experiment):
 
             # Trigger time-based events.
             if (now - previous_second_timestamp) > 1.000:
-
                 # Grow or shrink the food stores.
 
                 # Alternate positive and negative growth rates
-                seasonal_growth = (
-                    self.grid.seasonal_growth_rate **
-                    (-1 if self.grid.round % 2 else 1)
+                seasonal_growth = self.grid.seasonal_growth_rate ** (
+                    -1 if self.grid.round % 2 else 1
                 )
 
                 # Compute how many food items we should have on the grid,
                 # ensuring it's not less than zero.
-                self.grid.item_count = max(min(
-                    self.grid.item_count *
-                    self.grid.growth_rate *
-                    seasonal_growth,
-                    self.grid.rows * self.grid.columns,
-                ), 0)
+                self.grid.item_count = max(
+                    min(
+                        self.grid.item_count * self.grid.growth_rate * seasonal_growth,
+                        self.grid.rows * self.grid.columns,
+                    ),
+                    0,
+                )
 
                 # TODO: self.grid.replenish_food()
-                for i in range(int(round(self.grid.item_count) - len(self.grid.item_locations))):
+                for i in range(
+                    int(round(self.grid.item_count) - len(self.grid.item_locations))
+                ):
                     self.grid.spawn_item()
 
                 # TODO: self.grid.prune_excess_food()
-                for i in range(len(self.grid.item_locations) - int(round(self.grid.item_count))):
-                    del self.grid.item_locations[random.choice(self.grid.item_locations.keys())]
+                for i in range(
+                    len(self.grid.item_locations) - int(round(self.grid.item_count))
+                ):
+                    del self.grid.item_locations[
+                        random.choice(self.grid.item_locations.keys())
+                    ]
                     self.grid.items_updated = True
 
                 abundances = {}
@@ -1670,11 +1676,14 @@ class Griduniverse(Experiment):
                         relative_frequency = (
                             1.0 * abundances[player.color] / len(self.grid.players)
                         )
-                        payoff = fermi(
-                            beta=self.grid.frequency_dependence,
-                            p1=relative_frequency,
-                            p2=0.5
-                        ) * self.grid.frequency_dependent_payoff_rate
+                        payoff = (
+                            fermi(
+                                beta=self.grid.frequency_dependence,
+                                p1=relative_frequency,
+                                p2=0.5,
+                            )
+                            * self.grid.frequency_dependent_payoff_rate
+                        )
 
                         player.score = max(player.score + payoff, 0)
 
@@ -1685,30 +1694,24 @@ class Griduniverse(Experiment):
             game_round = self.grid.round
             self.grid.check_round_completion()
             if self.grid.round != game_round and not self.grid.game_over:
-                self.publish({'type': 'new_round', 'round': self.grid.round})
-                self.record_event({
-                    'type': 'new_round',
-                    'round': self.grid.round
-                })
+                self.publish({"type": "new_round", "round": self.grid.round})
+                self.record_event({"type": "new_round", "round": self.grid.round})
 
-        self.publish({'type': 'stop'})
+        self.publish({"type": "stop"})
         self.socket_session.commit()
         return
 
     def player_feedback(self, data):
-        engagement = int(json.loads(data.questions.list[-1][-1])['engagement'])
-        difficulty = int(json.loads(data.questions.list[-1][-1])['difficulty'])
+        engagement = int(json.loads(data.questions.list[-1][-1])["engagement"])
+        difficulty = int(json.loads(data.questions.list[-1][-1])["difficulty"])
         try:
-            fun = int(json.loads(data.questions.list[-1][-1])['fun'])
+            fun = int(json.loads(data.questions.list[-1][-1])["fun"])
             return engagement, difficulty, fun
         except IndexError:
             return engagement, difficulty
 
     def replay_start(self):
-        self.grid = Gridworld(
-            log_event=self.record_event,
-            **self.config.as_dict()
-        )
+        self.grid = Gridworld(log_event=self.record_event, **self.config.as_dict())
 
     def replay_started(self):
         return self.grid.game_started
@@ -1716,9 +1719,12 @@ class Griduniverse(Experiment):
     def events_for_replay(self, session=None, target=None):
         info_cls = dallinger.models.Info
         from .models import Event
+
         # Get the base query from the parent class, but remove order_by fields as we override them
         # in the subqueries
-        events = Experiment.events_for_replay(self, session=session, target=target).order_by(False)
+        events = Experiment.events_for_replay(
+            self, session=session, target=target
+        ).order_by(False)
         if target is None:
             # If we don't have a specific target time we can't optimise some states away
             return events
@@ -1730,71 +1736,78 @@ class Griduniverse(Experiment):
         )
 
         # Get the most recent eligible update that changed the food positions
-        item_events = events.filter(
-            info_cls.type == 'state',
-            Event.details['items'] != None,  # noqa: E711
-        ).order_by(Event.creation_time.desc()).limit(1)
+        item_events = (
+            events.filter(
+                info_cls.type == "state",
+                Event.details["items"] != None,  # noqa: E711
+            )
+            .order_by(Event.creation_time.desc())
+            .limit(1)
+        )
 
         # Get the most recent eligible update that changed the wall positions
-        wall_events = events.filter(
-            info_cls.type == 'state',
-            Event.details['walls'] != None,  # noqa: E711
-        ).order_by(Event.creation_time.desc()).limit(1)
+        wall_events = (
+            events.filter(
+                info_cls.type == "state",
+                Event.details["walls"] != None,  # noqa: E711
+            )
+            .order_by(Event.creation_time.desc())
+            .limit(1)
+        )
 
         # Get the most recent eligible update that changed the player positions
-        update_events = events.filter(
-            info_cls.type == 'state',
-            Event.details['players'] != None,  # noqa: E711
-        ).order_by(Event.creation_time.desc()).limit(1)
+        update_events = (
+            events.filter(
+                info_cls.type == "state",
+                Event.details["players"] != None,  # noqa: E711
+            )
+            .order_by(Event.creation_time.desc())
+            .limit(1)
+        )
 
         # Get all eligible updates of the below types
-        event_types = {'chat', 'new_round', 'donation_processed', 'color_changed'}
+        event_types = {"chat", "new_round", "donation_processed", "color_changed"}
         typed_events = events.filter(
-            info_cls.type == 'event',
-            Event.details['type'].astext.in_(event_types)
+            info_cls.type == "event", Event.details["type"].astext.in_(event_types)
         )
 
         # Merge the above four queries, discarding duplicates, and put them in time ascending order
         merged_events = item_events.union(
-            wall_events,
-            update_events,
-            typed_events
+            wall_events, update_events, typed_events
         ).order_by(Event.creation_time.asc())
 
         # Limit the query to the type, the effective time and the JSONB field containing the data
         return merged_events.with_entities(
-            info_cls.type,
-            info_cls.creation_time,
-            info_cls.details
+            info_cls.type, info_cls.creation_time, info_cls.details
         )
 
     def replay_event(self, event):
-        if 'server_time' not in event.details:
+        if "server_time" not in event.details:
             # If we don't have a server time in the event we reconstruct it from
             # the event metadata
-            event.details['server_time'] = (
-                time.mktime(event.creation_time.timetuple()) +
-                event.creation_time.microsecond / 1e6
+            event.details["server_time"] = (
+                time.mktime(event.creation_time.timetuple())
+                + event.creation_time.microsecond / 1e6
             )
-        if event.type == 'event':
+        if event.type == "event":
             self.publish(event.details)
-            if event.details.get('type') == 'new_round':
+            if event.details.get("type") == "new_round":
                 self.grid.check_round_completion()
-            elif event.details.get('type') == 'chat':
+            elif event.details.get("type") == "chat":
                 self.handle_chat_message(event.details)
 
-        if event.type == 'state':
+        if event.type == "state":
             self.state_count += 1
             state = event.details
             if not state:
                 # Allow loading older exports that didn't fill the details column
                 state = json.loads(event.contents)
             msg = {
-                'type': 'state',
-                'grid': state,
-                'count': self.state_count,
-                'remaining_time': self.grid.remaining_round_time,
-                'round': state['round'],
+                "type": "state",
+                "grid": state,
+                "count": self.state_count,
+                "remaining_time": self.grid.remaining_round_time,
+                "round": state["round"],
             }
             self.grid.deserialize(state)
             self.publish(msg)
@@ -1804,23 +1817,25 @@ class Griduniverse(Experiment):
         # Start when the first player connects
         start_time = (
             self.import_session.query(Event)
-            .filter(Event.details['type'].astext == 'connect')
-            .order_by(Event.creation_time)
-            [0].creation_time
+            .filter(Event.details["type"].astext == "connect")
+            .order_by(Event.creation_time)[0]
+            .creation_time
         )
         # At the start of the following second, as Dallinger truncates milliseconds for start time
         start_time += datetime.timedelta(seconds=1)
         # End at the last move
         end_time = (
             self.import_session.query(Event)
-            .filter(Event.details['type'].astext == 'move')
-            .order_by(Event.creation_time.desc())
-            [0].creation_time
+            .filter(Event.details["type"].astext == "move")
+            .order_by(Event.creation_time.desc())[0]
+            .creation_time
         )
         return (start_time, end_time)
 
     def revert_to_time(self, session=None, target=None):
-        self._replay_time_index = self.usable_replay_range[0] - datetime.timedelta(minutes=1)
+        self._replay_time_index = self.usable_replay_range[0] - datetime.timedelta(
+            minutes=1
+        )
         self.grid.chat_message_history = []
         self.state_count = 0
         self.grid.players = {}
@@ -1828,15 +1843,17 @@ class Griduniverse(Experiment):
         self.grid.wall_locations = {}
 
     def replay_finish(self):
-        self.publish({'type': 'stop'})
+        self.publish({"type": "stop"})
 
     def analyze(self, data):
-        return json.dumps({
-            "average_payoff": self.average_payoff(data),
-            "average_score": self.average_score(data),
-            "number_of_actions": self.number_of_actions(data),
-            "average_time_to_start": self.average_time_to_start(data),
-        })
+        return json.dumps(
+            {
+                "average_payoff": self.average_payoff(data),
+                "average_score": self.average_score(data),
+                "number_of_actions": self.number_of_actions(data),
+                "average_time_to_start": self.average_time_to_start(data),
+            }
+        )
 
     def isplit(self, seq, splitters):
         """Split a list into nested lists on a value (or tuple or list of values)
@@ -1844,7 +1861,7 @@ class Griduniverse(Experiment):
         auxilary function to number_of_actions"""
         return [
             list(g)
-            for k, g in itertools.groupby(seq, lambda x:x in splitters)
+            for k, g in itertools.groupby(seq, lambda x: x in splitters)
             if not k
         ]
 
@@ -1853,28 +1870,34 @@ class Griduniverse(Experiment):
         auxilary function to number_of_actions"""
         player_move_data = []
         for player in origin_ids:
-            players_moves = [x for x in moves if x[11] == player]  # Get all the moves of a player
+            players_moves = [
+                x for x in moves if x[11] == player
+            ]  # Get all the moves of a player
             if len(players_moves) != 0:
                 player_id = json.loads(players_moves[0][9])["player_id"]
-                player_move_data.append({"player_id": player_id,
-                                         "total_moves": len(players_moves)})
+                player_move_data.append(
+                    {"player_id": player_id, "total_moves": len(players_moves)}
+                )
         return player_move_data
 
     def number_of_actions(self, data):
         """Return a dictionary containing the # of actions taken
         for each participant per round"""
         df = data.infos.df
-        dataState = df.loc[df['type'] == 'state']
+        dataState = df.loc[df["type"] == "state"]
         if dataState.empty:
             return []
         dlist = data.infos.list
-        moves_and_round_breaks = [x for x in dlist if x[10] == 'event' and
-                                  ('move' in x[9] or 'new_round' in x[9])]
+        moves_and_round_breaks = [
+            x
+            for x in dlist
+            if x[10] == "event" and ("move" in x[9] or "new_round" in x[9])
+        ]
         # Find all the round dividers/breaks
         round_breaks = [x for x in moves_and_round_breaks if "new_round" in x[9]]
 
         # Get the unique origin_id for each player to differentiate players
-        moves = [x for x in moves_and_round_breaks if 'move' in x[9]]
+        moves = [x for x in moves_and_round_breaks if "move" in x[9]]
         origin_ids = [set(x[11] for x in moves)][0]
 
         # Split the move data of entire game into lists containing move data for each round
@@ -1887,8 +1910,10 @@ class Griduniverse(Experiment):
             # Note that the round number might not match how griduniverse numbers the rounds
             # However the system used here to # rounds is verified to be accurate chronologically
             # Round 1 happened before round 2 etc
-            data_dict = {"round_number": round_number,
-                         "round_data": self.number_of_actions_per_round(origin_ids, moves)}
+            data_dict = {
+                "round_number": round_number,
+                "round_data": self.number_of_actions_per_round(origin_ids, moves),
+            }
             number_of_actions_data.append(data_dict)
             round_number += 1
 
@@ -1896,14 +1921,15 @@ class Griduniverse(Experiment):
 
     def average_time_to_start(self, data):
         """The average time to start the game.
-        Compare the time of participant's first move info to the network creation timr"""
+        Compare the time of participant's first move info to the network creation timr
+        """
         df = data.infos.df
-        dataState = df.loc[df['type'] == 'state']
+        dataState = df.loc[df["type"] == "state"]
         if dataState.empty:
             return str(datetime.timedelta(0))
         network_creation_time = data.networks.list[0][1]
         dlist = data.infos.list
-        moves = [x for x in dlist if x[10] == 'event' and 'move' in x[9]]
+        moves = [x for x in dlist if x[10] == "event" and "move" in x[9]]
 
         # Get the unique origin_id for each player to differentiate players
         origin_ids = set(x[11] for x in moves)
@@ -1911,7 +1937,9 @@ class Griduniverse(Experiment):
         deltasum = datetime.timedelta(0)  # init
         delta_count = 0
         for player in origin_ids:
-            players_moves = [x for x in moves if x[11] == player]  # get all the moves of a player
+            players_moves = [
+                x for x in moves if x[11] == player
+            ]  # get all the moves of a player
             if len(players_moves) != 0:  # Is it possible that the player does not move?
                 # Use the time of their first move
                 delta = players_moves[0][1] - network_creation_time
@@ -1926,39 +1954,40 @@ class Griduniverse(Experiment):
 
     def average_payoff(self, data):
         df = data.infos.df
-        dataState = df.loc[df['type'] == 'state']
+        dataState = df.loc[df["type"] == "state"]
         if dataState.empty:
             return 0.0
         final_state = json.loads(dataState.iloc[-1][-1])
-        players = final_state['players']
-        payoff = [player['payoff'] for player in players]
+        players = final_state["players"]
+        payoff = [player["payoff"] for player in players]
         return float(sum(payoff)) / len(payoff)
 
     def average_score(self, data):
         df = data.infos.df
-        dataState = df.loc[df['type'] == 'state']
+        dataState = df.loc[df["type"] == "state"]
         if dataState.empty:
             return 0.0
         final_state = json.loads(dataState.iloc[-1][-1])
-        players = final_state['players']
-        scores = [player['score'] for player in players]
+        players = final_state["players"]
+        scores = [player["score"] for player in players]
         return float(sum(scores)) / len(scores)
 
     def _last_state_for_player(self, player_id):
         most_recent_grid_state = self.environment.state()
         if most_recent_grid_state is not None:
-            players = json.loads(most_recent_grid_state.contents)['players']
-            id_matches = [p for p in players if int(p['id']) == player_id]
+            players = json.loads(most_recent_grid_state.contents)["players"]
+            id_matches = [p for p in players if int(p["id"]) == player_id]
             if id_matches:
                 return id_matches[0]
 
     def is_complete(self):
         """Don't consider the experiment finished until all initial
         recruits have completed the experiment."""
-        finished_count = self.session.query(
-            dallinger.models.Participant
-        ).filter(
-            dallinger.models.Participant.status.in_(['approved', 'rejected'])
-        ).with_entities(func.count(dallinger.models.Participant.id)).scalar()
+        finished_count = (
+            self.session.query(dallinger.models.Participant)
+            .filter(dallinger.models.Participant.status.in_(["approved", "rejected"]))
+            .with_entities(func.count(dallinger.models.Participant.id))
+            .scalar()
+        )
 
         return finished_count >= self.initial_recruitment_size

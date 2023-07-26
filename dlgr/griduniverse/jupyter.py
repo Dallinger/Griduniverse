@@ -7,13 +7,16 @@ from traitlets import (
 
 from dallinger.jupyter import ExperimentWidget as DallingerExperimentWidget
 
-header_template = Template(u"""
+header_template = Template(
+    """
 <h2>{{ name }}</h2>
 <div>Status: {{ status }}</div>
 {% if app_id %}<div>App ID: {{ app_id }}</div>{% endif %}
-""")
+"""
+)
 
-grid_template = Template(u"""
+grid_template = Template(
+    """
 <table>
 {% for row in rows %}
 <tr>
@@ -23,9 +26,11 @@ grid_template = Template(u"""
 </tr>
 {% endfor %}
 </table>
-""")
+"""
+)
 
-scores_template = Template(u"""
+scores_template = Template(
+    """
 <table style="width: 30%">
 <tr>
 <th>Name</th> <th>Score</th>
@@ -38,9 +43,11 @@ scores_template = Template(u"""
 </tr>
 {% endfor %}
 </table>
-""")
+"""
+)
 
-chat_template = Template(u"""
+chat_template = Template(
+    """
 <table style="width: 30%">
 <tr>
 <th>Name</th> <th>Message</th>
@@ -53,7 +60,8 @@ chat_template = Template(u"""
 </tr>
 {% endfor %}
 </table>
-""")
+"""
+)
 
 
 NOTHING = "<div style='width: 5px; height: 5px; background-color: lightgray'></div>"
@@ -63,10 +71,9 @@ PLAYER = "<div style='width: 5px; height: 5px; background-color: %s'></div>"
 
 
 class ExperimentWidget(DallingerExperimentWidget):
+    status = Unicode("Unknown")
 
-    status = Unicode('Unknown')
-
-    @observe('grid')
+    @observe("grid")
     def render(self, change=None):
         header = widgets.HTML(
             header_template.render(
@@ -77,9 +84,11 @@ class ExperimentWidget(DallingerExperimentWidget):
         )
 
         tab_list = []
-        if hasattr(self.exp, 'grid'):
+        if hasattr(self.exp, "grid"):
             grid = []
-            player_positions = {tuple(p.position): p.color for p in self.exp.grid.players.values()}
+            player_positions = {
+                tuple(p.position): p.color for p in self.exp.grid.players.values()
+            }
             for row_idx in range(self.exp.grid.rows):
                 row = []
                 for col_idx in range(self.exp.grid.columns):
@@ -97,15 +106,17 @@ class ExperimentWidget(DallingerExperimentWidget):
                 grid_template.render(
                     rows=grid,
                 ),
-                description='Grid',
+                description="Grid",
             )
             tab_list += [grid_tab]
 
             scores_tab = widgets.HTML(
                 scores_template.render(
-                    players=sorted(self.exp.grid.players.values(), key=lambda player: player.id),
+                    players=sorted(
+                        self.exp.grid.players.values(), key=lambda player: player.id
+                    ),
                 ),
-                description='Scores',
+                description="Scores",
             )
             tab_list += [scores_tab]
 
@@ -113,12 +124,14 @@ class ExperimentWidget(DallingerExperimentWidget):
                 chat_template.render(
                     chat_messages=self.exp.grid.chat_message_history,
                 ),
-                description='Chat',
+                description="Chat",
             )
             tab_list += [chat_tab]
 
         self.config_tab.description = "Config"
-        tab_list += [self.config_tab, ]
+        tab_list += [
+            self.config_tab,
+        ]
         tabs = widgets.Tab(children=tab_list)
         for i, tab in enumerate(tab_list):
             tabs.set_title(i, tab.description)

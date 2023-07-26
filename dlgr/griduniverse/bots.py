@@ -22,7 +22,7 @@ from dallinger.config import get_config
 
 from .maze_utils import positions_to_maze, maze_to_graph, find_path_astar
 
-logger = logging.getLogger('griduniverse')
+logger = logging.getLogger("griduniverse")
 
 
 class BaseGridUniverseBot(BotBase):
@@ -35,12 +35,12 @@ class BaseGridUniverseBot(BotBase):
 
     def complete_questionnaire(self):
         """Complete the standard debriefing form randomly."""
-        difficulty = Select(self.driver.find_element_by_id('difficulty'))
+        difficulty = Select(self.driver.find_element_by_id("difficulty"))
         difficulty.select_by_value(str(random.randint(1, 7)))
-        engagement = Select(self.driver.find_element_by_id('engagement'))
+        engagement = Select(self.driver.find_element_by_id("engagement"))
         engagement.select_by_value(str(random.randint(1, 7)))
         try:
-            fun = Select(self.driver.find_element_by_id('fun'))
+            fun = Select(self.driver.find_element_by_id("fun"))
             # This is executed by the IEC_demo.py script...
             # No need to fill out a random value.
             fun.select_by_value(str(0))
@@ -49,9 +49,11 @@ class BaseGridUniverseBot(BotBase):
         return True
 
     def get_wait_time(self):
-        """ Return a random wait time approximately average to
+        """Return a random wait time approximately average to
         MEAN_KEY_INTERVAL but never more than MAX_KEY_INTERVAL"""
-        return min(random.expovariate(1.0 / self.MEAN_KEY_INTERVAL), self.MAX_KEY_INTERVAL)
+        return min(
+            random.expovariate(1.0 / self.MEAN_KEY_INTERVAL), self.MAX_KEY_INTERVAL
+        )
 
     def wait_for_grid(self):
         """Blocks until the grid is visible"""
@@ -63,12 +65,12 @@ class BaseGridUniverseBot(BotBase):
     def get_js_variable(self, variable_name):
         """Return an arbitrary JavaScript variable from the browser"""
         try:
-            script = 'return window.{};'.format(variable_name)
+            script = "return window.{};".format(variable_name)
             result = self.driver.execute_script(script)
             if result is None:
                 # In some cases (older remote Firefox)
                 # we need to use window.wrappedJSObject
-                script = 'return window.wrappedJSObject.{};'.format(variable_name)
+                script = "return window.wrappedJSObject.{};".format(variable_name)
                 result = self.driver.execute_script(script)
         except WebDriverException:
             result = None
@@ -88,8 +90,11 @@ class BaseGridUniverseBot(BotBase):
     def food_positions(self):
         """Return a list of food coordinates"""
         try:
-            return [tuple(item['position']) for item in self.state['food']
-                    if item['maturity'] > 0.5]
+            return [
+                tuple(item["position"])
+                for item in self.state["food"]
+                if item["maturity"] > 0.5
+            ]
         except (AttributeError, TypeError, KeyError):
             return []
 
@@ -97,16 +102,14 @@ class BaseGridUniverseBot(BotBase):
     def wall_positions(self):
         """Return a list of wall coordinates"""
         try:
-            return [tuple(item['position']) for item in self.state['walls']]
+            return [tuple(item["position"]) for item in self.state["walls"]]
         except (AttributeError, TypeError, KeyError):
             return []
 
     @property
     def player_positions(self):
         """Return a dictionary that maps player id to their coordinates"""
-        return {
-            player['id']: player['position'] for player in self.state['players']
-        }
+        return {player["id"]: player["position"] for player in self.state["players"]}
 
     @property
     def my_position(self):
@@ -128,7 +131,7 @@ class BaseGridUniverseBot(BotBase):
         # to the grid element; it's needed to avoid a
         # "cannot focus element" error with chromedriver
         try:
-            if self.driver.desired_capabilities['browserName'] == 'chrome':
+            if self.driver.desired_capabilities["browserName"] == "chrome":
                 action = ActionChains(self.driver).move_to_element(grid)
                 action.click().send_keys(self.get_next_key()).perform()
             else:
@@ -144,10 +147,10 @@ class BaseGridUniverseBot(BotBase):
         """
         self.wait_for_quorum()
         if self._skip_experiment:
-            self.log('Participant overrecruited. Skipping experiment.')
+            self.log("Participant overrecruited. Skipping experiment.")
             return True
         self.wait_for_grid()
-        self.log('Bot player started')
+        self.log("Bot player started")
 
         # Wait for state to be available
         self.state = None
@@ -162,17 +165,20 @@ class BaseGridUniverseBot(BotBase):
         expected_finish_time = datetime.datetime.now() + datetime.timedelta(days=1)
 
         while self.is_still_on_grid:
-
             # The proposed finish time is how many seconds we think remain plus the current time
             proposed_finish_time = datetime.datetime.now() + datetime.timedelta(
-                seconds=self.grid['remaining_time']
+                seconds=self.grid["remaining_time"]
             )
             # Update the expected finish time iff it is earlier than we thought
             expected_finish_time = min(expected_finish_time, proposed_finish_time)
 
             # If we expected to finish more than 30 seconds ago then bail out
             now = datetime.datetime.now()
-            if expected_finish_time + datetime.timedelta(seconds=self.END_BUFFER_SECONDS) < now:
+            if (
+                expected_finish_time
+                + datetime.timedelta(seconds=self.END_BUFFER_SECONDS)
+                < now
+            ):
                 return True
 
             gevent.sleep(self.get_wait_time())
@@ -236,10 +242,10 @@ class BaseGridUniverseBot(BotBase):
         """Convert a string of letters representing cardinal directions
         to a tuple of Selenium arrow keys"""
         lookup = {
-            'N': Keys.UP,
-            'S': Keys.DOWN,
-            'E': Keys.RIGHT,
-            'W': Keys.LEFT,
+            "N": Keys.UP,
+            "S": Keys.DOWN,
+            "E": Keys.RIGHT,
+            "W": Keys.LEFT,
         }
         return tuple(map(lookup.get, directions))
 
@@ -264,17 +270,11 @@ class BaseGridUniverseBot(BotBase):
             graph = self._graph
         except AttributeError:
             self._maze = maze = positions_to_maze(
-                self.wall_positions,
-                self.state['rows'],
-                self.state['columns']
+                self.wall_positions, self.state["rows"], self.state["columns"]
             )
             self._graph = graph = maze_to_graph(maze)
         result = find_path_astar(
-            maze,
-            tuple(origin),
-            tuple(endpoint),
-            max_iterations=10000,
-            graph=graph
+            maze, tuple(origin), tuple(endpoint), max_iterations=10000, graph=graph
         )
         if result:
             distance = result[0]
@@ -314,50 +314,47 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
         from dallinger.experiment_server.sockets import chat_backend
 
         self.redis = dallinger.db.redis_conn
-        chat_backend.subscribe(self, 'griduniverse')
+        chat_backend.subscribe(self, "griduniverse")
 
-        self.publish({
-            'type': 'connect',
-            'player_id': self.participant_id
-        })
+        self.publish({"type": "connect", "player_id": self.participant_id})
 
     def send(self, message):
         """Redis handler to receive a message from the griduniverse channel to this bot."""
-        channel, payload = message.split(':', 1)
+        channel, payload = message.split(":", 1)
         data = json.loads(payload)
-        if channel == 'quorum':
-            handler = 'handle_quorum'
+        if channel == "quorum":
+            handler = "handle_quorum"
         else:
-            handler = 'handle_{}'.format(data['type'])
+            handler = "handle_{}".format(data["type"])
         getattr(self, handler, lambda x: None)(data)
 
     def publish(self, message):
         """Sends a message from this bot to the `griduniverse_ctrl` channel."""
-        self.redis.publish('griduniverse_ctrl', json.dumps(message))
+        self.redis.publish("griduniverse_ctrl", json.dumps(message))
 
     def handle_state(self, data):
         """Receive a grid state update an store it"""
-        if 'grid' in data:
+        if "grid" in data:
             # grid is a json encoded dictionary, we want to selectively
             # update this rather than overwrite it as not all grid changes
             # are sent each time (such as food and walls)
-            data['grid'] = json.loads(data['grid'])
-            if 'grid' not in self.grid:
-                self.grid['grid'] = {}
-            self.grid['grid'].update(data['grid'])
-            data['grid'] = self.grid['grid']
+            data["grid"] = json.loads(data["grid"])
+            if "grid" not in self.grid:
+                self.grid["grid"] = {}
+            self.grid["grid"].update(data["grid"])
+            data["grid"] = self.grid["grid"]
         self.grid.update(data)
 
     def handle_stop(self, data):
         """Receive an update that the round has finished and mark the
         remaining time as zero"""
-        self.grid['remaining_time'] = 0
+        self.grid["remaining_time"] = 0
 
     def handle_quorum(self, data):
         """Update an instance attribute when the quorum is reached, so it
         can be checked in wait_for_quorum().
         """
-        if 'q' in data and data['q'] == data['n']:
+        if "q" in data and data["q"] == data["n"]:
             self.log("Quorum fulfilled... unleashing bot.")
             self._quorum_reached = True
 
@@ -365,7 +362,7 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
     def is_still_on_grid(self):
         """Returns True if the bot is still on an active grid,
         otherwise False"""
-        return self.grid.get('remaining_time', 0) > 0.25
+        return self.grid.get("remaining_time", 0) > 0.25
 
     def send_next_key(self):
         """Determines the message to send that corresponds to
@@ -375,27 +372,27 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
         message = {}
         if key == Keys.UP:
             message = {
-                'type': "move",
-                'player_id': self.participant_id,
-                'move': 'up',
+                "type": "move",
+                "player_id": self.participant_id,
+                "move": "up",
             }
         elif key == Keys.DOWN:
             message = {
-                'type': "move",
-                'player_id': self.participant_id,
-                'move': 'down',
+                "type": "move",
+                "player_id": self.participant_id,
+                "move": "down",
             }
         elif key == Keys.LEFT:
             message = {
-                'type': "move",
-                'player_id': self.participant_id,
-                'move': 'left',
+                "type": "move",
+                "player_id": self.participant_id,
+                "move": "left",
             }
         elif key == Keys.RIGHT:
             message = {
-                'type': "move",
-                'player_id': self.participant_id,
-                'move': 'right',
+                "type": "move",
+                "player_id": self.participant_id,
+                "move": "right",
             }
         if message:
             self.publish(message)
@@ -405,11 +402,11 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
         super(HighPerformanceBaseGridUniverseBot, self).on_signup(data)
         # We may have been the player to complete the quorum, in which case
         # we won't have to wait for status from the backend.
-        if data['quorum']['n'] == data['quorum']['q']:
+        if data["quorum"]["n"] == data["quorum"]["q"]:
             self._quorum_reached = True
         # overrecruitment is handled by web ui, so high perf bots need to
         # do that handling here instead.
-        if data['participant']['status'] == u'overrecruited':
+        if data["participant"]["status"] == "overrecruited":
             self._skip_experiment = True
 
     def wait_for_quorum(self):
@@ -430,7 +427,7 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
         self.grid = {}
         self._make_socket()
         while True:
-            if self.grid and self.grid['remaining_time']:
+            if self.grid and self.grid["remaining_time"]:
                 break
             gevent.sleep(0.001)
 
@@ -439,9 +436,9 @@ class HighPerformanceBaseGridUniverseBot(HighPerformanceBotBase, BaseGridUnivers
         in the browser using our accumulated state.
 
         The only values of variable_name supported are 'state' and 'ego'"""
-        if variable_name == 'state':
-            return self.grid['grid']
-        elif variable_name == 'ego':
+        if variable_name == "state":
+            return self.grid["grid"]
+        elif variable_name == "ego":
             return self.participant_id
 
     def get_player_id(self):
@@ -457,16 +454,7 @@ class RandomBot(HighPerformanceBaseGridUniverseBot):
     """A bot that plays griduniverse randomly"""
 
     #: The Selenium keys that this bot will choose between
-    VALID_KEYS = [
-        Keys.UP,
-        Keys.DOWN,
-        Keys.RIGHT,
-        Keys.LEFT,
-        Keys.SPACE,
-        'r',
-        'b',
-        'y'
-    ]
+    VALID_KEYS = [Keys.UP, Keys.DOWN, Keys.RIGHT, Keys.LEFT, Keys.SPACE, "r", "b", "y"]
 
     def get_next_key(self):
         """Randomly press one of Up, Down, Left, Right, space, r, b or y"""
@@ -623,7 +611,7 @@ class AdvantageSeekingBot(HighPerformanceBaseGridUniverseBot):
         seen_players = set()
         seen_food = set()
         choices = {}
-        for (player_id, food_id) in best_choices:
+        for player_id, food_id in best_choices:
             if player_id in seen_players:
                 continue
             if food_id in seen_food:
@@ -688,7 +676,7 @@ def Bot(*args, **kwargs):
     """
 
     config = get_config()
-    bot_implementation = config.get('bot_policy', u'RandomBot')
+    bot_implementation = config.get("bot_policy", "RandomBot")
     bot_class = globals().get(bot_implementation, None)
     if bot_class and issubclass(bot_class, BotBase):
         return bot_class(*args, **kwargs)

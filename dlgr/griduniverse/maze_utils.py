@@ -63,8 +63,15 @@ def find_path_astar(maze, start, goal, max_iterations=None, graph=None):
             continue
         visited.add(current)
         for direction, neighbour in graph[current]:
-            heappush(pr_queue, (cost + heuristic(neighbour, goal), cost + 1,
-                                path + direction, neighbour))
+            heappush(
+                pr_queue,
+                (
+                    cost + heuristic(neighbour, goal),
+                    cost + 1,
+                    path + direction,
+                    neighbour,
+                ),
+            )
     return None, ""
 
 
