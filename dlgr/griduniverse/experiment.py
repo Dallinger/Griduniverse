@@ -821,6 +821,10 @@ class Gridworld(object):
             }
         )
 
+    def locations_of_item_of_type(self, item_id):
+        """Return"""
+        return {k: v for k, v in self.item_locations.items() if v.item_id == item_id}
+
     def items_changed(self, last_items):
         locations = self.item_locations
         if len(last_items) != len(locations):
@@ -840,7 +844,9 @@ class Gridworld(object):
             seasonal_growth = item_type["seasonal_growth_rate"] ** (
                 -1 if self.round % 2 else 1
             )
-
+            logger.warning(
+                f"item_type: {item_type['name']}, seasonal_growth: {seasonal_growth}"
+            )
             # Compute how many items of this type we should have on the grid,
             # ensuring it's not less than zero.
             item_type["item_count"] = max(
@@ -852,16 +858,28 @@ class Gridworld(object):
                 ),
                 0,
             )
+            logger.warning(
+                f"item_type: {item_type['name']}, target count: {item_type['item_count']}"
+            )
 
-            for i in range(
-                int(round(item_type["item_count"]) - len(self.item_locations))
-            ):
+            num_items_to_add = int(
+                round(item_type["item_count"])
+                - len(self.locations_of_item_of_type(item_type["item_id"]))
+            )
+            logger.warning(f"{num_items_to_add} items to add.")
+            for i in range(num_items_to_add):
                 self.spawn_item(item_id=item_type["item_id"])
 
-            for i in range(
-                len(self.item_locations) - int(round(item_type["item_count"]))
-            ):
-                del self.item_locations[random.choice(self.item_locations.keys())]
+            num_items_to_remove = len(
+                self.locations_of_item_of_type(item_type["item_id"])
+            ) - int(round(item_type["item_count"]))
+            logger.warning(f"{num_items_to_remove} items to remove.")
+
+            for i in range(num_items_to_remove):
+                loc_to_remove = random.choice(
+                    list(self.locations_of_item_of_type(item_type["item_id"]).keys())
+                )
+                del self.item_locations[loc_to_remove]
                 self.items_updated = True
 
     def spawn_player(self, id=None, **kwargs):
