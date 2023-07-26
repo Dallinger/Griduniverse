@@ -94,15 +94,12 @@ GU_PARAMS = {
     "donation_group": bool,
     "donation_ingroup": bool,
     "donation_public": bool,
-    "item_count": int,
     "respawn": bool,
-    "reward": int,
     "public_good_multiplier": float,
     "growth_rate": float,
     "food_planting": bool,  # legacy, only for original game
     "food_planting_cost": int,  # legacy, only for original game
     "probability_distribution": unicode,
-    "seasonal_growth_rate": float,
     "difi_question": bool,
     "difi_group_label": unicode,
     "difi_group_image": unicode,
@@ -275,15 +272,12 @@ class Gridworld(object):
         )
 
         # Items
-        self.item_count = kwargs.get("item_count", 8)
         self.respawn = kwargs.get("respawn", True)
-        self.reward = kwargs.get("reward", 1)
         self.public_good_multiplier = kwargs.get("public_good_multiplier", 1)
         self.growth_rate = kwargs.get("growth_rate", 1.00)
         self.food_planting = kwargs.get("food_planting", False)
         self.food_planting_cost = kwargs.get("food_planting_cost", 1)
         self.probability_distribution = kwargs.get("probability_distribution", "random")
-        self.seasonal_growth_rate = kwargs.get("seasonal_growth_rate", 1)
 
         # Chat
         self.chat_message_history = []
@@ -309,9 +303,6 @@ class Gridworld(object):
         self.start_timestamp = kwargs.get("start_timestamp", None)
 
         self.round = 0
-        self.public_good = (
-            self.reward * self.public_good_multiplier
-        ) / self.num_players
 
         if self.contagion_hierarchy:
             self.contagion_hierarchy = range(self.num_colors)
@@ -344,6 +335,12 @@ class Gridworld(object):
         # Items and transitions
         self.item_config = kwargs.get("item_config", DEFAULT_ITEM_CONFIG)
         self.transition_config = kwargs.get("transition_config", {})
+
+        # public good
+        calories = 0
+        for item_type in self.item_config.values():
+            calories += item_type["calories"]
+        self.public_good = (calories * self.public_good_multiplier) / self.num_players
 
     def can_occupy(self, position):
         if self.player_overlap:
@@ -695,9 +692,9 @@ class Gridworld(object):
             text += """ Movement commands will be ignored almost all of the time,
                 and the player will move in a random direction instead."""
         text += """</p><p>Players gain points by getting to squares that have
-            food on them. Each piece of food is worth {g.reward}
-            {g.reward:plural, point, points}. When the game starts there
-            are <strong>{g.item_count}</strong> {g.item_count:plural, piece, pieces}
+            food on them. Each piece of food is worth x
+            points. When the game starts there
+            are <strong>n</strong> pieces
             of food on the grid. Food is represented by a green"""
 
         text += " or brown"
@@ -778,15 +775,15 @@ class Gridworld(object):
                     # respawn same type of item.
                     self.spawn_item(item_id=item.item_id)
                 else:
-                    self.item_count -= 1
+                    self.item_config[item.item_id]["item_count"] -= 1
 
                 # Update scores.
                 if player.color_idx > 0:
-                    reward = self.reward
+                    calories = item.calories
                 else:
-                    reward = self.reward * self.relative_deprivation
+                    calories = item.calories * self.relative_deprivation
 
-                player.score += reward
+                player.score += calories
                 consumed += 1
 
         if consumed and self.public_good:
@@ -836,6 +833,36 @@ class Gridworld(object):
             if found.id != obj["id"] or found.maturity != obj["maturity"]:
                 return True
         return False
+
+    def replenish_items(self):
+        for item_type in self.item_config.values():
+            # Alternate positive and negative growth rates
+            seasonal_growth = item_type["seasonal_growth_rate"] ** (
+                -1 if self.round % 2 else 1
+            )
+
+            # Compute how many items of this type we should have on the grid,
+            # ensuring it's not less than zero.
+            item_type["item_count"] = max(
+                min(
+                    item_type["item_count"]
+                    * item_type["growth_rate"]
+                    * seasonal_growth,
+                    self.rows * self.columns,
+                ),
+                0,
+            )
+
+            for i in range(
+                int(round(item_type["item_count"]) - len(self.item_locations))
+            ):
+                self.spawn_item(item_id=item_type["item_id"])
+
+            for i in range(
+                len(self.item_locations) - int(round(item_type["item_count"]))
+            ):
+                del self.item_locations[random.choice(self.item_locations.keys())]
+                self.items_updated = True
 
     def spawn_player(self, id=None, **kwargs):
         """Spawn a player."""
@@ -1193,6 +1220,14 @@ class Griduniverse(Experiment):
         with open(game_config_file, "r") as game_config_stream:
             self.game_config = yaml.safe_load(game_config_stream)
         self.item_config = {o["item_id"]: o for o in self.game_config.get("items", ())}
+
+        # If any item is missing a key, add it with default value.
+        item_defaults = self.game_config.get("item_defaults", {})
+        for item in self.item_config.values():
+            for prop in item_defaults:
+                if prop not in item:
+                    item[prop] = item_defaults[prop]
+
         self.transition_config = {
             (t["actor_start"], t["target_start"]): t
             for t in self.game_config.get("transitions", ())
@@ -1581,10 +1616,11 @@ class Griduniverse(Experiment):
         if not self.config.get("replay", False):
             self.grid.build_labyrinth()
             logger.info("Spawning items")
-            for i in range(self.grid.item_count):
-                if (i % 250) == 0:
-                    gevent.sleep(0.00001)
-                self.grid.spawn_item()
+            for item_type in self.item_config.values():
+                for i in range(item_type["item_count"]):
+                    if (i % 250) == 0:
+                        gevent.sleep(0.00001)
+                    self.grid.spawn_item(item_id=item_type["item_id"])
 
         while not self.grid.game_started:
             gevent.sleep(0.01)
@@ -1630,37 +1666,8 @@ class Griduniverse(Experiment):
 
             # Trigger time-based events.
             if (now - previous_second_timestamp) > 1.000:
-                # Grow or shrink the food stores.
-
-                # Alternate positive and negative growth rates
-                seasonal_growth = self.grid.seasonal_growth_rate ** (
-                    -1 if self.grid.round % 2 else 1
-                )
-
-                # Compute how many food items we should have on the grid,
-                # ensuring it's not less than zero.
-                self.grid.item_count = max(
-                    min(
-                        self.grid.item_count * self.grid.growth_rate * seasonal_growth,
-                        self.grid.rows * self.grid.columns,
-                    ),
-                    0,
-                )
-
-                # TODO: self.grid.replenish_food()
-                for i in range(
-                    int(round(self.grid.item_count) - len(self.grid.item_locations))
-                ):
-                    self.grid.spawn_item()
-
-                # TODO: self.grid.prune_excess_food()
-                for i in range(
-                    len(self.grid.item_locations) - int(round(self.grid.item_count))
-                ):
-                    del self.grid.item_locations[
-                        random.choice(self.grid.item_locations.keys())
-                    ]
-                    self.grid.items_updated = True
+                # Grow or shrink the item stores.
+                self.grid.replenish_items()
 
                 abundances = {}
                 for player in self.grid.players.values():

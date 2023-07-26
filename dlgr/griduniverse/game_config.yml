@@ -1,4 +1,24 @@
 ---
+item_defaults:
+  item_id: 1
+  item_count: 8
+  calories: 5
+  crossable: true
+  interactive: false
+  growth_rate: 1.0
+  maturation_speed: 0.01
+  maturation_threshold: 0.5
+  n_uses: 1
+  name: Food
+  plantable: false
+  planting_cost: 1
+  portable: true
+  probability_distribution: "random"
+  respawn: true
+  seasonal_growth_rate: 1.0
+  spawn_rate: 0.1
+  sprite: "#8a9b0f,#7a6b54"
+
 items:
   # Legacy GU Food item
   - item_id: 9
@@ -12,39 +32,48 @@ items:
     plantable: false
     planting_cost: 1
     portable: true
+    respawn: true
     spawn_rate: 0.1
     sprite: "#8a9b0f,#7a6b54"
 
+  - item_id: 10
+    calories: 3
+    crossable: true
+    interactive: false
+    maturation_speed: 0.01
+    maturation_threshold: 0.5
+    n_uses: 1
+    name: Food2
+    plantable: false
+    planting_cost: 1
+    portable: true
+    respawn: true
+    spawn_rate: 0.1
+    sprite: "#2a9b0f,#1a6b54"
+
   # One Hour, One Life items
-  # - calories: null
-  #   crossable: true
+  # - crossable: true
   #   interactive: true
-  #   n_uses: null
   #   name: Wild Carrot Plant
   #   item_id: 1
   #   portable: false
   #   spawn_rate: 0.15
 
-  # - calories: null
-  #   crossable: true
+  # - crossable: true
   #   interactive: true
-  #   n_uses: null
   #   name: Stone
   #   item_id: 2
   #   portable: true
   #   spawn_rate: 0.05
 
-  # - calories: null
-  #   crossable: false
+  # - crossable: false
   #   interactive: true
-  #   n_uses: null
   #   name: Big Hard Rock
   #   item_id: 3
   #   portable: false
   #   spawn_rate: 0.05
 
-  # - calories: null
-  #   crossable: false
+  # - crossable: false
   #   interactive: true
   #   n_uses: 6
   #   name: Gooseberry Bush
@@ -52,10 +81,8 @@ items:
   #   portable: false
   #   spawn_rate: 0.1
 
-  # - calories: null
-  #   crossable: false
+  # - crossable: false
   #   interactive: true
-  #   n_uses: null
   #   name: Sharp Stone
   #   item_id: 5
   #   portable: true
@@ -79,8 +106,7 @@ items:
   #   portable: true
   #   spawn_rate: 0.1
 
-  # - calories: null
-  #   crossable: false
+  # - crossable: false
   #   interactive: true
   #   n_uses: 1
   #   name: Empty Gooseberry Bush
