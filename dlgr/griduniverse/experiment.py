@@ -99,8 +99,6 @@ GU_PARAMS = {
     'reward': int,
     'public_good_multiplier': float,
     'growth_rate': float,
-    'maturation_speed': float,
-    'maturation_threshold': float,
     'food_planting': bool,  # legacy, only for original game
     'food_planting_cost': int,  # legacy, only for original game
     'probability_distribution': unicode,
@@ -287,9 +285,6 @@ class Gridworld(object):
         self.reward = kwargs.get('reward', 1)
         self.public_good_multiplier = kwargs.get('public_good_multiplier', 1)
         self.growth_rate = kwargs.get('growth_rate', 1.00)
-        self.maturation_speed = kwargs.get('maturation_speed', 1)
-        self.maturation_threshold = kwargs.get(
-            'maturation_threshold', 0.0)
         self.food_planting = kwargs.get('food_planting', False)
         self.food_planting_cost = kwargs.get('food_planting_cost', 1)
         self.probability_distribution = kwargs.get('probability_distribution', 'random')
@@ -311,7 +306,7 @@ class Gridworld(object):
         # Set some variables.
         self.players = {}
         self.item_locations = {}
-        self.food_consumed = []  # For now, everything with calories is food
+        self.items_consumed = []  # For now, everything with calories is food
         self.start_timestamp = kwargs.get('start_timestamp', None)
 
         self.round = 0
@@ -352,6 +347,13 @@ class Gridworld(object):
         if self.player_overlap:
             return not self.has_wall(position)
         return not self.has_player(position) and not self.has_wall(position)
+
+    @property
+    def includes_maturing_items(self):
+        return any(
+            item["maturation_threshold"] > 0.0
+            for item in self.item_config.values()
+        )
 
     @property
     def limited_player_colors(self):
@@ -581,7 +583,7 @@ class Gridworld(object):
         if 'items' in state:
             self.item_locations = {}
             for item_state in state['items']:
-                obj = Item(maturation_speed=self.maturation_speed, **item_state)
+                obj = Item(**item_state)
                 self.item_locations[tuple(obj.position)] = obj
 
     def instructions(self):
@@ -683,25 +685,20 @@ class Gridworld(object):
             {g.reward:plural, point, points}. When the game starts there
             are <strong>{g.item_count}</strong> {g.item_count:plural, piece, pieces}
             of food on the grid. Food is represented by a green"""
-        if self.maturation_threshold > 0:
-            text += " or brown"
+
+        text += " or brown"
         text += " square: <img src='static/images/food-green.png' height='20'>"
-        if self.maturation_threshold > 0:
-            text += " <img src='static/images/food-brown.png' height='20'>"
+        text += " <img src='static/images/food-brown.png' height='20'>"
         if self.respawn:
             text += "<br>Food is automatically respawned after it is consumed."
-            if self.maturation_threshold > 0:
-                text += """It will appear immediately, but not be consumable for
-                    some time, because it has a maturation period. It will show
-                    up as brown initially, and then as green when it matures."""
+
+        text += """It will appear immediately, but may not be consumable for
+            some time if it has a maturation period. It will show
+            up as brown initially, and then as green when it matures."""
         text += """<br>The location where the food will appear after respawning is
             is determined by the <strong>{g.probability_distribution}</strong>
             probability distribution."""
-        if self.food_planting:
-            text += " Players can plant more food by pressing the spacebar."
-            if self.food_planting_cost > 0:
-                text += """ The cost for planting food is {g.food_planting_cost}
-                {g.food_planting_cost:plural, point, points}."""
+        text += " Players may be able to plant more food by pressing the spacebar."
         text += "</p>"
         if self.alternate_consumption_donation and self.num_rounds > 1:
             text += """<p> Rounds will alternate between <strong>consumption</strong> and
@@ -747,24 +744,23 @@ class Gridworld(object):
                                 color_list=', '.join(self.limited_player_color_names))
 
     def consume(self):
-        """Players consume the food."""
+        """Players consume the non-interactive items"""
         consumed = 0
         for player in self.players.values():
             position = tuple(player.position)
             if position in self.item_locations:
-                food = self.item_locations[position]
-                # any item with calories is food for now. Other items are ignored.
-                if not food.calories:
+                item = self.item_locations[position]
+                if item.interactive or not item.calories:
                     continue
-                if food.maturity < self.maturation_threshold:
+                if item.maturity < item.maturation_threshold:
                     continue
                 del self.item_locations[position]
-                # Update existence and count of food.
-                self.food_consumed.append(food)
+                # Update existence and count of item.
+                self.items_consumed.append(item)
                 self.items_updated = True
                 if self.respawn:
                     # respawn same type of item.
-                    self.spawn_item(item_id=food.item_id)
+                    self.spawn_item(item_id=item.item_id)
                 else:
                     self.item_count -= 1
 
@@ -798,7 +794,7 @@ class Gridworld(object):
 
         item_props = self.item_config[item_id]
         new_item = Item(
-            id=(len(self.item_locations) + len(self.food_consumed)),
+            id=(len(self.item_locations) + len(self.items_consumed)),
             position=position,
             item_config=item_props,
         )
@@ -1612,7 +1608,7 @@ class Griduniverse(Experiment):
             # on the values.
 
             # Log item updates every hundred rounds to capture maturity changes
-            if self.grid.maturation_threshold and (count % 100) == 0:
+            if self.grid.includes_maturing_items and (count % 100) == 0:
                 self.grid.items_updated = True
             now = time.time()
 

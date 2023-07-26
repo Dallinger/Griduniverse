@@ -21,14 +21,19 @@ class TestItem(object):
     @pytest.fixture
     def item_config(self):
         return {
-            'calories': 5,
-            'crossable': True,
-            'interactive': False,
-            'n_uses': 1,
-            'name': 'Food',
             'item_id': 9,
-            'portable': True,
-            'spawn_rate': None
+            "calories": 5,
+            "crossable": True,
+            "interactive": False,
+            "maturation_speed": 1,
+            "maturation_threshold": 0.0,
+            "n_uses": 1,
+            "name": "Food",
+            "plantable": False,
+            "planting_cost": 1,
+            "portable": True,
+            "spawn_rate": 0.1,
+            "sprite": "#8a9b0f,#7a6b54",
         }
 
     @property

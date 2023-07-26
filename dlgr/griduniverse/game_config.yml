@@ -1,15 +1,18 @@
 ---
 items:
   # Legacy GU Food item
-  - calories: 5
+  - item_id: 9
+    calories: 5
     crossable: true
     interactive: false
+    maturation_speed: 0.01
+    maturation_threshold: 0.5
     n_uses: 1
     name: Food
-    item_id: 9
+    plantable: false
+    planting_cost: 1
     portable: true
     spawn_rate: 0.1
-    maturation_speed: 1
     sprite: "#8a9b0f,#7a6b54"
 
   # One Hour, One Life items
