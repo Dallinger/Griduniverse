@@ -94,12 +94,6 @@ GU_PARAMS = {
     "donation_group": bool,
     "donation_ingroup": bool,
     "donation_public": bool,
-    "respawn": bool,
-    "public_good_multiplier": float,
-    "growth_rate": float,
-    "food_planting": bool,  # legacy, only for original game
-    "food_planting_cost": int,  # legacy, only for original game
-    "probability_distribution": unicode,
     "difi_question": bool,
     "difi_group_label": unicode,
     "difi_group_image": unicode,
@@ -271,14 +265,6 @@ class Gridworld(object):
             "alternate_consumption_donation", False
         )
 
-        # Items
-        self.respawn = kwargs.get("respawn", True)
-        self.public_good_multiplier = kwargs.get("public_good_multiplier", 1)
-        self.growth_rate = kwargs.get("growth_rate", 1.00)
-        self.food_planting = kwargs.get("food_planting", False)
-        self.food_planting_cost = kwargs.get("food_planting_cost", 1)
-        self.probability_distribution = kwargs.get("probability_distribution", "random")
-
         # Chat
         self.chat_message_history = []
 
@@ -312,46 +298,50 @@ class Gridworld(object):
             self.color_costs = [2**i for i in range(self.num_colors)]
             random.shuffle(self.color_costs)
 
-        # get item spawning probability distribution function and args
-        self.probability_function_args = []
-        parts = self.probability_distribution.split()
-        if len(parts) > 1:
-            self.probability_distribution = parts[0]
-            self.probability_function_args = parts[1:]
-        probability_distribution = "{}_probability_distribution".format(
-            self.probability_distribution
-        )
-        self.probability_function = getattr(
-            distributions, probability_distribution, None
-        )
-        if self.probability_function is None:
-            logger.info(
-                "Unknown item probability distribution: {}.".format(
-                    self.probability_distribution
-                )
-            )
-            self.probability_function = distributions.random_probability_distribution
-
         # Items and transitions
         self.item_config = kwargs.get("item_config", DEFAULT_ITEM_CONFIG)
         self.transition_config = kwargs.get("transition_config", {})
 
-        # public good
-        calories = 0
+        # Any maturing items?
+        self.includes_maturing_items = any(
+            item["maturation_threshold"] > 0.0 for item in self.item_config.values()
+        )
+
+        # Get item spawning probability distribution function and args
         for item_type in self.item_config.values():
-            calories += item_type["calories"]
-        self.public_good = (calories * self.public_good_multiplier) / self.num_players
+            item_type["probability_function_args"] = []
+            parts = item_type["probability_distribution"].split()
+            if len(parts) > 1:
+                item_type["probability_distribution"] = parts[0]
+                item_type["probability_function_args"] = parts[1:]
+            probability_distribution = "{}_probability_distribution".format(
+                item_type["probability_distribution"]
+            )
+            item_type["probability_function"] = getattr(
+                distributions, probability_distribution, None
+            )
+            if item_type["probability_function"] is None:
+                logger.info(
+                    "Unknown item probability distribution: {}.".format(
+                        item_type["probability_distribution"]
+                    )
+                )
+                item_type[
+                    "probability_function"
+                ] = distributions.random_probability_distribution
+
+        # public good
+        for item_type in self.item_config.values():
+            item_type["public_good"] = (
+                item_type["calories"]
+                * item_type["public_good_multiplier"]
+                / self.num_players
+            )
 
     def can_occupy(self, position):
         if self.player_overlap:
             return not self.has_wall(position)
         return not self.has_player(position) and not self.has_wall(position)
-
-    @property
-    def includes_maturing_items(self):
-        return any(
-            item["maturation_threshold"] > 0.0 for item in self.item_config.values()
-        )
 
     @property
     def limited_player_colors(self):
@@ -585,7 +575,7 @@ class Gridworld(object):
             for item_state in state["items"]:
                 # TODO verify this works at some point!
                 item_props = self.item_config[item_state["item_id"]]
-                obj = Item(item_props, **item_state)
+                obj = Item(item_config=item_props, **item_state)
                 self.item_locations[tuple(obj.position)] = obj
 
     def instructions(self):
@@ -700,15 +690,14 @@ class Gridworld(object):
         text += " or brown"
         text += " square: <img src='static/images/food-green.png' height='20'>"
         text += " <img src='static/images/food-brown.png' height='20'>"
-        if self.respawn:
-            text += "<br>Food is automatically respawned after it is consumed."
+        text += "<br>Food can be respawned after it is consumed."
 
         text += """It will appear immediately, but may not be consumable for
             some time if it has a maturation period. It will show
             up as brown initially, and then as green when it matures."""
         text += """<br>The location where the food will appear after respawning is
-            is determined by the <strong>{g.probability_distribution}</strong>
-            probability distribution."""
+            is determined by the <strong>configured</strong>
+            probability distribution for each item type."""
         text += " Players may be able to plant more food by pressing the spacebar."
         text += "</p>"
         if self.alternate_consumption_donation and self.num_rounds > 1:
@@ -771,7 +760,7 @@ class Gridworld(object):
                 # Update existence and count of item.
                 self.items_consumed.append(item)
                 self.items_updated = True
-                if self.respawn:
+                if item.respawn:
                     # respawn same type of item.
                     self.spawn_item(item_id=item.item_id)
                 else:
@@ -786,15 +775,12 @@ class Gridworld(object):
                 player.score += calories
                 consumed += 1
 
-        if consumed and self.public_good:
+        if consumed and item.public_good:
             for player_to in self.players.values():
-                player_to.score += self.public_good * consumed
+                player_to.score += item.public_good * consumed
 
     def spawn_item(self, position=None, item_id=None):
         """Respawn an item for a single position"""
-        if not position:
-            position = self._random_empty_position()
-
         if not item_id:
             # No specific item type, pick randomly.
             item_id = None
@@ -804,6 +790,9 @@ class Gridworld(object):
                     spawn_rate = random.random()
                     if spawn_rate < obj.get("spawn_rate", 0.1):
                         item_id = obj.get("item_id", 1)
+
+        if not position:
+            position = self._random_empty_position(item_id)
 
         item_props = self.item_config[item_id]
         new_item = Item(
@@ -825,12 +814,12 @@ class Gridworld(object):
         locations = self.item_locations
         if len(last_items) != len(locations):
             return True
-        for obj in last_items:
-            position = tuple(obj["position"])
+        for item in last_items:
+            position = tuple(item["position"])
             if position not in locations:
                 return True
             found = locations[position]
-            if found.id != obj["id"] or found.maturity != obj["maturity"]:
+            if found.id != item["id"] or found.maturity != item["maturity"]:
                 return True
         return False
 
@@ -845,30 +834,33 @@ class Gridworld(object):
             # ensuring it's not less than zero.
             item_type["item_count"] = max(
                 min(
-                    item_type["item_count"]
-                    * item_type["growth_rate"]
-                    * seasonal_growth,
+                    item_type["item_count"] * item_type["spawn_rate"] * seasonal_growth,
                     self.rows * self.columns,
                 ),
                 0,
             )
 
-            for i in range(
-                int(round(item_type["item_count"]) - len(self.item_locations))
-            ):
+            # Only items of the same type.
+            item_locations = [
+                position
+                for position in self.item_locations
+                if self.item_locations[position].item_id == item_type["item_id"]
+            ]
+
+            for i in range(int(round(item_type["item_count"]) - len(item_locations))):
                 self.spawn_item(item_id=item_type["item_id"])
 
-            for i in range(
-                len(self.item_locations) - int(round(item_type["item_count"]))
-            ):
-                del self.item_locations[random.choice(self.item_locations.keys())]
+            for i in range(len(item_locations) - int(round(item_type["item_count"]))):
+                del self.item_locations[random.choice(list(item_locations.keys()))]
                 self.items_updated = True
 
     def spawn_player(self, id=None, **kwargs):
         """Spawn a player."""
+        # For player position, use same distribution as first configured item.
+        item_id = list(self.item_config.keys())[0]
         player = Player(
             id=id,
-            position=self._random_empty_position(),
+            position=self._random_empty_position(item_id),
             num_possible_colors=self.num_colors,
             motion_speed_limit=self.motion_speed_limit,
             motion_cost=self.motion_cost,
@@ -886,15 +878,15 @@ class Gridworld(object):
         self._start_if_ready()
         return player
 
-    def _random_empty_position(self):
+    def _random_empty_position(self, item_id):
         """Select an empty cell at random, using the configured probability
         distribution."""
         rows = self.rows
         columns = self.columns
         empty_cell = False
         while not empty_cell:
-            position = self.probability_function(
-                rows, columns, *self.probability_function_args
+            position = self.item_config[item_id]["probability_function"](
+                rows, columns, *self.item_config[item_id]["probability_function_args"]
             )
             empty_cell = self._empty(position)
 
@@ -977,6 +969,7 @@ class Item(object):
             "item_id": self.item_id,
             "position": self.position,
             "maturity": self.maturity,
+            "creation_timestamp": self.creation_timestamp,
         }
 
     @property
@@ -1535,11 +1528,13 @@ class Griduniverse(Experiment):
             self.record_event(message, message["donor_id"])
 
     def handle_plant_food(self, msg):
+        # Legacy. For now, take planting info from first defined item.
+        planting_cost = list(self.item_config.values())[0]["planting_cost"]
         player = self.grid.players[msg["player_id"]]
         position = msg["position"]
-        can_afford = player.score >= self.grid.food_planting_cost
+        can_afford = player.score >= planting_cost
         if can_afford and not self.grid.has_item(position):
-            player.score -= self.grid.food_planting_cost
+            player.score -= planting_cost
             self.grid.spawn_item(position=position)
 
     def handle_toggle_visible(self, msg):
