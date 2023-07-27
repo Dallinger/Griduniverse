@@ -810,6 +810,10 @@ class Gridworld(object):
             }
         )
 
+    def locations_of_item_of_type(self, item_id):
+        """Return"""
+        return {k: v for k, v in self.item_locations.items() if v.item_id == item_id}
+
     def items_changed(self, last_items):
         locations = self.item_locations
         if len(last_items) != len(locations):
@@ -829,7 +833,9 @@ class Gridworld(object):
             seasonal_growth = item_type["seasonal_growth_rate"] ** (
                 -1 if self.round % 2 else 1
             )
-
+            logger.warning(
+                f"item_type: {item_type['name']}, seasonal_growth: {seasonal_growth}"
+            )
             # Compute how many items of this type we should have on the grid,
             # ensuring it's not less than zero.
             item_type["item_count"] = max(
@@ -839,13 +845,12 @@ class Gridworld(object):
                 ),
                 0,
             )
+            logger.warning(
+                f"item_type: {item_type['name']}, target count: {item_type['item_count']}"
+            )
 
             # Only items of the same type.
-            item_locations = [
-                position
-                for position in self.item_locations
-                if self.item_locations[position].item_id == item_type["item_id"]
-            ]
+            item_locations = self.locations_of_item_of_type(item_type["item_id"])
 
             for i in range(int(round(item_type["item_count"]) - len(item_locations))):
                 self.spawn_item(item_id=item_type["item_id"])
