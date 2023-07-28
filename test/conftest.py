@@ -1,6 +1,7 @@
 """
 Test fixtures for `dlgr.griduniverse` module.
 """
+import copy
 import mock
 import os
 import pytest
@@ -105,7 +106,32 @@ def active_config(stub_config):
 
 
 @pytest.fixture
-def output():
+def item_config():
+    return copy.deepcopy(
+        {
+            1: {
+                "calories": 5,
+                "crossable": True,
+                "interactive": False,
+                "item_count": 8,
+                "item_id": 1,
+                "maturation_speed": 0.01,
+                "maturation_threshold": 0.5,
+                "n_uses": 1,
+                "name": "Food",
+                "plantable": False,
+                "planting_cost": 1,
+                "portable": True,
+                "probability_distribution": "random",
+                "public_good": 0.0,
+                "public_good_multiplier": 0.0,
+                "respawn": True,
+                "seasonal_growth_rate": 1.0,
+                "spawn_rate": 1.0,
+                "sprite": "#8a9b0f,#7a6b54",
+            }
+        }
+    )
 
     class Output(object):
 
@@ -141,9 +167,14 @@ def pubsub(exp):
 @pytest.fixture
 def fresh_gridworld():
     from dlgr.griduniverse.experiment import Gridworld
-    if hasattr(Gridworld, 'instance'):
-        delattr(Gridworld, 'instance')
 
+    if hasattr(Gridworld, "instance"):
+        delattr(Gridworld, "instance")
+
+    yield
+
+    if hasattr(Gridworld, "instance"):
+        delattr(Gridworld, "instance")
 
 @pytest.fixture
 def gridworld(fresh_gridworld, active_config):
