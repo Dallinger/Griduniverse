@@ -15,6 +15,7 @@ import uuid
 import yaml
 
 from cached_property import cached_property
+from dataclasses import dataclass, field
 from faker import Factory
 from sqlalchemy import create_engine
 from sqlalchemy import func
@@ -940,27 +941,19 @@ class Gridworld(object):
             return 1
 
 
-class Item(object):
-    """A generic object supporting configuration via a game_config.yml
-    definition.
+@dataclass(frozen=True)
+class Item:
+    item_config: dict
+    id: int = field(default_factory=lambda: uuid.uuid4())
+    creation_timestamp: float = field(default_factory=time.time)
+    position: tuple = (0, 0)
 
-    All instances sharing an item_id will share a reference to the same
-    item_config, and values will be looked up from this common key/value map.
-
-    Only values that vary by instance will be stored on the object itself.
-    """
-
-    def __init__(self, item_config, id=None, position=(0, 0), creation_timestamp=None):
-        self._item_config = item_config
-        self.item_id = item_config["item_id"]
-        self.id = id if id is not None else uuid.uuid4()
-        ct = creation_timestamp
-        self.creation_timestamp = ct if ct is not None else time.time()
-        self.position = position
+    def __post_init__(self):
+        object.__setattr__(self, "item_id", self.item_config["item_id"])
 
     def __getattr__(self, name):
         # Look up value from the item type's shared definition.
-        return self._item_config[name]
+        return self.item_config[name]
 
     def __repr__(self):
         return (
@@ -1697,7 +1690,6 @@ class Griduniverse(Experiment):
                 previous_second_timestamp = now
 
             self.grid.compute_payoffs()
-
             game_round = self.grid.round
             self.grid.check_round_completion()
             if self.grid.round != game_round and not self.grid.game_over:
