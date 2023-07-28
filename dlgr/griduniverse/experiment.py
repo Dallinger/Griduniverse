@@ -943,6 +943,13 @@ class Gridworld(object):
 
 @dataclass(frozen=True)
 class Item:
+    """A generic object supporting configuration via a game_config.yml
+    definition.
+
+    All instances sharing an item_id will share a reference to the same
+    item_config, and values will be looked up from this common key/value map.
+    Only values that vary by instance will be stored on the object itself.
+    """
     item_config: dict
     id: int = field(default_factory=lambda: uuid.uuid4())
     creation_timestamp: float = field(default_factory=time.time)
