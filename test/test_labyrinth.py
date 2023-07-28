@@ -3,14 +3,15 @@ import pytest
 
 
 class TestLabyrinth(object):
-
     @pytest.fixture
     def labyrinth(self, **kw):
         from dlgr.griduniverse.maze import labyrinth
+
         return labyrinth
 
     def test_creates_walls(self, labyrinth):
         from dlgr.griduniverse.maze import Wall
+
         walls = labyrinth()
         assert isinstance(walls[0], Wall)
 
@@ -38,15 +39,15 @@ class TestLabyrinth(object):
 
 
 class TestMazePrune(object):
-
     @pytest.fixture
     def prune(self, **kw):
         from dlgr.griduniverse import maze
+
         return maze._prune
 
     @pytest.fixture
     def Pos(self):
-        Positioned = namedtuple('Positioned', ['position'])
+        Positioned = namedtuple("Positioned", ["position"])
         return Positioned
 
     def test_prune_removes_isolated_walls_only_when_contiguity_is_1(self, Pos, prune):
@@ -77,48 +78,90 @@ class TestMazePrune(object):
 
         """
         positions = [
-            [0, 7], [0, 8],
-            [1, 7], [1, 8],
-            [2, 0], [2, 3], [2, 6], [2, 7],
-            [3, 1], [3, 5], [3, 6], [3, 9],
-            [4, 0], [4, 2], [4, 4], [4, 5],
-            [5, 3], [5, 4], [5, 7],
-            [6, 1], [6, 2], [6, 3],
-            [7, 1], [7, 2], [7, 3],
-            [8, 0]
+            [0, 7],
+            [0, 8],
+            [1, 7],
+            [1, 8],
+            [2, 0],
+            [2, 3],
+            [2, 6],
+            [2, 7],
+            [3, 1],
+            [3, 5],
+            [3, 6],
+            [3, 9],
+            [4, 0],
+            [4, 2],
+            [4, 4],
+            [4, 5],
+            [5, 3],
+            [5, 4],
+            [5, 7],
+            [6, 1],
+            [6, 2],
+            [6, 3],
+            [7, 1],
+            [7, 2],
+            [7, 3],
+            [8, 0],
         ]
         walls = [Pos(pos) for pos in positions]
-        pruned = [
-            w.position for w in prune(walls, density=0.5, contiguity=1.0)
-        ]
+        pruned = [w.position for w in prune(walls, density=0.5, contiguity=1.0)]
         singles_removed = [
-            [0, 7], [0, 8],
-            [1, 7], [1, 8],
-            [2, 6], [2, 7],
-            [3, 5], [3, 6],
-            [4, 4], [4, 5],
-            [5, 3], [5, 4],
-            [6, 1], [6, 2], [6, 3],
-            [7, 1], [7, 2], [7, 3]
+            [0, 7],
+            [0, 8],
+            [1, 7],
+            [1, 8],
+            [2, 6],
+            [2, 7],
+            [3, 5],
+            [3, 6],
+            [4, 4],
+            [4, 5],
+            [5, 3],
+            [5, 4],
+            [6, 1],
+            [6, 2],
+            [6, 3],
+            [7, 1],
+            [7, 2],
+            [7, 3],
         ]
         assert pruned == singles_removed
 
-    def test_prune_removes_some_contiguous_walls_with_contiguity_less_than_1(self, Pos, prune):
+    def test_prune_removes_some_contiguous_walls_with_contiguity_less_than_1(
+        self, Pos, prune
+    ):
         positions = [
-            [0, 7], [0, 8],
-            [1, 7], [1, 8],
-            [2, 0], [2, 3], [2, 6], [2, 7],
-            [3, 1], [3, 5], [3, 6], [3, 9],
-            [4, 0], [4, 2], [4, 4], [4, 5],
-            [5, 3], [5, 4], [5, 7],
-            [6, 1], [6, 2], [6, 3],
-            [7, 1], [7, 2], [7, 3],
-            [8, 0]
+            [0, 7],
+            [0, 8],
+            [1, 7],
+            [1, 8],
+            [2, 0],
+            [2, 3],
+            [2, 6],
+            [2, 7],
+            [3, 1],
+            [3, 5],
+            [3, 6],
+            [3, 9],
+            [4, 0],
+            [4, 2],
+            [4, 4],
+            [4, 5],
+            [5, 3],
+            [5, 4],
+            [5, 7],
+            [6, 1],
+            [6, 2],
+            [6, 3],
+            [7, 1],
+            [7, 2],
+            [7, 3],
+            [8, 0],
         ]
         num_with_neighbors = 18  # 18 of 26 walls have neighbors in this configuration
         walls = [Pos(pos) for pos in positions]
-        pruned = [
-            w.position for w in prune(walls, density=0.5, contiguity=0.5)
-        ]
+        pruned = [w.position for w in prune(walls, density=0.5, contiguity=0.5)]
 
         assert len(pruned) < num_with_neighbors

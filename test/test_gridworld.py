@@ -2,9 +2,8 @@ import mock
 import pytest
 
 
-@pytest.mark.usefixtures('env')
+@pytest.mark.usefixtures("env")
 class TestItemSpawning(object):
-
     def test_spawn_item_at_position(self, gridworld):
         # reset food state
         gridworld.items_updated = False
@@ -25,45 +24,43 @@ class TestItemSpawning(object):
         assert len(gridworld.item_locations.keys()) == 1
 
 
-@pytest.mark.usefixtures('env')
+@pytest.mark.usefixtures("env")
 class TestSerialize(object):
-
     def test_serializes_players(self, gridworld):
         player = mock.Mock()
-        player.serialize.return_value = 'Serialized Player'
+        player.serialize.return_value = "Serialized Player"
         gridworld.players = {1: player}
         values = gridworld.serialize()
-        assert values['players'] == ['Serialized Player']
-        assert values['round'] == 0
-        assert values['donation_active'] == gridworld.donation_active
-        assert values['rows'] == gridworld.rows
-        assert values['columns'] == gridworld.columns
+        assert values["players"] == ["Serialized Player"]
+        assert values["round"] == 0
+        assert values["donation_active"] == gridworld.donation_active
+        assert values["rows"] == gridworld.rows
+        assert values["columns"] == gridworld.columns
 
     def test_serializes_items_and_walls(self, gridworld):
         values = gridworld.serialize()
-        assert values.get('walls') == []
-        assert values.get('items') == []
+        assert values.get("walls") == []
+        assert values.get("items") == []
         wall = mock.Mock()
         items = mock.Mock()
-        wall.serialize.return_value = 'Serialized Wall'
-        items.serialize.return_value = 'Serialized Item'
+        wall.serialize.return_value = "Serialized Wall"
+        items.serialize.return_value = "Serialized Item"
         gridworld.wall_locations[(1, 1)] = wall
         gridworld.item_locations[(2, 2)] = items
         values = gridworld.serialize()
-        assert values.get('walls') == ['Serialized Wall']
-        assert values.get('items') == ['Serialized Item']
+        assert values.get("walls") == ["Serialized Wall"]
+        assert values.get("items") == ["Serialized Item"]
 
     def test_food_and_wall_serialization_disabled(self, gridworld):
-        gridworld.wall_locations[(1, 1)] = 'ignored'
-        gridworld.item_locations[(2, 2)] = 'ignored'
+        gridworld.wall_locations[(1, 1)] = "ignored"
+        gridworld.item_locations[(2, 2)] = "ignored"
         values = gridworld.serialize(include_walls=False, include_items=False)
-        assert values.get('walls') is None
-        assert values.get('food') is None
+        assert values.get("walls") is None
+        assert values.get("food") is None
 
 
-@pytest.mark.usefixtures('env')
+@pytest.mark.usefixtures("env")
 class TestRoundState(object):
-
     def test_check_round_not_started(self, gridworld):
         # Game hasn't started
         gridworld._start_if_ready()
@@ -87,7 +84,7 @@ class TestRoundState(object):
         gridworld.num_rounds = 2
         gridworld._start_if_ready()
         # When elapsed_round_time surpasses the time_per_round, the round is over
-        with mock.patch('time.time') as mod_time:
+        with mock.patch("time.time") as mod_time:
             start_time = gridworld.start_timestamp
             mod_time.return_value = start_time + gridworld.time_per_round
             assert gridworld.remaining_round_time == 0
@@ -104,7 +101,7 @@ class TestRoundState(object):
         gridworld.players = {1: mock.Mock()}
         gridworld.num_rounds = 1
         gridworld._start_if_ready()
-        with mock.patch('time.time') as mod_time:
+        with mock.patch("time.time") as mod_time:
             # Finish final round
             start_time = gridworld.start_timestamp
             mod_time.return_value = start_time + gridworld.time_per_round
@@ -113,7 +110,7 @@ class TestRoundState(object):
             assert gridworld.game_over is True
 
 
-@pytest.mark.usefixtures('env')
+@pytest.mark.usefixtures("env")
 class TestInstructions(object):
 
     def test_instructions(self, gridworld):
