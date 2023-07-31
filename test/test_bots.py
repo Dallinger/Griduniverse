@@ -1,11 +1,11 @@
 import json
-import mock
-import pytest
 import time
 
+import mock
+import pytest
 from selenium.webdriver.common.keys import Keys
 
-from dlgr.griduniverse.bots import RandomBot, AdvantageSeekingBot, FoodSeekingBot
+from dlgr.griduniverse.bots import AdvantageSeekingBot, FoodSeekingBot, RandomBot
 
 
 @pytest.fixture

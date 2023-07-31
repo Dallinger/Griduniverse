@@ -4,9 +4,9 @@ experiment = Griduniverse()
 participants = 3
 
 data = experiment.run(
-    mode=u'debug',
-    recruiter=u'bots',
-    bot_policy=u"AdvantageSeekingBot",
+    mode="debug",
+    recruiter="bots",
+    bot_policy="AdvantageSeekingBot",
     max_participants=participants,
     num_dynos_worker=participants,
 )

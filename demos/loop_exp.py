@@ -4,10 +4,10 @@ experiment = Griduniverse()
 participants = 1
 iterations = 2
 
-for i in xrange(iterations):
+for i in range(iterations):
     data = experiment.run(
-        time_per_round = 100.0,
-        mode=u'sandbox',
+        time_per_round=100.0,
+        mode="sandbox",
         max_participants=participants,
         num_dynos_worker=participants,
     )
@@ -15,5 +15,7 @@ for i in xrange(iterations):
     results = experiment.analyze(data)
     print(results)
 
-print("Script successfully ran with %d participants for %d iterations" % (participants, iterations))
-
+print(
+    "Script successfully ran with %d participants for %d iterations"
+    % (participants, iterations)
+)

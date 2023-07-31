@@ -19,6 +19,7 @@
 #
 import os
 import sys
+
 here = os.path.dirname(os.path.abspath(__file__))
 src = os.path.abspath(os.path.join(here, '..', '..'))
 sys.path.insert(0, src)
@@ -136,6 +137,7 @@ todo_include_todos = False
 # a list of builtin themes.
 #
 import alabaster
+
 html_theme_path = [alabaster.get_path()]
 extensions += ['alabaster']
 html_theme = 'alabaster'
@@ -392,8 +394,9 @@ source_suffix = [
 
 # -- Install demo files -------------------------------------------
 
-import sys
 import os
+import sys
+
 root = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(root)
 

@@ -1,10 +1,6 @@
-from dallinger.experiments import Griduniverse
 from bams.learners import ActiveLearner
-from bams.query_strategies import (
-    # BALD,
-    HyperCubePool,
-    RandomStrategy,
-)
+from bams.query_strategies import HyperCubePool, RandomStrategy  # BALD,
+from dallinger.experiments import Griduniverse
 
 NDIM = 1
 POOL_SIZE = 500
@@ -18,40 +14,44 @@ def scale_up(threshold, dim):
     out = int(dim * threshold)
     return out
 
+
 def scale_down(threshold, dim):
     """Rescale 0 =< output =< 1"""
-    out = float(dim/threshold) if threshold else 0.0
+    out = float(dim / threshold) if threshold else 0.0
     return out
+
 
 def oracle(x):
     """Run a GU game by scaling up the features so they can be input into the game.
     Then scale them done so the active learner can understand them.
     """
-    grid_config = {"participants": 1,
-                   "time_per_round": 20.0,
-                   "num_food": 100,
-                   "average_score": 200.0,
-                }
+    grid_config = {
+        "participants": 1,
+        "time_per_round": 20.0,
+        "num_food": 100,
+        "average_score": 200.0,
+    }
     experiment = Griduniverse()
     # Scale up
-    print x[0]
-    num_food = scale_up(grid_config['num_food'], float(x[0]))
-    print num_food
+    print(x[0])
+    num_food = scale_up(grid_config["num_food"], float(x[0]))
+    print(num_food)
     data = experiment.run(
-    mode=u'debug',
-    recruiter=u'bots',
-    bot_policy=u"AdvantageSeekingBot",
-    time_per_round = grid_config['time_per_round'],
-    num_food = num_food,
-    max_participants=grid_config['participants'],
-    num_dynos_worker=grid_config['participants'],
-    webdriver_type=u'chrome',
+        mode="debug",
+        recruiter="bots",
+        bot_policy="AdvantageSeekingBot",
+        time_per_round=grid_config["time_per_round"],
+        num_food=num_food,
+        max_participants=grid_config["participants"],
+        num_dynos_worker=grid_config["participants"],
+        webdriver_type="chrome",
     )
     score = experiment.average_score(data)
-    print score
+    print(score)
     # Scale back down
-    results = scale_down(grid_config['average_score'], score)
+    results = scale_down(grid_config["average_score"], score)
     return results
+
 
 learner = ActiveLearner(
     query_strategy=RandomStrategy(pool=HyperCubePool(NDIM, POOL_SIZE)),
@@ -67,4 +67,3 @@ while learner.budget > 0:
     learner.update(x, y)
     print(learner.posteriors)
     print(learner.map_model)
-

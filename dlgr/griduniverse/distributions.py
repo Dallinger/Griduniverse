@@ -1,5 +1,6 @@
-import numpy
 import random
+
+import numpy
 
 
 def _is_valid_boundary(rows, columns, row, column):

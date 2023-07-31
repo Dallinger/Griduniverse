@@ -2,13 +2,13 @@
 Test fixtures for `dlgr.griduniverse` module.
 """
 import copy
-import mock
 import os
-import pytest
 import shutil
 import tempfile
-from dallinger import models
 
+import mock
+import pytest
+from dallinger import models
 
 skip_on_ci = pytest.mark.skipif(
     bool(os.environ.get("CI", False)), reason="Only runs outside of CI environment"
@@ -83,8 +83,7 @@ def stub_config():
         "threads": "1",
         "whimsical": True,
     }
-    from dallinger.config import default_keys
-    from dallinger.config import Configuration
+    from dallinger.config import Configuration, default_keys
 
     config = Configuration()
     for key in default_keys:

@@ -2,8 +2,6 @@
 
 import collections
 import datetime
-import flask
-import gevent
 import itertools
 import json
 import logging
@@ -13,28 +11,24 @@ import random
 import string
 import time
 import uuid
-import yaml
-
-from cached_property import cached_property
 from dataclasses import dataclass, field
-from faker import Factory
-from sqlalchemy import create_engine
-from sqlalchemy import func
-from sqlalchemy.orm import (
-    sessionmaker,
-    scoped_session,
-)
 
 import dallinger
+import flask
+import gevent
+import yaml
+from cached_property import cached_property
 from dallinger import db
 from dallinger.compat import unicode
 from dallinger.config import get_config
 from dallinger.experiment import Experiment
+from faker import Factory
+from sqlalchemy import create_engine, func
+from sqlalchemy.orm import scoped_session, sessionmaker
 
 from . import distributions
-from .maze import Wall
-from .maze import labyrinth
 from .bots import Bot
+from .maze import Wall, labyrinth
 from .models import Event
 
 logger = logging.getLogger(__file__)

@@ -3,10 +3,11 @@ Tests for `dlgr.griduniverse` module.
 """
 import collections
 import json
-import mock
-import pytest
 import time
 import uuid
+
+import mock
+import pytest
 
 from dlgr.griduniverse.experiment import Player
 

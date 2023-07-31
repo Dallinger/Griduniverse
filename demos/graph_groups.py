@@ -1,36 +1,44 @@
 from __future__ import unicode_literals
+
 import csv
 import json
+
 import matplotlib
+import matplotlib.pyplot as plt
 import pandas as pd
 from dallinger.experiments import Griduniverse
+
 from dlgr.griduniverse.experiment import Gridworld
 
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
+matplotlib.use("Agg")
 
 ROWS = 40
 COLS = 40
 # We need to increase the CSV field size to successfully load GU experiment
 # data with a large grid
-ORIG_CSV_LIMIT = csv.field_size_limit(ROWS*COLS*1024)
+ORIG_CSV_LIMIT = csv.field_size_limit(ROWS * COLS * 1024)
 
 BASE_ID = "b0d3daa{}-f7ed-43fa-ad6b-9928aa51f8e1"
 PARTICIPANTS = 6
 
 # Repeat for each group counts into which we can divide participants
-GROUP_COUNTS = [n for n in range(1, len(Gridworld.player_colors) + 1)
-                if PARTICIPANTS % n == 0 and n != PARTICIPANTS]
+GROUP_COUNTS = [
+    n
+    for n in range(1, len(Gridworld.player_colors) + 1)
+    if PARTICIPANTS % n == 0 and n != PARTICIPANTS
+]
 
 PLOT_VARS = ["average_score", "average_payoff"]
-print "Running with {} participants and group counts {}".format(
-    PARTICIPANTS, GROUP_COUNTS
+print(
+    "Running with {} participants and group counts {}".format(
+        PARTICIPANTS, GROUP_COUNTS
+    )
 )
 
 EXP_CONFIG = {
     "mode": "live",
     "max_participants": PARTICIPANTS,
-    "num_recruits": PARTICIPANTS*3,
+    "num_recruits": PARTICIPANTS * 3,
     "num_colors": 1,
     "time_per_round": 60.0,
     "num_rounds": 2,
@@ -63,12 +71,15 @@ for count in GROUP_COUNTS:
     config["num_colors"] = count
     data.append(exp.collect(exp_id, exp_config=config))
 
-graph_data = [(count, json.loads(exp.analyze(data[i])))
-              for i, count in enumerate(GROUP_COUNTS)]
+graph_data = [
+    (count, json.loads(exp.analyze(data[i]))) for i, count in enumerate(GROUP_COUNTS)
+]
 
-df = pd.DataFrame([[d[1][v] for v in PLOT_VARS] for d in graph_data],
-                  index=[d[0] for d in graph_data],
-                  columns=PLOT_VARS)
+df = pd.DataFrame(
+    [[d[1][v] for v in PLOT_VARS] for d in graph_data],
+    index=[d[0] for d in graph_data],
+    columns=PLOT_VARS,
+)
 
 axes = df.plot(kind="bar", title="Griduniverse Score/Payoff by Number of Groups")
 axes.set_xlabel("Number of Groups")
@@ -76,4 +87,4 @@ fig = axes.get_figure()
 
 fig.savefig("groups_graph.png")
 plt.close(fig)
-print "Graph saved to groups_graph.png"
+print("Graph saved to groups_graph.png")

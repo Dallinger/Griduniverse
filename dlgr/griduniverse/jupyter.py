@@ -1,11 +1,7 @@
+from dallinger.jupyter import ExperimentWidget as DallingerExperimentWidget
 from ipywidgets import widgets
 from jinja2 import Template
-from traitlets import (
-    observe,
-    Unicode,
-)
-
-from dallinger.jupyter import ExperimentWidget as DallingerExperimentWidget
+from traitlets import Unicode, observe
 
 header_template = Template(
     """

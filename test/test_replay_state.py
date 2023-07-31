@@ -1,6 +1,7 @@
 """Tests for the data module."""
 
 from datetime import datetime
+
 import pytest
 
 

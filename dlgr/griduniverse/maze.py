@@ -1,6 +1,7 @@
-import gevent
 import itertools
 import random
+
+import gevent
 
 
 class Wall(object):

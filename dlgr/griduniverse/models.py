@@ -1,5 +1,5 @@
-from dallinger.models import Info
 from dallinger.information import State
+from dallinger.models import Info
 from sqlalchemy import Column, Index
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.declarative import declared_attr

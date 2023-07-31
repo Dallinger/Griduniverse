@@ -7,20 +7,20 @@ import operator
 import random
 
 import gevent
-from selenium.common.exceptions import StaleElementReferenceException
-from selenium.common.exceptions import WebDriverException
-from selenium.common.exceptions import NoSuchElementException
+from dallinger.bots import BotBase, HighPerformanceBotBase
+from dallinger.config import get_config
+from selenium.common.exceptions import (
+    NoSuchElementException,
+    StaleElementReferenceException,
+    WebDriverException,
+)
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support.ui import Select
+from selenium.webdriver.support.ui import Select, WebDriverWait
 
-from dallinger.bots import BotBase, HighPerformanceBotBase
-from dallinger.config import get_config
-
-from .maze_utils import positions_to_maze, maze_to_graph, find_path_astar
+from .maze_utils import find_path_astar, maze_to_graph, positions_to_maze
 
 logger = logging.getLogger("griduniverse")
 
