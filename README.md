@@ -1,7 +1,6 @@
 # Griduniverse
 
 [![Build Status](https://github.com/dallinger/Griduniverse/actions/workflows/test.yml/badge.svg)](https://github.com/Dallinger/Griduniverse/actions/workflows/test.yml)
-[![Greenkeeper badge](https://badges.greenkeeper.io/Dallinger/Griduniverse.svg)](https://greenkeeper.io/)
 [![codecov](https://codecov.io/gh/Dallinger/Griduniverse/branch/master/graph/badge.svg)](https://codecov.io/gh/Dallinger/Griduniverse)
 
 
