@@ -303,42 +303,45 @@ class Gridworld(object):
         # Items and transitions
         self.item_config = kwargs.get("item_config", DEFAULT_ITEM_CONFIG)
         self.transition_config = kwargs.get("transition_config", {})
+        self.player_config = kwargs.get("player_config", {})
+
+        if self.player_config.get('available_colors'):
+            self.player_color_names = []
+            self.player_colors = []
+            for name, value in self.player_config['available_colors'].items():
+                self.player_color_names.append(name)
+                self.player_colors.append(value)
 
         # Any maturing items?
         self.includes_maturing_items = any(
             item["maturation_threshold"] > 0.0 for item in self.item_config.values()
         )
 
-        # Get item spawning probability distribution function and args
+        # Get item spawning probability distribution and public good calories
         for item_type in self.item_config.values():
-            item_type["probability_function_args"] = []
-            parts = item_type["probability_distribution"].split()
-            if len(parts) > 1:
-                item_type["probability_distribution"] = parts[0]
-                item_type["probability_function_args"] = parts[1:]
-            probability_distribution = "{}_probability_distribution".format(
-                item_type["probability_distribution"]
-            )
-            item_type["probability_function"] = getattr(
-                distributions, probability_distribution, None
-            )
-            if item_type["probability_function"] is None:
-                logger.info(
-                    "Unknown item probability distribution: {}.".format(
-                        item_type["probability_distribution"]
-                    )
-                )
-                item_type[
-                    "probability_function"
-                ] = distributions.random_probability_distribution
+            item_type["probability_function"], item_type["probability_function_args"] = self._get_probablity_func_for_config(item_type["probability_distribution"])
 
-        # public good
-        for item_type in self.item_config.values():
             item_type["public_good"] = (
                 item_type["calories"]
                 * item_type["public_good_multiplier"]
                 / self.num_players
             )
+
+        # Player probability distribution
+        self.player_config["probability_function"], self.player_config["probability_function_args"] = self._get_probablity_func_for_config(self.player_config["probability_distribution"])
+
+    def _get_probablity_func_for_config(self, probability_distribution):
+        probability_function_args = []
+        parts = probability_distribution.split()
+        if len(parts) > 1:
+            probability_distribution = parts[0]
+            probability_function_args = parts[1:]
+        probability_distribution = f"{probability_distribution}_probability_distribution"
+        probability_function = getattr(distributions, probability_distribution, None)
+        if probability_function is None:
+            logger.info(f"Unknown item probability distribution: {probability_distribution}.")
+            probability_function = distributions.random_probability_distribution
+        return probability_function, probability_function_args
 
     def can_occupy(self, position):
         if self.player_overlap:
@@ -863,11 +866,9 @@ class Gridworld(object):
 
     def spawn_player(self, id=None, **kwargs):
         """Spawn a player."""
-        # For player position, use same distribution as first configured item.
-        item_id = list(self.item_config.keys())[0]
         player = Player(
             id=id,
-            position=self._random_empty_position(item_id),
+            position=self._random_empty_position(player=True),
             num_possible_colors=self.num_colors,
             motion_speed_limit=self.motion_speed_limit,
             motion_cost=self.motion_cost,
@@ -885,16 +886,24 @@ class Gridworld(object):
         self._start_if_ready()
         return player
 
-    def _random_empty_position(self, item_id):
+    def _random_empty_position(self, item_id=None, player=False):
         """Select an empty cell at random, using the configured probability
         distribution."""
         rows = self.rows
         columns = self.columns
         empty_cell = False
+        if item_id:
+            prob_func = self.item_config[item_id]["probability_function"]
+            func_args = self.item_config[item_id]["probability_function_args"]
+        elif player:
+            prob_func = self.player_config["probability_function"]
+            func_args = self.player_config["probability_function_args"]
+        else:
+            prob_func = distributions.random_probability_distribution
+            func_args = []
+
         while not empty_cell:
-            position = self.item_config[item_id]["probability_function"](
-                rows, columns, *self.item_config[item_id]["probability_function_args"]
-            )
+            position = prob_func(rows, columns, *func_args)
             empty_cell = self._empty(position)
 
         return position
@@ -1202,6 +1211,7 @@ class Griduniverse(Experiment):
                 log_event=self.record_event,
                 item_config=self.item_config,
                 transition_config=self.transition_config,
+                player_config=self.player_config,
                 **self.config.as_dict(),
             )
             self.session.commit()
@@ -1231,6 +1241,8 @@ class Griduniverse(Experiment):
             (t["actor_start"], t["target_start"]): t
             for t in self.game_config.get("transitions", ())
         }
+
+        self.player_config = self.game_config.get("player_config")
         # This is accessed by the grid.html template to load the configuration on the client side:
         # TODO: could this instead be passed as an arg to the template in
         # the /grid route?
