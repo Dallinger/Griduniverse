@@ -11,32 +11,18 @@ from dlgr.griduniverse.bots import RandomBot, AdvantageSeekingBot, FoodSeekingBo
 @pytest.fixture
 def overrecruited_response():
     return {
-        'status': 'OK',
-        'participant': {
-            'id': 4,
-            'status': 'overrecruited'
-        },
-        'quorum': {
-            'q': 1,
-            'n': 1,
-            'overrecruited': True
-        }
+        "status": "OK",
+        "participant": {"id": 4, "status": "overrecruited"},
+        "quorum": {"q": 1, "n": 1, "overrecruited": True},
     }
 
 
 @pytest.fixture
 def working_response():
     return {
-        'status': 'OK',
-        'participant': {
-            'id': 4,
-            'status': 'working'
-        },
-        'quorum': {
-            'q': 5,
-            'n': 1,
-            'overrecruited': False
-        }
+        "status": "OK",
+        "participant": {"id": 4, "status": "working"},
+        "quorum": {"q": 5, "n": 1, "overrecruited": False},
     }
 
 
@@ -54,15 +40,12 @@ def grid_state():
     # WWWWWWWWWW
     food_positions = [
         {
-            u'color': [0.534, 0.591, 0.087],
-            u'id': food_id,
-            u'maturity': 0.9,
-            u'position': position
-        } for food_id, position in enumerate([
-            [1, 1],
-            [4, 2],
-            [4, 4]
-        ])
+            "color": [0.534, 0.591, 0.087],
+            "id": food_id,
+            "maturity": 0.9,
+            "position": position,
+        }
+        for food_id, position in enumerate([[1, 1], [4, 2], [4, 4]])
     ]
     wall_positions = [
         [1, 3],
@@ -82,65 +65,65 @@ def grid_state():
         wall_positions.append([0, i])
         wall_positions.append([9, i])
     wall_positions = [
-        {u'color': [0.5, 0.5, 0.5], u'position': position} for position in wall_positions
+        {"color": [0.5, 0.5, 0.5], "position": position} for position in wall_positions
     ]
     grid_data = {
-        u'columns': 10,
-        u'donation_active': False,
-        u'food': food_positions,
-        u'players': [
+        "columns": 10,
+        "donation_active": False,
+        "food": food_positions,
+        "players": [
             {
-                u'color': u'RED',
-                u'id': 1,
-                u'identity_visible': True,
-                u'motion_auto': False,
-                u'motion_direction': u'right',
-                u'motion_speed_limit': 8,
-                u'motion_timestamp': 0,
-                u'name': u'Jeanne Brown',
-                u'payoff': 0.0,
-                u'position': [5, 5],
-                u'score': 0.0
+                "color": "RED",
+                "id": 1,
+                "identity_visible": True,
+                "motion_auto": False,
+                "motion_direction": "right",
+                "motion_speed_limit": 8,
+                "motion_timestamp": 0,
+                "name": "Jeanne Brown",
+                "payoff": 0.0,
+                "position": [5, 5],
+                "score": 0.0,
             },
             {
-                u'color': u'BLUE',
-                u'id': 2,
-                u'identity_visible': True,
-                u'motion_auto': False,
-                u'motion_direction': u'right',
-                u'motion_speed_limit': 8,
-                u'motion_timestamp': 0,
-                u'name': u'Kelsey Houston',
-                u'payoff': 0.0,
-                u'position': [2, 2],
-                u'score': 0.0
+                "color": "BLUE",
+                "id": 2,
+                "identity_visible": True,
+                "motion_auto": False,
+                "motion_direction": "right",
+                "motion_speed_limit": 8,
+                "motion_timestamp": 0,
+                "name": "Kelsey Houston",
+                "payoff": 0.0,
+                "position": [2, 2],
+                "score": 0.0,
             },
             {
-                u'color': u'YELLOW',
-                u'id': 3,
-                u'identity_visible': True,
-                u'motion_auto': False,
-                u'motion_direction': u'right',
-                u'motion_speed_limit': 8,
-                u'motion_timestamp': 0,
-                u'name': u'Rani Baker',
-                u'payoff': 0.0,
-                u'position': [5, 7],
-                u'score': 0.0
-            }
+                "color": "YELLOW",
+                "id": 3,
+                "identity_visible": True,
+                "motion_auto": False,
+                "motion_direction": "right",
+                "motion_speed_limit": 8,
+                "motion_timestamp": 0,
+                "name": "Rani Baker",
+                "payoff": 0.0,
+                "position": [5, 7],
+                "score": 0.0,
+            },
         ],
-        u'round': 0,
-        u'rows': 10,
-        u'walls': wall_positions}
+        "round": 0,
+        "rows": 10,
+        "walls": wall_positions,
+    }
 
     return json.dumps(grid_data)
 
 
 class TestRandomMovementBot(object):
-
     @pytest.fixture
     def bot(self):
-        b = RandomBot('http://example.com')
+        b = RandomBot("http://example.com")
         b.publish = mock.Mock()
         return b
 
@@ -154,11 +137,13 @@ class TestRandomMovementBot(object):
             assert bot.get_next_key() in bot.VALID_KEYS
 
     def test_random_bot_sends_random_key(self, bot):
-        bot.VALID_KEYS = [Keys.DOWN, ]
+        bot.VALID_KEYS = [
+            Keys.DOWN,
+        ]
         bot.publish.assert_not_called()
         bot.send_next_key()
         bot.publish.assert_called_once_with(
-            {'type': 'move', 'player_id': '', 'move': 'down'}
+            {"type": "move", "player_id": "", "move": "down"}
         )
 
     def test_skips_experiment_if_overrecruited(self, bot, overrecruited_response):
@@ -174,16 +159,15 @@ class TestRandomMovementBot(object):
 
 
 class TestAdvantageSeekingBot(object):
-
     @pytest.fixture
     def bot(self):
-        return AdvantageSeekingBot('http://example.com')
+        return AdvantageSeekingBot("http://example.com")
 
     @pytest.fixture
     def bot_in_maze(self, bot, grid_state):
         bot.grid = {}
         bot.participant_id = 1
-        bot.handle_state({'grid': grid_state, u'remaining_time': 60})
+        bot.handle_state({"grid": grid_state, "remaining_time": 60})
         bot.state = bot.observe_state()
         return bot
 
@@ -202,22 +186,14 @@ class TestAdvantageSeekingBot(object):
         assert bot_in_maze.food_positions == [(1, 1), (4, 2), (4, 4)]
         assert bot_in_maze.player_positions == {1: [5, 5], 2: [2, 2], 3: [5, 7]}
         assert bot_in_maze.distances() == {
-            1: {
-                0: None,
-                1: 10,
-                2: 2
-            }, 2: {
-                0: 2,
-                1: None,
-                2: None
-            }, 3: {
-                0: None,
-                1: 12,
-                2: 4
-            }
+            1: {0: None, 1: 10, 2: 2},
+            2: {0: 2, 1: None, 2: None},
+            3: {0: None, 1: 12, 2: 4},
         }
 
-    def test_advantage_seeking_bot_goes_for_closest_food_not_already_a_target(self, bot_in_maze):
+    def test_advantage_seeking_bot_goes_for_closest_food_not_already_a_target(
+        self, bot_in_maze
+    ):
         bot_in_maze.player_id = 1
         assert bot_in_maze.get_next_key() == Keys.UP
         assert bot_in_maze.target_coordinates == (4, 4)
@@ -235,30 +211,31 @@ class TestAdvantageSeekingBot(object):
         bot_in_maze.on_grid = True
         bot_in_maze._quorum_reached = True
         bot_in_maze.END_BUFFER_SECONDS = 1
-        HPBGUB = 'dlgr.griduniverse.bots.HighPerformanceBaseGridUniverseBot'
+        HPBGUB = "dlgr.griduniverse.bots.HighPerformanceBaseGridUniverseBot"
 
-        with mock.patch(HPBGUB + '.wait_for_grid') as wait_for_grid:
+        with mock.patch(HPBGUB + ".wait_for_grid") as wait_for_grid:
             wait_for_grid.return_value = True
-            bot_in_maze.grid['remaining_time'] = 2
+            bot_in_maze.grid["remaining_time"] = 2
             before_participate = time.time()
-            with mock.patch(HPBGUB + '.send_next_key') as send_next_key:
+            with mock.patch(HPBGUB + ".send_next_key") as send_next_key:
                 send_next_key.return_value = None
                 bot_in_maze.participate()
             after_participate = time.time()
-            assert after_participate - before_participate < 6  # 2s left, 1s grace, ~1s overhead
+            assert (
+                after_participate - before_participate < 6
+            )  # 2s left, 1s grace, ~1s overhead
 
 
 class TestFoodSeekingBot(object):
-
     @pytest.fixture
     def bot(self):
-        return FoodSeekingBot('http://example.com')
+        return FoodSeekingBot("http://example.com")
 
     @pytest.fixture
     def bot_in_maze(self, bot, grid_state):
         bot.grid = {}
         bot.participant_id = 1
-        bot.handle_state({'grid': grid_state, u'remaining_time': 60})
+        bot.handle_state({"grid": grid_state, "remaining_time": 60})
         bot.state = bot.observe_state()
         return bot
 

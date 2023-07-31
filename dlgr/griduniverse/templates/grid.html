@@ -4,9 +4,10 @@
 <script type="text/javascript">
     // Parameters
     settings = {};
+    settings.item_config = {{ experiment.item_config_json | safe}};
+    settings.transition_config = {{ experiment.transition_config_json | safe}};
     settings.block_size = {{ experiment.grid.block_size }};
     settings.padding = {{ experiment.grid.padding }};
-    settings.respawn_food = {% if experiment.grid.respawn_food %}true{% else %}false{% endif %};
     settings.dollars_per_point = {{ experiment.grid.dollars_per_point }};
     settings.rows = {{ experiment.grid.rows }};
     settings.columns = {{ experiment.grid.columns }};
@@ -30,7 +31,7 @@
     settings.identity_signaling = {% if experiment.grid.identity_signaling %}true{% else %}false{% endif %};
     settings.identity_starts_visible = {% if experiment.grid.identity_starts_visible %}true{% else %}false{% endif %};
     settings.motion_speed_limit = {{ experiment.grid.motion_speed_limit }};
-    settings.food_visible = {% if experiment.grid.food_visible %}true{% else %}false{% endif %};
+    // Visibility will be configured per-item type
     settings.show_chatroom = {% if experiment.grid.show_chatroom %}true{% else %}false{% endif %};
     settings.pseudonyms = {% if experiment.grid.pseudonyms %}true{% else %}false{% endif %};
     settings.walls_visible = {% if experiment.grid.walls_visible %}true{% else %}false{% endif %};
@@ -39,7 +40,7 @@
     settings.donation_amount = {{ experiment.grid.donation_amount }};
     settings.donation_individual = {% if experiment.grid.donation_individual %}true{% else %}false{% endif %};
     settings.donation_group = {% if experiment.grid.donation_group %}true{% else %}false{% endif %};
-    settings.donation_ingroup = {% if experiment.grid.donation_ingroup %}true{% else %}false{% endif %};    
+    settings.donation_ingroup = {% if experiment.grid.donation_ingroup %}true{% else %}false{% endif %};
     settings.donation_public = {% if experiment.grid.donation_public %}true{% else %}false{% endif %};
     settings.donation_active = {% if experiment.grid.donation_active %}true{% else %}false{% endif %};
     settings.donation_type = null;
@@ -94,7 +95,7 @@
         <ul id="messages">
             {% if experiment.grid.alternate_consumption_donation %}
                 <li>
-                    <span class="name">Moderator: </span> Starting a consumption round. Players have to consume as much food as possible.
+                    <span class="name">Moderator: </span> Starting a consumption round. Players have to consume as much as possible.
                 </li>
             {% endif %}
         </ul>

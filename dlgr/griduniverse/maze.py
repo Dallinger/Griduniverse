@@ -5,11 +5,12 @@ import random
 
 class Wall(object):
     """A segment of colored wall occupying a single grid postion"""
+
     DEFAULT_COLOR = [0.5, 0.5, 0.5]
 
     def __init__(self, **kwargs):
-        self.position = kwargs.get('position', [0, 0])
-        self.color = kwargs.get('color', self.DEFAULT_COLOR)
+        self.position = kwargs.get("position", [0, 0])
+        self.color = kwargs.get("color", self.DEFAULT_COLOR)
 
     def serialize(self):
         if self.color != self.DEFAULT_COLOR:
@@ -42,8 +43,8 @@ def _generate(rows, columns):
     c = (columns - 1) // 2
     r = (rows - 1) // 2
     visited = [[0] * c + [1] for _ in range(r)] + [[1] * (c + 1)]
-    ver = [["* "] * c + ['*'] for _ in range(r)] + [[]]
-    hor = [["**"] * c + ['*'] for _ in range(r + 1)]
+    ver = [["* "] * c + ["*"] for _ in range(r)] + [[]]
+    hor = [["**"] * c + ["*"] for _ in range(r + 1)]
 
     # Select a starting position at random, and mark it as visited:
     sx = random.randrange(c)
@@ -53,14 +54,9 @@ def _generate(rows, columns):
     stack = [(sx, sy)]
     while len(stack) > 0:
         (x, y) = stack.pop()
-        d = [
-            (x - 1, y),
-            (x, y + 1),
-            (x + 1, y),
-            (x, y - 1)
-        ]
+        d = [(x - 1, y), (x, y + 1), (x + 1, y), (x, y - 1)]
         random.shuffle(d)
-        for (xx, yy) in d:
+        for xx, yy in d:
             if visited[yy][xx]:
                 continue
             if xx == x:
@@ -71,9 +67,9 @@ def _generate(rows, columns):
             visited[yy][xx] = 1
 
     # Convert the maze to a list of wall cell positions.
-    the_rows = ([j for i in zip(hor, ver) for j in i])
+    the_rows = [j for i in zip(hor, ver) for j in i]
     the_rows = [list("".join(j)) for j in the_rows]
-    maze = [item == '*' for sublist in the_rows for item in sublist]
+    maze = [item == "*" for sublist in the_rows for item in sublist]
     positions = []
     for idx, value in enumerate(maze):
         if value:
@@ -87,9 +83,7 @@ def _prune(walls, density, contiguity):
     num_to_prune = int(round(len(walls) * (1 - density)))
     num_pruned = 0
     while num_pruned < num_to_prune:
-        to_prune = _classify_terminals(
-            walls, limit=num_to_prune - num_pruned
-        )
+        to_prune = _classify_terminals(walls, limit=num_to_prune - num_pruned)
         walls = [w for i, w in enumerate(walls) if i not in to_prune]
         if len(to_prune) == 0:
             break
@@ -147,5 +141,7 @@ def _classify_terminals(walls, limit=None):
     to_prune = set()
     for entries in found:
         if len(to_prune) < limit:
-            to_prune = to_prune.union(set(itertools.islice(entries, limit - len(to_prune))))
+            to_prune = to_prune.union(
+                set(itertools.islice(entries, limit - len(to_prune)))
+            )
     return to_prune

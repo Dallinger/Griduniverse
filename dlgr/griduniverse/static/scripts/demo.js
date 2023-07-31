@@ -121,8 +121,8 @@ var mouse = position(pixels.canvas);
 
 var isSpectator = false;
 var start = performance.now();
-var food = [];
-var foodConsumed = [];
+var items = [];
+var itemsConsumed = [];
 var walls = [];
 var wall_map = {};
 var row, column, rand;
@@ -149,17 +149,83 @@ var color2idx = function (color) {
 var color2name = function (color) {
   var idx = color2idx(color);
   return settings.player_color_names[idx];
-};
+}
 
-var Food = function (settings) {
-  if (!(this instanceof Food)) {
-    return new Food();
+function hexToRgbPercentages(hexColor) {
+  if (hexColor.startsWith("#")) {
+    hexColor = hexColor.substring(1);
   }
-  this.id = settings.id;
-  this.position = settings.position;
-  this.color = settings.color;
-  return this;
-};
+
+  // Check if the hex color has a valid length (either 3 or 6 characters)
+  if (hexColor.length !== 3 && hexColor.length !== 6) {
+    throw new Error("Invalid hex color format. It should be either 3 or 6 characters long.");
+  }
+
+  // If the hex color is 3 characters long, expand it to 6 characters by
+  // duplicating each character
+  if (hexColor.length === 3) {
+    hexColor = hexColor
+      .split("")
+      .map((char) => char + char)
+      .join("");
+  }
+
+  // Convert the hex color to RGB percentage values
+  const red = parseInt(hexColor.substring(0, 2), 16) / 255;
+  const green = parseInt(hexColor.substring(2, 4), 16) / 255;
+  const blue = parseInt(hexColor.substring(4, 6), 16) / 255;
+
+  return [red, green, blue];
+}
+
+function rgbOnScale(startColor, endColor, percentage) {
+
+  const result = [];
+  for (let i = 0; i < 3; i++) {
+    result[i] = endColor[i] + percentage * (startColor[i] - endColor[i]);
+  }
+
+  console.log("Item color: " + result);
+  return result;
+}
+/**
+ * Representation of a game item, which for the moment is limited to a
+ * simple Food type.
+ */
+class Item {
+  constructor(id, itemId, position, maturity) {
+    this.id = id;
+    this.itemId = itemId;
+    this.position = position;
+    this.maturity = maturity;
+    // XXX Maybe we can avoid this copy of every shared value
+    // to every instance, but going with it for now.
+    Object.assign(this, settings.item_config[this.itemId]);
+  }
+
+  /**
+   * Calculate a color based on sprite definition and maturity
+   */
+  get color() {
+    let immature, mature;
+
+    if (this.sprite.includes(",")) {
+      [immature, mature] = this.sprite.split(",");
+      // For now, assume these are hex colors
+    } else {
+      immature = mature = this.sprite;
+    }
+
+    return rgbOnScale(
+      hexToRgbPercentages(immature),
+      hexToRgbPercentages(mature),
+      this.maturity
+    );
+  }
+
+
+
+}
 
 var Wall = function (settings) {
   if (!(this instanceof Wall)) {
@@ -561,7 +627,6 @@ pixels.frame(function() {
   // Update the background.
   var ego = players.ego(),
       w = getWindowPosition(),
-      limitVisibility,
       dimness,
       rescaling,
       i, j, x, y;
@@ -575,15 +640,16 @@ pixels.frame(function() {
     return newColor;
   });
 
-  for (i = 0; i < food.length; i++) {
-    // Players digest the food.
-    var cur_food = food[i];
-    if (players.isPlayerAt(cur_food.position)) {
-      foodConsumed.push(food.splice(i, 1));
-    } else {
-      if (settings.food_visible) {
-        section.plot(cur_food.position[1], cur_food.position[0], cur_food.color);
+  for (i = 0; i < items.length; i++) {
+    var currentItem = items[i];
+    if (players.isPlayerAt(currentItem.position)) {
+      if (! currentItem.interactive) {
+        // Non-interactive items get consumed immediately
+        itemsConsumed.push(items.splice(i, 1));  // XXX this push does nothing, AFAICT (Jesse)
       }
+      // Else: show info about the item in some way
+    } else {
+      section.plot(currentItem.position[1], currentItem.position[0], currentItem.color);
     }
   }
 
@@ -952,16 +1018,17 @@ function onGameStateChange(msg) {
 
   updateDonationStatus(state.donation_active);
 
-  // Update food.
-  if (state.food !== undefined && state.food !== null) {
-    food = [];
-    for (j = 0; j < state.food.length; j++) {
-      food.push(
-        new Food({
-          id: state.food[j].id,
-          position: state.food[j].position,
-          color: state.food[j].color
-        })
+  // Update items
+  if (state.items !== undefined && state.items !== null) {
+    items = [];
+    for (j = 0; j < state.items.length; j++) {
+      items.push(
+        new Item(
+          state.items[j].id,
+          state.items[j].item_id,
+          state.items[j].position,
+          state.items[j].maturity,
+        )
       );
     }
   }

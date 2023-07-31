@@ -1,82 +1,130 @@
 ---
+player_config:
+  probability_distribution: "random"
+  available_colors:
+    BLUE: [0.50, 0.86, 1.00]
+    YELLOW: [1.00, 0.86, 0.50]
+    ORANGE: [0.91, 0.50, 0.02]
+    RED: [0.64, 0.11, 0.31]
+    PURPLE: [0.85, 0.60, 0.85]
+    TEAL: [0.77, 0.96, 0.90]
 
-objects:
+item_defaults:
+  item_id: 1
+  item_count: 8
+  calories: 5
+  crossable: true
+  interactive: false
+  maturation_speed: 0.01
+  maturation_threshold: 0.5
+  n_uses: 1
+  name: Food
+  plantable: false
+  planting_cost: 1
+  portable: true
+  probability_distribution: "random"
+  public_good: 0.0
+  public_good_multiplier: 0.0
+  respawn: true
+  seasonal_growth_rate: 1.0
+  spawn_rate: 1.0
+  sprite: "#8a9b0f,#7a6b54"
 
-  - calories: null
+items:
+  # Legacy GU Food item
+  - item_id: 9
+    calories: 5
     crossable: true
-    interactive: true
-    n_uses: null
-    name: Wild Carrot Plant
-    object_id: 1
-    portable: false
-    spawn_rate: 0.15
-
-  - calories: null
-    crossable: true
-    interactive: true
-    n_uses: null
-    name: Stone
-    object_id: 2
-    portable: true
-    spawn_rate: 0.05
-
-  - calories: null
-    crossable: false
-    interactive: true
-    n_uses: null
-    name: Big Hard Rock
-    object_id: 3
-    portable: false
-    spawn_rate: 0.05
-
-  - calories: null
-    crossable: false
-    interactive: true
-    n_uses: 6
-    name: Gooseberry Bush
-    object_id: 4
-    portable: false
-    spawn_rate: 0.1
-
-  - calories: null
-    crossable: false
-    interactive: true
-    n_uses: null
-    name: Sharp Stone
-    object_id: 5
-    portable: true
-    spawn_rate: null
-
-  - calories: 5
-    crossable: true
-    interactive: true
+    interactive: false
+    maturation_speed: 0.1
+    maturation_threshold: 0.5
     n_uses: 1
-    name: Wild Carrot
-    object_id: 6
+    name: Food
+    plantable: false
+    planting_cost: 1
     portable: true
-    spawn_rate: null
+    respawn: true
+    sprite: "#8a9b0f,#7a6b54"
 
-  - calories: 3
+  - item_id: 10
+    calories: 3
     crossable: true
-    interactive: true
+    interactive: false
+    item_count: 4
+    maturation_speed: 0.2
+    maturation_threshold: 0.5
     n_uses: 1
-    name: Gooseberry
-    object_id: 7
+    name: Food2
+    plantable: false
+    planting_cost: 1
     portable: true
-    spawn_rate: null
+    respawn: true
+    sprite: "#2a9b0f,#1a6b54"
 
-  - calories: null
-    crossable: false
-    interactive: true
-    n_uses: 1
-    name: Empty Gooseberry Bush
-    object_id: 8
-    portable: false
-    spawn_rate: null
+  # One Hour, One Life items
+  # - crossable: true
+  #   interactive: true
+  #   name: Wild Carrot Plant
+  #   item_id: 1
+  #   portable: false
+  #   spawn_rate: 0.15
 
+  # - crossable: true
+  #   interactive: true
+  #   name: Stone
+  #   item_id: 2
+  #   portable: true
+  #   spawn_rate: 0.05
+
+  # - crossable: false
+  #   interactive: true
+  #   name: Big Hard Rock
+  #   item_id: 3
+  #   portable: false
+  #   spawn_rate: 0.05
+
+  # - crossable: false
+  #   interactive: true
+  #   n_uses: 6
+  #   name: Gooseberry Bush
+  #   item_id: 4
+  #   portable: false
+  #   spawn_rate: 0.1
+
+  # - crossable: false
+  #   interactive: true
+  #   name: Sharp Stone
+  #   item_id: 5
+  #   portable: true
+  #   spawn_rate: 0.1
+
+  # - calories: 5
+  #   crossable: true
+  #   interactive: true
+  #   n_uses: 1
+  #   name: Wild Carrot
+  #   item_id: 6
+  #   portable: true
+  #   spawn_rate: 0.1
+
+  # - calories: 3
+  #   crossable: true
+  #   interactive: true
+  #   n_uses: 1
+  #   name: Gooseberry
+  #   item_id: 7
+  #   portable: true
+  #   spawn_rate: 0.1
+
+  # - crossable: false
+  #   interactive: true
+  #   n_uses: 1
+  #   name: Empty Gooseberry Bush
+  #   item_id: 8
+  #   portable: false
+  #   spawn_rate: 0.1
 
 transitions:
-
   - actor_end: 5
     actor_start: 2
     last_use: false
