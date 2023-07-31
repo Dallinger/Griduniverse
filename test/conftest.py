@@ -270,16 +270,3 @@ def participants(db_session, a):
         db_session.add(p)
         db_session.flush()
     return ps
-
-# import dlgr was not working in the context of a test. The following
-# lines make sure it works.
-import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-
-# Tests try to import Griduniverse from dallinger.experiments, but
-# this is not the case in the context of a test. The following lines
-# make sure it works.
-from dlgr.griduniverse.experiment import Griduniverse
-
-from dallinger import experiments
-experiments.Griduniverse = Griduniverse
