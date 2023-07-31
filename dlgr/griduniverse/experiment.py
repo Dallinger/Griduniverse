@@ -286,7 +286,7 @@ class Gridworld(object):
         # Set some variables.
         self.players = {}
         self.item_locations = {}
-        self.items_consumed = []  # For now, everything with calories is food
+        self.items_consumed = []
         self.start_timestamp = kwargs.get("start_timestamp", None)
 
         self.round = 0
@@ -1354,6 +1354,9 @@ class Griduniverse(Experiment):
                 self.record_event(message, message["player_id"])
 
     def parse_message(self, raw_message):
+        """Strip the channel prefix off the raw message, then return
+        the parsed JSON.
+        """
         if raw_message.startswith(self.channel + ":"):
             body = raw_message.replace(self.channel + ":", "")
             message = json.loads(body)

@@ -2,8 +2,8 @@
 mode = debug
 auto_recruit = true
 network = FullyConnected
-max_participants = 1
-time_per_round = 3000
+max_participants = 3
+time_per_round = 30
 
 [HIT Configuration]
 title = Griduniverse
