@@ -314,7 +314,8 @@ class Gridworld(object):
 
         # Any maturing items?
         self.includes_maturing_items = any(
-            item["maturation_threshold"] > 0.0 for item in self.item_config.values()
+            item.get("maturation_threshold", 0.0) > 0.0
+            for item in self.item_config.values()
         )
 
         # Get item spawning probability distribution and public good calories
@@ -323,12 +324,12 @@ class Gridworld(object):
                 item_type["probability_function"],
                 item_type["probability_function_args"],
             ) = self._get_probablity_func_for_config(
-                item_type["probability_distribution"]
+                item_type.get("probability_distribution", "")
             )
 
             item_type["public_good"] = (
                 item_type["calories"]
-                * item_type["public_good_multiplier"]
+                * item_type.get("public_good_multiplier", 0.0)
                 / self.num_players
             )
 
@@ -337,7 +338,7 @@ class Gridworld(object):
             self.player_config["probability_function"],
             self.player_config["probability_function_args"],
         ) = self._get_probablity_func_for_config(
-            self.player_config["probability_distribution"]
+            self.player_config.get("probability_distribution", "")
         )
 
     def _get_probablity_func_for_config(self, probability_distribution):
