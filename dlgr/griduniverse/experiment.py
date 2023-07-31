@@ -305,10 +305,10 @@ class Gridworld(object):
         self.transition_config = kwargs.get("transition_config", {})
         self.player_config = kwargs.get("player_config", {})
 
-        if self.player_config.get('available_colors'):
+        if self.player_config.get("available_colors"):
             self.player_color_names = []
             self.player_colors = []
-            for name, value in self.player_config['available_colors'].items():
+            for name, value in self.player_config["available_colors"].items():
                 self.player_color_names.append(name)
                 self.player_colors.append(value)
 
@@ -319,7 +319,12 @@ class Gridworld(object):
 
         # Get item spawning probability distribution and public good calories
         for item_type in self.item_config.values():
-            item_type["probability_function"], item_type["probability_function_args"] = self._get_probablity_func_for_config(item_type["probability_distribution"])
+            (
+                item_type["probability_function"],
+                item_type["probability_function_args"],
+            ) = self._get_probablity_func_for_config(
+                item_type["probability_distribution"]
+            )
 
             item_type["public_good"] = (
                 item_type["calories"]
@@ -328,7 +333,12 @@ class Gridworld(object):
             )
 
         # Player probability distribution
-        self.player_config["probability_function"], self.player_config["probability_function_args"] = self._get_probablity_func_for_config(self.player_config["probability_distribution"])
+        (
+            self.player_config["probability_function"],
+            self.player_config["probability_function_args"],
+        ) = self._get_probablity_func_for_config(
+            self.player_config["probability_distribution"]
+        )
 
     def _get_probablity_func_for_config(self, probability_distribution):
         probability_function_args = []
@@ -336,10 +346,14 @@ class Gridworld(object):
         if len(parts) > 1:
             probability_distribution = parts[0]
             probability_function_args = parts[1:]
-        probability_distribution = f"{probability_distribution}_probability_distribution"
+        probability_distribution = (
+            f"{probability_distribution}_probability_distribution"
+        )
         probability_function = getattr(distributions, probability_distribution, None)
         if probability_function is None:
-            logger.info(f"Unknown item probability distribution: {probability_distribution}.")
+            logger.info(
+                f"Unknown item probability distribution: {probability_distribution}."
+            )
             probability_function = distributions.random_probability_distribution
         return probability_function, probability_function_args
 
@@ -857,10 +871,14 @@ class Gridworld(object):
             # Only items of the same type.
             items_of_this_type = items_by_type[item_type["item_id"]]
 
-            for i in range(int(round(item_type["item_count"]) - len(items_of_this_type))):
+            for i in range(
+                int(round(item_type["item_count"]) - len(items_of_this_type))
+            ):
                 self.spawn_item(item_id=item_type["item_id"])
 
-            for i in range(len(items_of_this_type) - int(round(item_type["item_count"]))):
+            for i in range(
+                len(items_of_this_type) - int(round(item_type["item_count"]))
+            ):
                 del self.item_locations[random.choice(items_of_this_type).position]
                 self.items_updated = True
 
@@ -960,6 +978,7 @@ class Item:
     item_config, and values will be looked up from this common key/value map.
     Only values that vary by instance will be stored on the object itself.
     """
+
     item_config: dict
     id: int = field(default_factory=lambda: uuid.uuid4())
     creation_timestamp: float = field(default_factory=time.time)
