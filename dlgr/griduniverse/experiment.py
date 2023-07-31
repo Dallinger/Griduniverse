@@ -1,5 +1,6 @@
 """The Griduniverse."""
 
+import collections
 import datetime
 import flask
 import gevent
@@ -811,10 +812,6 @@ class Gridworld(object):
             }
         )
 
-    def locations_of_item_of_type(self, item_id):
-        """Return"""
-        return {k: v for k, v in self.item_locations.items() if v.item_id == item_id}
-
     def items_changed(self, last_items):
         locations = self.item_locations
         if len(last_items) != len(locations):
@@ -829,6 +826,10 @@ class Gridworld(object):
         return False
 
     def replenish_items(self):
+        items_by_type = collections.defaultdict(list)
+        for item in self.item_locations.values():
+            items_by_type[item.item_id].append(item)
+
         for item_type in self.item_config.values():
             # Alternate positive and negative growth rates
             seasonal_growth = item_type["seasonal_growth_rate"] ** (
@@ -851,13 +852,13 @@ class Gridworld(object):
             )
 
             # Only items of the same type.
-            item_locations = self.locations_of_item_of_type(item_type["item_id"])
+            items_of_this_type = items_by_type[item_type["item_id"]]
 
-            for i in range(int(round(item_type["item_count"]) - len(item_locations))):
+            for i in range(int(round(item_type["item_count"]) - len(items_of_this_type))):
                 self.spawn_item(item_id=item_type["item_id"])
 
-            for i in range(len(item_locations) - int(round(item_type["item_count"]))):
-                del self.item_locations[random.choice(list(item_locations.keys()))]
+            for i in range(len(items_of_this_type) - int(round(item_type["item_count"]))):
+                del self.item_locations[random.choice(items_of_this_type).position]
                 self.items_updated = True
 
     def spawn_player(self, id=None, **kwargs):
