@@ -49,6 +49,7 @@ snapshots/*
 data/*
 dlgr/griduniverse/snapshots
 dlgr/griduniverse/data/*
+dlgr/griduniverse/dallinger_develop
 
 .tox/*
 *.egg-info/*
@@ -57,6 +58,8 @@ dlgr/griduniverse/data/*
 docs/build/*
 dlgr/griduniverse/dump.rdb
 
+# Editor config, etc.
+.vscode/
 *.DS_Store
 
 bin
