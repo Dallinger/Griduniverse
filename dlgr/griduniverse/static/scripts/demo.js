@@ -624,11 +624,10 @@ pixels.frame(function() {
   // Update the background.
   var ego = players.ego(),
       w = getWindowPosition(),
+      section = new Section(background, w.left, w.top),
       dimness,
       rescaling,
-      i, j, x, y;
-
-  var section = new Section(background, w.left, w.top);
+      x, y;
 
   // Animate background for each visible cell
   section.map(function(x, y, color) {
@@ -652,6 +651,10 @@ pixels.frame(function() {
 
   // Draw the players:
   players.drawToGrid(section);
+
+  // Show info about the item the current player
+  // is sharing a square with:
+  updateItemInfoWindow(ego.position, items);
 
   // Add the Gaussian mask.
   var elapsedTime = performance.now() - startTime;
@@ -1033,6 +1036,23 @@ function updateDonationStatus(donation_is_active) {
   }
   // Update donation status
   settings.donation_active = donation_is_active;
+}
+
+/**
+ * If the current player is sharing a grid position with an interactive
+ * item, we show information about it on the page.
+ *
+ * @param {Array} egoPlayerPosition [x, y] coordinates of current player
+ * @param {itemlib.ItemCollection} items  the collection of all Items on the grid
+ */
+function updateItemInfoWindow(egoPlayerPosition, items) {
+  const inspectedItem = items.atPosition(egoPlayerPosition),
+        $el = $("#item-details");
+  if (_.isUndefined(inspectedItem)) {
+    $el.empty();
+  } else {
+    $el.html(inspectedItem.name);
+  }
 }
 
 function onGameStateChange(msg) {
