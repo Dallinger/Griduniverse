@@ -13,6 +13,7 @@ var gaussian = require("gaussian");
 var Color = require('color');
 var Identicon = require('./util/identicon');
 var md5 = require('./util/md5');
+var itemlib = require ("./items");
 
 function coordsToIdx(x, y, columns) {
   return y * columns + x;
@@ -127,6 +128,7 @@ var isSpectator = false;
 var start = performance.now();
 var items = [];
 var itemPositions = {};
+var items = new itemlib.ItemCollection();
 var itemsConsumed = [];
 var walls = [];
 var wall_map = {};
@@ -184,55 +186,6 @@ function hexToRgbPercentages(hexColor) {
   return [red, green, blue];
 }
 
-function rgbOnScale(startColor, endColor, percentage) {
-
-  const result = [];
-  for (let i = 0; i < 3; i++) {
-    result[i] = endColor[i] + percentage * (startColor[i] - endColor[i]);
-  }
-
-  return result;
-}
-/**
- * Representation of a game item, which for the moment is limited to a
- * simple Food type.
- */
-class Item {
-  constructor(id, itemId, position, maturity, remainingUses) {
-    this.id = id;
-    this.itemId = itemId;
-    this.position = position;
-    this.maturity = maturity;
-    this.remainingUses = remainingUses;
-    // XXX Maybe we can avoid this copy of every shared value
-    // to every instance, but going with it for now.
-    Object.assign(this, settings.item_config[this.itemId]);
-  }
-
-  /**
-   * Calculate a color based on sprite definition and maturity
-   */
-  get color() {
-    let immature, mature;
-
-    if (this.sprite.includes(",")) {
-      [immature, mature] = this.sprite.split(",");
-      // For now, assume these are hex colors
-    } else {
-      immature = mature = this.sprite;
-    }
-
-    return rgbOnScale(
-      hexToRgbPercentages(immature),
-      hexToRgbPercentages(mature),
-      this.maturity
-    );
-  }
-
-
-
-}
-
 var Wall = function (settings) {
   if (!(this instanceof Wall)) {
     return new Wall();
@@ -264,8 +217,14 @@ var Player = function (settings, dimness) {
 };
 
 Player.prototype.move = function(direction) {
-  function _hasWall(position) {
-    return wall_map[[position[1], position[0]]] !== undefined;
+
+  function _isCrossable(position) {
+    const hasWall = ! _.isUndefined(wall_map[[position[1], position[0]]]);
+    if (hasWall) {
+      return false;
+    }
+    const itemHere = items.atPosition(position);
+    return _.isUndefined(itemHere) || itemHere.crossable;
   }
 
   this.motion_direction = direction;
@@ -305,7 +264,7 @@ Player.prototype.move = function(direction) {
         console.log("Direction not recognized.");
     }
 
-    if (!_hasWall(newPosition) && (!players.isPlayerAt(newPosition) || settings.player_overlap)) {
+    if (_isCrossable(newPosition) && (!players.isPlayerAt(newPosition) || settings.player_overlap)) {
       this.position = newPosition;
       this.motion_timestamp = ts;
       return true;
@@ -678,12 +637,12 @@ pixels.frame(function() {
     return newColor;
   });
 
-  for (i = 0; i < items.length; i++) {
-    var currentItem = items[i];
+  for (const currentItem of items.values()) {
     if (players.isPlayerAt(currentItem.position)) {
-      if (! currentItem.interactive) {
+      if (!currentItem.interactive) {
         // Non-interactive items get consumed immediately
-        itemsConsumed.push(items.splice(i, 1));  // XXX this push does nothing, AFAICT (Jesse)
+        items.remove(currentItem);
+        itemsConsumed.push(currentItem); // XXX this push does nothing, AFAICT (Jesse)
       }
       // Else: show info about the item in some way
     } else if (currentItem.position) {
@@ -1111,22 +1070,19 @@ function onGameStateChange(msg) {
 
   // Update items
   if (state.items !== undefined && state.items !== null) {
-    items = [];
+    items = new itemlib.ItemCollection();
     for (j = 0; j < state.items.length; j++) {
-      var new_item = new Item(
-        state.items[j].id,
-        state.items[j].item_id,
-        state.items[j].position,
-        state.items[j].maturity,
-        state.items[j].remaining_uses,
+      items.add(
+        new itemlib.Item(
+          state.items[j].id,
+          state.items[j].item_id,
+          state.items[j].position,
+          state.items[j].maturity,
+          state.items[j].remaining_uses,
+        )
       );
-      items.push(new_item);
-      if (new_item.position) {
-        itemPositions[new_item.position[0] + '_' + new_item.position[1]] = new_item;
-      }
     }
   }
-
   // Update walls if they haven't been created yet.
   if (state.walls !== undefined && walls.length === 0) {
     for (k = 0; k < state.walls.length; k++) {
