@@ -107,8 +107,6 @@ for (var j = 0; j < settings.rows; j++) {
 
 var initialSection = new Section(background, 0, 0);
 
-var GREEN = [0.51, 0.69, 0.61];
-var WHITE = [1.00, 1.00, 1.00];
 var INVISIBLE_COLOR = [0.66, 0.66, 0.66];
 var CHANNEL = "griduniverse";
 var CONTROL_CHANNEL = "griduniverse_ctrl";
@@ -133,7 +131,7 @@ var itemsConsumed = [];
 var walls = [];
 var wall_map = {};
 var transitionsSeen = new Set();
-var row, column, rand;
+var rand;
 
 var name2idx = function (name) {
   var names = settings.player_color_names;
@@ -159,32 +157,6 @@ var color2name = function (color) {
   return settings.player_color_names[idx];
 }
 
-function hexToRgbPercentages(hexColor) {
-  if (hexColor.startsWith("#")) {
-    hexColor = hexColor.substring(1);
-  }
-
-  // Check if the hex color has a valid length (either 3 or 6 characters)
-  if (hexColor.length !== 3 && hexColor.length !== 6) {
-    throw new Error("Invalid hex color format. It should be either 3 or 6 characters long.");
-  }
-
-  // If the hex color is 3 characters long, expand it to 6 characters by
-  // duplicating each character
-  if (hexColor.length === 3) {
-    hexColor = hexColor
-      .split("")
-      .map((char) => char + char)
-      .join("");
-  }
-
-  // Convert the hex color to RGB percentage values
-  const red = parseInt(hexColor.substring(0, 2), 16) / 255;
-  const green = parseInt(hexColor.substring(2, 4), 16) / 255;
-  const blue = parseInt(hexColor.substring(4, 6), 16) / 255;
-
-  return [red, green, blue];
-}
 
 var Wall = function (settings) {
   if (!(this instanceof Wall)) {
@@ -330,9 +302,7 @@ var playerSet = (function () {
     };
 
     PlayerSet.prototype.drawToGrid = function (grid) {
-      var positions = [],
-          idx,
-          player,
+      var player,
           id,
           minScore,
           maxScore,
@@ -725,10 +695,6 @@ function arraySearch(arr, val) {
       }
     }
     return false;
-}
-
-function getRandomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function getWindowPosition() {
