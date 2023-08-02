@@ -29,7 +29,7 @@ class TestItem(object):
             "interactive": False,
             "maturation_speed": 1,
             "maturation_threshold": 0.0,
-            "n_uses": 1,
+            "n_uses": 3,
             "name": "Food",
             "plantable": False,
             "planting_cost": 1,
@@ -92,6 +92,16 @@ class TestItem(object):
 
         with pytest.raises(TypeError):
             item.calories = 6
+
+    def test_remaining_uses_default(self, item_config):
+        item = self.subject(item_config)
+
+        assert item.remaining_uses == item_config['n_uses']
+
+    def test_remaining_uses_in_constructor(self, item_config):
+        item = self.subject(item_config, remaining_uses=1)
+
+        assert item.remaining_uses == 1
 
 
 @pytest.mark.usefixtures("env")

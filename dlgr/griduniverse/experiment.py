@@ -991,11 +991,12 @@ class Item:
     id: int = field(default_factory=lambda: uuid.uuid4())
     creation_timestamp: float = field(default_factory=time.time)
     position: tuple = (0, 0)
-    remaining_uses: int = 1
+    remaining_uses: int = field(default=None)
 
     def __post_init__(self):
         object.__setattr__(self, "item_id", self.item_config["item_id"])
-        self.remaining_uses = self.item_config["n_uses"]
+        if self.remaining_uses is None:
+            self.remaining_uses = self.item_config["n_uses"]
 
     def __getattr__(self, name):
         # Look up value from the item type's shared definition.
@@ -1005,15 +1006,18 @@ class Item:
         raise AttributeError(name)
 
     def __setattr__(self, name, value):
-        # Some properties should be immutable
+        """Item properties derived from the item's type should be immutable, along
+        with things like the `id` and `creation_timestamp`"""
         if name in {"item_config", "id", "creation_timestamp", "item_id"}:
             try:
-                # These values can have initial values set
+                # These properties need to be able to have initial values set in
+                # `__init__`
                 self.__dict__[name]
                 raise TypeError("Cannot change immutable item config.")
             except KeyError:
                 pass
         elif name in self.item_config:
+            # The remaining properties from `item_config` can never be overridden
             raise TypeError("Cannot change immutable item config.")
 
         super().__setattr__(name, value)
