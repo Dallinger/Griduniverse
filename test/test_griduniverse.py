@@ -130,7 +130,7 @@ class TestExperimentClass(object):
             assert isinstance(key[0], int)
             assert isinstance(key[1], int)
             # This value comes from the defaults
-            assert transition["visible"] is True
+            assert transition["visible"] in {"always", "never", "seen"}
             break
 
     def test_create_network_builds_default_network_type(self, exp):
