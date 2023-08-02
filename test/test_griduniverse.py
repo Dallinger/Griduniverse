@@ -113,6 +113,26 @@ class TestExperimentClass(object):
 
         assert isinstance(exp.grid, Gridworld)
 
+    def test_new_experiment_has_item_config_with_defaults(self, exp):
+        item_config = exp.item_config
+        assert isinstance(item_config, dict)
+        # We define item 9 as Food, and pull the null public good multiplier from the default
+        assert item_config[9]["name"] == "Food"
+        assert item_config[9]["public_good_multiplier"] == 0.0
+
+    def test_new_experiment_has_transition_config_with_defaults(self, exp):
+        transition_config = exp.transition_config
+        assert isinstance(transition_config, dict)
+        for key, transition in transition_config.items():
+            # We are keyed on tuples of item ids (actor, target)
+            assert isinstance(key, tuple)
+            assert len(key) == 2
+            assert isinstance(key[0], int)
+            assert isinstance(key[1], int)
+            # This value comes from the defaults
+            assert transition["visible"] is True
+            break
+
     def test_create_network_builds_default_network_type(self, exp):
         from dallinger.networks import FullyConnected
 
