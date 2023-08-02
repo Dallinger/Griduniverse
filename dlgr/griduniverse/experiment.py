@@ -1006,16 +1006,15 @@ class Item:
 
     def __setattr__(self, name, value):
         # Some properties should be immutable
-        if (
-            name in {"item_config", "id", "creation_timestamp"}
-            or name in self.item_config
-        ):
+        if name in {"item_config", "id", "creation_timestamp", "item_id"}:
             try:
-                # But only if the value has already been initialized
+                # These values can have initial values set
                 self.__dict__[name]
                 raise TypeError("Cannot change immutable item config.")
             except KeyError:
                 pass
+        elif name in self.item_config:
+            raise TypeError("Cannot change immutable item config.")
 
         super().__setattr__(name, value)
 

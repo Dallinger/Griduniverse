@@ -86,13 +86,11 @@ class TestItem(object):
         assert item.calories == 6
 
     def test_type_properties_cannot_by_shadowed(self, item_config):
-        from dataclasses import FrozenInstanceError
-
         item = self.subject(item_config)
 
         assert item.calories == 5
 
-        with pytest.raises(FrozenInstanceError):
+        with pytest.raises(TypeError):
             item.calories = 6
 
 
