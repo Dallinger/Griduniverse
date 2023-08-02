@@ -39,7 +39,7 @@ transition_defaults:
   target_end: null
   target_start: null
   last_use: false
-  modify_uses: [0, 0] # How should the number of uses for the actor and target 
+  modify_uses: [0, 0] # How should the number of uses for the actor and target
                       # be changed by the transition.
 
 items:
