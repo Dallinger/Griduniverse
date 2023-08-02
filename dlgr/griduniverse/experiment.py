@@ -999,7 +999,7 @@ class Item:
             self.remaining_uses = self.item_config["n_uses"]
 
     def __getattr__(self, name):
-        # Look up value from the item type's shared definition.
+        """We look up unknown properties from the `item_config`"""
         item_config = self.__dict__.get("item_config", {})
         if name in item_config:
             return item_config[name]
@@ -1694,20 +1694,17 @@ class Griduniverse(Experiment):
         location_item = self.grid.item_locations.get(position)
         transition = None
 
+        actor_key = player_item and player_item.item_id
+        target_key = location_item and location_item.item_id
+        transition_key = (actor_key, target_key)
         # If the target item has only 1 remaining use, then we try to find a
         # `last_use` transition
         if location_item and location_item.remaining_uses == 1:
-            transition = self.transition_config.get(
-                ("last", player_item and player_item.item_id, location_item.item_id)
-            )
-
+            last_trans_key = ("last",) + transition_key
+            transition = self.transition_config.get(last_trans_key)
+        # If we didn't find or need one, we look up the standard key
         if transition is None:
-            transition = self.transition_config.get(
-                (
-                    player_item and player_item.item_id,
-                    location_item and location_item.item_id,
-                )
-            )
+            transition = self.transition_config.get(transition_key)
 
         if transition is None:
             error_msg = {
@@ -1720,32 +1717,29 @@ class Griduniverse(Experiment):
             self.publish(error_msg)
             return
 
-        modify_actor, modify_target = transition.get("modify_uses", (0, 0))
+        # these values may be positive or negative, so we may add or remove uses
+        modify_actor_uses, modify_target_uses = transition.get("modify_uses", (0, 0))
         if player_item and player_item.remaining_uses:
-            player_item.remaining_uses += modify_actor
+            player_item.remaining_uses += modify_actor_uses
         if location_item and location_item.remaining_uses:
-            location_item.remaining_uses += modify_target
+            location_item.remaining_uses += modify_target_uses
 
         # An item that is replaced or has no remaining uses has been "consumed"
-        if player_item and (
-            player_item.remaining_uses == 0
-            or transition["actor_end"] != player_item.item_id
-        ):
+        if (player_item and player_item.remaining_uses < 1) or transition[
+            "actor_end"
+        ] != actor_key:
             self.grid.items_consumed.append(player_item)
             player.current_item = None
             self.grid.items_updated = True
-        if location_item and (
-            location_item.remaining_uses == 0
-            or transition["target_end"] != location_item.item_id
-        ):
+        if (location_item and location_item.remaining_uses < 1) or transition[
+            "target_end"
+        ] != target_key:
             del self.grid.item_locations[position]
             self.grid.items_consumed.append(location_item)
             self.grid.items_updated = True
 
         # The player's item type has changed
-        if (transition["actor_end"] and not player_item) or (
-            player_item and transition["actor_end"] != player_item.item_id
-        ):
+        if transition["actor_end"] != actor_key:
             new_player_item = Item(
                 id=len(self.grid.item_locations) + len(self.grid.items_consumed),
                 item_config=self.item_config[transition["actor_end"]],
@@ -1754,9 +1748,7 @@ class Griduniverse(Experiment):
             self.grid.items_updated = True
 
         # The location's item type has changed
-        if (transition["target_end"] and not location_item) or (
-            location_item and transition["target_end"] != location_item.item_id
-        ):
+        if transition["target_end"] != target_key:
             new_target_item = Item(
                 id=len(self.grid.item_locations) + len(self.grid.items_consumed),
                 position=position,
