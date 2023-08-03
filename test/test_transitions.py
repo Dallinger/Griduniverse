@@ -62,3 +62,21 @@ class TestTransitions(object):
         assert list(mocked_exp.grid.item_locations.keys()) == [(0, 0)]  # The item is still there
         assert participant.current_item != item  # The item is not in the player's inventory
         assert len(self.messages) == 1
+
+    def test_drop_item_success(self, exp, participant):
+        participant.current_item = item = self.create_item()
+
+        exp.handle_item_drop(msg={"player_id": participant.id, "position": (3, 3)})
+        assert list(exp.grid.item_locations.keys()) == [(3, 3)]
+        assert item.position == (3, 3)
+
+    def test_drop_item_cant_drop_error(self, mocked_exp, participant, item):
+        """The user tries to drop an item over an exiting item.
+        """
+        assert item  # The `item` fixture places it at (0, 0)
+        participant.current_item = self.create_item()  # The participant has an item in their hands
+
+        mocked_exp.handle_item_drop(msg={"player_id": participant.id, "position": (0, 0)})
+        # Dropping failed, so the item is still in the player's hands
+        assert participant.current_item
+        assert len(self.messages) == 1  # and we get an error message
