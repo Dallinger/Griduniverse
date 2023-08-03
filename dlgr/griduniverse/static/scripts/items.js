@@ -67,12 +67,15 @@ export class GridItems {
     this._itemsByPosition.delete(JSON.stringify(item.position));
     this._positionsById.delete(item.id);
   }
+
   /**
-   * Retrieve the Item values from the GridItems
-   * @returns Map.prototype[@@iterator]
+   * Retrieve pairs of positions and Item objects (like Python's dict.items())
+   * @returns Map.prototype[@@iterator] of[position, Item] pairs
    */
-  values() {
-    return this._itemsByPosition.values();
+  *entries() {
+    for (const [itemPosition, currentItem] of this._itemsByPosition.entries()) {
+      yield [JSON.parse(itemPosition), currentItem];
+    }
   }
 }
 

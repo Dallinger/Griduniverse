@@ -247,7 +247,7 @@ Player.prototype.replaceItem = function(item) {
     item = new itemlib.Item(item.id, item.item_id, item.position, item.maturity, item.remaining_uses)
   }
   this.current_item = item;
-  displayWhatEgoPlayerIsCarrying(item)
+  displayWhatEgoPlayerIsCarrying(item);
 };
 
 Player.prototype.getTransition = function () {
@@ -602,15 +602,14 @@ pixels.frame(function() {
     return newColor;
   });
 
-  for (const currentItem of gridItems.values()) {
-    itemPosition = gridItems.positionOf(currentItem)
-    if (players.isPlayerAt(itemPosition)) {
-      if (!currentItem.interactive) {
+  for (const [position, item] of gridItems.entries()) {
+    if (players.isPlayerAt(position)) {
+      if (!item.interactive) {
         // Non-interactive items get consumed immediately
-        gridItems.remove(currentItem);
+        gridItems.remove(item);
       }
     } else {
-      section.plot(itemPosition[1], itemPosition[0], currentItem.color);
+      section.plot(position[1], position[0], item.color);
     }
   }
 
