@@ -1710,8 +1710,6 @@ var mouse = position(pixels.canvas);
 
 var isSpectator = false;
 var start = performance.now();
-// var items = [];
-// var itemPositions = {};
 var gridItems = new itemlib.GridItems();
 var walls = [];
 var wall_map = {};
@@ -34156,6 +34154,13 @@ class Item {
 /* harmony export (immutable) */ __webpack_exports__["Item"] = Item;
 
 
+/**
+ * Manages Items that sit on the grid.
+ *
+ * Items currently being carried by a Player are not included.
+ * These are instead held by reference in the Play instances,
+ * (named `current_item`).
+ */
 class GridItems {
   constructor() {
     this._itemsByPosition = new Map();

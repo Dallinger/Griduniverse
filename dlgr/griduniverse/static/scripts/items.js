@@ -36,6 +36,13 @@ export class Item {
   }
 }
 
+/**
+ * Manages Items that sit on the grid.
+ *
+ * Items currently being carried by a Player are not included.
+ * These are instead held by reference in the Play instances,
+ * (named `current_item`).
+ */
 export class GridItems {
   constructor() {
     this._itemsByPosition = new Map();

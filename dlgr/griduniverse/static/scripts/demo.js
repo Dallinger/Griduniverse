@@ -123,8 +123,6 @@ var mouse = position(pixels.canvas);
 
 var isSpectator = false;
 var start = performance.now();
-// var items = [];
-// var itemPositions = {};
 var gridItems = new itemlib.GridItems();
 var walls = [];
 var wall_map = {};
