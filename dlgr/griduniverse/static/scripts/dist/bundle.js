@@ -1831,7 +1831,7 @@ Player.prototype.move = function(direction) {
 
 Player.prototype.replaceItem = function(item) {
   if (item && !(item instanceof itemlib.Item)) {
-    item = new itemlib.Item(item.id, item.item_id, item.position, item.maturity, item.remaining_uses)
+    item = new itemlib.Item(item.id, item.item_id, item.maturity, item.remaining_uses)
   }
   this.current_item = item;
   displayWhatEgoPlayerIsCarrying(item);
