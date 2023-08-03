@@ -72,6 +72,10 @@
     <!-- Grid will be inserted here. -->
 </div>
 
+<div id="inventory">
+    Currently Carrying: <span id="inventory-item"></span>
+</div>
+
 {% if experiment.grid.donation_amount %}
 <div id="donate" class="for-players">
     <label>Give {{ experiment.grid.donation_amount }} point{{experiment.grid.donation_amount > 1 and 's' or ''}} to:</label>

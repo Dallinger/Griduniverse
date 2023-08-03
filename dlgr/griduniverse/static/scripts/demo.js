@@ -32,6 +32,10 @@ function animateColor(color) {
 }
 
 function positionsAreEqual(a, b) {
+  // Items with null positions are never co-located
+  if (a === null || b === null) {
+    return false;
+  }
   return a[0] === b[0] && a[1] === b[1];
 }
 
@@ -122,9 +126,11 @@ var mouse = position(pixels.canvas);
 var isSpectator = false;
 var start = performance.now();
 var items = [];
+var itemPositions = {};
 var itemsConsumed = [];
 var walls = [];
 var wall_map = {};
+var transitionsSeen = new Set();
 var row, column, rand;
 
 var name2idx = function (name) {
@@ -185,7 +191,6 @@ function rgbOnScale(startColor, endColor, percentage) {
     result[i] = endColor[i] + percentage * (startColor[i] - endColor[i]);
   }
 
-  console.log("Item color: " + result);
   return result;
 }
 /**
@@ -193,11 +198,12 @@ function rgbOnScale(startColor, endColor, percentage) {
  * simple Food type.
  */
 class Item {
-  constructor(id, itemId, position, maturity) {
+  constructor(id, itemId, position, maturity, remainingUses) {
     this.id = id;
     this.itemId = itemId;
     this.position = position;
     this.maturity = maturity;
+    this.remainingUses = remainingUses;
     // XXX Maybe we can avoid this copy of every shared value
     // to every instance, but going with it for now.
     Object.assign(this, settings.item_config[this.itemId]);
@@ -253,6 +259,7 @@ var Player = function (settings, dimness) {
   this.name = settings.name;
   this.identity_visible = settings.identity_visible;
   this.dimness = dimness;
+  this.replaceItem(settings.current_item);
   return this;
 };
 
@@ -306,6 +313,37 @@ Player.prototype.move = function(direction) {
   }
   return false;
 };
+
+
+Player.prototype.replaceItem = function(item) {
+  if (item && !(item instanceof Item)) {
+    item = new Item(item.id, item.item_id, item.position, item.maturity, item.remaining_uses)
+  }
+  this.current_item = item;
+  $('#inventory-item').text(item ? item.name : '');
+};
+
+Player.prototype.getTransition = function () {
+  var transition;
+  var player_item = this.current_item;
+  var position = this.position;
+  var item_at_pos = itemPositions[position[0] + '_' + position[1]]
+  var transition_id = (player_item && player_item.itemId || '') + '_' + (item_at_pos && item_at_pos.itemId || '');
+  var last_transition_id = 'last_' + transition_id;
+  if (item_at_pos && item_at_pos.remaining_uses == 1) {
+    transition = settings.transition_config[last_transition_id];
+    if (transition) {
+      transition_id = last_transition_id;
+    }
+  }
+  if (!transition) {
+    transition = settings.transition_config[transition_id];
+  }
+  if (!transition) {
+    return null;
+  }
+  return {id: transition_id, transition: transition};
+}
 
 var playerSet = (function () {
 
@@ -648,7 +686,7 @@ pixels.frame(function() {
         itemsConsumed.push(items.splice(i, 1));  // XXX this push does nothing, AFAICT (Jesse)
       }
       // Else: show info about the item in some way
-    } else {
+    } else if (currentItem.position) {
       section.plot(currentItem.position[1], currentItem.position[0], currentItem.color);
     }
   }
@@ -807,12 +845,65 @@ function bindGameKeys(socket) {
   });
 
   Mousetrap.bind("space", function () {
+    var msg_type;
+    var ego = players.ego();
+    var position = ego.position;
+    var item_at_pos = itemPositions[position[0] + '_' + position[1]]
+    var player_item = ego.current_item;
+    var transition = ego.getTransition();
+    if (!item_at_pos && !player_item) {
+      // If there's nothing here, we try to plant food GU 1.0 style
+      msg_type = "plant_food";
+    } else if (transition) {
+      // Check for a transition between objects. For now we don't do anything
+      // client-side other checking that it exists. We could optimize display
+      // updates later
+      msg_type = "item_transition";
+      transitionsSeen.add(transition.id);
+    } else if (player_item && player_item.calories) {
+      // If there's nothing here to transition with and we're holding something
+      // edible, consume it.
+      msg_type = "item_consume";
+      player_item.remainingUses = player_item.remainingUses - 1;
+      if (player_item.remainingUses < 1) {
+        ego.replaceItem(null);
+      }
+    } else if (!player_item && item_at_pos && item_at_pos.portable) {
+      // If there's a portable item here and we don't something in hand, pick it up.
+      msg_type = "item_pick_up";
+      item_at_pos.position = null;
+      delete itemPositions[position[0] + '_' + position[1]];
+      ego.replaceItem(item_at_pos);
+    }
+    if (!msg_type) {
+      return;
+    }
     var msg = {
-      type: "plant_food",
-      player_id: players.ego().id,
-      position: players.ego().position
+      type: msg_type,
+      player_id: ego.id,
+      position: position
     };
     socket.send(msg);
+  });
+
+  Mousetrap.bind("d", function () {
+    var ego = players.ego();
+    var position = ego.position;
+    var item_at_pos = itemPositions[position[0] + '_' + position[1]]
+    var current_item = ego.current_item;
+    if (!current_item || item_at_pos) {
+      return;
+    }
+    var msg = {
+      type: "item_drop",
+      player_id: ego.id,
+      position: position
+    };
+    socket.send(msg);
+    ego.replaceItem(null);
+    current_item.position = position;
+    items.push(current_item);
+    itemPositions[position[0] + '_' + position[1]] = current_item;
   });
 
   if (settings.mutable_colors) {
@@ -1022,14 +1113,17 @@ function onGameStateChange(msg) {
   if (state.items !== undefined && state.items !== null) {
     items = [];
     for (j = 0; j < state.items.length; j++) {
-      items.push(
-        new Item(
-          state.items[j].id,
-          state.items[j].item_id,
-          state.items[j].position,
-          state.items[j].maturity,
-        )
+      var new_item = new Item(
+        state.items[j].id,
+        state.items[j].item_id,
+        state.items[j].position,
+        state.items[j].maturity,
+        state.items[j].remaining_uses,
       );
+      items.push(new_item);
+      if (new_item.position) {
+        itemPositions[new_item.position[0] + '_' + new_item.position[1]] = new_item;
+      }
     }
   }
 

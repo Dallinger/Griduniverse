@@ -29,7 +29,7 @@ class TestItem(object):
             "interactive": False,
             "maturation_speed": 1,
             "maturation_threshold": 0.0,
-            "n_uses": 1,
+            "n_uses": 3,
             "name": "Food",
             "plantable": False,
             "planting_cost": 1,
@@ -86,14 +86,22 @@ class TestItem(object):
         assert item.calories == 6
 
     def test_type_properties_cannot_by_shadowed(self, item_config):
-        from dataclasses import FrozenInstanceError
-
         item = self.subject(item_config)
 
         assert item.calories == 5
 
-        with pytest.raises(FrozenInstanceError):
+        with pytest.raises(TypeError):
             item.calories = 6
+
+    def test_remaining_uses_default(self, item_config):
+        item = self.subject(item_config)
+
+        assert item.remaining_uses == item_config['n_uses']
+
+    def test_remaining_uses_in_constructor(self, item_config):
+        item = self.subject(item_config, remaining_uses=1)
+
+        assert item.remaining_uses == 1
 
 
 @pytest.mark.usefixtures("env")
@@ -112,6 +120,26 @@ class TestExperimentClass(object):
         from dlgr.griduniverse.experiment import Gridworld
 
         assert isinstance(exp.grid, Gridworld)
+
+    def test_new_experiment_has_item_config_with_defaults(self, exp):
+        item_config = exp.item_config
+        assert isinstance(item_config, dict)
+        # We define item 9 as Food, and pull the null public good multiplier from the default
+        assert item_config[9]["name"] == "Food"
+        assert item_config[9]["public_good_multiplier"] == 0.0
+
+    def test_new_experiment_has_transition_config_with_defaults(self, exp):
+        transition_config = exp.transition_config
+        assert isinstance(transition_config, dict)
+        for key, transition in transition_config.items():
+            # We are keyed on tuples of item ids (actor, target)
+            assert isinstance(key, tuple)
+            assert len(key) == 2
+            assert isinstance(key[0], int)
+            assert isinstance(key[1], int)
+            # This value comes from the defaults
+            assert transition["visible"] in {"always", "never", "seen"}
+            break
 
     def test_create_network_builds_default_network_type(self, exp):
         from dallinger.networks import FullyConnected

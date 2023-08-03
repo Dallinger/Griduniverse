@@ -847,35 +847,48 @@ class Gridworld(object):
             seasonal_growth = item_type["seasonal_growth_rate"] ** (
                 -1 if self.round % 2 else 1
             )
-            logger.warning(
+            logger.debug(
                 f"item_type: {item_type['name']}, seasonal_growth: {seasonal_growth}"
             )
             # Compute how many items of this type we should have on the grid,
             # ensuring it's not less than zero.
             item_type["item_count"] = max(
                 min(
-                    item_type["item_count"] * item_type["spawn_rate"] * seasonal_growth,
+                    round(
+                        item_type["item_count"]
+                        * item_type["spawn_rate"]
+                        * seasonal_growth,
+                        5,
+                    ),
                     self.rows * self.columns,
                 ),
                 0,
             )
-            logger.warning(
+            logger.debug(
                 f"item_type: {item_type['name']}, target count: {item_type['item_count']}"
             )
 
             # Only items of the same type.
             items_of_this_type = items_by_type[item_type["item_id"]]
 
-            for i in range(
-                int(round(item_type["item_count"]) - len(items_of_this_type))
-            ):
-                self.spawn_item(item_id=item_type["item_id"])
+            items_to_add_or_remove = round(item_type["item_count"]) - len(
+                items_of_this_type
+            )
+            add_items = items_to_add_or_remove > 1
 
-            for i in range(
-                len(items_of_this_type) - int(round(item_type["item_count"]))
-            ):
-                del self.item_locations[random.choice(items_of_this_type).position]
-                self.items_updated = True
+            for i in range(abs(items_to_add_or_remove)):
+                if add_items:
+                    self.spawn_item(item_id=item_type["item_id"])
+                    self.items_updated = True
+                elif item_type["limit_quantity"]:
+                    random_of_type = random.choice(items_of_this_type)
+                    try:
+                        del self.item_locations[tuple(random_of_type.position)]
+                        self.items_updated = True
+                    except (KeyError, TypeError):
+                        pass
+                else:
+                    break
 
     def spawn_player(self, id=None, **kwargs):
         """Spawn a player."""
@@ -964,7 +977,7 @@ class Gridworld(object):
             return 1
 
 
-@dataclass(frozen=True)
+@dataclass
 class Item:
     """A generic object supporting configuration via a game_config.yml
     definition.
@@ -978,13 +991,36 @@ class Item:
     id: int = field(default_factory=lambda: uuid.uuid4())
     creation_timestamp: float = field(default_factory=time.time)
     position: tuple = (0, 0)
+    remaining_uses: int = field(default=None)
 
     def __post_init__(self):
         object.__setattr__(self, "item_id", self.item_config["item_id"])
+        if self.remaining_uses is None:
+            self.remaining_uses = self.item_config["n_uses"]
 
     def __getattr__(self, name):
-        # Look up value from the item type's shared definition.
-        return self.item_config[name]
+        """We look up unknown properties from the `item_config`"""
+        item_config = self.__dict__.get("item_config", {})
+        if name in item_config:
+            return item_config[name]
+        raise AttributeError(name)
+
+    def __setattr__(self, name, value):
+        """Item properties derived from the item's type should be immutable, along
+        with things like the `id` and `creation_timestamp`"""
+        if name in {"item_config", "id", "creation_timestamp", "item_id"}:
+            try:
+                # These properties need to be able to have initial values set in
+                # `__init__`
+                self.__dict__[name]
+                raise TypeError("Cannot change immutable item config.")
+            except KeyError:
+                pass
+        elif name in self.item_config:
+            # The remaining properties from `item_config` can never be overridden
+            raise TypeError("Cannot change immutable item config.")
+
+        super().__setattr__(name, value)
 
     def __repr__(self):
         return (
@@ -996,9 +1032,10 @@ class Item:
         return {
             "id": self.id,
             "item_id": self.item_id,
-            "position": self.position,
+            "position": self.position and list(self.position),
             "maturity": self.maturity,
             "creation_timestamp": self.creation_timestamp,
+            "remaining_uses": self.remaining_uses,
         }
 
     @property
@@ -1038,6 +1075,7 @@ class Player(object):
         self.identity_visible = kwargs.get("identity_visible", True)
         self.recruiter_id = kwargs.get("recruiter_id", "")
         self.add_wall = None
+        self.current_item = None
 
         # Determine the player's color. We don't have access to the specific
         # gridworld we are running in, so we can't use the `limited_` variables
@@ -1173,6 +1211,7 @@ class Player(object):
             "name": self.name,
             "identity_visible": self.identity_visible,
             "recruiter_id": self.recruiter_id,
+            "current_item": self.current_item and self.current_item.serialize(),
         }
 
 
@@ -1251,10 +1290,19 @@ class Griduniverse(Experiment):
                 if prop not in item:
                     item[prop] = item_defaults[prop]
 
-        self.transition_config = {
-            (t["actor_start"], t["target_start"]): t
-            for t in self.game_config.get("transitions", ())
-        }
+        self.transition_config = {}
+        transition_defaults = self.game_config.get("transition_defaults", {})
+        for t in self.game_config.get("transitions", ()):
+            transition = transition_defaults.copy()
+            transition.update(t)
+            if transition["last_use"]:
+                self.transition_config[
+                    ("last", t["actor_start"], t["target_start"])
+                ] = transition
+            else:
+                self.transition_config[
+                    (t["actor_start"], t["target_start"])
+                ] = transition
 
         self.player_config = self.game_config.get("player_config")
         # This is accessed by the grid.html template to load the configuration on the client side:
@@ -1262,7 +1310,10 @@ class Griduniverse(Experiment):
         # the /grid route?
         self.item_config_json = json.dumps(self.item_config)
         self.transition_config_json = json.dumps(
-            {"{}_{}".format(k[0], k[1]): v for k, v in self.transition_config.items()}
+            {
+                "_".join(str(e or "") for e in k): v
+                for k, v in self.transition_config.items()
+            }
         )
 
     @classmethod
@@ -1360,6 +1411,10 @@ class Griduniverse(Experiment):
                     "plant_food": self.handle_plant_food,
                     "toggle_visible": self.handle_toggle_visible,
                     "build_wall": self.handle_build_wall,
+                    "item_pick_up": self.handle_item_pick_up,
+                    "item_consume": self.handle_item_consume,
+                    "item_transition": self.handle_item_transition,
+                    "item_drop": self.handle_item_drop,
                 }
             )
 
@@ -1584,6 +1639,143 @@ class Griduniverse(Experiment):
         if can_afford:
             player.score -= self.grid.wall_building_cost
             player.add_wall = position
+
+    def handle_item_consume(self, msg):
+        player = self.grid.players[msg["player_id"]]
+        player_item = player.current_item
+        if player_item is None or not player_item.calories:
+            error_msg = {
+                "type": "consume_error",
+                "player_id": player.id,
+                "player_item": player_item.serialize(),
+            }
+            self.publish(error_msg)
+            return
+
+        player_item.remaining_uses -= 1
+        if not player_item.remaining_uses:
+            self.grid.items_consumed.append(player_item)
+            player.current_item = None
+
+        if player.color_idx > 0:
+            calories = player_item.calories
+        else:
+            calories = player_item.calories * self.relative_deprivation
+
+        player.score += calories
+        if player_item.public_good:
+            for player_to in self.grid.players.values():
+                player_to.score += player_item.public_good
+
+    def handle_item_pick_up(self, msg):
+        player = self.grid.players[msg["player_id"]]
+        player_item = player.current_item
+        position = tuple(msg["position"])
+        location_item = self.grid.item_locations.get(position)
+        if player_item is not None or location_item is None:
+            error_msg = {
+                "type": "action_error",
+                "player_id": player.id,
+                "position": list(position),
+                "item": location_item and location_item.serialize(),
+                "player_item": player_item and player_item.serialize(),
+            }
+            self.publish(error_msg)
+            return
+        location_item.position = None
+        del self.grid.item_locations[position]
+        player.current_item = location_item
+        self.grid.items_updated = True
+
+    def handle_item_transition(self, msg):
+        player = self.grid.players[msg["player_id"]]
+        player_item = player.current_item
+        position = tuple(msg["position"])
+        location_item = self.grid.item_locations.get(position)
+        transition = None
+
+        actor_key = player_item and player_item.item_id
+        target_key = location_item and location_item.item_id
+        transition_key = (actor_key, target_key)
+        # If the target item has only 1 remaining use, then we try to find a
+        # `last_use` transition
+        if location_item and location_item.remaining_uses == 1:
+            last_trans_key = ("last",) + transition_key
+            transition = self.transition_config.get(last_trans_key)
+        # If we didn't find or need one, we look up the standard key
+        if transition is None:
+            transition = self.transition_config.get(transition_key)
+
+        if transition is None:
+            error_msg = {
+                "type": "action_error",
+                "player_id": player.id,
+                "position": list(position),
+                "item": location_item and location_item.serialize(),
+                "player_item": player_item and player_item.serialize(),
+            }
+            self.publish(error_msg)
+            return
+
+        # these values may be positive or negative, so we may add or remove uses
+        modify_actor_uses, modify_target_uses = transition.get("modify_uses", (0, 0))
+        if player_item and player_item.remaining_uses:
+            player_item.remaining_uses += modify_actor_uses
+        if location_item and location_item.remaining_uses:
+            location_item.remaining_uses += modify_target_uses
+
+        # An item that is replaced or has no remaining uses has been "consumed"
+        if (player_item and player_item.remaining_uses < 1) or transition[
+            "actor_end"
+        ] != actor_key:
+            self.grid.items_consumed.append(player_item)
+            player.current_item = None
+            self.grid.items_updated = True
+        if (location_item and location_item.remaining_uses < 1) or transition[
+            "target_end"
+        ] != target_key:
+            del self.grid.item_locations[position]
+            self.grid.items_consumed.append(location_item)
+            self.grid.items_updated = True
+
+        # The player's item type has changed
+        if transition["actor_end"] != actor_key:
+            new_player_item = Item(
+                id=len(self.grid.item_locations) + len(self.grid.items_consumed),
+                item_config=self.item_config[transition["actor_end"]],
+            )
+            player.current_item = new_player_item
+            self.grid.items_updated = True
+
+        # The location's item type has changed
+        if transition["target_end"] != target_key:
+            new_target_item = Item(
+                id=len(self.grid.item_locations) + len(self.grid.items_consumed),
+                position=position,
+                item_config=self.item_config[transition["target_end"]],
+            )
+            self.grid.item_locations[position] = new_target_item
+            self.grid.items_updated = True
+
+    def handle_item_drop(self, msg):
+        player = self.grid.players[msg["player_id"]]
+        player_item = player.current_item
+        position = tuple(msg["position"])
+        location_item = self.grid.item_locations.get(position)
+        if player_item is None or location_item is not None:
+            error_msg = {
+                "type": "action_error",
+                "player_id": player.id,
+                "position": list(position),
+                "item": location_item and location_item.serialize(),
+                "player_item": player_item and player_item.serialize(),
+            }
+            self.publish(error_msg)
+            return
+        player_item.position = position
+        self.grid.item_locations[position] = player_item
+        player.current_item = None
+        self.grid.items_updated = True
 
     def send_state_thread(self):
         """Publish the current state of the grid and game"""

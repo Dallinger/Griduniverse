@@ -12,11 +12,11 @@ player_config:
 item_defaults:
   item_id: 1
   item_count: 8
-  calories: 5
+  calories: 0
   crossable: true
   interactive: false
-  maturation_speed: 0.01
-  maturation_threshold: 0.5
+  maturation_speed: 0.0
+  maturation_threshold: 0.0
   n_uses: 1
   name: Food
   plantable: false
@@ -25,10 +25,22 @@ item_defaults:
   probability_distribution: "random"
   public_good: 0.0
   public_good_multiplier: 0.0
-  respawn: true
+  respawn: false
+  limit_quantity: false
   seasonal_growth_rate: 1.0
   spawn_rate: 1.0
   sprite: "#8a9b0f,#7a6b54"
+
+transition_defaults:
+  visible: never # Can be set to "never", "always", or "seen" for transitions that become
+                 # visible to a player after they have been executed for the first time
+  actor_end: null
+  actor_start: null
+  target_end: null
+  target_start: null
+  last_use: false
+  modify_uses: [0, 0] # How should the number of uses for the actor and target
+                      # be changed by the transition.
 
 items:
   # Legacy GU Food item
@@ -44,6 +56,8 @@ items:
     planting_cost: 1
     portable: true
     respawn: true
+    item_count: 8
+    limit_quantity: true
     sprite: "#8a9b0f,#7a6b54"
 
   - item_id: 10
@@ -59,92 +73,111 @@ items:
     planting_cost: 1
     portable: true
     respawn: true
+    limit_quantity: true
     sprite: "#2a9b0f,#1a6b54"
 
   # One Hour, One Life items
-  # - crossable: true
-  #   interactive: true
-  #   name: Wild Carrot Plant
-  #   item_id: 1
-  #   portable: false
-  #   spawn_rate: 0.15
+  - crossable: true
+    interactive: true
+    name: Wild Carrot Plant
+    item_id: 1
+    portable: true
+    spawn_rate: 0.15
+    item_count: 2
+    sprite: "#E67E22"
 
-  # - crossable: true
-  #   interactive: true
-  #   name: Stone
-  #   item_id: 2
-  #   portable: true
-  #   spawn_rate: 0.05
+  - crossable: true
+    interactive: true
+    name: Stone
+    item_id: 2
+    portable: true
+    spawn_rate: 0.05
+    item_count: 5
+    sprite: "#95A5A6"
 
-  # - crossable: false
-  #   interactive: true
-  #   name: Big Hard Rock
-  #   item_id: 3
-  #   portable: false
-  #   spawn_rate: 0.05
+  - crossable: false
+    interactive: true
+    name: Big Hard Rock
+    item_id: 3
+    portable: false
+    spawn_rate: 0
+    item_count: 2
+    sprite: "#7F8C8D"
 
-  # - crossable: false
-  #   interactive: true
-  #   n_uses: 6
-  #   name: Gooseberry Bush
-  #   item_id: 4
-  #   portable: false
-  #   spawn_rate: 0.1
+  - crossable: false
+    interactive: true
+    n_uses: 6
+    name: Gooseberry Bush
+    item_id: 4
+    portable: false
+    spawn_rate: 0.1
+    item_count: 2
+    sprite: "#8E44AD"
 
-  # - crossable: false
-  #   interactive: true
-  #   name: Sharp Stone
-  #   item_id: 5
-  #   portable: true
-  #   spawn_rate: 0.1
+  - crossable: false
+    interactive: true
+    name: Sharp Stone
+    item_id: 5
+    portable: true
+    spawn_rate: 0.05
+    item_count: 5
+    sprite: "#BDC3C7"
 
-  # - calories: 5
-  #   crossable: true
-  #   interactive: true
-  #   n_uses: 1
-  #   name: Wild Carrot
-  #   item_id: 6
-  #   portable: true
-  #   spawn_rate: 0.1
+  - calories: 5
+    crossable: true
+    interactive: true
+    n_uses: 1
+    name: Wild Carrot
+    item_id: 6
+    portable: true
+    spawn_rate: 0.1
+    item_count: 0
+    sprite: "#E67E22"
 
-  # - calories: 3
-  #   crossable: true
-  #   interactive: true
-  #   n_uses: 1
-  #   name: Gooseberry
-  #   item_id: 7
-  #   portable: true
-  #   spawn_rate: 0.1
+  - calories: 3
+    crossable: true
+    interactive: true
+    n_uses: 1
+    name: Gooseberry
+    item_id: 7
+    portable: true
+    spawn_rate: 0.1
+    item_count: 0
+    sprite: "#8E44AD"
 
-  # - crossable: false
-  #   interactive: true
-  #   n_uses: 1
-  #   name: Empty Gooseberry Bush
-  #   item_id: 8
-  #   portable: false
-  #   spawn_rate: 0.1
+  - crossable: false
+    interactive: true
+    n_uses: 1
+    name: Empty Gooseberry Bush
+    item_id: 8
+    portable: false
+    spawn_rate: 0
+    item_count: 0
+    sprite: "#9B59B6"
 
 transitions:
-  - actor_end: 5
-    actor_start: 2
-    last_use: false
-    modify_uses:
-      - 0
-      - 0
-    target_end: 3
+  - actor_start: 2
+    actor_end: 5
     target_start: 3
-
-  - actor_end: 5
-    actor_start: 5
+    target_end: 3
+    visible: always
     last_use: false
     modify_uses:
       - 0
       - 0
-    target_end: 6
+
+  - actor_start: 5
+    actor_end: 5
     target_start: 1
+    target_end: 6
+    visible: seen
+    last_use: false
+    modify_uses:
+      - 0
+      - 0
 
   - actor_end: 7
-    actor_start: 0
+    actor_start: null
     last_use: false
     modify_uses:
       - 0
@@ -153,7 +186,7 @@ transitions:
     target_start: 4
 
   - actor_end: 7
-    actor_start: 0
+    actor_start: null
     last_use: true
     modify_uses:
       - 0
