@@ -2192,13 +2192,14 @@ pixels.frame(function() {
   });
 
   for (const currentItem of gridItems.values()) {
-    if (players.isPlayerAt(currentItem.position)) {
+    itemPosition = gridItems.positionOf(currentItem)
+    if (players.isPlayerAt(itemPosition)) {
       if (!currentItem.interactive) {
         // Non-interactive items get consumed immediately
         gridItems.remove(currentItem);
       }
     } else {
-      section.plot(currentItem.position[1], currentItem.position[0], currentItem.color);
+      section.plot(itemPosition[1], itemPosition[0], currentItem.color);
     }
   }
 
@@ -2207,7 +2208,9 @@ pixels.frame(function() {
 
   // Show info about the item the current player
   // is sharing a square with:
-  updateItemInfoWindow(ego.position, gridItems);
+  if (! _.isUndefined(ego)) {
+    updateItemInfoWindow(ego.position, gridItems);
+  }
 
   // Add the Gaussian mask.
   var elapsedTime = performance.now() - startTime;
@@ -2410,8 +2413,7 @@ function bindGameKeys(socket) {
     };
     socket.send(msg);
     ego.replaceItem(null);
-    current_item.position = position;
-    gridItems.add(current_item);
+    gridItems.add(current_item, position);
   });
 
   if (settings.mutable_colors) {
@@ -2642,14 +2644,15 @@ function onGameStateChange(msg) {
   if (state.items !== undefined && state.items !== null) {
     gridItems = new itemlib.GridItems();
     for (j = 0; j < state.items.length; j++) {
+
       gridItems.add(
         new itemlib.Item(
           state.items[j].id,
           state.items[j].item_id,
-          state.items[j].position,
           state.items[j].maturity,
           state.items[j].remaining_uses,
-        )
+        ),
+        state.items[j].position
       );
     }
   }
@@ -34119,11 +34122,11 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
  */
 
 class Item {
-  constructor(id, itemId, position, maturity) {
+  constructor(id, itemId, maturity, remainingUses) {
     this.id = id;
     this.itemId = itemId;
-    this.position = position;
     this.maturity = maturity;
+    this.remainingUses = remainingUses;
 
     // XXX Maybe we can avoid this copy of every shared value
     // to every instance, but going with it for now.
@@ -34156,10 +34159,12 @@ class Item {
 class GridItems {
   constructor() {
     this._itemsByPosition = new Map();
+    this._positionsById = new Map();
   }
 
-  add(item) {
-    this._itemsByPosition.set(JSON.stringify(item.position), item);
+  add(item, position) {
+    this._itemsByPosition.set(JSON.stringify(position), item);
+    this._positionsById.set(item.id, JSON.stringify(position));
   }
 
   atPosition(position) {
@@ -34167,9 +34172,13 @@ class GridItems {
     return this._itemsByPosition.get(key);
   }
 
+  positionOf(item) {
+    return JSON.parse(this._positionsById.get(item.id));
+  }
+
   remove(item) {
     this._itemsByPosition.delete(JSON.stringify(item.position));
-    item.position = null;
+    this._positionsById.delete(item.id);
   }
   /**
    * Retrieve the Item values from the GridItems
