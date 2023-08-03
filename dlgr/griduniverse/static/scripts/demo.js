@@ -605,13 +605,14 @@ pixels.frame(function() {
   });
 
   for (const currentItem of gridItems.values()) {
-    if (players.isPlayerAt(currentItem.position)) {
+    itemPosition = gridItems.positionOf(currentItem)
+    if (players.isPlayerAt(itemPosition)) {
       if (!currentItem.interactive) {
         // Non-interactive items get consumed immediately
         gridItems.remove(currentItem);
       }
     } else {
-      section.plot(currentItem.position[1], currentItem.position[0], currentItem.color);
+      section.plot(itemPosition[1], itemPosition[0], currentItem.color);
     }
   }
 
@@ -620,7 +621,9 @@ pixels.frame(function() {
 
   // Show info about the item the current player
   // is sharing a square with:
-  updateItemInfoWindow(ego.position, gridItems);
+  if (! _.isUndefined(ego)) {
+    updateItemInfoWindow(ego.position, gridItems);
+  }
 
   // Add the Gaussian mask.
   var elapsedTime = performance.now() - startTime;
@@ -823,8 +826,7 @@ function bindGameKeys(socket) {
     };
     socket.send(msg);
     ego.replaceItem(null);
-    current_item.position = position;
-    gridItems.add(current_item);
+    gridItems.add(current_item, position);
   });
 
   if (settings.mutable_colors) {
@@ -1055,14 +1057,15 @@ function onGameStateChange(msg) {
   if (state.items !== undefined && state.items !== null) {
     gridItems = new itemlib.GridItems();
     for (j = 0; j < state.items.length; j++) {
+
       gridItems.add(
         new itemlib.Item(
           state.items[j].id,
           state.items[j].item_id,
-          state.items[j].position,
           state.items[j].maturity,
           state.items[j].remaining_uses,
-        )
+        ),
+        state.items[j].position
       );
     }
   }

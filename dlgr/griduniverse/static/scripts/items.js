@@ -4,12 +4,12 @@
  */
 
 export class Item {
-  constructor(id, itemId, position, maturity, remainingUses) {
+  constructor(id, itemId, maturity, remainingUses) {
     this.id = id;
     this.itemId = itemId;
-    this.position = position;
     this.maturity = maturity;
     this.remainingUses = remainingUses;
+
     // XXX Maybe we can avoid this copy of every shared value
     // to every instance, but going with it for now.
     Object.assign(this, settings.item_config[this.itemId]);
@@ -39,10 +39,12 @@ export class Item {
 export class GridItems {
   constructor() {
     this._itemsByPosition = new Map();
+    this._positionsById = new Map();
   }
 
-  add(item) {
-    this._itemsByPosition.set(JSON.stringify(item.position), item);
+  add(item, position) {
+    this._itemsByPosition.set(JSON.stringify(position), item);
+    this._positionsById.set(item.id, JSON.stringify(position));
   }
 
   atPosition(position) {
@@ -50,9 +52,13 @@ export class GridItems {
     return this._itemsByPosition.get(key);
   }
 
+  positionOf(item) {
+    return JSON.parse(this._positionsById.get(item.id));
+  }
+
   remove(item) {
     this._itemsByPosition.delete(JSON.stringify(item.position));
-    item.position = null;
+    this._positionsById.delete(item.id);
   }
   /**
    * Retrieve the Item values from the GridItems
