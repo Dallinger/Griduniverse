@@ -4,12 +4,12 @@
  */
 
 export class Item {
-  constructor(id, itemId, position, maturity) {
+  constructor(id, itemId, position, maturity, remainingUses) {
     this.id = id;
     this.itemId = itemId;
     this.position = position;
     this.maturity = maturity;
-
+    this.remainingUses = remainingUses;
     // XXX Maybe we can avoid this copy of every shared value
     // to every instance, but going with it for now.
     Object.assign(this, settings.item_config[this.itemId]);
