@@ -36,7 +36,7 @@ export class Item {
   }
 }
 
-export class ItemCollection {
+export class GridItems {
   constructor() {
     this._itemsByPosition = new Map();
   }
@@ -52,9 +52,10 @@ export class ItemCollection {
 
   remove(item) {
     this._itemsByPosition.delete(JSON.stringify(item.position));
+    item.position = null;
   }
   /**
-   * Retrieve the Item values from the ItemCollection
+   * Retrieve the Item values from the GridItems
    * @returns Map.prototype[@@iterator]
    */
   values() {

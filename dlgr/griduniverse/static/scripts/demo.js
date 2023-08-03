@@ -3,7 +3,6 @@
 
 (function (dallinger, require, settings) {
 
-var util = require("util");
 var grid = require("./index");
 var position = require("mouse-position");
 var Mousetrap = require("mousetrap");
@@ -124,10 +123,9 @@ var mouse = position(pixels.canvas);
 
 var isSpectator = false;
 var start = performance.now();
-var items = [];
-var itemPositions = {};
-var items = new itemlib.ItemCollection();
-var itemsConsumed = [];
+// var items = [];
+// var itemPositions = {};
+var gridItems = new itemlib.GridItems();
 var walls = [];
 var wall_map = {};
 var transitionsSeen = new Set();
@@ -195,7 +193,7 @@ Player.prototype.move = function(direction) {
     if (hasWall) {
       return false;
     }
-    const itemHere = items.atPosition(position);
+    const itemHere = gridItems.atPosition(position);
     return _.isUndefined(itemHere) || itemHere.crossable;
   }
 
@@ -247,18 +245,18 @@ Player.prototype.move = function(direction) {
 
 
 Player.prototype.replaceItem = function(item) {
-  if (item && !(item instanceof Item)) {
-    item = new Item(item.id, item.item_id, item.position, item.maturity, item.remaining_uses)
+  if (item && !(item instanceof itemlib.Item)) {
+    item = new itemlib.Item(item.id, item.item_id, item.position, item.maturity, item.remaining_uses)
   }
   this.current_item = item;
-  $('#inventory-item').text(item ? item.name : '');
+  displayWhatEgoPlayerIsCarrying(item)
 };
 
 Player.prototype.getTransition = function () {
   var transition;
   var player_item = this.current_item;
   var position = this.position;
-  var item_at_pos = itemPositions[position[0] + '_' + position[1]]
+  var item_at_pos = gridItems.atPosition(position);
   var transition_id = (player_item && player_item.itemId || '') + '_' + (item_at_pos && item_at_pos.itemId || '');
   var last_transition_id = 'last_' + transition_id;
   if (item_at_pos && item_at_pos.remaining_uses == 1) {
@@ -606,15 +604,13 @@ pixels.frame(function() {
     return newColor;
   });
 
-  for (const currentItem of items.values()) {
+  for (const currentItem of gridItems.values()) {
     if (players.isPlayerAt(currentItem.position)) {
       if (!currentItem.interactive) {
         // Non-interactive items get consumed immediately
-        items.remove(currentItem);
-        itemsConsumed.push(currentItem); // XXX this push does nothing, AFAICT (Jesse)
+        gridItems.remove(currentItem);
       }
-      // Else: show info about the item in some way
-    } else if (currentItem.position) {
+    } else {
       section.plot(currentItem.position[1], currentItem.position[0], currentItem.color);
     }
   }
@@ -624,7 +620,7 @@ pixels.frame(function() {
 
   // Show info about the item the current player
   // is sharing a square with:
-  updateItemInfoWindow(ego.position, items);
+  updateItemInfoWindow(ego.position, gridItems);
 
   // Add the Gaussian mask.
   var elapsedTime = performance.now() - startTime;
@@ -776,7 +772,7 @@ function bindGameKeys(socket) {
     var msg_type;
     var ego = players.ego();
     var position = ego.position;
-    var item_at_pos = itemPositions[position[0] + '_' + position[1]]
+    var item_at_pos = gridItems.atPosition(position);
     var player_item = ego.current_item;
     var transition = ego.getTransition();
     if (!item_at_pos && !player_item) {
@@ -799,8 +795,7 @@ function bindGameKeys(socket) {
     } else if (!player_item && item_at_pos && item_at_pos.portable) {
       // If there's a portable item here and we don't something in hand, pick it up.
       msg_type = "item_pick_up";
-      item_at_pos.position = null;
-      delete itemPositions[position[0] + '_' + position[1]];
+      gridItems.remove(position);
       ego.replaceItem(item_at_pos);
     }
     if (!msg_type) {
@@ -817,9 +812,8 @@ function bindGameKeys(socket) {
   Mousetrap.bind("d", function () {
     var ego = players.ego();
     var position = ego.position;
-    var item_at_pos = itemPositions[position[0] + '_' + position[1]]
     var current_item = ego.current_item;
-    if (!current_item || item_at_pos) {
+    if (!current_item || gridItems.atPosition(position)) {
       return;
     }
     var msg = {
@@ -830,8 +824,7 @@ function bindGameKeys(socket) {
     socket.send(msg);
     ego.replaceItem(null);
     current_item.position = position;
-    items.push(current_item);
-    itemPositions[position[0] + '_' + position[1]] = current_item;
+    gridItems.add(current_item);
   });
 
   if (settings.mutable_colors) {
@@ -1009,16 +1002,20 @@ function updateDonationStatus(donation_is_active) {
  * item, we show information about it on the page.
  *
  * @param {Array} egoPlayerPosition [x, y] coordinates of current player
- * @param {itemlib.ItemCollection} items  the collection of all Items on the grid
+ * @param {itemlib.GridItems} gridItems  the collection of all Items on the grid
  */
-function updateItemInfoWindow(egoPlayerPosition, items) {
-  const inspectedItem = items.atPosition(egoPlayerPosition),
+function updateItemInfoWindow(egoPlayerPosition, gridItems) {
+  const inspectedItem = gridItems.atPosition(egoPlayerPosition),
         $el = $("#item-details");
   if (_.isUndefined(inspectedItem)) {
     $el.empty();
   } else {
     $el.html(inspectedItem.name);
   }
+}
+
+function displayWhatEgoPlayerIsCarrying(item) {
+  $('#inventory-item').text(item ? item.name : '');
 }
 
 function onGameStateChange(msg) {
@@ -1054,11 +1051,11 @@ function onGameStateChange(msg) {
 
   updateDonationStatus(state.donation_active);
 
-  // Update items
+  // Update gridItems
   if (state.items !== undefined && state.items !== null) {
-    items = new itemlib.ItemCollection();
+    gridItems = new itemlib.GridItems();
     for (j = 0; j < state.items.length; j++) {
-      items.add(
+      gridItems.add(
         new itemlib.Item(
           state.items[j].id,
           state.items[j].item_id,
