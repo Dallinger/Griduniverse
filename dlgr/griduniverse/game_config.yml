@@ -10,7 +10,7 @@ player_config:
     TEAL: [0.77, 0.96, 0.90]
 
 item_defaults:
-  item_id: 1
+  item_id: default
   item_count: 8
   calories: 0
   crossable: true
@@ -44,7 +44,7 @@ transition_defaults:
 
 items:
   # Legacy GU Food item
-  - item_id: 9
+  - item_id: food
     calories: 5
     crossable: true
     interactive: false
@@ -60,7 +60,7 @@ items:
     limit_quantity: true
     sprite: "#8a9b0f,#7a6b54"
 
-  - item_id: 10
+  - item_id: food2
     calories: 3
     crossable: true
     interactive: false
@@ -80,7 +80,7 @@ items:
   - crossable: true
     interactive: true
     name: Wild Carrot Plant
-    item_id: 1
+    item_id: wild_carrot_plant
     portable: true
     spawn_rate: 0.15
     item_count: 2
@@ -89,35 +89,35 @@ items:
   - crossable: true
     interactive: true
     name: Stone
-    item_id: 2
+    item_id: stone
     portable: true
     spawn_rate: 0.05
     item_count: 5
     sprite: "#95A5A6"
 
-  - crossable: false
+  - crossable: true
     interactive: true
     name: Big Hard Rock
-    item_id: 3
+    item_id: big_hard_rock
     portable: false
     spawn_rate: 0
     item_count: 2
     sprite: "#7F8C8D"
 
-  - crossable: false
+  - crossable: true
     interactive: true
     n_uses: 6
     name: Gooseberry Bush
-    item_id: 4
+    item_id: gooseberry_bush
     portable: false
     spawn_rate: 0.1
     item_count: 2
     sprite: "#8E44AD"
 
-  - crossable: false
+  - crossable: true
     interactive: true
     name: Sharp Stone
-    item_id: 5
+    item_id: sharp_stone
     portable: true
     spawn_rate: 0.05
     item_count: 5
@@ -128,7 +128,7 @@ items:
     interactive: true
     n_uses: 1
     name: Wild Carrot
-    item_id: 6
+    item_id: wild_carrot
     portable: true
     spawn_rate: 0.1
     item_count: 0
@@ -139,7 +139,7 @@ items:
     interactive: true
     n_uses: 1
     name: Gooseberry
-    item_id: 7
+    item_id: gooseberry
     portable: true
     spawn_rate: 0.1
     item_count: 0
@@ -149,47 +149,47 @@ items:
     interactive: true
     n_uses: 1
     name: Empty Gooseberry Bush
-    item_id: 8
+    item_id: empty_gooseberry_bush
     portable: false
     spawn_rate: 0
     item_count: 0
     sprite: "#9B59B6"
 
 transitions:
-  - actor_start: 2
-    actor_end: 5
-    target_start: 3
-    target_end: 3
+  - actor_start: stone
+    actor_end: sharp_stone
+    target_start: big_hard_rock
+    target_end: big_hard_rock
     visible: always
     last_use: false
     modify_uses:
       - 0
       - 0
 
-  - actor_start: 5
-    actor_end: 5
-    target_start: 1
-    target_end: 6
+  - actor_start: sharp_stone
+    actor_end: sharp_stone
+    target_start: wild_carrot_plant
+    target_end: wild_carrot
     visible: seen
     last_use: false
     modify_uses:
       - 0
       - 0
 
-  - actor_end: 7
+  - actor_end: gooseberry
     actor_start: null
     last_use: false
     modify_uses:
       - 0
       - -1
-    target_end: 4
-    target_start: 4
+    target_end: gooseberry_bush
+    target_start: gooseberry_bush
 
-  - actor_end: 7
+  - actor_end: gooseberry
     actor_start: null
     last_use: true
     modify_uses:
       - 0
       - -1
-    target_end: 8
-    target_start: 4
+    target_end: empty_gooseberry_bush
+    target_start: gooseberry_bush

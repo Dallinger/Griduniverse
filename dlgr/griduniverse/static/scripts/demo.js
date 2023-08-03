@@ -255,7 +255,7 @@ Player.prototype.getTransition = function () {
   var player_item = this.current_item;
   var position = this.position;
   var item_at_pos = gridItems.atPosition(position);
-  var transition_id = (player_item && player_item.itemId || '') + '_' + (item_at_pos && item_at_pos.itemId || '');
+  var transition_id = (player_item && player_item.itemId || '') + '*' + (item_at_pos && item_at_pos.itemId || '');
   var last_transition_id = 'last_' + transition_id;
   if (item_at_pos && item_at_pos.remaining_uses == 1) {
     transition = settings.transition_config[last_transition_id];
