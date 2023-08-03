@@ -605,6 +605,7 @@ pixels.frame(function() {
   });
 
   for (const currentItem of gridItems.values()) {
+    // TODO Jesse
     if (players.isPlayerAt(currentItem.position)) {
       if (!currentItem.interactive) {
         // Non-interactive items get consumed immediately
@@ -823,6 +824,7 @@ function bindGameKeys(socket) {
     };
     socket.send(msg);
     ego.replaceItem(null);
+    // TODO Jesse
     current_item.position = position;
     gridItems.add(current_item);
   });
@@ -1055,6 +1057,7 @@ function onGameStateChange(msg) {
   if (state.items !== undefined && state.items !== null) {
     gridItems = new itemlib.GridItems();
     for (j = 0; j < state.items.length; j++) {
+      // TODO Jesse
       gridItems.add(
         new itemlib.Item(
           state.items[j].id,

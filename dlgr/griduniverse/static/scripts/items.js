@@ -39,10 +39,12 @@ export class Item {
 export class GridItems {
   constructor() {
     this._itemsByPosition = new Map();
+    this._itemsById = new Map();
   }
 
-  add(item) {
-    this._itemsByPosition.set(JSON.stringify(item.position), item);
+  add(item, position) {
+    this._itemsByPosition.set(JSON.stringify(position), item);
+    this._itemsById.set(item.id);
   }
 
   atPosition(position) {
@@ -50,9 +52,12 @@ export class GridItems {
     return this._itemsByPosition.get(key);
   }
 
+  getPosition(item) {
+    return this._itemsByPosition.get(item.id);
+  }
+
   remove(item) {
     this._itemsByPosition.delete(JSON.stringify(item.position));
-    item.position = null;
   }
   /**
    * Retrieve the Item values from the GridItems
