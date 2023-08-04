@@ -256,21 +256,21 @@ Player.prototype.getTransition = function () {
   var player_item = this.currentItem;
   var position = this.position;
   var item_at_pos = gridItems.atPosition(position);
-  var transition_id = (player_item && player_item.itemId || '') + '|' + (item_at_pos && item_at_pos.itemId || '');
-  var last_transition_id = 'last_' + transition_id;
+  var transitionId = (player_item && player_item.itemId || '') + '|' + (item_at_pos && item_at_pos.itemId || '');
+  var lastTransitionId = 'last_' + transitionId;
   if (item_at_pos && item_at_pos.remaining_uses == 1) {
-    transition = settings.transition_config[last_transition_id];
+    transition = settings.transition_config[lastTransitionId];
     if (transition) {
-      transition_id = last_transition_id;
+      transitionId = lastTransitionId;
     }
   }
   if (!transition) {
-    transition = settings.transition_config[transition_id];
+    transition = settings.transition_config[transitionId];
   }
   if (!transition) {
     return null;
   }
-  return {id: transition_id, transition: transition};
+  return {id: transitionId, transition: transition};
 }
 
 var playerSet = (function () {
@@ -999,7 +999,7 @@ function renderTransition(transition) {
   if (! transition) {
     return "";
   }
-  const transition_visibility = transition.transition.visible;
+  const transitionVisibility = transition.transition.visible;
   const states = [
     transition.transition.actor_start,
     transition.transition.actor_end,
@@ -1013,11 +1013,11 @@ function renderTransition(transition) {
 
   const aStartItemString = `✋${aStartItem ? aStartItem.name : '⬜'}`;
   const tStartItemString = tStartItem ? tStartItem.name : '⬜';
-  if (transition_visibility == "never") {
+  if (transitionVisibility == "never") {
     return `${aStartItemString} + ${tStartItemString}`
   }
   
-  if (transition_visibility == "seen" && !transitionsSeen.has(transition.id)) {
+  if (transitionVisibility == "seen" && !transitionsSeen.has(transition.id)) {
     var aEndItemString = "✋❓";
     var tEndItemString = "✋❓";
   } else {
