@@ -96,7 +96,7 @@ class TestItem(object):
     def test_remaining_uses_default(self, item_config):
         item = self.subject(item_config)
 
-        assert item.remaining_uses == item_config['n_uses']
+        assert item.remaining_uses == item_config["n_uses"]
 
     def test_remaining_uses_in_constructor(self, item_config):
         item = self.subject(item_config, remaining_uses=1)
