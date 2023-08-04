@@ -16,3 +16,15 @@ repos:
   hooks:
     - id: isort
       args: ["--profile", "black", "--filter-files"]
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.4.0
+  hooks:
+    - id: check-yaml
+- repo: local
+  hooks:
+    - id: compile-js
+      name: Update JS build
+      entry: "bash -c '( yarn run build && git add dlgr/griduniverse/static/scripts/dist ) || exit 1'"
+      language: system
+      files: "\\.js$"
+      pass_filenames: false
