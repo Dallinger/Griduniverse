@@ -1311,7 +1311,7 @@ class Griduniverse(Experiment):
         self.item_config_json = json.dumps(self.item_config)
         self.transition_config_json = json.dumps(
             {
-                "_".join(str(e or "") for e in k): v
+                "|".join(str(e or "") for e in k): v
                 for k, v in self.transition_config.items()
             }
         )

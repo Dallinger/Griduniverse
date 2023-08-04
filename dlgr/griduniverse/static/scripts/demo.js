@@ -3,7 +3,6 @@
 
 (function (dallinger, require, settings) {
 
-var util = require("util");
 var grid = require("./index");
 var position = require("mouse-position");
 var Mousetrap = require("mousetrap");
@@ -13,6 +12,7 @@ var gaussian = require("gaussian");
 var Color = require('color');
 var Identicon = require('./util/identicon');
 var md5 = require('./util/md5');
+var itemlib = require ("./items");
 
 function coordsToIdx(x, y, columns) {
   return y * columns + x;
@@ -106,8 +106,6 @@ for (var j = 0; j < settings.rows; j++) {
 
 var initialSection = new Section(background, 0, 0);
 
-var GREEN = [0.51, 0.69, 0.61];
-var WHITE = [1.00, 1.00, 1.00];
 var INVISIBLE_COLOR = [0.66, 0.66, 0.66];
 var CHANNEL = "griduniverse";
 var CONTROL_CHANNEL = "griduniverse_ctrl";
@@ -125,13 +123,11 @@ var mouse = position(pixels.canvas);
 
 var isSpectator = false;
 var start = performance.now();
-var items = [];
-var itemPositions = {};
-var itemsConsumed = [];
+var gridItems = new itemlib.GridItems();
 var walls = [];
 var wall_map = {};
 var transitionsSeen = new Set();
-var row, column, rand;
+var rand;
 
 var name2idx = function (name) {
   var names = settings.player_color_names;
@@ -157,81 +153,6 @@ var color2name = function (color) {
   return settings.player_color_names[idx];
 }
 
-function hexToRgbPercentages(hexColor) {
-  if (hexColor.startsWith("#")) {
-    hexColor = hexColor.substring(1);
-  }
-
-  // Check if the hex color has a valid length (either 3 or 6 characters)
-  if (hexColor.length !== 3 && hexColor.length !== 6) {
-    throw new Error("Invalid hex color format. It should be either 3 or 6 characters long.");
-  }
-
-  // If the hex color is 3 characters long, expand it to 6 characters by
-  // duplicating each character
-  if (hexColor.length === 3) {
-    hexColor = hexColor
-      .split("")
-      .map((char) => char + char)
-      .join("");
-  }
-
-  // Convert the hex color to RGB percentage values
-  const red = parseInt(hexColor.substring(0, 2), 16) / 255;
-  const green = parseInt(hexColor.substring(2, 4), 16) / 255;
-  const blue = parseInt(hexColor.substring(4, 6), 16) / 255;
-
-  return [red, green, blue];
-}
-
-function rgbOnScale(startColor, endColor, percentage) {
-
-  const result = [];
-  for (let i = 0; i < 3; i++) {
-    result[i] = endColor[i] + percentage * (startColor[i] - endColor[i]);
-  }
-
-  return result;
-}
-/**
- * Representation of a game item, which for the moment is limited to a
- * simple Food type.
- */
-class Item {
-  constructor(id, itemId, position, maturity, remainingUses) {
-    this.id = id;
-    this.itemId = itemId;
-    this.position = position;
-    this.maturity = maturity;
-    this.remainingUses = remainingUses;
-    // XXX Maybe we can avoid this copy of every shared value
-    // to every instance, but going with it for now.
-    Object.assign(this, settings.item_config[this.itemId]);
-  }
-
-  /**
-   * Calculate a color based on sprite definition and maturity
-   */
-  get color() {
-    let immature, mature;
-
-    if (this.sprite.includes(",")) {
-      [immature, mature] = this.sprite.split(",");
-      // For now, assume these are hex colors
-    } else {
-      immature = mature = this.sprite;
-    }
-
-    return rgbOnScale(
-      hexToRgbPercentages(immature),
-      hexToRgbPercentages(mature),
-      this.maturity
-    );
-  }
-
-
-
-}
 
 var Wall = function (settings) {
   if (!(this instanceof Wall)) {
@@ -264,8 +185,14 @@ var Player = function (settings, dimness) {
 };
 
 Player.prototype.move = function(direction) {
-  function _hasWall(position) {
-    return wall_map[[position[1], position[0]]] !== undefined;
+
+  function _isCrossable(position) {
+    const hasWall = ! _.isUndefined(wall_map[[position[1], position[0]]]);
+    if (hasWall) {
+      return false;
+    }
+    const itemHere = gridItems.atPosition(position);
+    return _.isNull(itemHere) || itemHere.crossable;
   }
 
   this.motion_direction = direction;
@@ -305,7 +232,7 @@ Player.prototype.move = function(direction) {
         console.log("Direction not recognized.");
     }
 
-    if (!_hasWall(newPosition) && (!players.isPlayerAt(newPosition) || settings.player_overlap)) {
+    if (_isCrossable(newPosition) && (!players.isPlayerAt(newPosition) || settings.player_overlap)) {
       this.position = newPosition;
       this.motion_timestamp = ts;
       return true;
@@ -316,19 +243,19 @@ Player.prototype.move = function(direction) {
 
 
 Player.prototype.replaceItem = function(item) {
-  if (item && !(item instanceof Item)) {
-    item = new Item(item.id, item.item_id, item.position, item.maturity, item.remaining_uses)
+  if (item && !(item instanceof itemlib.Item)) {
+    item = new itemlib.Item(item.id, item.item_id, item.maturity, item.remaining_uses)
   }
   this.current_item = item;
-  $('#inventory-item').text(item ? item.name : '');
+  displayWhatEgoPlayerIsCarrying(item);
 };
 
 Player.prototype.getTransition = function () {
   var transition;
   var player_item = this.current_item;
   var position = this.position;
-  var item_at_pos = itemPositions[position[0] + '_' + position[1]]
-  var transition_id = (player_item && player_item.itemId || '') + '_' + (item_at_pos && item_at_pos.itemId || '');
+  var item_at_pos = gridItems.atPosition(position);
+  var transition_id = (player_item && player_item.itemId || '') + '|' + (item_at_pos && item_at_pos.itemId || '');
   var last_transition_id = 'last_' + transition_id;
   if (item_at_pos && item_at_pos.remaining_uses == 1) {
     transition = settings.transition_config[last_transition_id];
@@ -371,9 +298,7 @@ var playerSet = (function () {
     };
 
     PlayerSet.prototype.drawToGrid = function (grid) {
-      var positions = [],
-          idx,
-          player,
+      var player,
           id,
           minScore,
           maxScore,
@@ -665,11 +590,10 @@ pixels.frame(function() {
   // Update the background.
   var ego = players.ego(),
       w = getWindowPosition(),
+      section = new Section(background, w.left, w.top),
       dimness,
       rescaling,
-      i, j, x, y;
-
-  var section = new Section(background, w.left, w.top);
+      x, y;
 
   // Animate background for each visible cell
   section.map(function(x, y, color) {
@@ -678,21 +602,25 @@ pixels.frame(function() {
     return newColor;
   });
 
-  for (i = 0; i < items.length; i++) {
-    var currentItem = items[i];
-    if (players.isPlayerAt(currentItem.position)) {
-      if (! currentItem.interactive) {
+  for (const [position, item] of gridItems.entries()) {
+    if (players.isPlayerAt(position)) {
+      if (!item.interactive) {
         // Non-interactive items get consumed immediately
-        itemsConsumed.push(items.splice(i, 1));  // XXX this push does nothing, AFAICT (Jesse)
+        gridItems.remove(position);
       }
-      // Else: show info about the item in some way
-    } else if (currentItem.position) {
-      section.plot(currentItem.position[1], currentItem.position[0], currentItem.color);
+    } else {
+      section.plot(position[1], position[0], item.color);
     }
   }
 
   // Draw the players:
   players.drawToGrid(section);
+
+  // Show info about the item the current player
+  // is sharing a square with:
+  if (! _.isUndefined(ego)) {
+    updateItemInfoWindow(ego, gridItems);
+  }
 
   // Add the Gaussian mask.
   var elapsedTime = performance.now() - startTime;
@@ -763,10 +691,6 @@ function arraySearch(arr, val) {
       }
     }
     return false;
-}
-
-function getRandomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function getWindowPosition() {
@@ -848,7 +772,7 @@ function bindGameKeys(socket) {
     var msg_type;
     var ego = players.ego();
     var position = ego.position;
-    var item_at_pos = itemPositions[position[0] + '_' + position[1]]
+    var item_at_pos = gridItems.atPosition(position);
     var player_item = ego.current_item;
     var transition = ego.getTransition();
     if (!item_at_pos && !player_item) {
@@ -871,8 +795,7 @@ function bindGameKeys(socket) {
     } else if (!player_item && item_at_pos && item_at_pos.portable) {
       // If there's a portable item here and we don't something in hand, pick it up.
       msg_type = "item_pick_up";
-      item_at_pos.position = null;
-      delete itemPositions[position[0] + '_' + position[1]];
+      gridItems.remove(position);
       ego.replaceItem(item_at_pos);
     }
     if (!msg_type) {
@@ -889,9 +812,8 @@ function bindGameKeys(socket) {
   Mousetrap.bind("d", function () {
     var ego = players.ego();
     var position = ego.position;
-    var item_at_pos = itemPositions[position[0] + '_' + position[1]]
     var current_item = ego.current_item;
-    if (!current_item || item_at_pos) {
+    if (!current_item || gridItems.atPosition(position)) {
       return;
     }
     var msg = {
@@ -901,9 +823,7 @@ function bindGameKeys(socket) {
     };
     socket.send(msg);
     ego.replaceItem(null);
-    current_item.position = position;
-    items.push(current_item);
-    itemPositions[position[0] + '_' + position[1]] = current_item;
+    gridItems.add(current_item, position);
   });
 
   if (settings.mutable_colors) {
@@ -1076,6 +996,54 @@ function updateDonationStatus(donation_is_active) {
   settings.donation_active = donation_is_active;
 }
 
+
+function renderTransition(transition) {
+  if (! transition) {
+    return "";
+  }
+  const states = [
+    transition.transition.actor_start,
+    transition.transition.actor_end,
+    transition.transition.target_start,
+    transition.transition.target_end
+  ];
+
+  const [aStartItem, aEndItem, tStartItem, tEndItem] = states.map(
+    (state) => settings.item_config[state]
+  );
+
+  return `✋${aStartItem.name} + ${tStartItem.name} → ✋${aEndItem.name} + ${tEndItem.name}`;
+}
+/**
+ * If the current player is sharing a grid position with an interactive
+ * item, we show information about it on the page.
+ *
+ * @param {Player} egoPlayer the current Player
+ * @param {itemlib.GridItems} gridItems  the collection of all Items on the grid
+ */
+function updateItemInfoWindow(egoPlayer, gridItems) {
+  const inspectedItem = gridItems.atPosition(egoPlayer.position),
+        transition = egoPlayer.getTransition(),
+        $square = $("#location-contents-item"),
+        $transition = $("#transition-details");
+
+  if (! inspectedItem) {
+    $square.empty();
+  } else {
+    $square.html(inspectedItem.name);
+  }
+
+  if (! transition) {
+    $transition.empty();
+  } else {
+    $transition.html(renderTransition(transition));
+  }
+}
+
+function displayWhatEgoPlayerIsCarrying(item) {
+  $('#inventory-item').text(item ? item.name : '');
+}
+
 function onGameStateChange(msg) {
   var $donationButtons = $('#individual-donate, #group-donate, #public-donate, #ingroup-donate'),
       $timeElement = $("#time"),
@@ -1109,24 +1077,22 @@ function onGameStateChange(msg) {
 
   updateDonationStatus(state.donation_active);
 
-  // Update items
+  // Update gridItems
   if (state.items !== undefined && state.items !== null) {
-    items = [];
+    gridItems = new itemlib.GridItems();
     for (j = 0; j < state.items.length; j++) {
-      var new_item = new Item(
-        state.items[j].id,
-        state.items[j].item_id,
-        state.items[j].position,
-        state.items[j].maturity,
-        state.items[j].remaining_uses,
+
+      gridItems.add(
+        new itemlib.Item(
+          state.items[j].id,
+          state.items[j].item_id,
+          state.items[j].maturity,
+          state.items[j].remaining_uses,
+        ),
+        state.items[j].position
       );
-      items.push(new_item);
-      if (new_item.position) {
-        itemPositions[new_item.position[0] + '_' + new_item.position[1]] = new_item;
-      }
     }
   }
-
   // Update walls if they haven't been created yet.
   if (state.walls !== undefined && walls.length === 0) {
     for (k = 0; k < state.walls.length; k++) {
