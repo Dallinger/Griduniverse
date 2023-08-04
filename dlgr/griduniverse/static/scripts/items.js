@@ -1,3 +1,5 @@
+/*global settings */
+/*jshint esversion: 6 */
 /**
  * Representation of a game item, which for the moment is limited to a
  * simple Food type.

@@ -47,4 +47,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
+      - name: Install yarn globally
+        run: npm install -g yarn
+      - name: Install JS deps with yarn
+        run: yarn install --ignore-optional
       - uses: pre-commit/action@v2.0.0

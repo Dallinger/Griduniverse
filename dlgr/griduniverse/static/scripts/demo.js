@@ -1,4 +1,4 @@
-/*global dallinger, require, settings */
+/*global dallinger, store */
 /*jshint esversion: 6 */
 
 (function (dallinger, require, settings) {
@@ -11,6 +11,7 @@ var $ = require("jquery");
 var gaussian = require("gaussian");
 var Color = require('color');
 var Identicon = require('./util/identicon');
+var _ = require('lodash');
 var md5 = require('./util/md5');
 var itemlib = require ("./items");
 
@@ -73,7 +74,7 @@ class Section {
     if (x >= this.left && x < this.left + this.columns) {
       if (y >= this.top && y < this.top + this.rows) {
         this.data[this.gridCoordsToSectionIdx(x, y)] = color;
-        if (texture !== undefined ){
+        if (! _.isUndefined(texture)){
           this.textures[this.gridCoordsToSectionIdx(x, y)] = texture;
         }
         background[coordsToIdx(x, y, settings.columns)] = color;
@@ -180,7 +181,7 @@ var Player = function (settings, dimness) {
   this.name = settings.name;
   this.identity_visible = settings.identity_visible;
   this.dimness = dimness;
-  this.replaceItem(settings.current_item);
+  this.replaceItem(settings.current_item || null);
   return this;
 };
 
@@ -406,7 +407,7 @@ var playerSet = (function () {
           }
         }
         var last_dimness = 1;
-        if (this._players[freshPlayerData.id] !== undefined) {
+        if (! _.isUndefined(this._players[freshPlayerData.id])) {
           last_dimness = this._players[freshPlayerData.id].dimness;
         }
         this._players[freshPlayerData.id] = new Player(freshPlayerData, last_dimness);
@@ -515,7 +516,7 @@ var GUSocket = (function () {
         var msg = JSON.parse(event.data.substring(marker.length));
 
         var callback = self.callbackMap[msg.type];
-        if (typeof callback !== 'undefined') {
+        if (! _.isUndefined(callback)) {
           callback(msg);
         } else {
           console.log("Unrecognized message type " + msg.type + ' from backend.');
@@ -531,8 +532,7 @@ var GUSocket = (function () {
         }
 
         var self = this,
-            isOpen = $.Deferred(),
-            tolerance = typeof(settings.lagTolerance) !== 'undefined' ? settings.lagTolerance : 0.1;
+            tolerance = _.isUndefined(settings.lagTolerance) ? 0.1 : settings.lagTolerance;
 
         this.broadcastChannel = settings.broadcast;
         this.controlChannel = settings.control;
@@ -635,7 +635,7 @@ pixels.frame(function() {
   var g = gaussian(0, Math.pow(visibilityNow, 2));
   rescaling = 1 / g.pdf(0);
 
-  if (typeof ego !== "undefined") {
+  if (! _.isUndefined(ego)) {
     x = ego.position[1];
     y = ego.position[0];
   } else {
@@ -702,7 +702,7 @@ function getWindowPosition() {
         rows: settings.window_rows
       };
 
-  if (typeof ego !== 'undefined') {
+  if (! _.isUndefined(ego)) {
     w.left = clamp(
       ego.position[1] - Math.floor(settings.window_columns / 2),
       0, settings.columns - settings.window_columns);
@@ -717,8 +717,7 @@ function bindGameKeys(socket) {
   var directions = ["up", "down", "left", "right"],
       repeatDelayMS = 1000 / settings.motion_speed_limit,
       lastDirection = null,
-      repeatIntervalId = null,
-      highlightEgo = false;
+      repeatIntervalId = null;
 
   function moveInDir(direction) {
     var ego = players.ego();
@@ -942,8 +941,7 @@ function onMoveRejected(msg) {
 }
 
 function onDonationProcessed(msg) {
-    var donor = players.get(msg.donor_id),
-      recipient_id = msg.recipient_id,
+    var recipient_id = msg.recipient_id,
       team_idx,
       donor_name,
       recipient_name,
@@ -1078,7 +1076,7 @@ function onGameStateChange(msg) {
   updateDonationStatus(state.donation_active);
 
   // Update gridItems
-  if (state.items !== undefined && state.items !== null) {
+  if (! _.isNil(state.items)) {
     gridItems = new itemlib.GridItems();
     for (j = 0; j < state.items.length; j++) {
 
@@ -1087,14 +1085,14 @@ function onGameStateChange(msg) {
           state.items[j].id,
           state.items[j].item_id,
           state.items[j].maturity,
-          state.items[j].remaining_uses,
+          state.items[j].remaining_uses
         ),
         state.items[j].position
       );
     }
   }
   // Update walls if they haven't been created yet.
-  if (state.walls !== undefined && walls.length === 0) {
+  if (! _.isUndefined(state.walls) && walls.length === 0) {
     for (k = 0; k < state.walls.length; k++) {
       cur_wall = state.walls[k];
       if (cur_wall instanceof Array) {
@@ -1114,7 +1112,7 @@ function onGameStateChange(msg) {
   }
 
   // If new walls have been added, draw them
-  if (state.walls !== undefined && walls.length < state.walls.length) {
+  if (! _.isUndefined(state.walls) && walls.length < state.walls.length) {
     for (k = walls.length; k < state.walls.length; k++) {
       cur_wall = state.walls[k];
       walls.push(
@@ -1128,7 +1126,7 @@ function onGameStateChange(msg) {
   }
 
   // Update displayed score, set donation info.
-  if (ego !== undefined) {
+  if (! _.isUndefined(ego)) {
     $("#score").html(Math.round(ego.score));
     $("#dollars").html(ego.payoff.toFixed(2));
     window.state = msg.grid;
@@ -1193,7 +1191,6 @@ function displayLeaderboards(msg, callback) {
       pushMessage('<em>Individual</em>');
     }
     var player_scores = players.player_scores();
-    var ego_id = players.ego_id;
     for (i = 0; i < player_scores.length; i++) {
       var player = player_scores[i];
       var player_name = chatName(player.id);
@@ -1234,7 +1231,7 @@ function gameOverHandler(player_id) {
 
 $(document).ready(function() {
   var player_id = dallinger.getUrlParameter('participant_id');
-      isSpectator = typeof player_id === 'undefined';
+      isSpectator = _.isUndefined(player_id);
   var socketSettings = {
         'endpoint': 'chat',
         'broadcast': CHANNEL,
@@ -1285,7 +1282,7 @@ $(document).ready(function() {
   $("#grid").append(pixels.canvas);
 
   // Opt out of the experiment.
-  $("#opt-out").click(function() {
+  $("#opt-out").on('click', function() {
     window.location.href = "/questionnaire?participant_id=" + player_id;
   });
 
@@ -1294,12 +1291,12 @@ $(document).ready(function() {
   }
 
   // Consent to the experiment.
-  $("#go-to-experiment").click(function() {
+  $("#go-to-experiment").on('click', function() {
     window.location.href = "/exp";
   });
 
   // Submit the questionnaire.
-  $("#submit-questionnaire").click(function() {
+  $("#submit-questionnaire").on('click', function() {
       dallinger.submitResponses();
   });
 
@@ -1405,20 +1402,20 @@ $(document).ready(function() {
       console.error(err);
     } finally {
       $("#message").val("");
-      return false;
     }
+    return false;
   });
 
   if (!isSpectator) {
     // Main game keys:
     bindGameKeys(socket);
     // Donation click events:
-    $(pixels.canvas).click(function (e) {
+    $(pixels.canvas).on('click', function (e) {
       donateToClicked();
     });
-    $('#public-donate').click(donateToAll);
-    $('#ingroup-donate').click(donateToInGroup);
-    $('#group-donate').click(function () {
+    $('#public-donate').on('click', donateToAll);
+    $('#ingroup-donate').on('click',donateToInGroup);
+    $('#group-donate').on('click',function () {
       if (settings.donation_group) {
         $('#donate label').text('Click on a color');
         settings.donation_type = 'group';
@@ -1427,7 +1424,7 @@ $(document).ready(function() {
         $('#individual-donate').addClass('button-outline');
       }
     });
-    $('#individual-donate').click(function () {
+    $('#individual-donate').on('click',function () {
       if (settings.donation_individual) {
         $('#donate label').text('Click on a player');
         settings.donation_type = 'individual';
