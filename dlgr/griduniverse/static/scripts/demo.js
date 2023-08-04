@@ -247,13 +247,13 @@ Player.prototype.replaceItem = function(item) {
   if (item && !(item instanceof itemlib.Item)) {
     item = new itemlib.Item(item.id, item.item_id, item.maturity, item.remaining_uses)
   }
-  this.current_item = item;
+  this.currentItem = item;
   displayWhatEgoPlayerIsCarrying(item);
 };
 
 Player.prototype.getTransition = function () {
   var transition;
-  var player_item = this.current_item;
+  var player_item = this.currentItem;
   var position = this.position;
   var item_at_pos = gridItems.atPosition(position);
   var transition_id = (player_item && player_item.itemId || '') + '|' + (item_at_pos && item_at_pos.itemId || '');
@@ -772,7 +772,7 @@ function bindGameKeys(socket) {
     var ego = players.ego();
     var position = ego.position;
     var item_at_pos = gridItems.atPosition(position);
-    var player_item = ego.current_item;
+    var player_item = ego.currentItem;
     var transition = ego.getTransition();
     if (!item_at_pos && !player_item) {
       // If there's nothing here, we try to plant food GU 1.0 style
@@ -811,8 +811,8 @@ function bindGameKeys(socket) {
   Mousetrap.bind("d", function () {
     var ego = players.ego();
     var position = ego.position;
-    var current_item = ego.current_item;
-    if (!current_item || gridItems.atPosition(position)) {
+    var currentItem = ego.currentItem;
+    if (!currentItem || gridItems.atPosition(position)) {
       return;
     }
     var msg = {
@@ -822,7 +822,7 @@ function bindGameKeys(socket) {
     };
     socket.send(msg);
     ego.replaceItem(null);
-    gridItems.add(current_item, position);
+    gridItems.add(currentItem, position);
   });
 
   if (settings.mutable_colors) {
@@ -999,6 +999,7 @@ function renderTransition(transition) {
   if (! transition) {
     return "";
   }
+  const transition_visibility = transition.transition.visible;
   const states = [
     transition.transition.actor_start,
     transition.transition.actor_end,
@@ -1010,7 +1011,21 @@ function renderTransition(transition) {
     (state) => settings.item_config[state]
   );
 
-  return `✋${aStartItem.name} + ${tStartItem.name} → ✋${aEndItem.name} + ${tEndItem.name}`;
+  const aStartItemString = `✋${aStartItem ? aStartItem.name : '⬜'}`;
+  const tStartItemString = tStartItem ? tStartItem.name : '⬜';
+  if (transition_visibility == "never") {
+    return `${aStartItemString} + ${tStartItemString}`
+  }
+  
+  if (transition_visibility == "seen" && !transitionsSeen.has(transition.id)) {
+    var aEndItemString = "✋❓";
+    var tEndItemString = "✋❓";
+  } else {
+    aEndItemString = `✋${aEndItem ? aEndItem.name: '⬜'}`;
+    tEndItemString = tEndItem ? tEndItem.name: '⬜';
+  }
+  return `${aStartItemString} + ${tStartItemString} → ${aEndItemString} + ${tEndItemString}`;
+
 }
 /**
  * If the current player is sharing a grid position with an interactive
@@ -1032,7 +1047,12 @@ function updateItemInfoWindow(egoPlayer, gridItems) {
   }
 
   if (! transition) {
-    $transition.empty();
+    // If we're holding an item with calories, indicate that we might want to eat it.
+    if (egoPlayer.currentItem && egoPlayer.currentItem.calories) {
+      $transition.html(`✋${egoPlayer.currentItem.name} + 🤤`);
+    } else {
+      $transition.empty();
+    }
   } else {
     $transition.html(renderTransition(transition));
   }
