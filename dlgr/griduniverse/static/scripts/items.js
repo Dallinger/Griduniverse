@@ -56,16 +56,24 @@ export class GridItems {
 
   atPosition(position) {
     const key = JSON.stringify(position);
-    return this._itemsByPosition.get(key);
+    return this._itemsByPosition.get(key) || null;
   }
 
   positionOf(item) {
-    return JSON.parse(this._positionsById.get(item.id));
+    if (this._positionsById.has(item.id)) {
+      return JSON.parse(this._positionsById.get(item.id));
+    }
+
+    return undefined;
   }
 
-  remove(item) {
-    this._itemsByPosition.delete(JSON.stringify(item.position));
-    this._positionsById.delete(item.id);
+  remove(position) {
+    const item = this.atPosition(position);
+
+    if (item) {
+      this._itemsByPosition.delete(JSON.stringify(position));
+      this._positionsById.delete(item.id);
+    }
   }
 
   /**
