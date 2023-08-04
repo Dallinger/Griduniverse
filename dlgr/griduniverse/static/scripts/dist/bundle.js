@@ -1752,7 +1752,7 @@ Player.prototype.move = function(direction) {
       return false;
     }
     const itemHere = gridItems.atPosition(position);
-    return _.isUndefined(itemHere) || itemHere.crossable;
+    return _.isNull(itemHere) || itemHere.crossable;
   }
 
   this.motion_direction = direction;
@@ -2587,13 +2587,13 @@ function updateItemInfoWindow(egoPlayer, gridItems) {
         $square = $("#location-contents-item"),
         $transition = $("#transition-details");
 
-  if (inspectedItem) {
+  if (! inspectedItem) {
     $square.empty();
   } else {
     $square.html(inspectedItem.name);
   }
 
-  if (transition) {
+  if (! transition) {
     $transition.empty();
   } else {
     $transition.html(renderTransition(transition));
