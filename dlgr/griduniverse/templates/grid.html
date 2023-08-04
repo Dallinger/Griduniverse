@@ -75,7 +75,12 @@
 <div id="inventory">
     Currently Carrying: <span id="inventory-item"></span>
 </div>
-
+<div id="location-contents">
+    At this Location: <span id="location-contents-item"></span>
+</div>
+<div id="item-transitions">
+    Available Transitions: <span id="transition-details"></span>
+</div>
 {% if experiment.grid.donation_amount %}
 <div id="donate" class="for-players">
     <label>Give {{ experiment.grid.donation_amount }} point{{experiment.grid.donation_amount > 1 and 's' or ''}} to:</label>
@@ -94,9 +99,6 @@
 </div>
 {% endif %}
 
-<div id="item-details">
-    <!-- Details of interative item you're sharing a square with inserted here -->
-</div>
 <div id="chat">
     <div id="chatlog">
         <ul id="messages">

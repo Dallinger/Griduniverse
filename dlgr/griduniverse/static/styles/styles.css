@@ -43,13 +43,6 @@ canvas {
 }
 
 
-#item-details {
-    height: 5rem;
-    width: 275px;
-    border: 1px solid #cccccc;
-    padding: 1rem;
-}
-
 #chat {
     width: 100%;
 }

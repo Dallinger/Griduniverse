@@ -255,7 +255,7 @@ Player.prototype.getTransition = function () {
   var player_item = this.current_item;
   var position = this.position;
   var item_at_pos = gridItems.atPosition(position);
-  var transition_id = (player_item && player_item.itemId || '') + '*' + (item_at_pos && item_at_pos.itemId || '');
+  var transition_id = (player_item && player_item.itemId || '') + '|' + (item_at_pos && item_at_pos.itemId || '');
   var last_transition_id = 'last_' + transition_id;
   if (item_at_pos && item_at_pos.remaining_uses == 1) {
     transition = settings.transition_config[last_transition_id];
@@ -619,7 +619,7 @@ pixels.frame(function() {
   // Show info about the item the current player
   // is sharing a square with:
   if (! _.isUndefined(ego)) {
-    updateItemInfoWindow(ego.position, gridItems);
+    updateItemInfoWindow(ego, gridItems);
   }
 
   // Add the Gaussian mask.
@@ -996,20 +996,47 @@ function updateDonationStatus(donation_is_active) {
   settings.donation_active = donation_is_active;
 }
 
+
+function renderTransition(transition) {
+  if (! transition) {
+    return "";
+  }
+  const states = [
+    transition.transition.actor_start,
+    transition.transition.actor_end,
+    transition.transition.target_start,
+    transition.transition.target_end
+  ];
+
+  const [aStartItem, aEndItem, tStartItem, tEndItem] = states.map(
+    (state) => settings.item_config[state]
+  );
+
+  return `✋${aStartItem.name} + ${tStartItem.name} = ✋${aEndItem.name} + ${tEndItem.name}`;
+}
 /**
  * If the current player is sharing a grid position with an interactive
  * item, we show information about it on the page.
  *
- * @param {Array} egoPlayerPosition [x, y] coordinates of current player
+ * @param {Player} egoPlayer the current Player
  * @param {itemlib.GridItems} gridItems  the collection of all Items on the grid
  */
-function updateItemInfoWindow(egoPlayerPosition, gridItems) {
-  const inspectedItem = gridItems.atPosition(egoPlayerPosition),
-        $el = $("#item-details");
+function updateItemInfoWindow(egoPlayer, gridItems) {
+  const inspectedItem = gridItems.atPosition(egoPlayer.position),
+        transition = egoPlayer.getTransition(),
+        $square = $("#location-contents-item"),
+        $transition = $("#transition-details");
+
   if (_.isUndefined(inspectedItem)) {
-    $el.empty();
+    $square.empty();
   } else {
-    $el.html(inspectedItem.name);
+    $square.html(inspectedItem.name);
+  }
+
+  if (_.isUndefined(transition)) {
+    $transition.empty();
+  } else {
+    $transition.html(renderTransition(transition));
   }
 }
 
