@@ -127,7 +127,7 @@ var start = performance.now();
 var gridItems = new itemlib.GridItems();
 var walls = [];
 var wall_map = {};
-var transitionsSeen = new Set();
+var transitionsUsed = new Set();
 var rand;
 
 var name2idx = function (name) {
@@ -247,30 +247,30 @@ Player.prototype.replaceItem = function(item) {
   if (item && !(item instanceof itemlib.Item)) {
     item = new itemlib.Item(item.id, item.item_id, item.maturity, item.remaining_uses)
   }
-  this.current_item = item;
+  this.currentItem = item;
   displayWhatEgoPlayerIsCarrying(item);
 };
 
 Player.prototype.getTransition = function () {
   var transition;
-  var player_item = this.current_item;
+  var player_item = this.currentItem;
   var position = this.position;
   var item_at_pos = gridItems.atPosition(position);
-  var transition_id = (player_item && player_item.itemId || '') + '|' + (item_at_pos && item_at_pos.itemId || '');
-  var last_transition_id = 'last_' + transition_id;
+  var transitionId = (player_item && player_item.itemId || '') + '|' + (item_at_pos && item_at_pos.itemId || '');
+  var lastTransitionId = 'last_' + transitionId;
   if (item_at_pos && item_at_pos.remaining_uses == 1) {
-    transition = settings.transition_config[last_transition_id];
+    transition = settings.transition_config[lastTransitionId];
     if (transition) {
-      transition_id = last_transition_id;
+      transitionId = lastTransitionId;
     }
   }
   if (!transition) {
-    transition = settings.transition_config[transition_id];
+    transition = settings.transition_config[transitionId];
   }
   if (!transition) {
     return null;
   }
-  return {id: transition_id, transition: transition};
+  return {id: transitionId, transition: transition};
 }
 
 var playerSet = (function () {
@@ -772,7 +772,7 @@ function bindGameKeys(socket) {
     var ego = players.ego();
     var position = ego.position;
     var item_at_pos = gridItems.atPosition(position);
-    var player_item = ego.current_item;
+    var player_item = ego.currentItem;
     var transition = ego.getTransition();
     if (!item_at_pos && !player_item) {
       // If there's nothing here, we try to plant food GU 1.0 style
@@ -782,7 +782,7 @@ function bindGameKeys(socket) {
       // client-side other checking that it exists. We could optimize display
       // updates later
       msg_type = "item_transition";
-      transitionsSeen.add(transition.id);
+      transitionsUsed.add(transition.id);
     } else if (player_item && player_item.calories) {
       // If there's nothing here to transition with and we're holding something
       // edible, consume it.
@@ -811,8 +811,8 @@ function bindGameKeys(socket) {
   Mousetrap.bind("d", function () {
     var ego = players.ego();
     var position = ego.position;
-    var current_item = ego.current_item;
-    if (!current_item || gridItems.atPosition(position)) {
+    var currentItem = ego.currentItem;
+    if (!currentItem || gridItems.atPosition(position)) {
       return;
     }
     var msg = {
@@ -822,7 +822,7 @@ function bindGameKeys(socket) {
     };
     socket.send(msg);
     ego.replaceItem(null);
-    gridItems.add(current_item, position);
+    gridItems.add(currentItem, position);
   });
 
   if (settings.mutable_colors) {
@@ -999,6 +999,7 @@ function renderTransition(transition) {
   if (! transition) {
     return "";
   }
+  const transitionVisibility = transition.transition.visible;
   const states = [
     transition.transition.actor_start,
     transition.transition.actor_end,
@@ -1010,7 +1011,21 @@ function renderTransition(transition) {
     (state) => settings.item_config[state]
   );
 
-  return `✋${aStartItem.name} + ${tStartItem.name} → ✋${aEndItem.name} + ${tEndItem.name}`;
+  const aStartItemString = `✋${aStartItem ? aStartItem.name : '⬜'}`;
+  const tStartItemString = tStartItem ? tStartItem.name : '⬜';
+  if (transitionVisibility == "never") {
+    return `${aStartItemString} + ${tStartItemString}`
+  }
+  
+  if (transitionVisibility == "seen" && !transitionsUsed.has(transition.id)) {
+    var aEndItemString = "✋❓";
+    var tEndItemString = "❓";
+  } else {
+    aEndItemString = `✋${aEndItem ? aEndItem.name: '⬜'}`;
+    tEndItemString = tEndItem ? tEndItem.name: '⬜';
+  }
+  return `${aStartItemString} + ${tStartItemString} → ${aEndItemString} + ${tEndItemString}`;
+
 }
 /**
  * If the current player is sharing a grid position with an interactive
@@ -1032,7 +1047,12 @@ function updateItemInfoWindow(egoPlayer, gridItems) {
   }
 
   if (! transition) {
-    $transition.empty();
+    // If we're holding an item with calories, indicate that we might want to consume it.
+    if (egoPlayer.currentItem && egoPlayer.currentItem.calories) {
+      $transition.html(`✋${egoPlayer.currentItem.name} + 😋`);
+    } else {
+      $transition.empty();
+    }
   } else {
     $transition.html(renderTransition(transition));
   }

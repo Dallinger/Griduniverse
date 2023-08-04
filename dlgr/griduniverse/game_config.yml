@@ -32,7 +32,7 @@ item_defaults:
   sprite: "#8a9b0f,#7a6b54"
 
 transition_defaults:
-  visible: never # Can be set to "never", "always", or "seen" for transitions that become
+  visible: seen # Can be set to "never", "always", or "seen" for transitions that become
                  # visible to a player after they have been executed for the first time
   actor_end: null
   actor_start: null
@@ -83,7 +83,7 @@ items:
     item_id: wild_carrot_plant
     portable: true
     spawn_rate: 0.15
-    item_count: 2
+    item_count: 100
     sprite: "#E67E22"
 
   - crossable: true
@@ -92,7 +92,7 @@ items:
     item_id: stone
     portable: true
     spawn_rate: 0.05
-    item_count: 5
+    item_count: 50
     sprite: "#95A5A6"
 
   - crossable: true
@@ -101,7 +101,7 @@ items:
     item_id: big_hard_rock
     portable: false
     spawn_rate: 0
-    item_count: 2
+    item_count: 20
     sprite: "#7F8C8D"
 
   - crossable: true
@@ -111,7 +111,7 @@ items:
     item_id: gooseberry_bush
     portable: false
     spawn_rate: 0.1
-    item_count: 2
+    item_count: 50
     sprite: "#8E44AD"
 
   - crossable: true
@@ -120,7 +120,7 @@ items:
     item_id: sharp_stone
     portable: true
     spawn_rate: 0.05
-    item_count: 5
+    item_count: 20
     sprite: "#BDC3C7"
 
   - calories: 5
@@ -130,7 +130,7 @@ items:
     name: Wild Carrot
     item_id: wild_carrot
     portable: true
-    spawn_rate: 0.1
+    spawn_rate: 0
     item_count: 0
     sprite: "#E67E22"
 
@@ -141,7 +141,7 @@ items:
     name: Gooseberry
     item_id: gooseberry
     portable: true
-    spawn_rate: 0.1
+    spawn_rate: 0
     item_count: 0
     sprite: "#8E44AD"
 
@@ -179,6 +179,7 @@ transitions:
   - actor_end: gooseberry
     actor_start: null
     last_use: false
+    visible: never
     modify_uses:
       - 0
       - -1
@@ -188,6 +189,7 @@ transitions:
   - actor_end: gooseberry
     actor_start: null
     last_use: true
+    visible: always
     modify_uses:
       - 0
       - -1
