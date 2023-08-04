@@ -124,9 +124,9 @@ class TestExperimentClass(object):
     def test_new_experiment_has_item_config_with_defaults(self, exp):
         item_config = exp.item_config
         assert isinstance(item_config, dict)
-        # We define item 9 as Food, and pull the null public good multiplier from the default
-        assert item_config[9]["name"] == "Food"
-        assert item_config[9]["public_good_multiplier"] == 0.0
+        # We define a Food item, and pull the null public good multiplier from the default
+        assert item_config["food"]["name"] == "Food"
+        assert item_config["food"]["public_good_multiplier"] == 0.0
 
     def test_new_experiment_has_transition_config_with_defaults(self, exp):
         transition_config = exp.transition_config
@@ -135,8 +135,9 @@ class TestExperimentClass(object):
             # We are keyed on tuples of item ids (actor, target)
             assert isinstance(key, tuple)
             assert len(key) == 2
-            assert isinstance(key[0], int)
-            assert isinstance(key[1], int)
+            # ints or strings both supported for IDs
+            assert isinstance(key[0], (int, str))
+            assert isinstance(key[1], (int, str))
             # This value comes from the defaults
             assert transition["visible"] in {"always", "never", "seen"}
             break
