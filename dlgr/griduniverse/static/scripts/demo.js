@@ -192,7 +192,7 @@ Player.prototype.move = function(direction) {
       return false;
     }
     const itemHere = gridItems.atPosition(position);
-    return _.isUndefined(itemHere) || itemHere.crossable;
+    return _.isNull(itemHere) || itemHere.crossable;
   }
 
   this.motion_direction = direction;
@@ -606,7 +606,7 @@ pixels.frame(function() {
     if (players.isPlayerAt(position)) {
       if (!item.interactive) {
         // Non-interactive items get consumed immediately
-        gridItems.remove(item);
+        gridItems.remove(position);
       }
     } else {
       section.plot(position[1], position[0], item.color);
@@ -1012,7 +1012,7 @@ function renderTransition(transition) {
     (state) => settings.item_config[state]
   );
 
-  return `✋${aStartItem.name} + ${tStartItem.name} = ✋${aEndItem.name} + ${tEndItem.name}`;
+  return `✋${aStartItem.name} + ${tStartItem.name} → ✋${aEndItem.name} + ${tEndItem.name}`;
 }
 /**
  * If the current player is sharing a grid position with an interactive
@@ -1027,13 +1027,13 @@ function updateItemInfoWindow(egoPlayer, gridItems) {
         $square = $("#location-contents-item"),
         $transition = $("#transition-details");
 
-  if (_.isUndefined(inspectedItem)) {
+  if (! inspectedItem) {
     $square.empty();
   } else {
     $square.html(inspectedItem.name);
   }
 
-  if (_.isUndefined(transition)) {
+  if (! transition) {
     $transition.empty();
   } else {
     $transition.html(renderTransition(transition));

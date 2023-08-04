@@ -60,42 +60,15 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 9);
+/******/ 	return __webpack_require__(__webpack_require__.s = 8);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */,
 /* 1 */
-/***/ (function(module, exports) {
-
-var g;
-
-// This works in non-strict mode
-g = (function() {
-	return this;
-})();
-
-try {
-	// This works if eval is allowed (see CSP)
-	g = g || Function("return this")() || (1,eval)("this");
-} catch(e) {
-	// This works if the window reference is available
-	if(typeof window === "object")
-		g = window;
-}
-
-// g can still be undefined, but nothing to do about it...
-// We return undefined, instead of nothing here, so it's
-// easier to handle this case. if(!global) { ...}
-
-module.exports = g;
-
-
-/***/ }),
-/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var convert = __webpack_require__(15);
+var convert = __webpack_require__(10);
 
 module.exports = function (cstr) {
     var m, conv, parts, alpha;
@@ -181,7 +154,7 @@ module.exports = function (cstr) {
 
 
 /***/ }),
-/* 3 */
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -194,7 +167,7 @@ module.exports = function (cstr) {
 
 
 
-var typeOf = __webpack_require__(17);
+var typeOf = __webpack_require__(12);
 
 module.exports = function isNumber(num) {
   var type = typeOf(num);
@@ -207,7 +180,7 @@ module.exports = function isNumber(num) {
 
 
 /***/ }),
-/* 4 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -234,7 +207,7 @@ module.exports = function isString(value) {
 
 
 /***/ }),
-/* 5 */
+/* 4 */
 /***/ (function(module, exports) {
 
 
@@ -273,7 +246,7 @@ module.exports = isArray || function (val) {
 
 
 /***/ }),
-/* 6 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/*
@@ -560,7 +533,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*
 }(this))
 
 /***/ }),
-/* 7 */
+/* 6 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -715,11 +688,11 @@ module.exports = {
 };
 
 /***/ }),
-/* 8 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* MIT license */
-var cssKeywords = __webpack_require__(7);
+var cssKeywords = __webpack_require__(6);
 
 // NOTE: conversions should only return primitive values (i.e. arrays, or
 //       values that give correct `typeof` results).
@@ -1582,7 +1555,7 @@ convert.rgb.gray = function (rgb) {
 
 
 /***/ }),
-/* 9 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var require;/*global dallinger, require, settings */
@@ -1590,16 +1563,16 @@ var require;/*global dallinger, require, settings */
 
 (function (dallinger, require, settings) {
 
-var grid = __webpack_require__(14);
-var position = __webpack_require__(27);
-var Mousetrap = __webpack_require__(29);
-var ReconnectingWebSocket = __webpack_require__(30);
-var $ = __webpack_require__(31);
-var gaussian = __webpack_require__(32);
-var Color = __webpack_require__(33);
-var Identicon = __webpack_require__(39);
-var md5 = __webpack_require__(6);
-var itemlib = __webpack_require__ (41);
+var grid = __webpack_require__(9);
+var position = __webpack_require__(23);
+var Mousetrap = __webpack_require__(25);
+var ReconnectingWebSocket = __webpack_require__(26);
+var $ = __webpack_require__(27);
+var gaussian = __webpack_require__(28);
+var Color = __webpack_require__(29);
+var Identicon = __webpack_require__(35);
+var md5 = __webpack_require__(5);
+var itemlib = __webpack_require__ (37);
 
 function coordsToIdx(x, y, columns) {
   return y * columns + x;
@@ -1779,7 +1752,7 @@ Player.prototype.move = function(direction) {
       return false;
     }
     const itemHere = gridItems.atPosition(position);
-    return _.isUndefined(itemHere) || itemHere.crossable;
+    return _.isNull(itemHere) || itemHere.crossable;
   }
 
   this.motion_direction = direction;
@@ -2193,7 +2166,7 @@ pixels.frame(function() {
     if (players.isPlayerAt(position)) {
       if (!item.interactive) {
         // Non-interactive items get consumed immediately
-        gridItems.remove(item);
+        gridItems.remove(position);
       }
     } else {
       section.plot(position[1], position[0], item.color);
@@ -2599,7 +2572,7 @@ function renderTransition(transition) {
     (state) => settings.item_config[state]
   );
 
-  return `✋${aStartItem.name} + ${tStartItem.name} = ✋${aEndItem.name} + ${tEndItem.name}`;
+  return `✋${aStartItem.name} + ${tStartItem.name} → ✋${aEndItem.name} + ${tEndItem.name}`;
 }
 /**
  * If the current player is sharing a grid position with an interactive
@@ -2614,13 +2587,13 @@ function updateItemInfoWindow(egoPlayer, gridItems) {
         $square = $("#location-contents-item"),
         $transition = $("#transition-details");
 
-  if (_.isUndefined(inspectedItem)) {
+  if (! inspectedItem) {
     $square.empty();
   } else {
     $square.html(inspectedItem.name);
   }
 
-  if (_.isUndefined(transition)) {
+  if (! transition) {
     $transition.empty();
   } else {
     $transition.html(renderTransition(transition));
@@ -3030,23 +3003,19 @@ $(document).ready(function() {
 
 
 /***/ }),
-/* 10 */,
-/* 11 */,
-/* 12 */,
-/* 13 */,
-/* 14 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var parse = __webpack_require__(2);
-var isnumber = __webpack_require__(3);
-var isstring = __webpack_require__(4);
-var isarray = __webpack_require__(5);
-var convert = __webpack_require__(19);
-var layout = __webpack_require__(22);
-var texcoord = __webpack_require__(23);
-var range = __webpack_require__(24);
-var pixdenticon = __webpack_require__(25);
-var md5 = __webpack_require__(6);
+var parse = __webpack_require__(1);
+var isnumber = __webpack_require__(2);
+var isstring = __webpack_require__(3);
+var isarray = __webpack_require__(4);
+var convert = __webpack_require__(14);
+var layout = __webpack_require__(18);
+var texcoord = __webpack_require__(19);
+var range = __webpack_require__(20);
+var pixdenticon = __webpack_require__(21);
+var md5 = __webpack_require__(5);
 
 function Pixels(data, textures, opts) {
   if (!(this instanceof Pixels)) return new Pixels(data, textures, opts);
@@ -3097,7 +3066,7 @@ function Pixels(data, textures, opts) {
     width / height
   );
 
-  var regl = __webpack_require__(26)(canvas);
+  var regl = __webpack_require__(22)(canvas);
 
   var initial_texture = [];
   for (row = 0; row < opts.size; row++) {
@@ -3200,10 +3169,10 @@ module.exports = Pixels;
 
 
 /***/ }),
-/* 15 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var conversions = __webpack_require__(16);
+var conversions = __webpack_require__(11);
 
 var convert = function() {
    return new Converter();
@@ -3297,7 +3266,7 @@ Converter.prototype.getValues = function(space) {
 module.exports = convert;
 
 /***/ }),
-/* 16 */
+/* 11 */
 /***/ (function(module, exports) {
 
 /* MIT license */
@@ -4001,10 +3970,10 @@ for (var key in cssKeywords) {
 
 
 /***/ }),
-/* 17 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isBuffer = __webpack_require__(18);
+var isBuffer = __webpack_require__(13);
 var toString = Object.prototype.toString;
 
 /**
@@ -4123,7 +4092,7 @@ module.exports = function kindOf(val) {
 
 
 /***/ }),
-/* 18 */
+/* 13 */
 /***/ (function(module, exports) {
 
 /*!
@@ -4150,14 +4119,14 @@ function isSlowBuffer (obj) {
 
 
 /***/ }),
-/* 19 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var lodash = __webpack_require__(20);
-var isarray = __webpack_require__(5);
-var isnumber = __webpack_require__(3);
-var isstring = __webpack_require__(4);
-var parse = __webpack_require__(2);
+var lodash = __webpack_require__(15);
+var isarray = __webpack_require__(4);
+var isnumber = __webpack_require__(2);
+var isstring = __webpack_require__(3);
+var parse = __webpack_require__(1);
 
 function convert(data) {
   data = isarray(data[0]) && data[0].length !== 3 ? lodash.flatten(data, 1) : data;
@@ -4183,7 +4152,7 @@ module.exports = convert;
 
 
 /***/ }),
-/* 20 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {var __WEBPACK_AMD_DEFINE_RESULT__;/**
@@ -21272,10 +21241,37 @@ module.exports = convert;
   }
 }.call(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1), __webpack_require__(21)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(16), __webpack_require__(17)(module)))
 
 /***/ }),
-/* 21 */
+/* 16 */
+/***/ (function(module, exports) {
+
+var g;
+
+// This works in non-strict mode
+g = (function() {
+	return this;
+})();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || Function("return this")() || (1,eval)("this");
+} catch(e) {
+	// This works if the window reference is available
+	if(typeof window === "object")
+		g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
+
+
+/***/ }),
+/* 17 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
@@ -21303,7 +21299,7 @@ module.exports = function(module) {
 
 
 /***/ }),
-/* 22 */
+/* 18 */
 /***/ (function(module, exports) {
 
 function layout(rows, columns, padding, size, aspect) {
@@ -21334,7 +21330,7 @@ module.exports = layout;
 
 
 /***/ }),
-/* 23 */
+/* 19 */
 /***/ (function(module, exports) {
 
 function texcoord(rows, columns, texture_indexes, num_textures) {
@@ -21367,7 +21363,7 @@ module.exports = texcoord;
 
 
 /***/ }),
-/* 24 */
+/* 20 */
 /***/ (function(module, exports) {
 
 function range(j, k) { 
@@ -21382,7 +21378,7 @@ module.exports = range;
 
 
 /***/ }),
-/* 25 */
+/* 21 */
 /***/ (function(module, exports) {
 
 /**
@@ -21489,7 +21485,7 @@ module.exports = Identicon;
 
 
 /***/ }),
-/* 26 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function (global, factory) {
@@ -30998,10 +30994,10 @@ return wrapREGL;
 
 
 /***/ }),
-/* 27 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Emitter = __webpack_require__(28)
+var Emitter = __webpack_require__(24)
 
 module.exports = attach
 
@@ -31049,7 +31045,7 @@ function attach(element, listener) {
 
 
 /***/ }),
-/* 28 */
+/* 24 */
 /***/ (function(module, exports) {
 
 // Copyright Joyent, Inc. and other Node contributors.
@@ -31357,7 +31353,7 @@ function isUndefined(arg) {
 
 
 /***/ }),
-/* 29 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/*global define:false */
@@ -32408,7 +32404,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*global define:false */
 
 
 /***/ }),
-/* 30 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -32620,13 +32616,13 @@ module.exports = ReconnectingWebsocket;
 
 
 /***/ }),
-/* 31 */
+/* 27 */
 /***/ (function(module, exports) {
 
 module.exports = jQuery;
 
 /***/ }),
-/* 32 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function(exports) {
@@ -32745,14 +32741,14 @@ module.exports = jQuery;
 
 
 /***/ }),
-/* 33 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var colorString = __webpack_require__(34);
-var convert = __webpack_require__(37);
+var colorString = __webpack_require__(30);
+var convert = __webpack_require__(33);
 
 var _slice = [].slice;
 
@@ -33231,12 +33227,12 @@ module.exports = Color;
 
 
 /***/ }),
-/* 34 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* MIT license */
-var colorNames = __webpack_require__(7);
-var swizzle = __webpack_require__(35);
+var colorNames = __webpack_require__(6);
+var swizzle = __webpack_require__(31);
 
 var reverseNames = {};
 
@@ -33470,13 +33466,13 @@ function hexDouble(num) {
 
 
 /***/ }),
-/* 35 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var isArrayish = __webpack_require__(36);
+var isArrayish = __webpack_require__(32);
 
 var concat = Array.prototype.concat;
 var slice = Array.prototype.slice;
@@ -33506,7 +33502,7 @@ swizzle.wrap = function (fn) {
 
 
 /***/ }),
-/* 36 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -33524,11 +33520,11 @@ module.exports = function isArrayish(obj) {
 
 
 /***/ }),
-/* 37 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var conversions = __webpack_require__(8);
-var route = __webpack_require__(38);
+var conversions = __webpack_require__(7);
+var route = __webpack_require__(34);
 
 var convert = {};
 
@@ -33608,10 +33604,10 @@ module.exports = convert;
 
 
 /***/ }),
-/* 38 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var conversions = __webpack_require__(8);
+var conversions = __webpack_require__(7);
 
 /*
 	this function routes a model to all other models.
@@ -33712,7 +33708,7 @@ module.exports = function (fromModel) {
 
 
 /***/ }),
-/* 39 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -33730,7 +33726,7 @@ module.exports = function (fromModel) {
 (function() {
     var PNGlib;
     if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-        PNGlib = __webpack_require__(40);
+        PNGlib = __webpack_require__(36);
     } else {
         PNGlib = window.PNGlib;
     }
@@ -33916,7 +33912,7 @@ module.exports = function (fromModel) {
 })();
 
 /***/ }),
-/* 40 */
+/* 36 */
 /***/ (function(module, exports) {
 
 /**
@@ -34135,7 +34131,7 @@ module.exports = function (fromModel) {
     })();
 
 /***/ }),
-/* 41 */
+/* 37 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -34200,16 +34196,24 @@ class GridItems {
 
   atPosition(position) {
     const key = JSON.stringify(position);
-    return this._itemsByPosition.get(key);
+    return this._itemsByPosition.get(key) || null;
   }
 
   positionOf(item) {
-    return JSON.parse(this._positionsById.get(item.id));
+    if (this._positionsById.has(item.id)) {
+      return JSON.parse(this._positionsById.get(item.id));
+    }
+
+    return undefined;
   }
 
-  remove(item) {
-    this._itemsByPosition.delete(JSON.stringify(item.position));
-    this._positionsById.delete(item.id);
+  remove(position) {
+    const item = this.atPosition(position);
+
+    if (item) {
+      this._itemsByPosition.delete(JSON.stringify(position));
+      this._positionsById.delete(item.id);
+    }
   }
 
   /**
