@@ -1047,9 +1047,9 @@ function updateItemInfoWindow(egoPlayer, gridItems) {
   }
 
   if (! transition) {
-    // If we're holding an item with calories, indicate that we might want to eat it.
+    // If we're holding an item with calories, indicate that we might want to consume it.
     if (egoPlayer.currentItem && egoPlayer.currentItem.calories) {
-      $transition.html(`✋${egoPlayer.currentItem.name} + 🤤`);
+      $transition.html(`✋${egoPlayer.currentItem.name} + 😋`);
     } else {
       $transition.empty();
     }
