@@ -784,7 +784,7 @@ class Gridworld(object):
                 if player.color_idx > 0:
                     calories = item.calories
                 else:
-                    calories = item.calories * self.relative_deprivation
+                    calories = item.calories * self.grid.relative_deprivation
 
                 player.score += calories
                 consumed += 1
@@ -1647,7 +1647,7 @@ class Griduniverse(Experiment):
             error_msg = {
                 "type": "consume_error",
                 "player_id": player.id,
-                "player_item": player_item.serialize(),
+                "player_item": player_item and player_item.serialize(),
             }
             self.publish(error_msg)
             return
@@ -1660,7 +1660,7 @@ class Griduniverse(Experiment):
         if player.color_idx > 0:
             calories = player_item.calories
         else:
-            calories = player_item.calories * self.relative_deprivation
+            calories = player_item.calories * self.grid.relative_deprivation
 
         player.score += calories
         if player_item.public_good:
@@ -1725,15 +1725,15 @@ class Griduniverse(Experiment):
             location_item.remaining_uses += modify_target_uses
 
         # An item that is replaced or has no remaining uses has been "consumed"
-        if (player_item and player_item.remaining_uses < 1) or transition[
-            "actor_end"
-        ] != actor_key:
+        if player_item and (
+            (player_item.remaining_uses < 1) or transition["actor_end"] != actor_key
+        ):
             self.grid.items_consumed.append(player_item)
             player.current_item = None
             self.grid.items_updated = True
-        if (location_item and location_item.remaining_uses < 1) or transition[
-            "target_end"
-        ] != target_key:
+        if location_item and (
+            (location_item.remaining_uses < 1) or transition["target_end"] != target_key
+        ):
             del self.grid.item_locations[position]
             self.grid.items_consumed.append(location_item)
             self.grid.items_updated = True
