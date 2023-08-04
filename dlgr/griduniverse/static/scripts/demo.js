@@ -127,7 +127,7 @@ var start = performance.now();
 var gridItems = new itemlib.GridItems();
 var walls = [];
 var wall_map = {};
-var transitionsSeen = new Set();
+var transitionsUsed = new Set();
 var rand;
 
 var name2idx = function (name) {
@@ -782,7 +782,7 @@ function bindGameKeys(socket) {
       // client-side other checking that it exists. We could optimize display
       // updates later
       msg_type = "item_transition";
-      transitionsSeen.add(transition.id);
+      transitionsUsed.add(transition.id);
     } else if (player_item && player_item.calories) {
       // If there's nothing here to transition with and we're holding something
       // edible, consume it.
@@ -1017,9 +1017,9 @@ function renderTransition(transition) {
     return `${aStartItemString} + ${tStartItemString}`
   }
   
-  if (transitionVisibility == "seen" && !transitionsSeen.has(transition.id)) {
+  if (transitionVisibility == "seen" && !transitionsUsed.has(transition.id)) {
     var aEndItemString = "✋❓";
-    var tEndItemString = "✋❓";
+    var tEndItemString = "❓";
   } else {
     aEndItemString = `✋${aEndItem ? aEndItem.name: '⬜'}`;
     tEndItemString = tEndItem ? tEndItem.name: '⬜';
