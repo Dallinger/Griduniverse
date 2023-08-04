@@ -19,9 +19,14 @@
   "devDependencies": {
     "browser-sync": "<2.19.0",
     "browser-sync-webpack-plugin": "^2.3.0",
-    "fsevents": "^2.3.2",
     "uglify-es": "^3.0.28",
     "webpack": "^2.4.1"
+  },
+  "resolutions": {
+    "**/fsevents": "^2.3.2"
+  },
+  "optionalDependencies": {
+    "fsevents": "*"
   },
   "scripts": {
     "build": "webpack",

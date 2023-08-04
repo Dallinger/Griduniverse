@@ -50,5 +50,5 @@ jobs:
       - name: Install yarn globally
         run: npm install -g yarn
       - name: Install JS deps with yarn
-        run: yarn install
+        run: yarn install --ignore-optional
       - uses: pre-commit/action@v2.0.0
