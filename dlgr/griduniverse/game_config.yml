@@ -189,7 +189,7 @@ items:
     respawn: true
     item_count: 8
     limit_quantity: true
-    sprite: "#8a9b0f,#7a6b54"
+    sprite: "color:#8a9b0f,#7a6b54"
 
   - item_id: food2
     calories: 3
@@ -205,7 +205,7 @@ items:
     portable: true
     respawn: true
     limit_quantity: true
-    sprite: "#2a9b0f,#1a6b54"
+    sprite: "image:/static/images/food.png"
 
   # One Hour, One Life items
   - crossable: true
@@ -215,7 +215,7 @@ items:
     portable: true
     spawn_rate: 0.15
     item_count: 100
-    sprite: "#E67E22"
+    sprite: "color:#E67E22"
 
   - crossable: true
     interactive: true
@@ -224,7 +224,7 @@ items:
     portable: true
     spawn_rate: 0.05
     item_count: 50
-    sprite: "#95A5A6"
+    sprite: "color:#95A5A6"
 
   - crossable: true
     interactive: true
@@ -233,7 +233,7 @@ items:
     portable: false
     spawn_rate: 0
     item_count: 20
-    sprite: "#7F8C8D"
+    sprite: "color:#7F8C8D"
 
   - crossable: true
     interactive: true
@@ -243,7 +243,7 @@ items:
     portable: false
     spawn_rate: 0.1
     item_count: 50
-    sprite: "#8E44AD"
+    sprite: "color:#8E44AD"
 
   - crossable: true
     interactive: true
@@ -252,7 +252,7 @@ items:
     portable: true
     spawn_rate: 0.05
     item_count: 20
-    sprite: "#BDC3C7"
+    sprite: "color:#BDC3C7"
 
   - calories: 5
     crossable: true
@@ -263,7 +263,7 @@ items:
     portable: true
     spawn_rate: 0
     item_count: 0
-    sprite: "#E67E22"
+    sprite: "color:#E67E22"
 
   - calories: 3
     crossable: true
@@ -274,7 +274,7 @@ items:
     portable: true
     spawn_rate: 0
     item_count: 0
-    sprite: "#8E44AD"
+    sprite: "color:#8E44AD"
 
   - crossable: false
     interactive: true
@@ -284,7 +284,7 @@ items:
     portable: false
     spawn_rate: 0
     item_count: 0
-    sprite: "#9B59B6"
+    sprite: "color:#9B59B6"
 
 transitions:
   - actor_start: stone

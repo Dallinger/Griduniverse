@@ -15,24 +15,41 @@ export class Item {
     // XXX Maybe we can avoid this copy of every shared value
     // to every instance, but going with it for now.
     Object.assign(this, settings.item_config[this.itemId]);
+
+    // Sprite
+    let spriteType, spriteValue;
+    let immature, mature;
+    [spriteType, spriteValue] = this.sprite.split(":");
+    if (spriteType === "color") {
+      if (spriteValue.includes(",")) {
+        [immature, mature] = spriteValue.split(",");
+      } else {
+        immature = mature = spriteValue;
+      }
+    } else {
+      immature = "#808080"
+      mature = "#808080"
+    }
+    this.immature = immature;
+    this.mature = mature;
+    if (spriteType === "image") {
+      this.image = new Promise(resolve => {
+        const image = new Image();
+        image.crossOrigin = "anonymous";
+        image.src = spriteValue;
+        image.onload = () => resolve(Object.assign(image, { style: "max-width:16px" }));
+      })
+    }
+  }
   }
 
   /**
    * Calculate a color based on sprite definition and maturity
    */
   get color() {
-    let immature, mature;
-
-    if (this.sprite.includes(",")) {
-      [immature, mature] = this.sprite.split(",");
-      // For now, assume these are hex colors
-    } else {
-      immature = mature = this.sprite;
-    }
-
     return rgbOnScale(
-      hexToRgbPercentages(immature),
-      hexToRgbPercentages(mature),
+      hexToRgbPercentages(this.immature),
+      hexToRgbPercentages(this.mature),
       this.maturity
     );
   }
