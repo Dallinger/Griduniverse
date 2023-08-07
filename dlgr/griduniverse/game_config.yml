@@ -34,6 +34,9 @@ item_defaults:
   # example: "color:#808080,#858585"
   # image:<server path to image>
   # example: "image:/static/images/food.png"
+  # emoji:<emoji_desc | emoji_char>
+  # emojis from emojis.json, as defined on https://api.github.com/emojis
+  # example: "emoji:carrot"
   sprite: "color:#8a9b0f,#7a6b54"
 
 transition_defaults:
@@ -89,7 +92,7 @@ items:
     portable: true
     spawn_rate: 0.15
     item_count: 100
-    sprite: "color:#E67E22"
+    sprite: "emoji:carrot"
 
   - crossable: true
     interactive: true
@@ -98,7 +101,7 @@ items:
     portable: true
     spawn_rate: 0.05
     item_count: 50
-    sprite: "color:#95A5A6"
+    sprite: "emoji:◽"
 
   - crossable: true
     interactive: true
@@ -107,7 +110,7 @@ items:
     portable: false
     spawn_rate: 0
     item_count: 20
-    sprite: "color:#7F8C8D"
+    sprite: "emoji:⚪"
 
   - crossable: true
     interactive: true
@@ -117,7 +120,7 @@ items:
     portable: false
     spawn_rate: 0.1
     item_count: 50
-    sprite: "color:#8E44AD"
+    sprite: "emoji:deciduous_tree"
 
   - crossable: true
     interactive: true
@@ -126,7 +129,7 @@ items:
     portable: true
     spawn_rate: 0.05
     item_count: 20
-    sprite: "color:#BDC3C7"
+    sprite: "emoji:rock"
 
   - calories: 5
     crossable: true
@@ -137,7 +140,7 @@ items:
     portable: true
     spawn_rate: 0
     item_count: 0
-    sprite: "color:#E67E22"
+    sprite: "emoji:carrot"
 
   - calories: 3
     crossable: true
