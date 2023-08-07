@@ -117,6 +117,7 @@ var pixels = grid(initialSection.data, initialSection.textures, {
   size: settings.block_size,
   padding: settings.padding,
   background: [0.1, 0.1, 0.1],
+  item_config: settings.item_config,
   formatted: true
 });
 
@@ -610,6 +611,14 @@ pixels.frame(function() {
       }
     } else {
       section.plot(position[1], position[0], item.color);
+      if (item.itemId in pixels.itemImages) {
+        try {
+          console.log(position);
+          pixels.itemImages[item.itemId]({"position": position});
+        } catch(error) {
+          // Command not ready yet.
+        }
+      }
     }
   }
 
@@ -1115,6 +1124,7 @@ function onGameStateChange(msg) {
 
   // Update gridItems
   if (! _.isNil(state.items)) {
+    pixels.generateItemImages();
     gridItems = new itemlib.GridItems();
     for (j = 0; j < state.items.length; j++) {
 

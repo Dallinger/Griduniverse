@@ -8,6 +8,8 @@ var texcoord = require("./util/texcoord");
 var range = require("./util/range");
 var pixdenticon = require("./util/pixdenticon");
 var md5 = require("./util/md5");
+var emojis = require("./emojis.json");
+var emojis_by_char = require("./emoji_chars.json");
 
 function Pixels(data, textures, opts) {
   if (!(this instanceof Pixels)) return new Pixels(data, textures, opts);
@@ -124,6 +126,10 @@ function Pixels(data, textures, opts) {
     squares({ position: positions, texcoords: texcoords, color: colors });
   };
 
+  var drawItems = function(positions, texcoords, colors) {
+    squares({ position: positions, texcoords: texcoords, color: colors });
+  };
+
   draw(buffer.position, buffer.texcoords, buffer.color);
 
   self._buffer = buffer;
@@ -131,6 +137,9 @@ function Pixels(data, textures, opts) {
   self._formatted = opts.formatted;
   self.canvas = canvas;
   self.frame = regl.frame;
+  self.regl = regl;
+  self.item_config = opts.item_config;
+  self.itemImages = {};
 }
 
 Pixels.prototype.update = function(data, textures) {
@@ -155,6 +164,82 @@ Pixels.prototype.update = function(data, textures) {
   );
 
   self._draw(self._buffer.position, self._buffer.texcoords(texcoords), self._buffer.color(expanded_colors));
+};
+
+Pixels.prototype.generateItemImages = function() {
+  const regl = this.regl;
+  for (const [item_id, item] of Object.entries(this.item_config)){
+    if (!(item_id in this.itemImages)) {
+      let spriteType, spriteValue;
+      let immature, mature;
+      let imageCommand;
+      [spriteType, spriteValue] = item.sprite.split(":");
+      if (spriteType === "color") {
+        if (spriteValue.includes(",")) {
+          [immature, mature] = spriteValue.split(",");
+        } else {
+          immature = mature = spriteValue;
+        }
+      } else {
+        immature = "#808080"
+        mature = "#808080"
+      }
+      item.immature = immature;
+      item.mature = mature;
+      var makeCommand = function(texture) {
+        var command = regl({
+          frag: `
+          precision mediump float;
+          uniform sampler2D texture;
+          varying vec2 uv;
+          void main () {
+            gl_FragColor = texture2D(texture, uv);
+          }`,
+          vert: `
+          precision mediump float;
+          attribute vec2 position;
+          varying vec2 uv;
+          void main () {
+            uv = vec2(position);
+            gl_Position = vec4(1.0 - 2.0 * position, 0, 1);
+          }`,
+          attributes: {
+            position: regl.prop("position")
+          },
+          uniforms: {
+            texture: texture
+          },
+          count: 3
+        });
+        return command;
+      };
+      if (spriteType === "image") {
+        new Promise(resolve => {
+          const image = new Image();
+          image.crossOrigin = "anonymous";
+          image.src = spriteValue;
+          image.onload = () => resolve(this.itemImages[item_id] = makeCommand(regl.texture(image)));
+        })
+      }
+      if (spriteType === "emoji") {
+        let spriteUrl = "https://github.githubassets.com/images/icons/emoji/unicode/2753.png?v8"; // question mark
+        if (spriteValue in emojis) {
+          spriteUrl = emojis[spriteValue];
+        }
+        if (spriteValue in emojis_by_char) {
+          spriteUrl = emojis_by_char[spriteValue];
+        }
+        imageCommand = new Promise(resolve => {
+          const image = new Image();
+          image.crossOrigin = "anonymous";
+          image.src = spriteUrl;
+          image.onload = () => resolve(this.itemImages[item_id] = makeCommand(regl.texture(image)));
+          //image.onload = () => resolve(Object.assign(makeCommand(regl.texture(image))));
+        })
+      }
+      this.itemImages[item_id] = imageCommand;
+    }
+  };
 };
 
 module.exports = Pixels;
