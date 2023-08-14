@@ -71,6 +71,35 @@
 /* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
+"use strict";
+/*!
+ * is-number <https://github.com/jonschlinkert/is-number>
+ *
+ * Copyright (c) 2014-2015, Jon Schlinkert.
+ * Licensed under the MIT License.
+ */
+
+
+
+var typeOf = __webpack_require__(38);
+
+module.exports = function isNumber(num) {
+  var type = typeOf(num);
+
+  if (type === 'string') {
+    if (!num.trim()) return false;
+  } else if (type !== 'number') {
+    return false;
+  }
+
+  return (num - num + 1) >= 0;
+};
+
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
 var __WEBPACK_AMD_DEFINE_RESULT__;/*
  * JavaScript MD5
  * https://github.com/blueimp/JavaScript-MD5
@@ -355,7 +384,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*
 }(this))
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {var __WEBPACK_AMD_DEFINE_RESULT__;/**
@@ -17572,7 +17601,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(44), __webpack_require__(45)(module)))
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* MIT license */
@@ -18446,7 +18475,7 @@ convert.rgb.gray = function (rgb) {
 
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports) {
 
 
@@ -18481,35 +18510,6 @@ var str = Object.prototype.toString;
 
 module.exports = isArray || function (val) {
   return !! val && '[object Array]' == str.call(val);
-};
-
-
-/***/ }),
-/* 5 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-/*!
- * is-number <https://github.com/jonschlinkert/is-number>
- *
- * Copyright (c) 2014-2015, Jon Schlinkert.
- * Licensed under the MIT License.
- */
-
-
-
-var typeOf = __webpack_require__(38);
-
-module.exports = function isNumber(num) {
-  var type = typeOf(num);
-
-  if (type === 'string') {
-    if (!num.trim()) return false;
-  } else if (type !== 'number') {
-    return false;
-  }
-
-  return (num - num + 1) >= 0;
 };
 
 
@@ -18638,15 +18638,15 @@ module.exports = function (cstr) {
 /***/ (function(module, exports, __webpack_require__) {
 
 var parse = __webpack_require__(7);
-var isnumber = __webpack_require__(5);
+var isnumber = __webpack_require__(1);
 var isstring = __webpack_require__(6);
-var isarray = __webpack_require__(4);
+var isarray = __webpack_require__(5);
 var convert = __webpack_require__(22);
 var layout = __webpack_require__(23);
 var texcoord = __webpack_require__(27);
 var range = __webpack_require__(26);
 var pixdenticon = __webpack_require__(24);
-var md5 = __webpack_require__(1);
+var md5 = __webpack_require__(2);
 var emojis = __webpack_require__(20);
 var emojis_by_char = __webpack_require__(19);
 
@@ -18840,7 +18840,7 @@ Pixels.prototype.generateItemImages = function() {
           varying vec2 uv;
           void main () {
             uv = vec2(position);
-            gl_Position = vec4(1.0 - 2.0 * position, 0, 1);
+            gl_Position = vec4(position.x, position.y, 0.0, 1.0);
           }`,
           attributes: {
             position: regl.prop("position")
@@ -18848,7 +18848,7 @@ Pixels.prototype.generateItemImages = function() {
           uniforms: {
             texture: texture
           },
-          count: 3
+          count: 6
         });
         return command;
       };
@@ -18873,7 +18873,6 @@ Pixels.prototype.generateItemImages = function() {
           image.crossOrigin = "anonymous";
           image.src = spriteUrl;
           image.onload = () => resolve(this.itemImages[item_id] = makeCommand(regl.texture(image)));
-          //image.onload = () => resolve(Object.assign(makeCommand(regl.texture(image))));
         })
       }
       this.itemImages[item_id] = imageCommand;
@@ -21213,9 +21212,10 @@ var $ = __webpack_require__(16);
 var gaussian = __webpack_require__(12);
 var Color = __webpack_require__(11);
 var Identicon = __webpack_require__(10);
-var _ = __webpack_require__(2);
-var md5 = __webpack_require__(1);
+var _ = __webpack_require__(3);
+var md5 = __webpack_require__(2);
 var itemlib = __webpack_require__ (9);
+var isnumber = __webpack_require__(1);
 
 function coordsToIdx(x, y, columns) {
   return y * columns + x;
@@ -21789,6 +21789,30 @@ document.body.style.background = "#ffffff";
 
 var startTime = performance.now();
 
+const getItemCoords = function(x, y) {
+  grid = []
+  var size = isnumber(settings.block_size) ? settings.block_size : 10;
+  var padding = isnumber(settings.padding) ? settings.padding : 2;
+  var rows = settings.window_rows;
+  var columns = settings.window_columns;
+  var width = columns * size + (columns + 1) * padding;
+  var height = rows * size + (rows + 1) * padding;
+  var aspect = width / height;
+  size = 2 * size / width;
+  padding = 2 * padding / width;
+  var x = -1 + aspect * (x * (padding + size) + padding);
+  var y = 1 - (y * (padding + size) + padding);
+  grid.push([ y, x ]);
+  var x_next = x + size - padding;
+  grid.push([ y, x_next ]);
+  var y_next = y - size + padding;
+  grid.push([ y_next, x ]);
+  grid.push([ y_next, x ]);
+  grid.push([ y, x_next ]);
+  grid.push([ y_next, x_next ]);
+  return grid
+}
+
 pixels.frame(function() {
   // Update the background.
   var ego = players.ego(),
@@ -21815,8 +21839,7 @@ pixels.frame(function() {
       section.plot(position[1], position[0], item.color);
       if (item.itemId in pixels.itemImages) {
         try {
-          console.log(position);
-          pixels.itemImages[item.itemId]({"position": position});
+          pixels.itemImages[item.itemId]({"position": getItemCoords(position[0], position[1])});
         } catch(error) {
           // Command not ready yet.
         }
@@ -22707,9 +22730,9 @@ module.exports = {"100":"https://github.githubassets.com/images/icons/emoji/unic
 /* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var lodash = __webpack_require__(2);
-var isarray = __webpack_require__(4);
-var isnumber = __webpack_require__(5);
+var lodash = __webpack_require__(3);
+var isarray = __webpack_require__(5);
+var isnumber = __webpack_require__(1);
 var isstring = __webpack_require__(6);
 var parse = __webpack_require__(7);
 
@@ -23145,7 +23168,7 @@ module.exports = texcoord;
 /* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var conversions = __webpack_require__(3);
+var conversions = __webpack_require__(4);
 var route = __webpack_require__(29);
 
 var convert = {};
@@ -23229,7 +23252,7 @@ module.exports = convert;
 /* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var conversions = __webpack_require__(3);
+var conversions = __webpack_require__(4);
 
 /*
 	this function routes a model to all other models.
