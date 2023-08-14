@@ -14,6 +14,7 @@ var Identicon = require('./util/identicon');
 var _ = require('lodash');
 var md5 = require('./util/md5');
 var itemlib = require ("./items");
+var isnumber = require("is-number");
 
 function coordsToIdx(x, y, columns) {
   return y * columns + x;
@@ -587,6 +588,30 @@ document.body.style.background = "#ffffff";
 
 var startTime = performance.now();
 
+const getItemCoords = function(x, y) {
+  grid = []
+  var size = isnumber(settings.block_size) ? settings.block_size : 10;
+  var padding = isnumber(settings.padding) ? settings.padding : 2;
+  var rows = settings.window_rows;
+  var columns = settings.window_columns;
+  var width = columns * size + (columns + 1) * padding;
+  var height = rows * size + (rows + 1) * padding;
+  var aspect = width / height;
+  size = 2 * size / width;
+  padding = 2 * padding / width;
+  var x = -1 + aspect * (x * (padding + size) + padding);
+  var y = 1 - (y * (padding + size) + padding);
+  grid.push([ y, x ]);
+  var x_next = x + size - padding;
+  grid.push([ y, x_next ]);
+  var y_next = y - size + padding;
+  grid.push([ y_next, x ]);
+  grid.push([ y_next, x ]);
+  grid.push([ y, x_next ]);
+  grid.push([ y_next, x_next ]);
+  return grid
+}
+
 pixels.frame(function() {
   // Update the background.
   var ego = players.ego(),
@@ -613,8 +638,7 @@ pixels.frame(function() {
       section.plot(position[1], position[0], item.color);
       if (item.itemId in pixels.itemImages) {
         try {
-          console.log(position);
-          pixels.itemImages[item.itemId]({"position": position});
+          pixels.itemImages[item.itemId]({"position": getItemCoords(position[0], position[1])});
         } catch(error) {
           // Command not ready yet.
         }

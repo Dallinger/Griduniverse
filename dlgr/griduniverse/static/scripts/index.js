@@ -201,7 +201,7 @@ Pixels.prototype.generateItemImages = function() {
           varying vec2 uv;
           void main () {
             uv = vec2(position);
-            gl_Position = vec4(1.0 - 2.0 * position, 0, 1);
+            gl_Position = vec4(position.x, position.y, 0.0, 1.0);
           }`,
           attributes: {
             position: regl.prop("position")
@@ -209,7 +209,7 @@ Pixels.prototype.generateItemImages = function() {
           uniforms: {
             texture: texture
           },
-          count: 3
+          count: 6
         });
         return command;
       };
@@ -234,7 +234,6 @@ Pixels.prototype.generateItemImages = function() {
           image.crossOrigin = "anonymous";
           image.src = spriteUrl;
           image.onload = () => resolve(this.itemImages[item_id] = makeCommand(regl.texture(image)));
-          //image.onload = () => resolve(Object.assign(makeCommand(regl.texture(image))));
         })
       }
       this.itemImages[item_id] = imageCommand;
