@@ -91,7 +91,7 @@ item_defaults:
   public_good_multiplier: 0.0
 
   # Should a replacement of this same item type be immediately added to the gridworld
-  # when an instance is consumed?
+  # when an existing item is consumed?
   respawn: false
 
   # If the current number of instances of this item in the gridworld exceeds the
@@ -108,28 +108,52 @@ item_defaults:
 
   # At what rate should additional instances of this item be added to the gridworld?
   # A rate of 1.0 means that the target number of items (item_count) will not grow over
-  # time, but a value greater than 1.0 will result in a steadily growing item_count.
+  # time, but a value greater than 1.0 will result in a steadily growing number of items
+  # of this type.
   spawn_rate: 1.0
 
   # Visual representation of this item in the UI.
   # This value can be any of:
   #    - A single hex color value
   #    - A comma-separated pair of hex colors representing the items immature and mature
-  #      states
+  #      states (rendered color will be along a continuum between these colors based on
+  #      current maturity)
   #    - A unicode emoji "🍓"
   #    - The path of an image in within the images/ folder ("sprites/strawberry.png")
   sprite: "#8a9b0f,#7a6b54"
 
 transition_defaults:
-  visible: seen # Can be set to "never", "always", or "seen" for transitions that become
-                 # visible to a player after they have been executed for the first time
+  # Can be set to "never", "always", or "seen" for transitions that become
+  # visible to a player after they have been executed for the first time
+  visible: seen
+
+  # item_id for the item that will exist in the player's hand after the transition
+  # has executed
   actor_end: null
+
+  # item_id for the item that must be in the player's position in order to execute
+  # the transition
   actor_start: null
+
+  # item_id for the item that will exist in the player's grid block after the transition
+  # has executed
   target_end: null
+
+  # item_id for the item that must exist at the player's current position in order
+  # to execute the transition
   target_start: null
+
+  # For items that have an n_uses value greater than 1, if last_use is true,
+  # the transition will be executed when the final use is exhausted. For example,
+  # a gooseberry bush with 5 uses could be transitioned to an empty bush when the
+  # last serving of berries has been harvested. In this case, the target_start
+  # would be the item_id of the gooseberry bush, and the target_end would be the
+  # item_id of the item representing the empty bush.
   last_use: false
-  modify_uses: [0, 0] # How should the number of uses for the actor and target
-                      # be changed by the transition.
+
+  # How should the number of uses for the actor and target be changed by the transition.
+  # These can be positive or negative integers.
+  modify_uses: [0, 0]
 
 items:
   # Legacy GU Food item
