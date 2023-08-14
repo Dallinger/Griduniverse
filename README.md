@@ -42,8 +42,8 @@ via configuration parameters (see below).
 #### Items
 
 Griduniverse provides a rich system for defining interactive and/or nutrition-providing "items" which will also be added to the world. In addition to defining
-properties of the items themselves like their caloric value, whether than can be carried by players, and whether the respawn automatically, experiment authors
-can also define transitions that are activated when players interact with the item on the block they currently occupy, potentially in combination with an item
+properties of the items themselves (caloric value, whether than can be carried by players, whether the respawn automatically, etc.), experiment authors
+can also define transitions that execute when players interact with the item on the block they currently occupy, potentially in combination with an item
 they are carrying. For example, a player carrying a stone might be able to transform the stone into a more useful "sharp stone" by sharpening against a
 "large rock" that exists in the block they currently occupy.
 
@@ -495,6 +495,10 @@ Default is False.
 
 Which Bot class to run. Default: `RandomBot`.
 
+## Item and Item Transition Configuration
+
+See detailed explanations for each value for items and transitions on the item_defaults
+and transition_defaults definitions in game_config.yml.
 
 ## Griduniverse bots
 
