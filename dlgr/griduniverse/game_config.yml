@@ -36,7 +36,7 @@ item_defaults:
   # How many calories does a single instance provide when a player consumes it?
   # In the simple case, the consuming player will get all the caloric benefit from
   # items they consume, but there are also options for dividing this benefit among
-  # other players (see public_good and public_good_multiplier, below)
+  # other players (see public_good_multiplier, below).
   calories: 0
 
   # Can a player occupy the grid block this item is sitting on?
@@ -85,16 +85,9 @@ item_defaults:
   # See the distributions.py module for their implementations
   probability_distribution: "random"
 
-  # The number of calories to be given to all *other players* when a player consumes
-  # an instance of this item.
-  # If this value is non-zero, public_good_multiplier will be ignored.
-  public_good: 0.0
-
   # Basis from computing calories credited to all *other players* when a player
   # consumes an instance of this item. The credit will be equal to:
   #     calories * public_good_multiplier / number of players
-  #
-  # Note that unless public_good is 0, this value will be ignored.
   public_good_multiplier: 0.0
 
   # Should a replacement of this same item type be immediately added to the gridworld
@@ -115,7 +108,7 @@ item_defaults:
 
   # At what rate should additional instances of this item be added to the gridworld?
   # A rate of 1.0 means that the target number of items (item_count) will not grow over
-  # time, but a large value will result in a steadily growing item_count.
+  # time, but a value greater than 1.0 will result in a steadily growing item_count.
   spawn_rate: 1.0
 
   # Visual representation of this item in the UI.

@@ -321,16 +321,11 @@ class Gridworld(object):
                 item_type.get("probability_distribution", "")
             )
 
-            # static version of public good
-            public_good = item_type.get("public_good", 0.0)
-            # alternate version which interacts with calories
-            public_good_multiplier = item_type.get("public_good_multiplier", 0.0)
-
-            if public_good == 0.0 and public_good_multiplier != 0.0:
-                # Overwrite public_good with value derived from multiplier and calories:
-                item_type["public_good"] = (
-                    item_type["calories"] * public_good_multiplier / self.num_players
-                )
+            item_type["public_good"] = (
+                item_type["calories"]
+                * item_type.get("public_good_multiplier", 0.0)
+                / self.num_players
+            )
 
         # Player probability distribution
         (
