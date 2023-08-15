@@ -372,6 +372,30 @@ var playerSet = (function () {
       return distances[0].player;
     };
 
+    PlayerSet.prototype.getAdjacentPlayers = function () {
+      /* Return a list of players adjacent to the ego player */
+      adjacentPlayers = [];
+      let egoPostiion = this._players[ego].position;
+      for (id in this._players) {
+        if (id === ego) {
+          continue;
+        }
+        if (this._players.hasOwnProperty(id)) {
+          let player = this._players[id];
+          if (player.hasOwnProperty('position')) {
+            let position = player.position;
+            if (position[0] === egoPostiion[0] && Math.abs(position[1] - egoPostiion[1]) === 1) {
+              adjacentPlayers.push(player);
+            }
+            if (position[1] === egoPostiion[1] && Math.abs(position[0] - egoPostiion[0]) === 1) {
+              adjacentPlayers.push(player);
+            }
+          }
+        }
+      }
+      return adjacentPlayers;
+    };
+
     PlayerSet.prototype.ego = function () {
       return this.get(this.ego_id);
     };
@@ -1024,8 +1048,14 @@ function renderTransition(transition) {
     aEndItemString = `✋${aEndItem ? aEndItem.name: '⬜'}`;
     tEndItemString = tEndItem ? tEndItem.name: '⬜';
   }
-  return `${aStartItemString} + ${tStartItemString} → ${aEndItemString} + ${tEndItemString}`;
-
+  var actors_info = "";
+  const required_actors = transition.transition.required_actors
+  // The total number of actors is the number of adjacent players plus one for ego (the current player)
+  const neighbouringActors = players.getAdjacentPlayers().length + 1;
+  if (neighbouringActors < required_actors) {
+    actors_info = ` - not available: ${required_actors - neighbouringActors} more players needed`;
+  }
+  return `${aStartItemString} + ${tStartItemString} → ${aEndItemString} + ${tEndItemString}${actors_info}`;
 }
 /**
  * If the current player is sharing a grid position with an interactive
