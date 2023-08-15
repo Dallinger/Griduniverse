@@ -18860,18 +18860,20 @@ Pixels.prototype.imageTexture = function(imageUrl) {
   if (imageUrl in textureCache) {
     return textureCache[imageUrl];
   }
-  return new Promise (resolve => {
+  return new Promise ((resolve) => {
     let image = new Image();
     image.src = imageUrl;
     image.crossOrigin = "anonymous";
     image.onload = () => {
-      // Don't recreate the texture if we already have it cached
-      if (!(imageUrl in textureCache)) {
-        let texture = this.regl.texture(image);
-        textureCache[imageUrl] = texture;
-      }
-      resolve(textureCache[imageUrl]);
-    }
+      createImageBitmap(image).then((bitmap) => {
+        // Don't recreate the texture if we already have it cached
+        if (!(imageUrl in textureCache)) {
+          let texture = this.regl.texture(bitmap);
+          textureCache[imageUrl] = texture;
+        }
+        resolve(textureCache[imageUrl]);
+      });
+    };
   });
 }
 
