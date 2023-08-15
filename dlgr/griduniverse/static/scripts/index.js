@@ -5,18 +5,22 @@ var isarray = require("is-array");
 var convert = require("./util/convert");
 var layout = require("./util/layout");
 var texcoord = require("./util/texcoord");
-var range = require("./util/range");
+var _ = require('lodash');
 var pixdenticon = require("./util/pixdenticon");
 var md5 = require("./util/md5");
-var emojis = require("./emojis.json");
-var emojis_by_char = require("./emoji_chars.json");
+
 
 function Pixels(data, textures, opts) {
   if (!(this instanceof Pixels)) return new Pixels(data, textures, opts);
   var self = this;
   opts = opts || {};
   this.opts = opts;
+  this.textureCache = {};
+  this.itemTextures = {};
   var num_identicons = 100;
+  this.numTextures = num_identicons;
+  var texturePromises = [];
+  var texture;
 
   opts.background = opts.background || [ 0.5, 0.5, 0.5 ];
   opts.size = isnumber(opts.size) ? opts.size : 10;
@@ -42,6 +46,7 @@ function Pixels(data, textures, opts) {
   var canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
+  canvas.style.backgroundColor = '#1F1F1F';
   if (opts.root) opts.root.appendChild(canvas);
 
   var colors = opts.formatted ? data : convert(data);
@@ -49,10 +54,10 @@ function Pixels(data, textures, opts) {
     opts.rows,
     opts.columns,
     textures,
-    num_identicons
+    this.numTextures
   );
 
-  var positions = layout(
+  this.positions = layout(
     opts.rows,
     opts.columns,
     2 * opts.padding / width,
@@ -60,25 +65,45 @@ function Pixels(data, textures, opts) {
     width / height
   );
 
-  var regl = require("regl")(canvas);
+  var regl = this.regl = require("regl")(canvas);
 
+  // First texture in the texture map is an empty square
   var initial_texture = [];
-  for (row = 0; row < opts.size; row++) {
-    rowdata = []
-    for (col = 0; col < opts.size; col++) {
+  for (let row = 0; row < opts.size; row++) {
+    let rowdata = [];
+    for (let col = 0; col < opts.size; col++) {
       rowdata.push([255, 255, 255]);
     }
     initial_texture.push(rowdata);
   }
+
+  // The next textures are the identicons
   var salt = $("#grid").data("identicon-salt");
-  for (var i = 0; i < num_identicons; i++) {
-    texture = new pixdenticon(md5(salt + i), opts.size).render().buffer;
-    for (row = 0; row < opts.size; row++) {
-      initial_texture.push(texture[row]);
+  for (let i = 0; i < num_identicons; i++) {
+    let identTexture = new pixdenticon(md5(salt + i), opts.size).render().buffer;
+    for (let row = 0; row < opts.size; row++) {
+      initial_texture.push(identTexture[row]);
     }
   }
+  texture = regl.texture(initial_texture);
 
-  var texture = regl.texture(initial_texture);
+
+  // Now w fetch any textures needed for our items
+  for (let item_id in opts.item_config) {
+    let itemInfo = opts.item_config[item_id];
+    let itemTexture = this.textureForItem(itemInfo);
+    let itemId = itemInfo.item_id;
+    if (!itemTexture) continue;
+    if (itemTexture.then) {
+      // Not sure what to do about the promises here
+      texturePromises.push(itemTexture);
+      itemTexture.then(function (texture) {
+        self.itemTextures[itemId] = texture;
+      });
+    } else {
+      self.itemTextures[itemId] = itemTexture;
+    }
+  }
 
   var squares = regl({
     vert: `
@@ -108,26 +133,52 @@ function Pixels(data, textures, opts) {
     `,
     attributes: { position: regl.prop("position"), texcoords: regl.prop("texcoords"), color: regl.prop("color")},
     primitive: "triangles",
-    count: colors.length * 6,
+    count: function (context, props) {
+      // We don't always pass in the full position grid, when we don't we need
+      // to pass in a number of vertices to render
+      return props.count || colors.length * 6;
+    },
     uniforms: { vtexture: texture }
   });
 
+  self.renderItemsOfType = regl({
+    vert: `
+      precision mediump float;
+      attribute vec2 position;
+      attribute vec2 texcoords;
+      varying vec2 v_texcoords;
+      void main () {
+        gl_PointSize = float(${opts.size});
+        gl_Position = vec4(position.x, position.y, 0.0, 1.0);
+        v_texcoords = texcoords;
+      }`,
+    frag: `
+      precision mediump float;
+      varying vec2 v_texcoords;
+      uniform sampler2D vtexture;
+      void main () {
+        vec4 texture;
+        gl_FragColor = texture2D(vtexture, v_texcoords);
+      }`,
+      attributes: {position: regl.prop("position"), texcoords: regl.prop("texcoords")},
+      uniforms: {vtexture: regl.prop("texture")},
+      count: function (context, props) {
+        return props.count;
+      }
+  });
+
   var expanded_colors = [];
-  for(var i = 0; i < colors.length; ++i){
-    for(var n = 0; n < 6; ++n) {
+  for(let i = 0; i < colors.length; ++i){
+    for(let n = 0; n < 6; ++n) {
       expanded_colors.push(colors[i]);
     }
   }
 
-  var buffer = { position: regl.buffer(positions), texcoords: regl.buffer(texcoords), color: regl.buffer(expanded_colors)};
+  var buffer = { position: regl.buffer(this.positions), texcoords: regl.buffer(texcoords), color: regl.buffer(expanded_colors)};
 
-  var draw = function(positions, texcoords, colors) {
+  var draw = function(positions, texcoords, colors, count) {
     regl.clear({ color: opts.background.concat([ 1 ]) });
-    squares({ position: positions, texcoords: texcoords, color: colors });
-  };
-
-  var drawItems = function(positions, texcoords, colors) {
-    squares({ position: positions, texcoords: texcoords, color: colors });
+    squares({ position: positions, texcoords: texcoords, color: colors, count: count});
   };
 
   draw(buffer.position, buffer.texcoords, buffer.color);
@@ -137,108 +188,141 @@ function Pixels(data, textures, opts) {
   self._formatted = opts.formatted;
   self.canvas = canvas;
   self.frame = regl.frame;
-  self.regl = regl;
   self.item_config = opts.item_config;
-  self.itemImages = {};
+}
+
+Pixels.prototype.textureForItem = function(item) {
+  let imageUrl;
+  let image_base = this.opts.sprites_url.replace(/\/$/, ''); // remove trailing '/'
+  let sprite = item.sprite;
+  let [spriteType, ...spriteValue] = sprite.split(':');
+  spriteValue = spriteValue.join(':');
+  if (spriteType === "image") {
+    if (spriteValue.indexOf('http') == 0) {
+      imageUrl = spriteValue;
+    } else {
+      imageUrl = image_base + '/' + spriteValue;
+    }
+    return this.imageTexture(imageUrl)
+  } else if (spriteType === "emoji") {
+    return this.emojiTexture(spriteValue);
+  }
+}
+
+Pixels.prototype.imageTexture = function(imageUrl) {
+  if (!imageUrl) {
+    return;
+  }
+  let textureCache = this.textureCache;
+
+  if (imageUrl in textureCache) {
+    return textureCache[imageUrl];
+  }
+  return new Promise (resolve => {
+    let image = new Image();
+    image.src = imageUrl;
+    image.crossOrigin = "anonymous";
+    image.onload = () => {
+      // Don't recreate the texture if we already have it cached
+      if (!(imageUrl in textureCache)) {
+        let texture = this.regl.texture(image);
+        textureCache[imageUrl] = texture;
+      }
+      resolve(textureCache[imageUrl]);
+    }
+  });
+}
+
+Pixels.prototype.emojiTexture = function(emoji) {
+  if (!emoji) {
+    return;
+  }
+  const opts = this.opts;
+  const size = opts.size * 2;
+  let textureCache = this.textureCache;
+
+  if (emoji in textureCache) {
+    return textureCache[emoji];
+  }
+  let textureCanvas = document.createElement("canvas");
+  textureCanvas.style.backgroundColor = "transparent";
+  textureCanvas.height = textureCanvas.width = size;
+  let ctx = textureCanvas.getContext("2d");
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = `${size}px serif`;
+  ctx.fillText(emoji, size/2, size/2);
+  let texture = this.regl.texture(textureCanvas);
+  textureCache[emoji] = texture;
+  return textureCache[emoji]
+}
+
+Pixels.prototype.updateItems = function(itemTextures) {
+  var self = this;
+  const textures = self.itemTextures;
+  // We render the full texture
+  const texcoords = [
+    [0, 0], [1, 0], [0, 1],
+    [0, 1], [1, 0], [1, 1],
+  ];
+  var commandArgs = [];
+
+  for (const itemId in itemTextures) {
+    let positions = itemTextures[itemId];
+    let count = positions.length;
+    let textureMap = [];
+    // Ensure the texture maps 1:1 onto the square. There's probably a better way
+    while (textureMap.length < count) {
+      textureMap.push.apply(textureMap, texcoords);
+    }
+    commandArgs.push({
+      position: positions, texcoords: textureMap, texture: textures[itemId],
+      count: count
+    })
+  }
+  if (commandArgs.length) {
+    // Render each item type in batch mode
+    self.renderItemsOfType(commandArgs);
+  }
 }
 
 Pixels.prototype.update = function(data, textures) {
   var self = this;
+  const opts = this.opts;
   var colors = self._formatted ? data : convert(data);
   var expanded_colors = [];
+  var positions = [];
+  var idx = 0;
+  var itemTextures = {};
 
-  for(var i = 0; i < colors.length; ++i){
-    for(var n = 0; n < 6; ++n) {
-      expanded_colors.push(colors[i]);
+  // We only draw squares for which don't have a custom texture to render
+  for (let i = 0; i < textures.length; i++) {
+    let texture = textures[i];
+    let has_texture = _.isString(texture);
+    if (has_texture) {
+      var texture_coords = itemTextures[texture] = (itemTextures[texture] || []);
+    }
+    for (let n = 0; n < 6; ++n) {
+      if (has_texture) {
+        texture_coords.push(self.positions[idx]);
+      } else {
+        expanded_colors.push(colors[i]);
+        positions.push(self.positions[idx]);
+      }
+      idx++;
     }
   }
-
-  var opts = this.opts;
-  var num_identicons = 100;
 
   var texcoords = texcoord(
     opts.rows,
     opts.columns,
     textures,
-    num_identicons
+    this.numTextures,
+    true
   );
 
-  self._draw(self._buffer.position, self._buffer.texcoords(texcoords), self._buffer.color(expanded_colors));
-};
-
-Pixels.prototype.generateItemImages = function() {
-  const regl = this.regl;
-  for (const [item_id, item] of Object.entries(this.item_config)){
-    if (!(item_id in this.itemImages)) {
-      let spriteType, spriteValue;
-      let immature, mature;
-      let imageCommand;
-      [spriteType, spriteValue] = item.sprite.split(":");
-      if (spriteType === "color") {
-        if (spriteValue.includes(",")) {
-          [immature, mature] = spriteValue.split(",");
-        } else {
-          immature = mature = spriteValue;
-        }
-      } else {
-        immature = "#808080"
-        mature = "#808080"
-      }
-      item.immature = immature;
-      item.mature = mature;
-      var makeCommand = function(texture) {
-        var command = regl({
-          frag: `
-          precision mediump float;
-          uniform sampler2D texture;
-          varying vec2 uv;
-          void main () {
-            gl_FragColor = texture2D(texture, uv);
-          }`,
-          vert: `
-          precision mediump float;
-          attribute vec2 position;
-          varying vec2 uv;
-          void main () {
-            uv = vec2(position);
-            gl_Position = vec4(position.x, position.y, 0.0, 1.0);
-          }`,
-          attributes: {
-            position: regl.prop("position")
-          },
-          uniforms: {
-            texture: texture
-          },
-          count: 6
-        });
-        return command;
-      };
-      if (spriteType === "image") {
-        new Promise(resolve => {
-          const image = new Image();
-          image.crossOrigin = "anonymous";
-          image.src = spriteValue;
-          image.onload = () => resolve(this.itemImages[item_id] = makeCommand(regl.texture(image)));
-        })
-      }
-      if (spriteType === "emoji") {
-        let spriteUrl = "https://github.githubassets.com/images/icons/emoji/unicode/2753.png?v8"; // question mark
-        if (spriteValue in emojis) {
-          spriteUrl = emojis[spriteValue];
-        }
-        if (spriteValue in emojis_by_char) {
-          spriteUrl = emojis_by_char[spriteValue];
-        }
-        imageCommand = new Promise(resolve => {
-          const image = new Image();
-          image.crossOrigin = "anonymous";
-          image.src = spriteUrl;
-          image.onload = () => resolve(this.itemImages[item_id] = makeCommand(regl.texture(image)));
-        })
-      }
-      this.itemImages[item_id] = imageCommand;
-    }
-  };
+  self._draw(self._buffer.position(positions), self._buffer.texcoords(texcoords), self._buffer.color(expanded_colors), texcoords.length);
+  self.updateItems(itemTextures);
 };
 
 module.exports = Pixels;

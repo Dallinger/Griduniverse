@@ -197,7 +197,7 @@ items:
     calories: 3
     crossable: true
     interactive: false
-    item_count: 4
+    item_count: 50
     maturation_speed: 0.2
     maturation_threshold: 0.5
     n_uses: 1
@@ -207,7 +207,7 @@ items:
     portable: true
     respawn: true
     limit_quantity: true
-    sprite: "image:/static/images/food.png"
+    sprite: "image:sprites/food.png"
 
   # One Hour, One Life items
   - crossable: true
@@ -217,7 +217,7 @@ items:
     portable: true
     spawn_rate: 0.15
     item_count: 100
-    sprite: "emoji:carrot"
+    sprite: "emoji:🥕"
 
   - crossable: true
     interactive: true
@@ -226,7 +226,7 @@ items:
     portable: true
     spawn_rate: 0.05
     item_count: 50
-    sprite: "emoji:◽"
+    sprite: "image:https://github.githubassets.com/images/icons/emoji/unicode/1faa8.png?v8"
 
   - crossable: true
     interactive: true
@@ -235,7 +235,7 @@ items:
     portable: false
     spawn_rate: 0
     item_count: 20
-    sprite: "emoji:⚪"
+    sprite: "emoji:🗿"
 
   - crossable: true
     interactive: true
@@ -245,7 +245,7 @@ items:
     portable: false
     spawn_rate: 0.1
     item_count: 50
-    sprite: "emoji:deciduous_tree"
+    sprite: "emoji:🌳"
 
   - crossable: true
     interactive: true
@@ -254,7 +254,7 @@ items:
     portable: true
     spawn_rate: 0.05
     item_count: 20
-    sprite: "emoji:rock"
+    sprite: "emoji:💎"
 
   - calories: 5
     crossable: true
@@ -265,7 +265,7 @@ items:
     portable: true
     spawn_rate: 0
     item_count: 0
-    sprite: "emoji:carrot"
+    sprite: "emoji:🥕"
 
   - calories: 3
     crossable: true
@@ -276,7 +276,7 @@ items:
     portable: true
     spawn_rate: 0
     item_count: 0
-    sprite: "color:#8E44AD"
+    sprite: "emoji:🫐"
 
   - crossable: false
     interactive: true
@@ -286,7 +286,7 @@ items:
     portable: false
     spawn_rate: 0
     item_count: 0
-    sprite: "color:#9B59B6"
+    sprite: "emoji:🌴"
 
 transitions:
   - actor_start: stone

@@ -14,7 +14,6 @@ var Identicon = require('./util/identicon');
 var _ = require('lodash');
 var md5 = require('./util/md5');
 var itemlib = require ("./items");
-var isnumber = require("is-number");
 
 function coordsToIdx(x, y, columns) {
   return y * columns + x;
@@ -75,7 +74,7 @@ class Section {
     if (x >= this.left && x < this.left + this.columns) {
       if (y >= this.top && y < this.top + this.rows) {
         this.data[this.gridCoordsToSectionIdx(x, y)] = color;
-        if (! _.isUndefined(texture)){
+        if (! _.isNil(texture)) {
           this.textures[this.gridCoordsToSectionIdx(x, y)] = texture;
         }
         background[coordsToIdx(x, y, settings.columns)] = color;
@@ -119,6 +118,7 @@ var pixels = grid(initialSection.data, initialSection.textures, {
   padding: settings.padding,
   background: [0.1, 0.1, 0.1],
   item_config: settings.item_config,
+  sprites_url: settings.sprites_url,
   formatted: true
 });
 
@@ -588,30 +588,6 @@ document.body.style.background = "#ffffff";
 
 var startTime = performance.now();
 
-const getItemCoords = function(x, y) {
-  grid = []
-  var size = isnumber(settings.block_size) ? settings.block_size : 10;
-  var padding = isnumber(settings.padding) ? settings.padding : 2;
-  var rows = settings.window_rows;
-  var columns = settings.window_columns;
-  var width = columns * size + (columns + 1) * padding;
-  var height = rows * size + (rows + 1) * padding;
-  var aspect = width / height;
-  size = 2 * size / width;
-  padding = 2 * padding / width;
-  var x = -1 + aspect * (x * (padding + size) + padding);
-  var y = 1 - (y * (padding + size) + padding);
-  grid.push([ y, x ]);
-  var x_next = x + size - padding;
-  grid.push([ y, x_next ]);
-  var y_next = y - size + padding;
-  grid.push([ y_next, x ]);
-  grid.push([ y_next, x ]);
-  grid.push([ y, x_next ]);
-  grid.push([ y_next, x_next ]);
-  return grid
-}
-
 pixels.frame(function() {
   // Update the background.
   var ego = players.ego(),
@@ -635,14 +611,11 @@ pixels.frame(function() {
         gridItems.remove(position);
       }
     } else {
-      section.plot(position[1], position[0], item.color);
-      if (item.itemId in pixels.itemImages) {
-        try {
-          pixels.itemImages[item.itemId]({"position": getItemCoords(position[0], position[1])});
-        } catch(error) {
-          // Command not ready yet.
-        }
+      var texture = undefined;
+      if (item.item_id in pixels.itemTextures) {
+        texture = item.item_id;
       }
+      section.plot(position[1], position[0], item.color, texture);
     }
   }
 
@@ -1148,7 +1121,6 @@ function onGameStateChange(msg) {
 
   // Update gridItems
   if (! _.isNil(state.items)) {
-    pixels.generateItemImages();
     gridItems = new itemlib.GridItems();
     for (j = 0; j < state.items.length; j++) {
 

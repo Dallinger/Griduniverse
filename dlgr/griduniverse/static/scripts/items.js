@@ -4,8 +4,10 @@
  * Representation of a game item, which for the moment is limited to a
  * simple Food type.
  */
+
+
 export class Item {
-  constructor(id, itemId, maturity, remainingUses, regl) {
+  constructor(id, itemId, maturity, remainingUses) {
     this.id = id;
     this.itemId = itemId;
     this.maturity = maturity;
@@ -14,18 +16,35 @@ export class Item {
     // XXX Maybe we can avoid this copy of every shared value
     // to every instance, but going with it for now.
     Object.assign(this, settings.item_config[this.itemId]);
+
+    this.setColorAttributes();
+  }
+
+  setColorAttributes() {
+    this.immature_color = "#808080";
+    this.mature_color = "#808080";
+    let [spriteType, ...spriteValue] = this.sprite.split(':');
+    spriteValue = spriteValue.join(':');
+    if (spriteType === "color") {
+      if (spriteValue.includes(",")) {
+        [this.immature_color, this.mature_color] = spriteValue.split(",");
+      } else {
+        this.immature_color = this.mature_color = spriteValue;
+      }
     }
+  }
 
   /**
    * Calculate a color based on sprite definition and maturity
    */
   get color() {
     return rgbOnScale(
-      hexToRgbPercentages(this.immature),
-      hexToRgbPercentages(this.mature),
+      hexToRgbPercentages(this.immature_color),
+      hexToRgbPercentages(this.mature_color),
       this.maturity
     );
   }
+
 }
 
 /**
