@@ -160,7 +160,8 @@ transition_defaults:
   last_use: false
 
   # How should the number of uses for the actor and target be changed by the transition.
-  # These can be positive or negative integers.
+  # These can be positive or negative integers: -1 would decrement n_uses, 1 would add
+  # an additional use.
   modify_uses: [0, 0]
 
 items:
