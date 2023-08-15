@@ -124,8 +124,8 @@ item_defaults:
   #    - A single hex color value, prefixed with "color:". Example: "color:#8a9b0f"
   #    - A comma-separated pair of hex colors representing the items immature and mature
   #      states (rendered color will be along a continuum between these colors based on
-  #      current maturity), also prefixed with "color:#8a9b0f,#7a6b54"
-  #    - A unicode emoji, prefixed with "emoji". Example: "emoji:🍓"
+  #      current maturity), also prefixed with "color:" Example: "color:#8a9b0f,#7a6b54"
+  #    - A unicode emoji, prefixed with "emoji:". Example: "emoji:🍓"
   #    - The path of an image in within the images/ folder, prefixed with "image:".
   #      Example ("image:sprites/strawberry.png")
   sprite: "color:#8a9b0f,#7a6b54"
