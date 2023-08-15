@@ -18734,7 +18734,8 @@ function Pixels(data, textures, opts) {
     let itemId = itemInfo.item_id;
     if (!itemTexture) continue;
     if (itemTexture.then) {
-      // Not sure what to do about the promises here
+      // If we have a promise, store the texture in the itemId -> texture map
+      // when it resolves.
       texturePromises.push(itemTexture);
       itemTexture.then(function (texture) {
         self.itemTextures[itemId] = texture;
@@ -18827,19 +18828,21 @@ function Pixels(data, textures, opts) {
   self._formatted = opts.formatted;
   self.canvas = canvas;
   self.frame = regl.frame;
-  self.item_config = opts.item_config;
 }
 
 Pixels.prototype.textureForItem = function(item) {
   let imageUrl;
   let image_base = this.opts.sprites_url.replace(/\/$/, ''); // remove trailing '/'
   let sprite = item.sprite;
+  // The spriteValue may contain a ':', e.g. if it's a url
   let [spriteType, ...spriteValue] = sprite.split(':');
   spriteValue = spriteValue.join(':');
   if (spriteType === "image") {
+    // Anything that's not an http(s) url gets prefixed with the static dir
     if (spriteValue.indexOf('http') == 0) {
       imageUrl = spriteValue;
     } else {
+      spriteValue = spriteValue.replace(/^\//, ''); // remove leading '/'
       imageUrl = image_base + '/' + spriteValue;
     }
     return this.imageTexture(imageUrl)
@@ -18877,7 +18880,7 @@ Pixels.prototype.emojiTexture = function(emoji) {
     return;
   }
   const opts = this.opts;
-  const size = opts.size * 2;
+  const size = opts.size * 4; // quadruple the size for retina
   let textureCache = this.textureCache;
 
   if (emoji in textureCache) {
@@ -18896,7 +18899,7 @@ Pixels.prototype.emojiTexture = function(emoji) {
   return textureCache[emoji]
 }
 
-Pixels.prototype.updateItems = function(itemTextures) {
+Pixels.prototype.updateItems = function(texturePositions) {
   var self = this;
   const textures = self.itemTextures;
   // We render the full texture
@@ -18906,8 +18909,8 @@ Pixels.prototype.updateItems = function(itemTextures) {
   ];
   var commandArgs = [];
 
-  for (const itemId in itemTextures) {
-    let positions = itemTextures[itemId];
+  for (const itemId in texturePositions) {
+    let positions = texturePositions[itemId];
     let count = positions.length;
     let textureMap = [];
     // Ensure the texture maps 1:1 onto the square. There's probably a better way
@@ -18932,14 +18935,14 @@ Pixels.prototype.update = function(data, textures) {
   var expanded_colors = [];
   var positions = [];
   var idx = 0;
-  var itemTextures = {};
+  var texturePositions = {};
 
   // We only draw squares for which don't have a custom texture to render
   for (let i = 0; i < textures.length; i++) {
     let texture = textures[i];
     let has_texture = _.isString(texture);
     if (has_texture) {
-      var texture_coords = itemTextures[texture] = (itemTextures[texture] || []);
+      var texture_coords = texturePositions[texture] = (texturePositions[texture] || []);
     }
     for (let n = 0; n < 6; ++n) {
       if (has_texture) {
@@ -18961,7 +18964,7 @@ Pixels.prototype.update = function(data, textures) {
   );
 
   self._draw(self._buffer.position(positions), self._buffer.texcoords(texcoords), self._buffer.color(expanded_colors), texcoords.length);
-  self.updateItems(itemTextures);
+  self.updateItems(texturePositions);
 };
 
 module.exports = Pixels;
@@ -23183,7 +23186,7 @@ module.exports = Identicon;
 /* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
-function texcoord(rows, columns, texture_indexes, num_textures, skip_items) {
+function texcoord(rows, columns, textureIndexes, numTextures, skipTextured) {
   var grid = [];
   var texture;
   var texture_start;
@@ -23191,25 +23194,25 @@ function texcoord(rows, columns, texture_indexes, num_textures, skip_items) {
   var _ = __webpack_require__(0);
 
   // avoid diviion by zero
-  num_textures = num_textures || 1;
+  numTextures = numTextures || 1;
 
   for (var i = 0; i < rows; i++) {
     for (var j = 0; j < columns; j++) {
-      texture = texture_indexes[i*rows + j];
+      texture = textureIndexes[i*rows + j];
       // Don't include squares with their own textures
-      if (_.isString(texture) && skip_items) {
+      if (_.isString(texture) && skipTextured) {
         continue;
       } else if (_.isString(texture)) {
         texture = 0;
       }
-      texture_start = (1/num_textures)*texture;
-      texture_next = texture_start + (1/num_textures);
+      texture_start = (1/numTextures)*texture;
+      texture_next = texture_start + (1/numTextures);
 
-      // Upper left triangle in texture map
+      // Map out the full texture across the six vertices for each "square"
       grid.push([ 0, texture_start ]);
       grid.push([ 1, texture_start ]);
       grid.push([ 0, texture_next ]);
-      // Lower right triangle in texture map
+
       grid.push([ 0, texture_next ]);
       grid.push([ 1, texture_start ]);
       grid.push([ 1, texture_next ]);
