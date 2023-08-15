@@ -25,12 +25,13 @@ player_config:
 item_defaults:
   # Each item definition must include a unique item_id. This actual value doesn't matter,
   # though an easily identifiable label can be helpful in developing and
-  # debugging your experiment
+  # debugging your experiment.
   item_id: default
 
-  # How many instances of this item should the world initially include? If "respawn" is true
-  # the world will regenerate replacements for consumed instances to maintain this
-  # number of instances.
+  # How many instances of this item should the world initially include?
+  # If "respawn" (see below) is true, consumed items will be replaced to maintain
+  # this number of instances. Note that this value may increase over the course
+  # of a game depending on the values of seasonal_growth_rate and spawn_rate (see below).
   item_count: 8
 
   # How many calories does a single instance provide when a player consumes it?
@@ -39,7 +40,7 @@ item_defaults:
   # other players (see public_good_multiplier, below).
   calories: 0
 
-  # Can a player occupy the grid block this item is sitting on?
+  # Can a player co-occupy the grid block this item is sitting on?
   crossable: true
 
   # Does a player need to explicitly interact with this item via the action button
@@ -47,30 +48,35 @@ item_defaults:
   # without needing to take any explicit action?
   interactive: false
 
-  # How rapidly does this item progress through its maturation lifecycle in
-  # WHAT UNITS???
+  # How rapidly this item progresses through its maturation lifecycle
   maturation_speed: 0.0
 
-  # At what level of maturity ("ripeness") is this item ready for consumption?
+  # Level of maturity ("ripeness") at which this item ready for consumption.
   # Prior to reaching this threshold, a player may be able to co-occupy the same
   # grid block, but not consume the item.
   maturation_threshold: 0.0
 
-  # Some items can be consumed (or otherwise used) more than once; for example
-  # a berry bush that provides multiple "servings" of berries before it's exhausted.
+  # Some items can be consumed (or otherwise used) more than once; for example,
+  # a berry bush might provide multiple "servings" of berries before it's exhausted.
+  # On the last use, a special transition may be triggered (see note on last_use
+  # in transition_defaults configuration below), which may transform this item into
+  # another. For example, a berry bush may be transformed into an empty berry bush,
+  # which might have different properties (different sprint, perhaps non-crossable,
+  # etc.)
   n_uses: 1
 
-  # Friendly name of the item that may be displayed to the player.
+  # Friendly name of the item that may be displayed to players.
   name: Food
 
-  # Can this item be "planted" (added to the gridworld) by the players themselves?
+  # Controls whether this item be "planted" (added to the gridworld) by the players
+  # themselves.
   plantable: false
 
-  # If this item is plantable (see above), how many points/calories are deducted from
-  # the player's score for each planting event they trigger?
+  # If this item is plantable (see above), specifies how many points/calories are
+  # deducted from the player's score each time they plant one.
   planting_cost: 1
 
-  # Can this item be picked up and carried to another location by the player?
+  # Controls whether this item be picked up and carried to another location by the player.
   portable: true
 
   # The distribution model used when spawning instances of this item on the grid.
@@ -90,12 +96,13 @@ item_defaults:
   #     calories * public_good_multiplier / number of players
   public_good_multiplier: 0.0
 
-  # Should a replacement of this same item type be immediately added to the gridworld
-  # when an existing item is consumed?
+  # Controls whether a replacement of this same item should be immediately added to the
+  # gridworld when an existing item is consumed.
   respawn: false
 
   # If the current number of instances of this item in the gridworld exceeds the
-  # configured item_count, should we prune items to limit the total to item_count?
+  # configured item_count (because players are planting additional instances, for example),
+  # should we prune items to limit the total to item_count?
   #
   # Note that item_count is potentially dynamic, changing over time based on
   # seasonal_growth_rate and spawn_rate (see below).
@@ -114,13 +121,14 @@ item_defaults:
 
   # Visual representation of this item in the UI.
   # This value can be any of:
-  #    - A single hex color value
+  #    - A single hex color value, prefixed with "color:". Example: "color:#8a9b0f"
   #    - A comma-separated pair of hex colors representing the items immature and mature
   #      states (rendered color will be along a continuum between these colors based on
-  #      current maturity)
-  #    - A unicode emoji "🍓"
-  #    - The path of an image in within the images/ folder ("sprites/strawberry.png")
-  sprite: "#8a9b0f,#7a6b54"
+  #      current maturity), also prefixed with "color:#8a9b0f,#7a6b54"
+  #    - A unicode emoji, prefixed with "emoji". Example: "emoji:🍓"
+  #    - The path of an image in within the images/ folder, prefixed with "image:".
+  #      Example ("image:sprites/strawberry.png")
+  sprite: "color:#8a9b0f,#7a6b54"
 
 transition_defaults:
   # Can be set to "never", "always", or "seen" for transitions that become
