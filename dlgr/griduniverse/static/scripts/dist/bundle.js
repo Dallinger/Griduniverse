@@ -21859,10 +21859,17 @@ function bindGameKeys(socket) {
     }
   }
 
+  function isChatting() {
+    return $("#message").is(':focus');
+  }
+
   directions.forEach(function(direction) {
     Mousetrap.bind(
       direction,
       function(e) {
+        if (isChatting()) {
+          return;
+        }
         e.preventDefault();
         if (direction === lastDirection) {
           return;
@@ -21883,6 +21890,9 @@ function bindGameKeys(socket) {
     Mousetrap.bind(
       direction,
       function(e) {
+        if (isChatting()) {
+          return;
+        }
         e.preventDefault();
         if (direction) {
           clearInterval(repeatIntervalId);
@@ -21894,7 +21904,11 @@ function bindGameKeys(socket) {
 
   });
 
-  Mousetrap.bind("space", function () {
+  Mousetrap.bind("space", function (e) {
+    if (isChatting()) {
+      return;
+    }
+    e.preventDefault();
     var msg_type;
     var ego = players.ego();
     var position = ego.position;
@@ -21935,7 +21949,11 @@ function bindGameKeys(socket) {
     socket.send(msg);
   });
 
-  Mousetrap.bind("d", function () {
+  Mousetrap.bind("d", function (e) {
+    if (isChatting()) {
+      return;
+    }
+    e.preventDefault();
     var ego = players.ego();
     var position = ego.position;
     var currentItem = ego.currentItem;
@@ -22525,7 +22543,7 @@ $(document).ready(function() {
     return Math.floor(pix / (settings.block_size + settings.padding));
   };
 
-  $("form").submit(function() {
+  $("form").on('submit', function() {
     var chatmessage = $("#message").val().trim(),
         msg;
 
