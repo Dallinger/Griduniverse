@@ -46,7 +46,7 @@ item_defaults:
   # Does a player need to explicitly interact with this item via the action button
   # when they co-occupy its grid block, or do the immediately consume the item
   # without needing to take any explicit action?
-  interactive: false
+  interactive: true
 
   # How rapidly this item progresses through its maturation lifecycle
   maturation_speed: 0.0
@@ -66,7 +66,7 @@ item_defaults:
   n_uses: 1
 
   # Friendly name of the item that may be displayed to players.
-  name: Food
+  name: Generic Item
 
   # Controls whether this item be "planted" (added to the gridworld) by the players
   # themselves.
@@ -88,7 +88,16 @@ item_defaults:
   #    - edge_bias
   #    - center_bias
   #
-  # See the distributions.py module for their implementations
+  # See the distributions.py module for their implementations.
+  #
+  # To implement a custom distribution option, add a function to distributions.py,
+  # with a name following the pattern [some_name]_probability_distribution(), with
+  # a signature matching the other functions in the module (rows, columns, *args),
+  # and returning an two-item array of integers representing a [row, column] grid position.
+  #
+  # To use your custom distibution for an item, specify only the prefix portion as the
+  # configuration value here (if your function name is "amazing_probability_distribution",
+  # the value to use here would be "amazing").
   probability_distribution: "random"
 
   # Basis from computing calories credited to all *other players* when a player
@@ -139,7 +148,7 @@ transition_defaults:
   # has executed
   actor_end: null
 
-  # item_id for the item that must be in the player's position in order to execute
+  # item_id for the item that must be in the player's hand in order to execute
   # the transition
   actor_start: null
 
