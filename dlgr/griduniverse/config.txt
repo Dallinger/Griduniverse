@@ -11,6 +11,7 @@ rows = 100
 window_rows = 20
 window_columns = 20
 use_identicons = true
+show_chatroom = true
 
 [HIT Configuration]
 title = Griduniverse
