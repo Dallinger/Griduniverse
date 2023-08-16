@@ -21511,10 +21511,9 @@ var playerSet = (function () {
           let player = this._players[id];
           if (player.hasOwnProperty('position')) {
             let position = player.position;
-            if (position[0] === egoPostiion[0] && Math.abs(position[1] - egoPostiion[1]) === 1) {
-              adjacentPlayers.push(player);
-            }
-            if (position[1] === egoPostiion[1] && Math.abs(position[0] - egoPostiion[0]) === 1) {
+            let distanceX = Math.abs(position[0] - egoPostiion[0]);
+            let distanceY = Math.abs(position[1] - egoPostiion[1])
+            if (distanceX <= 1 && distanceY <= 1) {
               adjacentPlayers.push(player);
             }
           }
