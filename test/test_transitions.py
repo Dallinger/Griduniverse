@@ -81,7 +81,7 @@ class TestHandleItemTransition(object):
         assert player.current_item.name == "Sharp Stone"
         assert len(mocked_exp.grid.items_consumed) == 1
         assert len(mocked_exp.grid.item_locations) == 1
-        list(mocked_exp.grid.item_locations.values())[0].name == "Big Hard Rock"
+        assert list(mocked_exp.grid.item_locations.values())[0].name == "Big Hard Rock"
 
     def test_handle_item_transition_reduces_items_remaining(self, mocked_exp, player):
         gooseberry_bush = create_item(**mocked_exp.item_config["gooseberry_bush"])
@@ -98,7 +98,9 @@ class TestHandleItemTransition(object):
         assert gooseberry_bush.remaining_uses == 5
         assert len(mocked_exp.grid.items_consumed) == 0
         assert len(mocked_exp.grid.item_locations) == 1
-        list(mocked_exp.grid.item_locations.values())[0].name == "Gooseberry Bush"
+        assert (
+            list(mocked_exp.grid.item_locations.values())[0].name == "Gooseberry Bush"
+        )
 
     def test_handle_last_item_transition(self, mocked_exp, player):
         gooseberry_bush = create_item(**mocked_exp.item_config["gooseberry_bush"])
@@ -117,7 +119,39 @@ class TestHandleItemTransition(object):
         # The bush is gone and replaced with an empty one
         assert len(mocked_exp.grid.items_consumed) == 1
         assert len(mocked_exp.grid.item_locations) == 1
-        list(mocked_exp.grid.item_locations.values())[0].name == "Empty Gooseberry Bush"
+        assert (
+            list(mocked_exp.grid.item_locations.values())[0].name
+            == "Empty Gooseberry Bush"
+        )
+
+    def test_handle_item_transition_multiple_actors_error(self, mocked_exp, player):
+        stone = create_item(**mocked_exp.item_config["stone"])
+        mocked_exp.grid.item_locations[(2, 2)] = stone
+        mocked_exp.grid.players[player.id].position = [2, 2]
+        mocked_exp.handle_item_transition(
+            msg={"player_id": player.id, "position": (2, 2)}
+        )
+        # Only one player was present. The transition did not happen, since it requires 2
+        assert list(mocked_exp.grid.item_locations.values())[0].name == "Stone"
+
+    def test_handle_item_transition_multiple_actors_success(
+        self, mocked_exp, a, player
+    ):
+        other_player = create_player(mocked_exp, a)
+        stone = create_item(**mocked_exp.item_config["stone"])
+        mocked_exp.grid.item_locations[(2, 2)] = stone
+        player.position = [2, 2]
+        mocked_exp.handle_item_transition(
+            msg={"player_id": player.id, "position": (2, 2)}
+        )
+        # The second player was not close enough. The transition did not happen
+        assert list(mocked_exp.grid.item_locations.values())[0].name == "Stone"
+
+        other_player.position = [2, 1]
+        mocked_exp.handle_item_transition(
+            msg={"player_id": player.id, "position": (2, 2)}
+        )
+        assert list(mocked_exp.grid.item_locations.values())[0].name == "Sharp Stone"
 
 
 class TestHandleItemConsume(object):
@@ -187,6 +221,10 @@ def item(exp):
 
 @pytest.fixture
 def player(exp, a):
+    return create_player(exp, a)
+
+
+def create_player(exp, a):
     from dlgr.griduniverse.experiment import Player
 
     participant = a.participant()
