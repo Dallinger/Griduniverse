@@ -128,15 +128,17 @@ item_defaults:
   # of this type.
   spawn_rate: 1.0
 
-  # Visual representation of this item in the UI.
-  # This value can be any of:
-  #    - A single hex color value, prefixed with "color:". Example: "color:#8a9b0f"
-  #    - A comma-separated pair of hex colors representing the items immature and mature
-  #      states (rendered color will be along a continuum between these colors based on
-  #      current maturity), also prefixed with "color:" Example: "color:#8a9b0f,#7a6b54"
+  # Visual representation of this item in the UI. This value can be any of:
+  #    - A single hex color value, prefixed with "color:". Example:
+  #      "color:#8a9b0f"
+  #    - A comma-separated pair of hex colors representing the items immature
+  #      and mature states (rendered color will be along a continuum between
+  #      these colors based on current maturity), also prefixed with "color:"
+  #      Example: "color:#8a9b0f,#7a6b54"
   #    - A unicode emoji, prefixed with "emoji:". Example: "emoji:🍓"
-  #    - The path of an image in within the images/ folder, prefixed with "image:".
-  #      Example ("image:sprites/strawberry.png")
+  #    - A url for an image or a path to an image in within the static/images/
+  #      folder, prefixed with "image:". Example
+  #      ("image:sprites/strawberry.png")
   sprite: "color:#8a9b0f,#7a6b54"
 
 transition_defaults:
@@ -189,13 +191,13 @@ items:
     respawn: true
     item_count: 8
     limit_quantity: true
-    sprite: "#8a9b0f,#7a6b54"
+    sprite: "color:#8a9b0f,#7a6b54"
 
   - item_id: food2
     calories: 3
     crossable: true
     interactive: false
-    item_count: 4
+    item_count: 50
     maturation_speed: 0.2
     maturation_threshold: 0.5
     n_uses: 1
@@ -205,7 +207,7 @@ items:
     portable: true
     respawn: true
     limit_quantity: true
-    sprite: "#2a9b0f,#1a6b54"
+    sprite: "image:sprites/food.png"
 
   # One Hour, One Life items
   - crossable: true
@@ -215,7 +217,7 @@ items:
     portable: true
     spawn_rate: 0.15
     item_count: 100
-    sprite: "#E67E22"
+    sprite: "emoji:🥕"
 
   - crossable: true
     interactive: true
@@ -224,7 +226,7 @@ items:
     portable: true
     spawn_rate: 0.05
     item_count: 50
-    sprite: "#95A5A6"
+    sprite: "image:https://github.githubassets.com/images/icons/emoji/unicode/1faa8.png?v8"
 
   - crossable: true
     interactive: true
@@ -233,7 +235,7 @@ items:
     portable: false
     spawn_rate: 0
     item_count: 20
-    sprite: "#7F8C8D"
+    sprite: "emoji:🗿"
 
   - crossable: true
     interactive: true
@@ -243,7 +245,7 @@ items:
     portable: false
     spawn_rate: 0.1
     item_count: 50
-    sprite: "#8E44AD"
+    sprite: "emoji:🌳"
 
   - crossable: true
     interactive: true
@@ -252,7 +254,7 @@ items:
     portable: true
     spawn_rate: 0.05
     item_count: 20
-    sprite: "#BDC3C7"
+    sprite: "emoji:💎"
 
   - calories: 5
     crossable: true
@@ -263,7 +265,7 @@ items:
     portable: true
     spawn_rate: 0
     item_count: 0
-    sprite: "#E67E22"
+    sprite: "emoji:🥕"
 
   - calories: 3
     crossable: true
@@ -274,7 +276,7 @@ items:
     portable: true
     spawn_rate: 0
     item_count: 0
-    sprite: "#8E44AD"
+    sprite: "emoji:🫐"
 
   - crossable: false
     interactive: true
@@ -284,7 +286,7 @@ items:
     portable: false
     spawn_rate: 0
     item_count: 0
-    sprite: "#9B59B6"
+    sprite: "emoji:🌴"
 
 transitions:
   - actor_start: stone

@@ -67,295 +67,7 @@
 /******/ })
 /************************************************************************/
 /******/ ([
-/* 0 */,
-/* 1 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var __WEBPACK_AMD_DEFINE_RESULT__;/*
- * JavaScript MD5
- * https://github.com/blueimp/JavaScript-MD5
- *
- * Copyright 2011, Sebastian Tschan
- * https://blueimp.net
- *
- * Licensed under the MIT license:
- * https://opensource.org/licenses/MIT
- *
- * Based on
- * A JavaScript implementation of the RSA Data Security, Inc. MD5 Message
- * Digest Algorithm, as defined in RFC 1321.
- * Version 2.2 Copyright (C) Paul Johnston 1999 - 2009
- * Other contributors: Greg Holt, Andrew Kepert, Ydnar, Lostinet
- * Distributed under the BSD License
- * See http://pajhome.org.uk/crypt/md5 for more info.
- */
-
-/* global define */
-
-;(function ($) {
-  'use strict'
-
-  /*
-  * Add integers, wrapping at 2^32. This uses 16-bit operations internally
-  * to work around bugs in some JS interpreters.
-  */
-  function safeAdd (x, y) {
-    var lsw = (x & 0xFFFF) + (y & 0xFFFF)
-    var msw = (x >> 16) + (y >> 16) + (lsw >> 16)
-    return (msw << 16) | (lsw & 0xFFFF)
-  }
-
-  /*
-  * Bitwise rotate a 32-bit number to the left.
-  */
-  function bitRotateLeft (num, cnt) {
-    return (num << cnt) | (num >>> (32 - cnt))
-  }
-
-  /*
-  * These functions implement the four basic operations the algorithm uses.
-  */
-  function md5cmn (q, a, b, x, s, t) {
-    return safeAdd(bitRotateLeft(safeAdd(safeAdd(a, q), safeAdd(x, t)), s), b)
-  }
-  function md5ff (a, b, c, d, x, s, t) {
-    return md5cmn((b & c) | ((~b) & d), a, b, x, s, t)
-  }
-  function md5gg (a, b, c, d, x, s, t) {
-    return md5cmn((b & d) | (c & (~d)), a, b, x, s, t)
-  }
-  function md5hh (a, b, c, d, x, s, t) {
-    return md5cmn(b ^ c ^ d, a, b, x, s, t)
-  }
-  function md5ii (a, b, c, d, x, s, t) {
-    return md5cmn(c ^ (b | (~d)), a, b, x, s, t)
-  }
-
-  /*
-  * Calculate the MD5 of an array of little-endian words, and a bit length.
-  */
-  function binlMD5 (x, len) {
-    /* append padding */
-    x[len >> 5] |= 0x80 << (len % 32)
-    x[(((len + 64) >>> 9) << 4) + 14] = len
-
-    var i
-    var olda
-    var oldb
-    var oldc
-    var oldd
-    var a = 1732584193
-    var b = -271733879
-    var c = -1732584194
-    var d = 271733878
-
-    for (i = 0; i < x.length; i += 16) {
-      olda = a
-      oldb = b
-      oldc = c
-      oldd = d
-
-      a = md5ff(a, b, c, d, x[i], 7, -680876936)
-      d = md5ff(d, a, b, c, x[i + 1], 12, -389564586)
-      c = md5ff(c, d, a, b, x[i + 2], 17, 606105819)
-      b = md5ff(b, c, d, a, x[i + 3], 22, -1044525330)
-      a = md5ff(a, b, c, d, x[i + 4], 7, -176418897)
-      d = md5ff(d, a, b, c, x[i + 5], 12, 1200080426)
-      c = md5ff(c, d, a, b, x[i + 6], 17, -1473231341)
-      b = md5ff(b, c, d, a, x[i + 7], 22, -45705983)
-      a = md5ff(a, b, c, d, x[i + 8], 7, 1770035416)
-      d = md5ff(d, a, b, c, x[i + 9], 12, -1958414417)
-      c = md5ff(c, d, a, b, x[i + 10], 17, -42063)
-      b = md5ff(b, c, d, a, x[i + 11], 22, -1990404162)
-      a = md5ff(a, b, c, d, x[i + 12], 7, 1804603682)
-      d = md5ff(d, a, b, c, x[i + 13], 12, -40341101)
-      c = md5ff(c, d, a, b, x[i + 14], 17, -1502002290)
-      b = md5ff(b, c, d, a, x[i + 15], 22, 1236535329)
-
-      a = md5gg(a, b, c, d, x[i + 1], 5, -165796510)
-      d = md5gg(d, a, b, c, x[i + 6], 9, -1069501632)
-      c = md5gg(c, d, a, b, x[i + 11], 14, 643717713)
-      b = md5gg(b, c, d, a, x[i], 20, -373897302)
-      a = md5gg(a, b, c, d, x[i + 5], 5, -701558691)
-      d = md5gg(d, a, b, c, x[i + 10], 9, 38016083)
-      c = md5gg(c, d, a, b, x[i + 15], 14, -660478335)
-      b = md5gg(b, c, d, a, x[i + 4], 20, -405537848)
-      a = md5gg(a, b, c, d, x[i + 9], 5, 568446438)
-      d = md5gg(d, a, b, c, x[i + 14], 9, -1019803690)
-      c = md5gg(c, d, a, b, x[i + 3], 14, -187363961)
-      b = md5gg(b, c, d, a, x[i + 8], 20, 1163531501)
-      a = md5gg(a, b, c, d, x[i + 13], 5, -1444681467)
-      d = md5gg(d, a, b, c, x[i + 2], 9, -51403784)
-      c = md5gg(c, d, a, b, x[i + 7], 14, 1735328473)
-      b = md5gg(b, c, d, a, x[i + 12], 20, -1926607734)
-
-      a = md5hh(a, b, c, d, x[i + 5], 4, -378558)
-      d = md5hh(d, a, b, c, x[i + 8], 11, -2022574463)
-      c = md5hh(c, d, a, b, x[i + 11], 16, 1839030562)
-      b = md5hh(b, c, d, a, x[i + 14], 23, -35309556)
-      a = md5hh(a, b, c, d, x[i + 1], 4, -1530992060)
-      d = md5hh(d, a, b, c, x[i + 4], 11, 1272893353)
-      c = md5hh(c, d, a, b, x[i + 7], 16, -155497632)
-      b = md5hh(b, c, d, a, x[i + 10], 23, -1094730640)
-      a = md5hh(a, b, c, d, x[i + 13], 4, 681279174)
-      d = md5hh(d, a, b, c, x[i], 11, -358537222)
-      c = md5hh(c, d, a, b, x[i + 3], 16, -722521979)
-      b = md5hh(b, c, d, a, x[i + 6], 23, 76029189)
-      a = md5hh(a, b, c, d, x[i + 9], 4, -640364487)
-      d = md5hh(d, a, b, c, x[i + 12], 11, -421815835)
-      c = md5hh(c, d, a, b, x[i + 15], 16, 530742520)
-      b = md5hh(b, c, d, a, x[i + 2], 23, -995338651)
-
-      a = md5ii(a, b, c, d, x[i], 6, -198630844)
-      d = md5ii(d, a, b, c, x[i + 7], 10, 1126891415)
-      c = md5ii(c, d, a, b, x[i + 14], 15, -1416354905)
-      b = md5ii(b, c, d, a, x[i + 5], 21, -57434055)
-      a = md5ii(a, b, c, d, x[i + 12], 6, 1700485571)
-      d = md5ii(d, a, b, c, x[i + 3], 10, -1894986606)
-      c = md5ii(c, d, a, b, x[i + 10], 15, -1051523)
-      b = md5ii(b, c, d, a, x[i + 1], 21, -2054922799)
-      a = md5ii(a, b, c, d, x[i + 8], 6, 1873313359)
-      d = md5ii(d, a, b, c, x[i + 15], 10, -30611744)
-      c = md5ii(c, d, a, b, x[i + 6], 15, -1560198380)
-      b = md5ii(b, c, d, a, x[i + 13], 21, 1309151649)
-      a = md5ii(a, b, c, d, x[i + 4], 6, -145523070)
-      d = md5ii(d, a, b, c, x[i + 11], 10, -1120210379)
-      c = md5ii(c, d, a, b, x[i + 2], 15, 718787259)
-      b = md5ii(b, c, d, a, x[i + 9], 21, -343485551)
-
-      a = safeAdd(a, olda)
-      b = safeAdd(b, oldb)
-      c = safeAdd(c, oldc)
-      d = safeAdd(d, oldd)
-    }
-    return [a, b, c, d]
-  }
-
-  /*
-  * Convert an array of little-endian words to a string
-  */
-  function binl2rstr (input) {
-    var i
-    var output = ''
-    var length32 = input.length * 32
-    for (i = 0; i < length32; i += 8) {
-      output += String.fromCharCode((input[i >> 5] >>> (i % 32)) & 0xFF)
-    }
-    return output
-  }
-
-  /*
-  * Convert a raw string to an array of little-endian words
-  * Characters >255 have their high-byte silently ignored.
-  */
-  function rstr2binl (input) {
-    var i
-    var output = []
-    output[(input.length >> 2) - 1] = undefined
-    for (i = 0; i < output.length; i += 1) {
-      output[i] = 0
-    }
-    var length8 = input.length * 8
-    for (i = 0; i < length8; i += 8) {
-      output[i >> 5] |= (input.charCodeAt(i / 8) & 0xFF) << (i % 32)
-    }
-    return output
-  }
-
-  /*
-  * Calculate the MD5 of a raw string
-  */
-  function rstrMD5 (s) {
-    return binl2rstr(binlMD5(rstr2binl(s), s.length * 8))
-  }
-
-  /*
-  * Calculate the HMAC-MD5, of a key and some data (raw strings)
-  */
-  function rstrHMACMD5 (key, data) {
-    var i
-    var bkey = rstr2binl(key)
-    var ipad = []
-    var opad = []
-    var hash
-    ipad[15] = opad[15] = undefined
-    if (bkey.length > 16) {
-      bkey = binlMD5(bkey, key.length * 8)
-    }
-    for (i = 0; i < 16; i += 1) {
-      ipad[i] = bkey[i] ^ 0x36363636
-      opad[i] = bkey[i] ^ 0x5C5C5C5C
-    }
-    hash = binlMD5(ipad.concat(rstr2binl(data)), 512 + data.length * 8)
-    return binl2rstr(binlMD5(opad.concat(hash), 512 + 128))
-  }
-
-  /*
-  * Convert a raw string to a hex string
-  */
-  function rstr2hex (input) {
-    var hexTab = '0123456789abcdef'
-    var output = ''
-    var x
-    var i
-    for (i = 0; i < input.length; i += 1) {
-      x = input.charCodeAt(i)
-      output += hexTab.charAt((x >>> 4) & 0x0F) +
-      hexTab.charAt(x & 0x0F)
-    }
-    return output
-  }
-
-  /*
-  * Encode a string as utf-8
-  */
-  function str2rstrUTF8 (input) {
-    return unescape(encodeURIComponent(input))
-  }
-
-  /*
-  * Take string arguments and return either raw or hex encoded strings
-  */
-  function rawMD5 (s) {
-    return rstrMD5(str2rstrUTF8(s))
-  }
-  function hexMD5 (s) {
-    return rstr2hex(rawMD5(s))
-  }
-  function rawHMACMD5 (k, d) {
-    return rstrHMACMD5(str2rstrUTF8(k), str2rstrUTF8(d))
-  }
-  function hexHMACMD5 (k, d) {
-    return rstr2hex(rawHMACMD5(k, d))
-  }
-
-  function md5 (string, key, raw) {
-    if (!key) {
-      if (!raw) {
-        return hexMD5(string)
-      }
-      return rawMD5(string)
-    }
-    if (!raw) {
-      return hexHMACMD5(key, string)
-    }
-    return rawHMACMD5(key, string)
-  }
-
-  if (true) {
-    !(__WEBPACK_AMD_DEFINE_RESULT__ = function () {
-      return md5
-    }.call(exports, __webpack_require__, exports, module),
-				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__))
-  } else if (typeof module === 'object' && module.exports) {
-    module.exports = md5
-  } else {
-    $.md5 = md5
-  }
-}(this))
-
-/***/ }),
-/* 2 */
+/* 0 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {var __WEBPACK_AMD_DEFINE_RESULT__;/**
@@ -17569,14 +17281,302 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*
   }
 }.call(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(42), __webpack_require__(43)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41), __webpack_require__(42)(module)))
+
+/***/ }),
+/* 1 */,
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;/*
+ * JavaScript MD5
+ * https://github.com/blueimp/JavaScript-MD5
+ *
+ * Copyright 2011, Sebastian Tschan
+ * https://blueimp.net
+ *
+ * Licensed under the MIT license:
+ * https://opensource.org/licenses/MIT
+ *
+ * Based on
+ * A JavaScript implementation of the RSA Data Security, Inc. MD5 Message
+ * Digest Algorithm, as defined in RFC 1321.
+ * Version 2.2 Copyright (C) Paul Johnston 1999 - 2009
+ * Other contributors: Greg Holt, Andrew Kepert, Ydnar, Lostinet
+ * Distributed under the BSD License
+ * See http://pajhome.org.uk/crypt/md5 for more info.
+ */
+
+/* global define */
+
+;(function ($) {
+  'use strict'
+
+  /*
+  * Add integers, wrapping at 2^32. This uses 16-bit operations internally
+  * to work around bugs in some JS interpreters.
+  */
+  function safeAdd (x, y) {
+    var lsw = (x & 0xFFFF) + (y & 0xFFFF)
+    var msw = (x >> 16) + (y >> 16) + (lsw >> 16)
+    return (msw << 16) | (lsw & 0xFFFF)
+  }
+
+  /*
+  * Bitwise rotate a 32-bit number to the left.
+  */
+  function bitRotateLeft (num, cnt) {
+    return (num << cnt) | (num >>> (32 - cnt))
+  }
+
+  /*
+  * These functions implement the four basic operations the algorithm uses.
+  */
+  function md5cmn (q, a, b, x, s, t) {
+    return safeAdd(bitRotateLeft(safeAdd(safeAdd(a, q), safeAdd(x, t)), s), b)
+  }
+  function md5ff (a, b, c, d, x, s, t) {
+    return md5cmn((b & c) | ((~b) & d), a, b, x, s, t)
+  }
+  function md5gg (a, b, c, d, x, s, t) {
+    return md5cmn((b & d) | (c & (~d)), a, b, x, s, t)
+  }
+  function md5hh (a, b, c, d, x, s, t) {
+    return md5cmn(b ^ c ^ d, a, b, x, s, t)
+  }
+  function md5ii (a, b, c, d, x, s, t) {
+    return md5cmn(c ^ (b | (~d)), a, b, x, s, t)
+  }
+
+  /*
+  * Calculate the MD5 of an array of little-endian words, and a bit length.
+  */
+  function binlMD5 (x, len) {
+    /* append padding */
+    x[len >> 5] |= 0x80 << (len % 32)
+    x[(((len + 64) >>> 9) << 4) + 14] = len
+
+    var i
+    var olda
+    var oldb
+    var oldc
+    var oldd
+    var a = 1732584193
+    var b = -271733879
+    var c = -1732584194
+    var d = 271733878
+
+    for (i = 0; i < x.length; i += 16) {
+      olda = a
+      oldb = b
+      oldc = c
+      oldd = d
+
+      a = md5ff(a, b, c, d, x[i], 7, -680876936)
+      d = md5ff(d, a, b, c, x[i + 1], 12, -389564586)
+      c = md5ff(c, d, a, b, x[i + 2], 17, 606105819)
+      b = md5ff(b, c, d, a, x[i + 3], 22, -1044525330)
+      a = md5ff(a, b, c, d, x[i + 4], 7, -176418897)
+      d = md5ff(d, a, b, c, x[i + 5], 12, 1200080426)
+      c = md5ff(c, d, a, b, x[i + 6], 17, -1473231341)
+      b = md5ff(b, c, d, a, x[i + 7], 22, -45705983)
+      a = md5ff(a, b, c, d, x[i + 8], 7, 1770035416)
+      d = md5ff(d, a, b, c, x[i + 9], 12, -1958414417)
+      c = md5ff(c, d, a, b, x[i + 10], 17, -42063)
+      b = md5ff(b, c, d, a, x[i + 11], 22, -1990404162)
+      a = md5ff(a, b, c, d, x[i + 12], 7, 1804603682)
+      d = md5ff(d, a, b, c, x[i + 13], 12, -40341101)
+      c = md5ff(c, d, a, b, x[i + 14], 17, -1502002290)
+      b = md5ff(b, c, d, a, x[i + 15], 22, 1236535329)
+
+      a = md5gg(a, b, c, d, x[i + 1], 5, -165796510)
+      d = md5gg(d, a, b, c, x[i + 6], 9, -1069501632)
+      c = md5gg(c, d, a, b, x[i + 11], 14, 643717713)
+      b = md5gg(b, c, d, a, x[i], 20, -373897302)
+      a = md5gg(a, b, c, d, x[i + 5], 5, -701558691)
+      d = md5gg(d, a, b, c, x[i + 10], 9, 38016083)
+      c = md5gg(c, d, a, b, x[i + 15], 14, -660478335)
+      b = md5gg(b, c, d, a, x[i + 4], 20, -405537848)
+      a = md5gg(a, b, c, d, x[i + 9], 5, 568446438)
+      d = md5gg(d, a, b, c, x[i + 14], 9, -1019803690)
+      c = md5gg(c, d, a, b, x[i + 3], 14, -187363961)
+      b = md5gg(b, c, d, a, x[i + 8], 20, 1163531501)
+      a = md5gg(a, b, c, d, x[i + 13], 5, -1444681467)
+      d = md5gg(d, a, b, c, x[i + 2], 9, -51403784)
+      c = md5gg(c, d, a, b, x[i + 7], 14, 1735328473)
+      b = md5gg(b, c, d, a, x[i + 12], 20, -1926607734)
+
+      a = md5hh(a, b, c, d, x[i + 5], 4, -378558)
+      d = md5hh(d, a, b, c, x[i + 8], 11, -2022574463)
+      c = md5hh(c, d, a, b, x[i + 11], 16, 1839030562)
+      b = md5hh(b, c, d, a, x[i + 14], 23, -35309556)
+      a = md5hh(a, b, c, d, x[i + 1], 4, -1530992060)
+      d = md5hh(d, a, b, c, x[i + 4], 11, 1272893353)
+      c = md5hh(c, d, a, b, x[i + 7], 16, -155497632)
+      b = md5hh(b, c, d, a, x[i + 10], 23, -1094730640)
+      a = md5hh(a, b, c, d, x[i + 13], 4, 681279174)
+      d = md5hh(d, a, b, c, x[i], 11, -358537222)
+      c = md5hh(c, d, a, b, x[i + 3], 16, -722521979)
+      b = md5hh(b, c, d, a, x[i + 6], 23, 76029189)
+      a = md5hh(a, b, c, d, x[i + 9], 4, -640364487)
+      d = md5hh(d, a, b, c, x[i + 12], 11, -421815835)
+      c = md5hh(c, d, a, b, x[i + 15], 16, 530742520)
+      b = md5hh(b, c, d, a, x[i + 2], 23, -995338651)
+
+      a = md5ii(a, b, c, d, x[i], 6, -198630844)
+      d = md5ii(d, a, b, c, x[i + 7], 10, 1126891415)
+      c = md5ii(c, d, a, b, x[i + 14], 15, -1416354905)
+      b = md5ii(b, c, d, a, x[i + 5], 21, -57434055)
+      a = md5ii(a, b, c, d, x[i + 12], 6, 1700485571)
+      d = md5ii(d, a, b, c, x[i + 3], 10, -1894986606)
+      c = md5ii(c, d, a, b, x[i + 10], 15, -1051523)
+      b = md5ii(b, c, d, a, x[i + 1], 21, -2054922799)
+      a = md5ii(a, b, c, d, x[i + 8], 6, 1873313359)
+      d = md5ii(d, a, b, c, x[i + 15], 10, -30611744)
+      c = md5ii(c, d, a, b, x[i + 6], 15, -1560198380)
+      b = md5ii(b, c, d, a, x[i + 13], 21, 1309151649)
+      a = md5ii(a, b, c, d, x[i + 4], 6, -145523070)
+      d = md5ii(d, a, b, c, x[i + 11], 10, -1120210379)
+      c = md5ii(c, d, a, b, x[i + 2], 15, 718787259)
+      b = md5ii(b, c, d, a, x[i + 9], 21, -343485551)
+
+      a = safeAdd(a, olda)
+      b = safeAdd(b, oldb)
+      c = safeAdd(c, oldc)
+      d = safeAdd(d, oldd)
+    }
+    return [a, b, c, d]
+  }
+
+  /*
+  * Convert an array of little-endian words to a string
+  */
+  function binl2rstr (input) {
+    var i
+    var output = ''
+    var length32 = input.length * 32
+    for (i = 0; i < length32; i += 8) {
+      output += String.fromCharCode((input[i >> 5] >>> (i % 32)) & 0xFF)
+    }
+    return output
+  }
+
+  /*
+  * Convert a raw string to an array of little-endian words
+  * Characters >255 have their high-byte silently ignored.
+  */
+  function rstr2binl (input) {
+    var i
+    var output = []
+    output[(input.length >> 2) - 1] = undefined
+    for (i = 0; i < output.length; i += 1) {
+      output[i] = 0
+    }
+    var length8 = input.length * 8
+    for (i = 0; i < length8; i += 8) {
+      output[i >> 5] |= (input.charCodeAt(i / 8) & 0xFF) << (i % 32)
+    }
+    return output
+  }
+
+  /*
+  * Calculate the MD5 of a raw string
+  */
+  function rstrMD5 (s) {
+    return binl2rstr(binlMD5(rstr2binl(s), s.length * 8))
+  }
+
+  /*
+  * Calculate the HMAC-MD5, of a key and some data (raw strings)
+  */
+  function rstrHMACMD5 (key, data) {
+    var i
+    var bkey = rstr2binl(key)
+    var ipad = []
+    var opad = []
+    var hash
+    ipad[15] = opad[15] = undefined
+    if (bkey.length > 16) {
+      bkey = binlMD5(bkey, key.length * 8)
+    }
+    for (i = 0; i < 16; i += 1) {
+      ipad[i] = bkey[i] ^ 0x36363636
+      opad[i] = bkey[i] ^ 0x5C5C5C5C
+    }
+    hash = binlMD5(ipad.concat(rstr2binl(data)), 512 + data.length * 8)
+    return binl2rstr(binlMD5(opad.concat(hash), 512 + 128))
+  }
+
+  /*
+  * Convert a raw string to a hex string
+  */
+  function rstr2hex (input) {
+    var hexTab = '0123456789abcdef'
+    var output = ''
+    var x
+    var i
+    for (i = 0; i < input.length; i += 1) {
+      x = input.charCodeAt(i)
+      output += hexTab.charAt((x >>> 4) & 0x0F) +
+      hexTab.charAt(x & 0x0F)
+    }
+    return output
+  }
+
+  /*
+  * Encode a string as utf-8
+  */
+  function str2rstrUTF8 (input) {
+    return unescape(encodeURIComponent(input))
+  }
+
+  /*
+  * Take string arguments and return either raw or hex encoded strings
+  */
+  function rawMD5 (s) {
+    return rstrMD5(str2rstrUTF8(s))
+  }
+  function hexMD5 (s) {
+    return rstr2hex(rawMD5(s))
+  }
+  function rawHMACMD5 (k, d) {
+    return rstrHMACMD5(str2rstrUTF8(k), str2rstrUTF8(d))
+  }
+  function hexHMACMD5 (k, d) {
+    return rstr2hex(rawHMACMD5(k, d))
+  }
+
+  function md5 (string, key, raw) {
+    if (!key) {
+      if (!raw) {
+        return hexMD5(string)
+      }
+      return rawMD5(string)
+    }
+    if (!raw) {
+      return hexHMACMD5(key, string)
+    }
+    return rawHMACMD5(key, string)
+  }
+
+  if (true) {
+    !(__WEBPACK_AMD_DEFINE_RESULT__ = function () {
+      return md5
+    }.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__))
+  } else if (typeof module === 'object' && module.exports) {
+    module.exports = md5
+  } else {
+    $.md5 = md5
+  }
+}(this))
 
 /***/ }),
 /* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* MIT license */
-var cssKeywords = __webpack_require__(28);
+var cssKeywords = __webpack_require__(27);
 
 // NOTE: conversions should only return primitive values (i.e. arrays, or
 //       values that give correct `typeof` results).
@@ -18498,7 +18498,7 @@ module.exports = isArray || function (val) {
 
 
 
-var typeOf = __webpack_require__(36);
+var typeOf = __webpack_require__(35);
 
 module.exports = function isNumber(num) {
   var type = typeOf(num);
@@ -18531,7 +18531,7 @@ var tryStringObject = function tryStringObject(value) {
 };
 var toStr = Object.prototype.toString;
 var strClass = '[object String]';
-var hasToStringTag = __webpack_require__(33)();
+var hasToStringTag = __webpack_require__(32)();
 
 module.exports = function isString(value) {
 	if (typeof value === 'string') {
@@ -18548,7 +18548,7 @@ module.exports = function isString(value) {
 /* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var convert = __webpack_require__(39);
+var convert = __webpack_require__(38);
 
 module.exports = function (cstr) {
     var m, conv, parts, alpha;
@@ -18643,17 +18643,23 @@ var isstring = __webpack_require__(6);
 var isarray = __webpack_require__(4);
 var convert = __webpack_require__(20);
 var layout = __webpack_require__(21);
-var texcoord = __webpack_require__(25);
-var range = __webpack_require__(24);
+var texcoord = __webpack_require__(24);
+var _ = __webpack_require__(0);
 var pixdenticon = __webpack_require__(22);
-var md5 = __webpack_require__(1);
+var md5 = __webpack_require__(2);
+
 
 function Pixels(data, textures, opts) {
   if (!(this instanceof Pixels)) return new Pixels(data, textures, opts);
   var self = this;
   opts = opts || {};
   this.opts = opts;
+  this.textureCache = {};
+  this.itemTextures = {};
   var num_identicons = 100;
+  this.numTextures = num_identicons;
+  var texturePromises = [];
+  var texture;
 
   opts.background = opts.background || [ 0.5, 0.5, 0.5 ];
   opts.size = isnumber(opts.size) ? opts.size : 10;
@@ -18679,6 +18685,7 @@ function Pixels(data, textures, opts) {
   var canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
+  canvas.style.backgroundColor = '#1F1F1F';
   if (opts.root) opts.root.appendChild(canvas);
 
   var colors = opts.formatted ? data : convert(data);
@@ -18686,10 +18693,10 @@ function Pixels(data, textures, opts) {
     opts.rows,
     opts.columns,
     textures,
-    num_identicons
+    this.numTextures
   );
 
-  var positions = layout(
+  this.positions = layout(
     opts.rows,
     opts.columns,
     2 * opts.padding / width,
@@ -18697,25 +18704,46 @@ function Pixels(data, textures, opts) {
     width / height
   );
 
-  var regl = __webpack_require__(40)(canvas);
+  var regl = this.regl = __webpack_require__(39)(canvas);
 
+  // First texture in the texture map is an empty square
   var initial_texture = [];
-  for (row = 0; row < opts.size; row++) {
-    rowdata = []
-    for (col = 0; col < opts.size; col++) {
+  for (let row = 0; row < opts.size; row++) {
+    let rowdata = [];
+    for (let col = 0; col < opts.size; col++) {
       rowdata.push([255, 255, 255]);
     }
     initial_texture.push(rowdata);
   }
+
+  // The next textures are the identicons
   var salt = $("#grid").data("identicon-salt");
-  for (var i = 0; i < num_identicons; i++) {
-    texture = new pixdenticon(md5(salt + i), opts.size).render().buffer;
-    for (row = 0; row < opts.size; row++) {
-      initial_texture.push(texture[row]);
+  for (let i = 0; i < num_identicons; i++) {
+    let identTexture = new pixdenticon(md5(salt + i), opts.size).render().buffer;
+    for (let row = 0; row < opts.size; row++) {
+      initial_texture.push(identTexture[row]);
     }
   }
+  texture = regl.texture(initial_texture);
 
-  var texture = regl.texture(initial_texture);
+
+  // Now w fetch any textures needed for our items
+  for (let item_id in opts.item_config) {
+    let itemInfo = opts.item_config[item_id];
+    let itemTexture = this.textureForItem(itemInfo);
+    let itemId = itemInfo.item_id;
+    if (!itemTexture) continue;
+    if (itemTexture.then) {
+      // If we have a promise, store the texture in the itemId -> texture map
+      // when it resolves.
+      texturePromises.push(itemTexture);
+      itemTexture.then(function (texture) {
+        self.itemTextures[itemId] = texture;
+      });
+    } else {
+      self.itemTextures[itemId] = itemTexture;
+    }
+  }
 
   var squares = regl({
     vert: `
@@ -18745,22 +18773,52 @@ function Pixels(data, textures, opts) {
     `,
     attributes: { position: regl.prop("position"), texcoords: regl.prop("texcoords"), color: regl.prop("color")},
     primitive: "triangles",
-    count: colors.length * 6,
+    count: function (context, props) {
+      // We don't always pass in the full position grid, when we don't we need
+      // to pass in a number of vertices to render
+      return props.count || colors.length * 6;
+    },
     uniforms: { vtexture: texture }
   });
 
+  self.renderItemsOfType = regl({
+    vert: `
+      precision mediump float;
+      attribute vec2 position;
+      attribute vec2 texcoords;
+      varying vec2 v_texcoords;
+      void main () {
+        gl_PointSize = float(${opts.size});
+        gl_Position = vec4(position.x, position.y, 0.0, 1.0);
+        v_texcoords = texcoords;
+      }`,
+    frag: `
+      precision mediump float;
+      varying vec2 v_texcoords;
+      uniform sampler2D vtexture;
+      void main () {
+        vec4 texture;
+        gl_FragColor = texture2D(vtexture, v_texcoords);
+      }`,
+      attributes: {position: regl.prop("position"), texcoords: regl.prop("texcoords")},
+      uniforms: {vtexture: regl.prop("texture")},
+      count: function (context, props) {
+        return props.count;
+      }
+  });
+
   var expanded_colors = [];
-  for(var i = 0; i < colors.length; ++i){
-    for(var n = 0; n < 6; ++n) {
+  for(let i = 0; i < colors.length; ++i){
+    for(let n = 0; n < 6; ++n) {
       expanded_colors.push(colors[i]);
     }
   }
 
-  var buffer = { position: regl.buffer(positions), texcoords: regl.buffer(texcoords), color: regl.buffer(expanded_colors)};
+  var buffer = { position: regl.buffer(this.positions), texcoords: regl.buffer(texcoords), color: regl.buffer(expanded_colors)};
 
-  var draw = function(positions, texcoords, colors) {
+  var draw = function(positions, texcoords, colors, count) {
     regl.clear({ color: opts.background.concat([ 1 ]) });
-    squares({ position: positions, texcoords: texcoords, color: colors });
+    squares({ position: positions, texcoords: texcoords, color: colors, count: count});
   };
 
   draw(buffer.position, buffer.texcoords, buffer.color);
@@ -18772,28 +18830,143 @@ function Pixels(data, textures, opts) {
   self.frame = regl.frame;
 }
 
+Pixels.prototype.textureForItem = function(item) {
+  let imageUrl;
+  let image_base = this.opts.sprites_url.replace(/\/$/, ''); // remove trailing '/'
+  let sprite = item.sprite;
+  // The spriteValue may contain a ':', e.g. if it's a url
+  let [spriteType, ...spriteValue] = sprite.split(':');
+  spriteValue = spriteValue.join(':');
+  if (spriteType === "image") {
+    // Anything that's not an http(s) url gets prefixed with the static dir
+    if (spriteValue.indexOf('http') == 0) {
+      imageUrl = spriteValue;
+    } else {
+      spriteValue = spriteValue.replace(/^\//, ''); // remove leading '/'
+      imageUrl = image_base + '/' + spriteValue;
+    }
+    return this.imageTexture(imageUrl)
+  } else if (spriteType === "emoji") {
+    return this.emojiTexture(spriteValue);
+  }
+}
+
+Pixels.prototype.imageTexture = function(imageUrl) {
+  if (!imageUrl) {
+    return;
+  }
+  let textureCache = this.textureCache;
+
+  if (imageUrl in textureCache) {
+    return textureCache[imageUrl];
+  }
+  return new Promise ((resolve) => {
+    let image = new Image();
+    image.src = imageUrl;
+    image.crossOrigin = "anonymous";
+    image.onload = () => {
+      createImageBitmap(image).then((bitmap) => {
+        // Don't recreate the texture if we already have it cached
+        if (!(imageUrl in textureCache)) {
+          let texture = this.regl.texture(bitmap);
+          textureCache[imageUrl] = texture;
+        }
+        resolve(textureCache[imageUrl]);
+      });
+    };
+  });
+}
+
+Pixels.prototype.emojiTexture = function(emoji) {
+  if (!emoji) {
+    return;
+  }
+  const opts = this.opts;
+  const size = opts.size * 4; // quadruple the size for retina
+  let textureCache = this.textureCache;
+
+  if (emoji in textureCache) {
+    return textureCache[emoji];
+  }
+  let textureCanvas = document.createElement("canvas");
+  textureCanvas.style.backgroundColor = "transparent";
+  textureCanvas.height = textureCanvas.width = size;
+  let ctx = textureCanvas.getContext("2d");
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = `${size}px serif`;
+  ctx.fillText(emoji, size/2, size/2);
+  let texture = this.regl.texture(textureCanvas);
+  textureCache[emoji] = texture;
+  return textureCache[emoji]
+}
+
+Pixels.prototype.updateItems = function(texturePositions) {
+  var self = this;
+  const textures = self.itemTextures;
+  // We render the full texture
+  const texcoords = [
+    [0, 0], [1, 0], [0, 1],
+    [0, 1], [1, 0], [1, 1],
+  ];
+  var commandArgs = [];
+
+  for (const itemId in texturePositions) {
+    let positions = texturePositions[itemId];
+    let count = positions.length;
+    let textureMap = [];
+    // Ensure the texture maps 1:1 onto the square. There's probably a better way
+    while (textureMap.length < count) {
+      textureMap.push.apply(textureMap, texcoords);
+    }
+    commandArgs.push({
+      position: positions, texcoords: textureMap, texture: textures[itemId],
+      count: count
+    })
+  }
+  if (commandArgs.length) {
+    // Render each item type in batch mode
+    self.renderItemsOfType(commandArgs);
+  }
+}
+
 Pixels.prototype.update = function(data, textures) {
   var self = this;
+  const opts = this.opts;
   var colors = self._formatted ? data : convert(data);
   var expanded_colors = [];
+  var positions = [];
+  var idx = 0;
+  var texturePositions = {};
 
-  for(var i = 0; i < colors.length; ++i){
-    for(var n = 0; n < 6; ++n) {
-      expanded_colors.push(colors[i]);
+  // We only draw squares for which don't have a custom texture to render
+  for (let i = 0; i < textures.length; i++) {
+    let texture = textures[i];
+    let has_texture = _.isString(texture);
+    if (has_texture) {
+      var texture_coords = texturePositions[texture] = (texturePositions[texture] || []);
+    }
+    for (let n = 0; n < 6; ++n) {
+      if (has_texture) {
+        texture_coords.push(self.positions[idx]);
+      } else {
+        expanded_colors.push(colors[i]);
+        positions.push(self.positions[idx]);
+      }
+      idx++;
     }
   }
-
-  var opts = this.opts;
-  var num_identicons = 100;
 
   var texcoords = texcoord(
     opts.rows,
     opts.columns,
     textures,
-    num_identicons
+    this.numTextures,
+    true
   );
 
-  self._draw(self._buffer.position, self._buffer.texcoords(texcoords), self._buffer.color(expanded_colors));
+  self._draw(self._buffer.position(positions), self._buffer.texcoords(texcoords), self._buffer.color(expanded_colors), texcoords.length);
+  self.updateItems(texturePositions);
 };
 
 module.exports = Pixels;
@@ -18812,6 +18985,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
  * simple Food type.
  */
 
+
 class Item {
   constructor(id, itemId, maturity, remainingUses) {
     this.id = id;
@@ -18822,27 +18996,35 @@ class Item {
     // XXX Maybe we can avoid this copy of every shared value
     // to every instance, but going with it for now.
     Object.assign(this, settings.item_config[this.itemId]);
+
+    this.setColorAttributes();
+  }
+
+  setColorAttributes() {
+    this.immature_color = "#808080";
+    this.mature_color = "#808080";
+    let [spriteType, ...spriteValue] = this.sprite.split(':');
+    spriteValue = spriteValue.join(':');
+    if (spriteType === "color") {
+      if (spriteValue.includes(",")) {
+        [this.immature_color, this.mature_color] = spriteValue.split(",");
+      } else {
+        this.immature_color = this.mature_color = spriteValue;
+      }
+    }
   }
 
   /**
    * Calculate a color based on sprite definition and maturity
    */
   get color() {
-    let immature, mature;
-
-    if (this.sprite.includes(",")) {
-      [immature, mature] = this.sprite.split(",");
-      // For now, assume these are hex colors
-    } else {
-      immature = mature = this.sprite;
-    }
-
     return rgbOnScale(
-      hexToRgbPercentages(immature),
-      hexToRgbPercentages(mature),
+      hexToRgbPercentages(this.immature_color),
+      hexToRgbPercentages(this.mature_color),
       this.maturity
     );
   }
+
 }
 /* harmony export (immutable) */ __webpack_exports__["Item"] = Item;
 
@@ -19150,8 +19332,8 @@ function rgbOnScale(startColor, endColor, percentage) {
 "use strict";
 
 
-var colorString = __webpack_require__(29);
-var convert = __webpack_require__(26);
+var colorString = __webpack_require__(28);
+var convert = __webpack_require__(25);
 
 var _slice = [].slice;
 
@@ -19638,7 +19820,7 @@ module.exports = Color;
 
 (function(exports) {
 
-  const generateGaussian = __webpack_require__(31);
+  const generateGaussian = __webpack_require__(30);
 
   // Complementary error function
   // From Numerical Recipes in C 2e p221
@@ -19776,7 +19958,7 @@ module.exports = Color;
 /* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Emitter = __webpack_require__(37)
+var Emitter = __webpack_require__(36)
 
 module.exports = attach
 
@@ -21138,8 +21320,8 @@ var $ = __webpack_require__(16);
 var gaussian = __webpack_require__(12);
 var Color = __webpack_require__(11);
 var Identicon = __webpack_require__(10);
-var _ = __webpack_require__(2);
-var md5 = __webpack_require__(1);
+var _ = __webpack_require__(0);
+var md5 = __webpack_require__(2);
 var itemlib = __webpack_require__ (9);
 
 function coordsToIdx(x, y, columns) {
@@ -21201,7 +21383,7 @@ class Section {
     if (x >= this.left && x < this.left + this.columns) {
       if (y >= this.top && y < this.top + this.rows) {
         this.data[this.gridCoordsToSectionIdx(x, y)] = color;
-        if (! _.isUndefined(texture)){
+        if (! _.isNil(texture)) {
           this.textures[this.gridCoordsToSectionIdx(x, y)] = texture;
         }
         background[coordsToIdx(x, y, settings.columns)] = color;
@@ -21244,6 +21426,8 @@ var pixels = grid(initialSection.data, initialSection.textures, {
   size: settings.block_size,
   padding: settings.padding,
   background: [0.1, 0.1, 0.1],
+  item_config: settings.item_config,
+  sprites_url: settings.sprites_url,
   formatted: true
 });
 
@@ -21736,7 +21920,11 @@ pixels.frame(function() {
         gridItems.remove(position);
       }
     } else {
-      section.plot(position[1], position[0], item.color);
+      var texture = undefined;
+      if (item.item_id in pixels.itemTextures) {
+        texture = item.item_id;
+      }
+      section.plot(position[1], position[0], item.color, texture);
     }
   }
 
@@ -22610,7 +22798,7 @@ $(document).ready(function() {
 /* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var lodash = __webpack_require__(2);
+var lodash = __webpack_require__(0);
 var isarray = __webpack_require__(4);
 var isnumber = __webpack_require__(5);
 var isstring = __webpack_require__(6);
@@ -22998,39 +23186,35 @@ module.exports = Identicon;
 
 /***/ }),
 /* 24 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-function range(j, k) { 
-    return Array
-        .apply(null, Array((k - j) + 1))
-        .map(function(discard, n){ return n + j; }); 
-}
-
-
-
-module.exports = range;
-
-
-/***/ }),
-/* 25 */
-/***/ (function(module, exports) {
-
-function texcoord(rows, columns, texture_indexes, num_textures) {
+function texcoord(rows, columns, textureIndexes, numTextures, skipTextured) {
   var grid = [];
   var texture;
   var texture_start;
   var texture_next;
+  var _ = __webpack_require__(0);
+
+  // avoid diviion by zero
+  numTextures = numTextures || 1;
 
   for (var i = 0; i < rows; i++) {
     for (var j = 0; j < columns; j++) {
-      texture = texture_indexes[i*rows + j];
-      texture_start = (1/num_textures)*texture;
-      texture_next = texture_start + (1/num_textures);
+      texture = textureIndexes[i*rows + j];
+      // Don't include squares with their own textures
+      if (_.isString(texture) && skipTextured) {
+        continue;
+      } else if (_.isString(texture)) {
+        texture = 0;
+      }
+      texture_start = (1/numTextures)*texture;
+      texture_next = texture_start + (1/numTextures);
 
+      // Map out the full texture across the six vertices for each "square"
       grid.push([ 0, texture_start ]);
       grid.push([ 1, texture_start ]);
       grid.push([ 0, texture_next ]);
-      
+
       grid.push([ 0, texture_next ]);
       grid.push([ 1, texture_start ]);
       grid.push([ 1, texture_next ]);
@@ -23045,11 +23229,11 @@ module.exports = texcoord;
 
 
 /***/ }),
-/* 26 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var conversions = __webpack_require__(3);
-var route = __webpack_require__(27);
+var route = __webpack_require__(26);
 
 var convert = {};
 
@@ -23129,7 +23313,7 @@ module.exports = convert;
 
 
 /***/ }),
-/* 27 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var conversions = __webpack_require__(3);
@@ -23232,7 +23416,7 @@ module.exports = function (fromModel) {
 
 
 /***/ }),
-/* 28 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23391,12 +23575,12 @@ module.exports = {
 
 
 /***/ }),
-/* 29 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* MIT license */
-var colorNames = __webpack_require__(30);
-var swizzle = __webpack_require__(41);
+var colorNames = __webpack_require__(29);
+var swizzle = __webpack_require__(40);
 var hasOwnProperty = Object.hasOwnProperty;
 
 var reverseNames = Object.create(null);
@@ -23639,7 +23823,7 @@ function hexDouble(num) {
 
 
 /***/ }),
-/* 30 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23798,7 +23982,7 @@ module.exports = {
 
 
 /***/ }),
-/* 31 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /** 
@@ -23847,7 +24031,7 @@ module.exports = {
 
 
 /***/ }),
-/* 32 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23896,13 +24080,13 @@ module.exports = function hasSymbols() {
 
 
 /***/ }),
-/* 33 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var hasSymbols = __webpack_require__(32);
+var hasSymbols = __webpack_require__(31);
 
 module.exports = function hasToStringTagShams() {
 	return hasSymbols() && !!Symbol.toStringTag;
@@ -23910,7 +24094,7 @@ module.exports = function hasToStringTagShams() {
 
 
 /***/ }),
-/* 34 */
+/* 33 */
 /***/ (function(module, exports) {
 
 module.exports = function isArrayish(obj) {
@@ -23925,7 +24109,7 @@ module.exports = function isArrayish(obj) {
 
 
 /***/ }),
-/* 35 */
+/* 34 */
 /***/ (function(module, exports) {
 
 /*!
@@ -23952,10 +24136,10 @@ function isSlowBuffer (obj) {
 
 
 /***/ }),
-/* 36 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isBuffer = __webpack_require__(35);
+var isBuffer = __webpack_require__(34);
 var toString = Object.prototype.toString;
 
 /**
@@ -24074,7 +24258,7 @@ module.exports = function kindOf(val) {
 
 
 /***/ }),
-/* 37 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24578,7 +24762,7 @@ function eventTargetAgnosticAddListener(emitter, name, listener, flags) {
 
 
 /***/ }),
-/* 38 */
+/* 37 */
 /***/ (function(module, exports) {
 
 /* MIT license */
@@ -25282,10 +25466,10 @@ for (var key in cssKeywords) {
 
 
 /***/ }),
-/* 39 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var conversions = __webpack_require__(38);
+var conversions = __webpack_require__(37);
 
 var convert = function() {
    return new Converter();
@@ -25379,7 +25563,7 @@ Converter.prototype.getValues = function(space) {
 module.exports = convert;
 
 /***/ }),
-/* 40 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function (global, factory) {
@@ -35606,13 +35790,13 @@ return wrapREGL;
 
 
 /***/ }),
-/* 41 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var isArrayish = __webpack_require__(34);
+var isArrayish = __webpack_require__(33);
 
 var concat = Array.prototype.concat;
 var slice = Array.prototype.slice;
@@ -35642,7 +35826,7 @@ swizzle.wrap = function (fn) {
 
 
 /***/ }),
-/* 42 */
+/* 41 */
 /***/ (function(module, exports) {
 
 var g;
@@ -35669,7 +35853,7 @@ module.exports = g;
 
 
 /***/ }),
-/* 43 */
+/* 42 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
