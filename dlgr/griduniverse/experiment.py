@@ -593,7 +593,11 @@ class Gridworld(object):
                 self.item_locations[tuple(obj.position)] = obj
 
     def instructions(self):
-        with open("templates/instructions/instruct-ready.html") as instructions_file:
+        instructions_file_path = os.path.join(
+            os.path.dirname(__file__),
+            "templates/instructions/instruct-ready.html"
+        )
+        with open(instructions_file_path) as instructions_file:
             instructions_html = instructions_file.read()
             return instructions_html
 
