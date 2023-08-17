@@ -288,6 +288,27 @@ items:
     item_count: 0
     sprite: "emoji:🌴"
 
+  - name: Stag
+    item_id: stag
+    n_uses: 1
+    sprite: "emoji:🦌"
+    spawn_rate: 0.05
+    calories: 10
+    item_count: 5
+    portable: false
+    crossable: true
+    interactive: true
+
+  - name: Fallen Stag
+    item_id: fallen_stag
+    n_uses: 1
+    sprite: "emoji:👜"
+    interactive: false
+    spawn_rate: 0
+    item_count: 0
+    portable: false
+    crossable: true
+
 transitions:
   - actor_start: stone
     actor_end: sharp_stone
@@ -329,15 +350,13 @@ transitions:
     target_end: empty_gooseberry_bush
     target_start: gooseberry_bush
 
-  # The following is a dummy test trasition to
-  # assist developement of multi-actor transitions
-  - actor_start: null
-    actor_end: null
+  - actor_start: sharp_stone
+    actor_end: sharp_stone
     required_actors: 2
-    target_start: stone
-    target_end: sharp_stone
+    target_start: stag
+    target_end: fallen_stag
     visible: always
     last_use: false
     modify_uses:
       - 0
-      - 0
+      - -1
