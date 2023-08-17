@@ -1705,7 +1705,7 @@ class Griduniverse(Experiment):
         if transition is None:
             transition = self.transition_config.get(transition_key)
 
-        required_actors = transition.get("required_actors", 0)
+        required_actors = transition and transition.get("required_actors", 0)
         if (transition is None) or (
             required_actors and len(player.neighbors()) + 1 < required_actors
         ):

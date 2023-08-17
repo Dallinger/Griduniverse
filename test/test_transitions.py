@@ -128,6 +128,8 @@ class TestHandleItemTransition(object):
         stone = create_item(**mocked_exp.item_config["stone"])
         mocked_exp.grid.item_locations[(2, 2)] = stone
         mocked_exp.grid.players[player.id].position = [2, 2]
+        mocked_exp.transition_config = TRANSITION_CONFIG
+
         mocked_exp.handle_item_transition(
             msg={"player_id": player.id, "position": (2, 2)}
         )
@@ -137,6 +139,7 @@ class TestHandleItemTransition(object):
     def test_handle_item_transition_multiple_actors_success(
         self, mocked_exp, a, player
     ):
+        mocked_exp.transition_config = TRANSITION_CONFIG
         other_player = create_player(mocked_exp, a)
         stone = create_item(**mocked_exp.item_config["stone"])
         mocked_exp.grid.item_locations[(2, 2)] = stone
@@ -253,3 +256,55 @@ def create_item(**kwargs):
     }
     item_data.update(kwargs)
     return Item(item_data)
+
+
+# Configuration of transitions: tests need stable transitions,
+# so we use a fixed configuration here.
+TRANSITION_CONFIG = {
+    ("last", None, "gooseberry_bush"): {
+        "actor_end": "gooseberry",
+        "actor_start": None,
+        "last_use": True,
+        "modify_uses": [0, -1],
+        "target_end": "empty_gooseberry_bush",
+        "target_start": "gooseberry_bush",
+        "visible": "always",
+    },
+    ("sharp_stone", "wild_carrot_plant"): {
+        "actor_end": "sharp_stone",
+        "actor_start": "sharp_stone",
+        "last_use": False,
+        "modify_uses": [0, 0],
+        "target_end": "wild_carrot",
+        "target_start": "wild_carrot_plant",
+        "visible": "seen",
+    },
+    (None, "gooseberry_bush"): {
+        "actor_end": "gooseberry",
+        "actor_start": None,
+        "last_use": False,
+        "modify_uses": [0, -1],
+        "target_end": "gooseberry_bush",
+        "target_start": "gooseberry_bush",
+        "visible": "never",
+    },
+    (None, "stone"): {
+        "actor_end": None,
+        "actor_start": None,
+        "last_use": False,
+        "modify_uses": [0, 0],
+        "required_actors": 2,
+        "target_end": "sharp_stone",
+        "target_start": "stone",
+        "visible": "always",
+    },
+    ("stone", "big_hard_rock"): {
+        "actor_end": "sharp_stone",
+        "actor_start": "stone",
+        "last_use": False,
+        "modify_uses": [0, 0],
+        "target_end": "big_hard_rock",
+        "target_start": "big_hard_rock",
+        "visible": "always",
+    },
+}
