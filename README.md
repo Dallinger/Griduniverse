@@ -4,7 +4,7 @@
 [![codecov](https://codecov.io/gh/Dallinger/Griduniverse/branch/master/graph/badge.svg)](https://codecov.io/gh/Dallinger/Griduniverse)
 
 
-Reinforcement learning is an area of machine learning that considers the problem faced by a decision-maker in a setting partly under control of the environment. To illustrate the complexities of learning in even simple scenarios, researchers often turn to so-called “Gridworlds”, toy problems that nonetheless capture the rich difficulties that arise when learning in an uncertain world. By adjusting the state space (i.e., the grid), the set of actions available to the decision maker, the reward function, and the mapping between actions and states, a richly structured array of reinforcement learning problems can be generated — a Griduniverse, one might say. To design a successful reinforcement learning AI system, then, is to develop an algorithm that learns well across many such Gridworlds. Indeed, state-of-the-art reinforcement learning algorithms such as deep Q-networks, for example, have achieved professional-level performance across tens of video games from raw pixel input.  
+Reinforcement learning is an area of machine learning that considers the problem faced by a decision-maker in a setting partly under control of the environment. To illustrate the complexities of learning in even simple scenarios, researchers often turn to so-called “Gridworlds”, toy problems that nonetheless capture the rich difficulties that arise when learning in an uncertain world. By adjusting the state space (i.e., the grid), the set of actions available to the decision maker, the reward function, and the mapping between actions and states, a richly structured array of reinforcement learning problems can be generated — a Griduniverse, one might say. To design a successful reinforcement learning AI system, then, is to develop an algorithm that learns well across many such Gridworlds. Indeed, state-of-the-art reinforcement learning algorithms such as deep Q-networks, for example, have achieved professional-level performance across tens of video games from raw pixel input.
 
 Fig. 1. A small Gridworld, reprinted from Sutton & Barto (1998). At each time step, the agent selects a move (up, down, left, right) and receives the reward specified in the grid.
 
@@ -29,9 +29,23 @@ Players take on one of some number of distinguishable identities (NUM_IDENTITIES
 
 Fig. 3. Sample colors that could serve as distinguishable identities.
 
-### Objects
+### Other Grid Objects
 
-The world may contain non-player objects that are immovable (e.g., walls) or movable (e.g., blocks).
+The world may contain various other non-player objects, some of which may be interactive, provide "calories" or "points", or enable players to progress through the
+game in various ways, and some of which are inert and non-interactive (walls). Points contribute to the players overall score in the game.
+
+#### Walls
+
+Walls are labyrinth of immovable obstacles added to the grid when it's initially constructed. The density and contiguity of the labyrinth can by configured
+via configuration parameters (see below).
+
+#### Items
+
+Griduniverse provides a rich system for defining interactive and/or nutrition-providing "items" which will also be added to the world. In addition to defining
+properties of the items themselves (caloric value, whether than can be carried by players, whether they respawn automatically, etc.), experiment authors
+can also define transitions that execute when players interact with the item on the block they currently occupy, potentially in combination with an item
+they are carrying. For example, a player carrying a stone might be able to transform the stone into a more useful "sharp stone" by sharpening against a
+"large rock" that exists in the block they currently occupy. For more details, see [Items and Transitions](#items-and-transitions) below.
 
 ### Chatroom
 
@@ -481,6 +495,42 @@ Default is False.
 
 Which Bot class to run. Default: `RandomBot`.
 
+## Items and Transitions
+
+Griduniverse provides a configuration syntax
+(see [game_config.yml](./dlgr/griduniverse/game_config.yml)) for defining custom
+objects that will be added to the grid world, and transitions that can be triggered by
+players, either independently or in cooperation, that extract some value from the items
+they're interacting with, and transform items of one type into another type. This makes
+it possible for the experiment author to create pathways for techological evolution in
+the game. For example, a `wild_carrot_plant` may only yield a `wild_carrot` if the
+`wild_carrot` can be cut from the tree using a `sharpened_stone`, and only unsharpened
+`stone`s exist in the grid world's intial state. Two players might need to collaborate
+to sharpen a plain `stone` against a `big_hard_rock` to transition the `stone` into
+a `sharpened_stone`, which can then be used to harvest a `wild_carrot` from the `wild_carrot_plant`.
+
+Transitions are modeled as a pair of states: prior to the transition execution, and after
+the transition has finished. Each state has two sub-componenents: the item
+in the possesion of the player executing the transtion, and the item in the grid block
+they are currently occupy during the transition.
+
+Prior to transition execution:
+  - `actor_start` - the ID of the item the player must be holding for the transition to be available
+  - `target_start` - the ID of the item that must exist on the player's current grid block for the
+     transition to be available
+
+After transition execution:
+  - `actor_end` - the ID of the item that will exist in the player's hand after the transition
+     has executed
+  - `target_end` - the ID of the item left in the player's grid block after the transition executes
+
+Note that any of these values may be `null`. For example, a transition may result in the item
+in the player's current grid block to be consumed, leaving nothing behind.
+
+### Configuration
+
+See detailed explanations for each value for items and transitions on the item_defaults
+and transition_defaults definitions in [game_config.yml](./dlgr/griduniverse/game_config.yml).
 
 ## Griduniverse bots
 

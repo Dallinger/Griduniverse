@@ -1,4 +1,4 @@
-*.js -diff -merge
+*.js -diff merge=ours
 *.js linguist-generated=true
-*.map -diff -merge
+*.map -diff merge=ours
 *.map linguist-generated=true

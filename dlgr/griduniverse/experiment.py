@@ -806,7 +806,7 @@ class Gridworld(object):
                         item_id = obj.get("item_id", 1)
 
         if not position:
-            position = self._random_empty_position(item_id)
+            position = self._find_empty_position(item_id)
 
         item_props = self.item_config[item_id]
         new_item = Item(
@@ -894,7 +894,7 @@ class Gridworld(object):
         """Spawn a player."""
         player = Player(
             id=id,
-            position=self._random_empty_position(player=True),
+            position=self._find_empty_position(player=True),
             num_possible_colors=self.num_colors,
             motion_speed_limit=self.motion_speed_limit,
             motion_cost=self.motion_cost,
@@ -912,9 +912,8 @@ class Gridworld(object):
         self._start_if_ready()
         return player
 
-    def _random_empty_position(self, item_id=None, player=False):
-        """Select an empty cell at random, using the configured probability
-        distribution."""
+    def _find_empty_position(self, item_id=None, player=False):
+        """Select an empty cell, using the configured probability distribution."""
         rows = self.rows
         columns = self.columns
         empty_cell = False

@@ -51,6 +51,7 @@
     settings.leaderboard_individual = {% if experiment.grid.leaderboard_individual %}true{% else %}false{% endif %};
     settings.leaderboard_time = {{ experiment.grid.leaderboard_time }} || 10;
     settings.motion_tremble_rate = {{ experiment.grid.motion_tremble_rate }} || 0.0;
+    settings.sprites_url = "{{ url_for('static', filename='images') }}";
 </script>
 {% endblock %}
 

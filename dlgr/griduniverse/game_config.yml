@@ -1,6 +1,18 @@
 ---
 player_config:
+  # The distribution model used when spawning players on the grid.
+  # Griduniverse provides a pre-defined set of distribution options:
+  #    - random
+  #    - sinusoidal
+  #    - horizontal
+  #    - vertical
+  #    - edge_bias
+  #    - center_bias
+  #
+  # See the distributions.py module for their implementations
   probability_distribution: "random"
+
+  # Griduniverse uses different colors to represent player groups or teams
   available_colors:
     BLUE: [0.50, 0.86, 1.00]
     YELLOW: [1.00, 0.86, 0.50]
@@ -9,38 +21,159 @@ player_config:
     PURPLE: [0.85, 0.60, 0.85]
     TEAL: [0.77, 0.96, 0.90]
 
+
 item_defaults:
+  # Each item definition must include a unique item_id. This actual value doesn't matter,
+  # though an easily identifiable label can be helpful in developing and
+  # debugging your experiment.
   item_id: default
+
+  # How many instances of this item should the world initially include?
+  # If "respawn" (see below) is true, consumed items will be replaced to maintain
+  # this number of instances. Note that this value may increase over the course
+  # of a game depending on the values of seasonal_growth_rate and spawn_rate (see below).
   item_count: 8
+
+  # How many calories does a single instance provide when a player consumes it?
+  # In the simple case, the consuming player will get all the caloric benefit from
+  # items they consume, but there are also options for dividing this benefit among
+  # other players (see public_good_multiplier, below).
   calories: 0
+
+  # Can a player co-occupy the grid block this item is sitting on?
   crossable: true
-  interactive: false
+
+  # Does a player need to explicitly interact with this item via the action button
+  # when they co-occupy its grid block, or do the immediately consume the item
+  # without needing to take any explicit action?
+  interactive: true
+
+  # How rapidly this item progresses through its maturation lifecycle
   maturation_speed: 0.0
+
+  # Level of maturity ("ripeness") at which this item ready for consumption.
+  # Prior to reaching this threshold, a player may be able to co-occupy the same
+  # grid block, but not consume the item.
   maturation_threshold: 0.0
+
+  # Some items can be consumed (or otherwise used) more than once; for example,
+  # a berry bush might provide multiple "servings" of berries before it's exhausted.
+  # On the last use, a special transition may be triggered (see note on last_use
+  # in transition_defaults configuration below), which may transform this item into
+  # another. For example, a berry bush may be transformed into an empty berry bush,
+  # which might have different properties (different sprint, perhaps non-crossable,
+  # etc.)
   n_uses: 1
-  name: Food
+
+  # Friendly name of the item that may be displayed to players.
+  name: Generic Item
+
+  # Controls whether this item be "planted" (added to the gridworld) by the players
+  # themselves.
   plantable: false
+
+  # If this item is plantable (see above), specifies how many points/calories are
+  # deducted from the player's score each time they plant one.
   planting_cost: 1
+
+  # Controls whether this item be picked up and carried to another location by the player.
   portable: true
+
+  # The distribution model used when spawning instances of this item on the grid.
+  # Griduniverse provides a pre-defined set of distribution options:
+  #    - random
+  #    - sinusoidal
+  #    - horizontal
+  #    - vertical
+  #    - edge_bias
+  #    - center_bias
+  #
+  # See the distributions.py module for their implementations.
+  #
+  # To implement a custom distribution option, add a function to distributions.py,
+  # with a name following the pattern [some_name]_probability_distribution(), with
+  # a signature matching the other functions in the module (rows, columns, *args),
+  # and returning an two-item array of integers representing a [row, column] grid position.
+  #
+  # To use your custom distibution for an item, specify only the prefix portion as the
+  # configuration value here (if your function name is "amazing_probability_distribution",
+  # the value to use here would be "amazing").
   probability_distribution: "random"
-  public_good: 0.0
+
+  # Basis from computing calories credited to all *other players* when a player
+  # consumes an instance of this item. The credit will be equal to:
+  #     calories * public_good_multiplier / number of players
   public_good_multiplier: 0.0
+
+  # Controls whether a replacement of this same item should be immediately added to the
+  # gridworld when an existing item is consumed.
   respawn: false
+
+  # If the current number of instances of this item in the gridworld exceeds the
+  # configured item_count (because players are planting additional instances, for example),
+  # should we prune items to limit the total to item_count?
+  #
+  # Note that item_count is potentially dynamic, changing over time based on
+  # seasonal_growth_rate and spawn_rate (see below).
   limit_quantity: false
+
+  # Degree to which the quantity of this item should fluctuate based on "seasons"
+  # (expressed as alternating rounds of the game, so there are just two seasons).
+  # This value is an *exponential* multiplier.
   seasonal_growth_rate: 1.0
+
+  # At what rate should additional instances of this item be added to the gridworld?
+  # A rate of 1.0 means that the target number of items (item_count) will not grow over
+  # time, but a value greater than 1.0 will result in a steadily growing number of items
+  # of this type.
   spawn_rate: 1.0
-  sprite: "#8a9b0f,#7a6b54"
+
+  # Visual representation of this item in the UI. This value can be any of:
+  #    - A single hex color value, prefixed with "color:". Example:
+  #      "color:#8a9b0f"
+  #    - A comma-separated pair of hex colors representing the items immature
+  #      and mature states (rendered color will be along a continuum between
+  #      these colors based on current maturity), also prefixed with "color:"
+  #      Example: "color:#8a9b0f,#7a6b54"
+  #    - A unicode emoji, prefixed with "emoji:". Example: "emoji:🍓"
+  #    - A url for an image or a path to an image in within the static/images/
+  #      folder, prefixed with "image:". Example
+  #      ("image:sprites/strawberry.png")
+  sprite: "color:#8a9b0f,#7a6b54"
 
 transition_defaults:
-  visible: seen # Can be set to "never", "always", or "seen" for transitions that become
-                 # visible to a player after they have been executed for the first time
+  # Can be set to "never", "always", or "seen" for transitions that become
+  # visible to a player after they have been executed for the first time
+  visible: seen
+
+  # item_id for the item that will exist in the player's hand after the transition
+  # has executed
   actor_end: null
+
+  # item_id for the item that must be in the player's hand in order to execute
+  # the transition
   actor_start: null
+
+  # item_id for the item that will exist in the player's grid block after the transition
+  # has executed
   target_end: null
+
+  # item_id for the item that must exist at the player's current position in order
+  # to execute the transition
   target_start: null
+
+  # For items that have an n_uses value greater than 1, if last_use is true,
+  # the transition will be executed when the final use is exhausted. For example,
+  # a gooseberry bush with 5 uses could be transitioned to an empty bush when the
+  # last serving of berries has been harvested. In this case, the target_start
+  # would be the item_id of the gooseberry bush, and the target_end would be the
+  # item_id of the item representing the empty bush.
   last_use: false
-  modify_uses: [0, 0] # How should the number of uses for the actor and target
-                      # be changed by the transition.
+
+  # How should the number of uses for the actor and target be changed by the transition.
+  # These can be positive or negative integers: -1 would decrement n_uses, 1 would add
+  # an additional use.
+  modify_uses: [0, 0]
 
 items:
   # Legacy GU Food item
@@ -58,13 +191,13 @@ items:
     respawn: true
     item_count: 8
     limit_quantity: true
-    sprite: "#8a9b0f,#7a6b54"
+    sprite: "color:#8a9b0f,#7a6b54"
 
   - item_id: food2
     calories: 3
     crossable: true
     interactive: false
-    item_count: 4
+    item_count: 50
     maturation_speed: 0.2
     maturation_threshold: 0.5
     n_uses: 1
@@ -74,7 +207,7 @@ items:
     portable: true
     respawn: true
     limit_quantity: true
-    sprite: "#2a9b0f,#1a6b54"
+    sprite: "image:sprites/food.png"
 
   # One Hour, One Life items
   - crossable: true
@@ -84,7 +217,7 @@ items:
     portable: true
     spawn_rate: 0.15
     item_count: 100
-    sprite: "#E67E22"
+    sprite: "emoji:🥕"
 
   - crossable: true
     interactive: true
@@ -93,7 +226,7 @@ items:
     portable: true
     spawn_rate: 0.05
     item_count: 50
-    sprite: "#95A5A6"
+    sprite: "image:https://github.githubassets.com/images/icons/emoji/unicode/1faa8.png?v8"
 
   - crossable: true
     interactive: true
@@ -102,7 +235,7 @@ items:
     portable: false
     spawn_rate: 0
     item_count: 20
-    sprite: "#7F8C8D"
+    sprite: "emoji:🗿"
 
   - crossable: true
     interactive: true
@@ -112,7 +245,7 @@ items:
     portable: false
     spawn_rate: 0.1
     item_count: 50
-    sprite: "#8E44AD"
+    sprite: "emoji:🌳"
 
   - crossable: true
     interactive: true
@@ -121,7 +254,7 @@ items:
     portable: true
     spawn_rate: 0.05
     item_count: 20
-    sprite: "#BDC3C7"
+    sprite: "emoji:💎"
 
   - calories: 5
     crossable: true
@@ -132,7 +265,7 @@ items:
     portable: true
     spawn_rate: 0
     item_count: 0
-    sprite: "#E67E22"
+    sprite: "emoji:🥕"
 
   - calories: 3
     crossable: true
@@ -143,7 +276,7 @@ items:
     portable: true
     spawn_rate: 0
     item_count: 0
-    sprite: "#8E44AD"
+    sprite: "emoji:🫐"
 
   - crossable: false
     interactive: true
@@ -153,7 +286,7 @@ items:
     portable: false
     spawn_rate: 0
     item_count: 0
-    sprite: "#9B59B6"
+    sprite: "emoji:🌴"
 
 transitions:
   - actor_start: stone

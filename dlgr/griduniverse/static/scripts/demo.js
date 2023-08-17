@@ -74,7 +74,7 @@ class Section {
     if (x >= this.left && x < this.left + this.columns) {
       if (y >= this.top && y < this.top + this.rows) {
         this.data[this.gridCoordsToSectionIdx(x, y)] = color;
-        if (! _.isUndefined(texture)){
+        if (! _.isNil(texture)) {
           this.textures[this.gridCoordsToSectionIdx(x, y)] = texture;
         }
         background[coordsToIdx(x, y, settings.columns)] = color;
@@ -117,6 +117,8 @@ var pixels = grid(initialSection.data, initialSection.textures, {
   size: settings.block_size,
   padding: settings.padding,
   background: [0.1, 0.1, 0.1],
+  item_config: settings.item_config,
+  sprites_url: settings.sprites_url,
   formatted: true
 });
 
@@ -632,7 +634,11 @@ pixels.frame(function() {
         gridItems.remove(position);
       }
     } else {
-      section.plot(position[1], position[0], item.color);
+      var texture = undefined;
+      if (item.item_id in pixels.itemTextures) {
+        texture = item.item_id;
+      }
+      section.plot(position[1], position[0], item.color, texture);
     }
   }
 
