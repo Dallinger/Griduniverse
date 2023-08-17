@@ -115,7 +115,4 @@ class TestInstructions(object):
     def test_instructions(self, gridworld):
         # Just test something basic
         html = gridworld.instructions()
-        assert (
-            f"🫐 Gooseberry (3 points)"
-            in html
-        )
+        assert f"🫐 Gooseberry (3 points)" in html
