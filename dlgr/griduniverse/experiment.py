@@ -594,8 +594,7 @@ class Gridworld(object):
 
     def instructions(self):
         instructions_file_path = os.path.join(
-            os.path.dirname(__file__),
-            "templates/instructions/instruct-ready.html"
+            os.path.dirname(__file__), "templates/instructions/instruct-ready.html"
         )
         with open(instructions_file_path) as instructions_file:
             instructions_html = instructions_file.read()
