@@ -156,6 +156,24 @@ class TestHandleItemTransition(object):
         )
         assert list(mocked_exp.grid.item_locations.values())[0].name == "Sharp Stone"
 
+    def test_handle_item_transition_multiple_actors_distribute_calories(
+        self, mocked_exp, a, player
+    ):
+        mocked_exp.transition_config = TRANSITION_CONFIG
+        other_player = create_player(mocked_exp, a)
+        player.current_item = create_item(**mocked_exp.item_config["sharp_stone"])
+        stag = create_item(**mocked_exp.item_config["stag"])
+        mocked_exp.grid.item_locations[(2, 2)] = stag
+        player.position = [2, 2]
+        other_player.position = [2, 1]
+        mocked_exp.handle_item_transition(
+            msg={"player_id": player.id, "position": (2, 2)}
+        )
+        assert list(mocked_exp.grid.item_locations.values())[0].name == "Fallen Stag"
+        # The 25 total calories should be diveded evenly, but the initiator gets the reminder if any
+        assert player.score == 13
+        assert other_player.score == 12
+
 
 class TestHandleItemConsume(object):
     messages = []
@@ -306,5 +324,16 @@ TRANSITION_CONFIG = {
         "target_end": "big_hard_rock",
         "target_start": "big_hard_rock",
         "visible": "always",
+    },
+    ("sharp_stone", "stag"): {
+        "actor_end": "sharp_stone",
+        "actor_start": "sharp_stone",
+        "last_use": False,
+        "modify_uses": [0, -1],
+        "required_actors": 2,
+        "target_end": "fallen_stag",
+        "target_start": "stag",
+        "visible": "always",
+        "calories": 25,
     },
 }

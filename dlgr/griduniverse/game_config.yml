@@ -293,7 +293,6 @@ items:
     n_uses: 1
     sprite: "emoji:🦌"
     spawn_rate: 0.05
-    calories: 10
     item_count: 5
     portable: false
     crossable: true
@@ -350,6 +349,7 @@ transitions:
     target_end: empty_gooseberry_bush
     target_start: gooseberry_bush
 
+  # At least two players can use a sharp stone to consume a stag
   - actor_start: sharp_stone
     actor_end: sharp_stone
     required_actors: 2
@@ -357,6 +357,7 @@ transitions:
     target_end: fallen_stag
     visible: always
     last_use: false
+    calories: 20
     modify_uses:
       - 0
       - -1
