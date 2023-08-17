@@ -176,39 +176,6 @@ transition_defaults:
   modify_uses: [0, 0]
 
 items:
-  # Legacy GU Food item
-  - item_id: food
-    calories: 5
-    crossable: true
-    interactive: false
-    maturation_speed: 0.1
-    maturation_threshold: 0.5
-    n_uses: 1
-    name: Food
-    plantable: false
-    planting_cost: 1
-    portable: true
-    respawn: true
-    item_count: 8
-    limit_quantity: true
-    sprite: "color:#8a9b0f,#7a6b54"
-
-  - item_id: food2
-    calories: 3
-    crossable: true
-    interactive: false
-    item_count: 50
-    maturation_speed: 0.2
-    maturation_threshold: 0.5
-    n_uses: 1
-    name: Food2
-    plantable: false
-    planting_cost: 1
-    portable: true
-    respawn: true
-    limit_quantity: true
-    sprite: "image:sprites/food.png"
-
   # One Hour, One Life items
   - crossable: true
     interactive: true
