@@ -115,7 +115,20 @@ Once the image is built, you can try it out on the browser with this command:
 
     $ dallinger docker debug
 
-To deploy it using `MTurk` use the following command:
+To deploy it to a server under your control, it's necessary to provision a server first. The server needs to be set up according to **Dallinger's** specifications. In particular:
 
-    $ dallinger docker deploy
+ -  Ports 80 and 443 should be free (**Dallinger** will install a web server and take care of getting SSL certificates for you).
+ -  `ssh` should be configured to enable passwordless login.
+ -  The user on the server needs passwordless `sudo`.
 
+Once the server is ready, the next step is to tell **Dallinger** about it. Assume the variable `$SERVER_USER` holds the user configured for `ssh` access to the server, and `$SERVER_HOSTNAME_OR_IP` holds the address of this server. To add it to the list of **Dallinger** servers, run this command: 
+
+    $ dallinger  docker-ssh  servers  add  --user  $SERVER_USER  --host  $SERVER_HOSTNAME_OR_IP
+
+Now that the server is added, you can deploy the experiment:
+
+    $ dallinger docker-ssh deploy --app-name griduniverse-test-app
+
+After the command finishes deploying the experiment, you will see the URL to connect to it as the final line of the command output. Use that URL to access the experiment and the dashboard.
+
+For more information about deploying using `docker`, consult the [**Dallinger** official documentation](https://dallinger.readthedocs.io/en/latest/docker_support.html#deploying-an-experiment-on-a-server).
