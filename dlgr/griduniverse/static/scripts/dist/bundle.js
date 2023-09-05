@@ -21938,8 +21938,9 @@ pixels.frame(function() {
 
   for (const [position, item] of gridItems.entries()) {
     if (players.isPlayerAt(position)) {
-      if (!item.interactive) {
+      if (!item.interactive && item.calories) {
         // Non-interactive items get consumed immediately
+        // IF they have non-zero caloric value.
         gridItems.remove(position);
       }
     } else {
@@ -22372,7 +22373,7 @@ function renderTransition(transition) {
   if (transitionVisibility == "never") {
     return `${aStartItemString} + ${tStartItemString}`
   }
-  
+
   if (transitionVisibility == "seen" && !transitionsUsed.has(transition.id)) {
     var aEndItemString = "✋❓";
     var tEndItemString = "❓";
