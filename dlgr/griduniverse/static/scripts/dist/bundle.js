@@ -21687,19 +21687,16 @@ var playerSet = (function () {
       /* Return a list of players adjacent to the ego player */
       adjacentPlayers = [];
       let egoPostiion = this._players[ego].position;
-      for (id in this._players) {
+      for (const [id, player] of this._players.entries()) {
         if (id === ego) {
           continue;
         }
-        if (this._players.hasOwnProperty(id)) {
-          let player = this._players[id];
-          if (player.hasOwnProperty('position')) {
-            let position = player.position;
-            let distanceX = Math.abs(position[0] - egoPostiion[0]);
-            let distanceY = Math.abs(position[1] - egoPostiion[1])
-            if (distanceX <= 1 && distanceY <= 1) {
-              adjacentPlayers.push(player);
-            }
+        if (player.hasOwnProperty('position')) {
+          let position = player.position;
+          let distanceX = Math.abs(position[0] - egoPostiion[0]);
+          let distanceY = Math.abs(position[1] - egoPostiion[1])
+          if (distanceX <= 1 && distanceY <= 1) {
+            adjacentPlayers.push(player);
           }
         }
       }
@@ -22384,9 +22381,9 @@ function renderTransition(transition) {
   var actors_info = "";
   const required_actors = transition.transition.required_actors
   // The total number of actors is the number of adjacent players plus one for ego (the current player)
-  const neighbouringActors = players.getAdjacentPlayers().length + 1;
-  if (neighbouringActors < required_actors) {
-    actors_info = ` - not available: ${required_actors - neighbouringActors} more players needed`;
+  const neighboringActors = players.getAdjacentPlayers().length + 1;
+  if (neighboringActors < required_actors) {
+    actors_info = ` - not available: ${required_actors - neighboringActors} more players needed`;
   }
   return `${aStartItemString} + ${tStartItemString} → ${aEndItemString} + ${tEndItemString}${actors_info}`;
 }
