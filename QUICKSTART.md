@@ -10,7 +10,7 @@ This is a guide to get up and running with **GridUniverse** quickly. The guide a
 
 The first step is to clone **GridUniverse** from the **Dallinger** `git` repository:
 
-    $ git clone git@github.com:Dallinger/Griduniverse.git
+    $ git clone https://github.com/Dallinger/Griduniverse.git
     $ cd Griduniverse
 
 For now, to work on the new One Hour One Life version, you need to specifically set the working `branch to one-hour-one-life`:
