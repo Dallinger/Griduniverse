@@ -13,6 +13,10 @@ The first step is to clone **GridUniverse** from the **Dallinger** `git` reposit
     $ git clone git@github.com:Dallinger/Griduniverse.git
     $ cd Griduniverse
 
+For now, to work on the new One Hour One Life version, you need to specifically set the working `branch to one-hour-one-life`:
+
+    $ git checkout one-hour-one-life
+
 ### Create virtual Python environment
 It is recommended to install all requirements into a Python virtual environment, so that your installation is self-contained and does not affect your system Python installation. To create one inside the **Griduniverse** directory, type the following:
 
@@ -44,8 +48,9 @@ To stop the services, use the following command:
 
 ### Running the experiment
 
-When the services are up, You can run **GridUniverse** using its default configuration with the following command:
+When the services are up, You can run **GridUniverse** using its default configuration with the following commands (it is important to change the directory for running the command, or dallinger will not find the experiment):
 
+    $ cd dlgr/griduniverse
     $ dallinger develop debug
 
 This will spawn initial game items according to the default game configuration (see below) and open the developer dashboard in a new browser window. Do not stop this process or the experiment will be interrupted.
