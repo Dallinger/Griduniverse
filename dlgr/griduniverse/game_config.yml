@@ -302,7 +302,7 @@ items:
     item_id: fallen_stag
     n_uses: 1
     sprite: "emoji:👜"
-    interactive: false
+    interactive: true
     spawn_rate: 0
     item_count: 0
     portable: false
