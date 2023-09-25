@@ -12,6 +12,7 @@ window_rows = 20
 window_columns = 20
 use_identicons = true
 show_chatroom = true
+recruiter = hotair
 
 [HIT Configuration]
 title = Griduniverse
@@ -38,3 +39,6 @@ num_dynos_worker = 1
 host = 0.0.0.0
 clock_on = false
 logfile = -
+
+[docker]
+docker_image_base_name = ghcr.io/dallinger/griduniverse

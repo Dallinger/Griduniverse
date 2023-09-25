@@ -81,7 +81,7 @@ class TestHandleItemTransition(object):
         assert player.current_item.name == "Sharp Stone"
         assert len(mocked_exp.grid.items_consumed) == 1
         assert len(mocked_exp.grid.item_locations) == 1
-        list(mocked_exp.grid.item_locations.values())[0].name == "Big Hard Rock"
+        assert list(mocked_exp.grid.item_locations.values())[0].name == "Big Hard Rock"
 
     def test_handle_item_transition_reduces_items_remaining(self, mocked_exp, player):
         gooseberry_bush = create_item(**mocked_exp.item_config["gooseberry_bush"])
@@ -98,7 +98,9 @@ class TestHandleItemTransition(object):
         assert gooseberry_bush.remaining_uses == 5
         assert len(mocked_exp.grid.items_consumed) == 0
         assert len(mocked_exp.grid.item_locations) == 1
-        list(mocked_exp.grid.item_locations.values())[0].name == "Gooseberry Bush"
+        assert (
+            list(mocked_exp.grid.item_locations.values())[0].name == "Gooseberry Bush"
+        )
 
     def test_handle_last_item_transition(self, mocked_exp, player):
         gooseberry_bush = create_item(**mocked_exp.item_config["gooseberry_bush"])
@@ -117,7 +119,60 @@ class TestHandleItemTransition(object):
         # The bush is gone and replaced with an empty one
         assert len(mocked_exp.grid.items_consumed) == 1
         assert len(mocked_exp.grid.item_locations) == 1
-        list(mocked_exp.grid.item_locations.values())[0].name == "Empty Gooseberry Bush"
+        assert (
+            list(mocked_exp.grid.item_locations.values())[0].name
+            == "Empty Gooseberry Bush"
+        )
+
+    def test_handle_item_transition_multiple_actors_error(self, mocked_exp, player):
+        stone = create_item(**mocked_exp.item_config["stone"])
+        mocked_exp.grid.item_locations[(2, 2)] = stone
+        mocked_exp.grid.players[player.id].position = [2, 2]
+        mocked_exp.transition_config = TRANSITION_CONFIG
+
+        mocked_exp.handle_item_transition(
+            msg={"player_id": player.id, "position": (2, 2)}
+        )
+        # Only one player was present. The transition did not happen, since it requires 2
+        assert list(mocked_exp.grid.item_locations.values())[0].name == "Stone"
+
+    def test_handle_item_transition_multiple_actors_success(
+        self, mocked_exp, a, player
+    ):
+        mocked_exp.transition_config = TRANSITION_CONFIG
+        other_player = create_player(mocked_exp, a)
+        stone = create_item(**mocked_exp.item_config["stone"])
+        mocked_exp.grid.item_locations[(2, 2)] = stone
+        player.position = [2, 2]
+        mocked_exp.handle_item_transition(
+            msg={"player_id": player.id, "position": (2, 2)}
+        )
+        # The second player was not close enough. The transition did not happen
+        assert list(mocked_exp.grid.item_locations.values())[0].name == "Stone"
+
+        other_player.position = [2, 1]
+        mocked_exp.handle_item_transition(
+            msg={"player_id": player.id, "position": (2, 2)}
+        )
+        assert list(mocked_exp.grid.item_locations.values())[0].name == "Sharp Stone"
+
+    def test_handle_item_transition_multiple_actors_distribute_calories(
+        self, mocked_exp, a, player
+    ):
+        mocked_exp.transition_config = TRANSITION_CONFIG
+        other_player = create_player(mocked_exp, a)
+        player.current_item = create_item(**mocked_exp.item_config["sharp_stone"])
+        stag = create_item(**mocked_exp.item_config["stag"])
+        mocked_exp.grid.item_locations[(2, 2)] = stag
+        player.position = [2, 2]
+        other_player.position = [2, 1]
+        mocked_exp.handle_item_transition(
+            msg={"player_id": player.id, "position": (2, 2)}
+        )
+        assert list(mocked_exp.grid.item_locations.values())[0].name == "Fallen Stag"
+        # The 25 total calories should be diveded evenly, but the initiator gets the reminder if any
+        assert player.score == 13
+        assert other_player.score == 12
 
 
 class TestHandleItemConsume(object):
@@ -187,6 +242,10 @@ def item(exp):
 
 @pytest.fixture
 def player(exp, a):
+    return create_player(exp, a)
+
+
+def create_player(exp, a):
     from dlgr.griduniverse.experiment import Player
 
     participant = a.participant()
@@ -215,3 +274,66 @@ def create_item(**kwargs):
     }
     item_data.update(kwargs)
     return Item(item_data)
+
+
+# Configuration of transitions: tests need stable transitions,
+# so we use a fixed configuration here.
+TRANSITION_CONFIG = {
+    ("last", None, "gooseberry_bush"): {
+        "actor_end": "gooseberry",
+        "actor_start": None,
+        "last_use": True,
+        "modify_uses": [0, -1],
+        "target_end": "empty_gooseberry_bush",
+        "target_start": "gooseberry_bush",
+        "visible": "always",
+    },
+    ("sharp_stone", "wild_carrot_plant"): {
+        "actor_end": "sharp_stone",
+        "actor_start": "sharp_stone",
+        "last_use": False,
+        "modify_uses": [0, 0],
+        "target_end": "wild_carrot",
+        "target_start": "wild_carrot_plant",
+        "visible": "seen",
+    },
+    (None, "gooseberry_bush"): {
+        "actor_end": "gooseberry",
+        "actor_start": None,
+        "last_use": False,
+        "modify_uses": [0, -1],
+        "target_end": "gooseberry_bush",
+        "target_start": "gooseberry_bush",
+        "visible": "never",
+    },
+    (None, "stone"): {
+        "actor_end": None,
+        "actor_start": None,
+        "last_use": False,
+        "modify_uses": [0, 0],
+        "required_actors": 2,
+        "target_end": "sharp_stone",
+        "target_start": "stone",
+        "visible": "always",
+    },
+    ("stone", "big_hard_rock"): {
+        "actor_end": "sharp_stone",
+        "actor_start": "stone",
+        "last_use": False,
+        "modify_uses": [0, 0],
+        "target_end": "big_hard_rock",
+        "target_start": "big_hard_rock",
+        "visible": "always",
+    },
+    ("sharp_stone", "stag"): {
+        "actor_end": "sharp_stone",
+        "actor_start": "sharp_stone",
+        "last_use": False,
+        "modify_uses": [0, -1],
+        "required_actors": 2,
+        "target_end": "fallen_stag",
+        "target_start": "stag",
+        "visible": "always",
+        "calories": 25,
+    },
+}

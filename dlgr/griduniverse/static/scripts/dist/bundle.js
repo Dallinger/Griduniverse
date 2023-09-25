@@ -21683,6 +21683,26 @@ var playerSet = (function () {
       return distances[0].player;
     };
 
+    PlayerSet.prototype.getAdjacentPlayers = function () {
+      /* Return a list of players adjacent to the ego player */
+      adjacentPlayers = [];
+      let egoPostiion = this._players[ego].position;
+      for (const [id, player] of this._players.entries()) {
+        if (id === ego) {
+          continue;
+        }
+        if (player.hasOwnProperty('position')) {
+          let position = player.position;
+          let distanceX = Math.abs(position[0] - egoPostiion[0]);
+          let distanceY = Math.abs(position[1] - egoPostiion[1])
+          if (distanceX <= 1 && distanceY <= 1) {
+            adjacentPlayers.push(player);
+          }
+        }
+      }
+      return adjacentPlayers;
+    };
+
     PlayerSet.prototype.ego = function () {
       return this.get(this.ego_id);
     };
@@ -21915,8 +21935,9 @@ pixels.frame(function() {
 
   for (const [position, item] of gridItems.entries()) {
     if (players.isPlayerAt(position)) {
-      if (!item.interactive) {
+      if (!item.interactive && item.calories) {
         // Non-interactive items get consumed immediately
+        // IF they have non-zero caloric value.
         gridItems.remove(position);
       }
     } else {
@@ -22349,7 +22370,7 @@ function renderTransition(transition) {
   if (transitionVisibility == "never") {
     return `${aStartItemString} + ${tStartItemString}`
   }
-  
+
   if (transitionVisibility == "seen" && !transitionsUsed.has(transition.id)) {
     var aEndItemString = "✋❓";
     var tEndItemString = "❓";
@@ -22357,8 +22378,14 @@ function renderTransition(transition) {
     aEndItemString = `✋${aEndItem ? aEndItem.name: '⬜'}`;
     tEndItemString = tEndItem ? tEndItem.name: '⬜';
   }
-  return `${aStartItemString} + ${tStartItemString} → ${aEndItemString} + ${tEndItemString}`;
-
+  var actors_info = "";
+  const required_actors = transition.transition.required_actors
+  // The total number of actors is the number of adjacent players plus one for ego (the current player)
+  const neighboringActors = players.getAdjacentPlayers().length + 1;
+  if (neighboringActors < required_actors) {
+    actors_info = ` - not available: ${required_actors - neighboringActors} more players needed`;
+  }
+  return `${aStartItemString} + ${tStartItemString} → ${aEndItemString} + ${tEndItemString}${actors_info}`;
 }
 /**
  * If the current player is sharing a grid position with an interactive

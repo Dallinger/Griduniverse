@@ -1705,7 +1705,11 @@ class Griduniverse(Experiment):
         if transition is None:
             transition = self.transition_config.get(transition_key)
 
-        if transition is None:
+        required_actors = transition and transition.get("required_actors", 0)
+        neighbors = player.neighbors()
+        if (transition is None) or (
+            required_actors and len(neighbors) + 1 < required_actors
+        ):
             error_msg = {
                 "type": "action_error",
                 "player_id": player.id,
@@ -1755,6 +1759,15 @@ class Griduniverse(Experiment):
             )
             self.grid.item_locations[position] = new_target_item
             self.grid.items_updated = True
+
+        # Possibly distribute calories to participating players
+        transition_calories = transition.get("calories")
+        if transition_calories:
+            per_player = transition_calories // (len(neighbors) + 1)
+            for other_player in neighbors:
+                other_player.score += per_player
+            player.score += per_player
+            player.score += transition_calories % (len(neighbors) + 1)
 
     def handle_item_drop(self, msg):
         player = self.grid.players[msg["player_id"]]
