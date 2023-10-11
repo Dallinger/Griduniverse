@@ -125,8 +125,8 @@ class TestExperimentClass(object):
         item_config = exp.item_config
         assert isinstance(item_config, dict)
         # We define a Food item, and pull the null public good multiplier from the default
-        assert item_config["food"]["name"] == "Food"
-        assert item_config["food"]["public_good_multiplier"] == 0.0
+        assert item_config["stone"]["name"] == "Stone"
+        assert item_config["stone"]["public_good_multiplier"] == 0.0
 
     def test_new_experiment_has_transition_config_with_defaults(self, exp):
         transition_config = exp.transition_config

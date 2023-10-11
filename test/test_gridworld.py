@@ -115,7 +115,4 @@ class TestInstructions(object):
     def test_instructions(self, gridworld):
         # Just test something basic
         html = gridworld.instructions()
-        assert (
-            f"game duration is <strong>{gridworld.time_per_round}</strong> seconds"
-            in html
-        )
+        assert "🫐 Gooseberry (3 points)" in html
