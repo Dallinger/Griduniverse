@@ -23,6 +23,13 @@ class TestItemSpawning(object):
         assert gridworld.items_updated is True
         assert len(gridworld.item_locations.keys()) == 1
 
+    def test_replenish_items_boosts_item_count_to_target(self, gridworld):
+        target = sum(item.get("item_count") for item in gridworld.item_config.values())
+
+        gridworld.replenish_items()
+
+        target == len(gridworld.item_locations)
+
 
 @pytest.mark.usefixtures("env")
 class TestSerialize(object):
@@ -30,8 +37,14 @@ class TestSerialize(object):
         player = mock.Mock()
         player.serialize.return_value = "Serialized Player"
         gridworld.players = {1: player}
+
         values = gridworld.serialize()
+
         assert values["players"] == ["Serialized Player"]
+
+    def test_serializes_game_state(self, gridworld):
+        values = gridworld.serialize()
+
         assert values["round"] == 0
         assert values["donation_active"] == gridworld.donation_active
         assert values["rows"] == gridworld.rows
@@ -57,6 +70,34 @@ class TestSerialize(object):
         values = gridworld.serialize(include_walls=False, include_items=False)
         assert values.get("walls") is None
         assert values.get("food") is None
+
+
+class TestDeserialize(object):
+    def test_round_trip(self, gridworld):
+        # Walls ("classic")
+        gridworld.walls_density = 0.0001
+        gridworld.build_labyrinth()
+        # Items
+        gridworld.replenish_items()
+        # Players
+        gridworld.spawn_player(1)
+        gridworld.spawn_player(2)
+
+        # Save state, so we can verify that we restore all the same values
+        saved = gridworld.serialize()
+
+        # Clear everything, so we can verify it's restored via
+        # deserialization:
+        gridworld.wall_locations.clear()
+        gridworld.item_locations.clear()
+        gridworld.players.clear()
+        gridworld.round = None
+
+        gridworld.deserialize(saved)
+
+        refetched = gridworld.serialize()
+
+        assert saved == refetched
 
 
 @pytest.mark.usefixtures("env")
