@@ -837,6 +837,28 @@ class Gridworld(object):
                 return True
         return False
 
+    def trigger_transitions(self):
+        now = time.time()
+        to_change = []
+        for position, item in self.item_locations.items():
+            item_type = self.item_config.get(item.item_id)
+            if not item_type:
+                continue
+            if "auto_transition_time" in item_type:
+                if now - item.creation_timestamp >= item_type["auto_transition_time"]:
+                    new_target_item = Item(
+                        id=item.id,
+                        position=position,
+                        item_config=self.item_config[
+                            item_type["auto_transition_target"]
+                        ],
+                    )
+                    to_change.append((position, new_target_item))
+        if to_change:
+            self.items_updated = True
+        for position, new_target_item in to_change:
+            self.item_locations[position] = new_target_item
+
     def replenish_items(self):
         items_by_type = collections.defaultdict(list)
         for item in self.item_locations.values():
@@ -1902,6 +1924,8 @@ class Griduniverse(Experiment):
             if (now - previous_second_timestamp) > 1.000:
                 # Grow or shrink the item stores.
                 self.grid.replenish_items()
+                # Trigger automatic transitions.
+                self.grid.trigger_transitions()
 
                 abundances = {}
                 for player in self.grid.players.values():

@@ -308,6 +308,52 @@ items:
     portable: false
     crossable: true
 
+  - name: Sunflower sprout
+    item_id: sunflower_sprout
+    n_uses: 1
+    sprite: "emoji:🌱"
+    interactive: true
+    spawn_rate: 0.9
+    item_count: 90
+    portable: false
+    crossable: true
+    auto_transition_time: 5
+    auto_transition_target: sunflower_bud
+
+  - name: Sunflower bud
+    item_id: sunflower_bud
+    n_uses: 1
+    sprite: "emoji:🌼"
+    interactive: true
+    spawn_rate: 0
+    item_count: 0
+    portable: false
+    crossable: true
+    auto_transition_time: 5
+    auto_transition_target: sunflower_bloom
+
+  - name: Sunflower bloom
+    item_id: sunflower_bloom
+    n_uses: 1
+    sprite: "emoji:🌻"
+    interactive: true
+    spawn_rate: 0
+    item_count: 0
+    portable: false
+    crossable: true
+    auto_transition_time: 5
+    auto_transition_target: sunflower_dried
+
+  - name: Sunflower dried
+    item_id: sunflower_dried
+    n_uses: 1
+    sprite: "emoji:🥀"
+    interactive: true
+    spawn_rate: 0
+    item_count: 0
+    portable: false
+    crossable: true
+
 transitions:
   - actor_start: stone
     actor_end: sharp_stone
