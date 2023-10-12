@@ -85,9 +85,14 @@ def stub_config():
     }
     from dallinger.config import Configuration, default_keys
 
+    from dlgr.griduniverse.experiment import GU_PARAMS
+
     config = Configuration()
     for key in default_keys:
         config.register(*key)
+    for key in GU_PARAMS.items():
+        config.register(*key)
+
     config.extend(defaults.copy())
     # Patch load() so we don't update any key/value pairs from actual files:
     # (Note: this is blindly cargo-culted in from dallinger's equivalent fixture.

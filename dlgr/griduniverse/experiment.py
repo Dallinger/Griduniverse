@@ -203,7 +203,6 @@ class Gridworld(object):
         self.visibility_ramp_time = kwargs.get("visibility_ramp_time", 4)
         self.background_animation = kwargs.get("background_animation", True)
         self.player_overlap = kwargs.get("player_overlap", False)
-        self.map_csv = kwargs.get("map_csv", None)
 
         # Motion
         self.motion_speed_limit = kwargs.get("motion_speed_limit", 8)
@@ -510,19 +509,18 @@ class Gridworld(object):
             player.payoff *= inter_proportions[player.color_idx]
             player.payoff *= self.dollars_per_point
 
-    def load_map(self):
-        with open(self.map_csv) as csv_file:
+    def load_map(self, csv_file_path):
+        with open(csv_file_path) as csv_file:
             grid_state = self.csv_to_grid_state(csv_file)
         self.deserialize(grid_state)
 
     def csv_to_grid_state(self, csv_file):
+        from .csv_gridworlds import matrix2gridworld  # avoid circular import
+
         grid_state = {}
         reader = csv.reader(csv_file)
-        for i, row in enumerate(reader):
-            for j, col in enumerate(row):
-                # location = (i, j)
-                # Process each col value
-                continue
+        grid_matrix = list(reader)
+        grid_state = matrix2gridworld(grid_matrix)
         return grid_state
 
     def build_labyrinth(self):
@@ -579,7 +577,7 @@ class Gridworld(object):
                     self.columns,
                 )
             )
-        self.round = state["round"]
+        self.round = state.get("round", 0)
         # @@@ can't set donation_active because it's a property
         # self.donation_active = state['donation_active']
 
@@ -875,7 +873,7 @@ class Item:
     """
 
     item_config: dict
-    id: int = field(default_factory=lambda: uuid.uuid4())
+    id: int = field(default_factory=lambda: uuid.uuid4().int)
     creation_timestamp: float = field(default_factory=time.time)
     position: tuple = (0, 0)
     remaining_uses: int = field(default=None)
@@ -1740,8 +1738,9 @@ class Griduniverse(Experiment):
     def game_loop(self):
         """Update the world state."""
         gevent.sleep(0.1)
-        if self.config.get("map_csv", None):
-            self.grid.load_map()
+        map_csv_path = self.config.get("map_csv", None)
+        if map_csv_path is not None:
+            self.grid.load_map(map_csv_path)
         elif not self.config.get("replay", False):
             self.grid.build_labyrinth()
             logger.info("Spawning items")
