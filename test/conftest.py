@@ -89,6 +89,10 @@ def stub_config():
     for key in default_keys:
         config.register(*key)
     config.extend(defaults.copy())
+    # Patch load() so we don't update any key/value pairs from actual files:
+    # (Note: this is blindly cargo-culted in from dallinger's equivalent fixture.
+    # Not certain it's necessary here.)
+    config.load = mock.Mock(side_effect=lambda: setattr(config, "ready", True))
     config.ready = True
 
     return config
@@ -99,12 +103,12 @@ def active_config(stub_config):
     """Loads the standard config as the active configuration returned by
     dallinger.config.get_config() and returns it.
     """
-    from dallinger.config import get_config
+    from dallinger import config as c
 
-    config = get_config()
-    config.data = stub_config.data
-    config.ready = True
-    return config
+    orig_config = c.config
+    c.config = stub_config
+    yield c.config
+    c.config = orig_config
 
 
 @pytest.fixture

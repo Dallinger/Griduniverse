@@ -567,12 +567,14 @@ class Gridworld(object):
 
         self.players = {}
         for player_state in state["players"]:
-            player_state["color_name"] = player_state.pop("color", None)
+            # Avoid mutating the caller's data
+            new_state = player_state.copy()
+            new_state["color_name"] = new_state.pop("color", None)
             player = Player(
                 pseudonym_locale=self.pseudonyms_locale,
                 pseudonym_gender=self.pseudonyms_gender,
                 grid=self,
-                **player_state,
+                **new_state,
             )
             self.players[player.id] = player
 
@@ -587,9 +589,12 @@ class Gridworld(object):
         if "items" in state:
             self.item_locations = {}
             for item_state in state["items"]:
-                # TODO verify this works at some point!
                 item_props = self.item_config[item_state["item_id"]]
-                obj = Item(item_config=item_props, **item_state)
+                invalid_params = ["item_id", "maturity"]
+                item_params = {
+                    k: v for k, v in item_state.items() if k not in invalid_params
+                }
+                obj = Item(item_props, **item_params)
                 self.item_locations[tuple(obj.position)] = obj
 
     def instructions(self):
