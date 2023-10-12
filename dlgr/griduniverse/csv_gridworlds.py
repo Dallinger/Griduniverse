@@ -43,7 +43,9 @@ def matrix2gridworld(matrix):
                     except IndexError:
                         max_color = len(color_names)
                         raise ValueError(
-                            f"Invalid player color specified in {cell}. Max color is {max_color}"
+                            f'Invalid player color specified in "{cell}" at postion {position}. '
+                            f"Max color value is {max_color}, "
+                            f"but you specified {player_color_index + 1}."
                         )
 
                 result["players"].append(player_data)
@@ -51,6 +53,7 @@ def matrix2gridworld(matrix):
                 # assume an Item
                 id_and_maybe_uses = [s.strip() for s in cell.split("|")]
                 item_data = {
+                    "id": len(result["items"]) + 1,
                     "item_id": id_and_maybe_uses[0],
                     "position": position,
                 }

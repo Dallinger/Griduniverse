@@ -171,7 +171,7 @@ class TestMatrix2SerializedGridworld(object):
 
         return matrix2gridworld
 
-    def test_transformation_one_row(self):
+    def test_one_row(self):
         csv = [["w", "stone", "", "gooseberry_bush|3", "p1c2"]]
 
         result = self.subject(csv)
@@ -181,10 +181,12 @@ class TestMatrix2SerializedGridworld(object):
             "rows": 1,
             "items": [
                 {
+                    "id": 1,
                     "item_id": "stone",
                     "position": [1, 0],
                 },
                 {
+                    "id": 2,
                     "item_id": "gooseberry_bush",
                     "position": [3, 0],
                     "remaining_uses": 3,
@@ -202,7 +204,7 @@ class TestMatrix2SerializedGridworld(object):
             ],
         }
 
-    def test_transformation_multirow(self):
+    def test_multirow(self):
         csv = [
             ["w", "stone", "", "gooseberry_bush|3", "p1c1"],
             ["", "w", "", "", ""],
@@ -223,20 +225,24 @@ class TestMatrix2SerializedGridworld(object):
             "rows": 10,
             "items": [
                 {
+                    "id": 1,
                     "item_id": "stone",
                     "position": [1, 0],
                 },
                 {
+                    "id": 2,
                     "item_id": "gooseberry_bush",
                     "position": [3, 0],
                     "remaining_uses": 3,
                 },
                 {
+                    "id": 3,
                     "item_id": "gooseberry_bush",
                     "position": [0, 6],
                     "remaining_uses": 4,
                 },
                 {
+                    "id": 4,
                     "item_id": "big_hard_rock",
                     "position": [1, 7],
                 },
@@ -278,14 +284,14 @@ class TestMatrix2SerializedGridworld(object):
             ],
         }
 
-    def test_transformation_empty_matrix(self):
+    def test_supports_empty_matrix(self):
         csv = []
 
         result = self.subject(csv)
 
         assert result == {"rows": 0, "columns": 0}
 
-    def test_transformation_not_confused_by_whitepace(self):
+    def test_not_confused_by_whitepace(self):
         csv = [["w ", "  stone", "  ", " gooseberry_bush | 3 ", " p1c2"]]
 
         result = self.subject(csv)
@@ -295,10 +301,12 @@ class TestMatrix2SerializedGridworld(object):
             "rows": 1,
             "items": [
                 {
+                    "id": 1,
                     "item_id": "stone",
                     "position": [1, 0],
                 },
                 {
+                    "id": 2,
                     "item_id": "gooseberry_bush",
                     "position": [3, 0],
                     "remaining_uses": 3,
@@ -316,10 +324,25 @@ class TestMatrix2SerializedGridworld(object):
             ],
         }
 
-    def test_transformation_explains_invalid_player_colors(self):
+    def test_explains_invalid_player_colors(self):
         csv = [["p1c999"]]
 
         with pytest.raises(ValueError) as exc_info:
             self.subject(csv)
 
         assert exc_info.match("Invalid player color")
+
+    def test_preserves_empty_edge_rows_and_columns(self):
+        csv = [
+            ["", "", "", "", ""],
+            ["", "", "stone", "", ""],
+            ["", "", "", "", ""],
+        ]
+
+        result = self.subject(csv)
+
+        assert result == {
+            "columns": 5,
+            "items": [{"id": 1, "item_id": "stone", "position": [2, 1]}],
+            "rows": 3,
+        }
