@@ -321,6 +321,16 @@ items:
     portable: false
     crossable: true
 
+  - name: Teleport pad
+    item_id: teleport
+    n_uses: 1
+    sprite: "emoji:🌀"
+    interactive: true
+    spawn_rate: 0
+    item_count: 0
+    portable: false
+    crossable: true
+
 transitions:
   - actor_start: stone
     actor_end: sharp_stone

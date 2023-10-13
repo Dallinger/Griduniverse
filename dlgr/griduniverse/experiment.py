@@ -522,6 +522,35 @@ class Gridworld(object):
             )
             self.wall_locations = {tuple(w.position): w for w in walls}
 
+        # Place teleport stations on every fifth row, at columns 5 and 10
+
+        if "teleport" in self.item_config:
+            item_props = self.item_config["teleport"]
+            for col in range(0, self.columns, 5):
+                base = dict(
+                    {
+                        "name": "Teleport pad",
+                        "item_id": "teleport",
+                        "n_uses": 0,
+                        "maturity": 0,
+                    },
+                    **item_props,
+                )
+
+                def new_id():
+                    return len(self.item_locations) + len(self.items_consumed)
+
+                self.item_locations[(col, 5)] = Item(
+                    id=new_id(),
+                    position=(col, 5),
+                    item_config=dict(base, teleport_target=(col, 10)),
+                )
+                self.item_locations[(col, 10)] = Item(
+                    id=new_id(),
+                    position=(col, 10),
+                    item_config=dict(base, teleport_target=(col, 5)),
+                )
+
     def _start_if_ready(self):
         # Don't start unless we have a least one player
         if self.players and not self.game_started:
