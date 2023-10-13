@@ -344,6 +344,16 @@ class TestPlayerConnects(object):
         exp.handle_connect({"player_id": participant.id})
         assert participant.id in exp.grid.players
 
+    def test_handle_connect_uses_existing_player_on_grid(self, exp, a):
+        participant = a.participant()
+        exp.grid.players[participant.id] = Player(
+            id=participant.id, color=[0.50, 0.86, 1.00], location=[10, 10]
+        )
+        exp.handle_connect({"player_id": participant.id})
+        assert participant.id in exp.node_by_player_id
+        assert len(exp.grid.players) == 1
+        assert len(exp.node_by_player_id) == 1
+
     def test_handle_connect_is_noop_for_spectators(self, exp):
         exp.handle_connect({"player_id": "spectator"})
         assert exp.node_by_player_id == {}
