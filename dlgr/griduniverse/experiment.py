@@ -517,10 +517,8 @@ class Gridworld(object):
     def csv_to_grid_state(self, csv_file):
         from .csv_gridworlds import matrix2gridworld  # avoid circular import
 
-        grid_state = {}
         reader = csv.reader(csv_file)
-        grid_matrix = list(reader)
-        grid_state = matrix2gridworld(grid_matrix)
+        grid_state = matrix2gridworld(list(reader))
         return grid_state
 
     def build_labyrinth(self):
