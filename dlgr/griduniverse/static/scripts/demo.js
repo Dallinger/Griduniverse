@@ -184,6 +184,7 @@ var Player = function (settings, dimness) {
   this.identity_visible = settings.identity_visible;
   this.dimness = dimness;
   this.replaceItem(settings.current_item || null);
+  this.just_consumed = settings.just_consumed;
   return this;
 };
 
@@ -603,6 +604,7 @@ var players = playerSet({'ego_id': undefined});
 
 pixels.canvas.style.marginLeft = window.innerWidth * 0.03 / 2 + "px";
 pixels.canvas.style.marginTop = window.innerHeight * 0.04 / 2 + "px";
+pixels.canvas.style.border = "5px solid #000000"
 document.body.style.transition = "0.3s all";
 document.body.style.background = "#ffffff";
 
@@ -623,6 +625,16 @@ pixels.frame(function() {
     background[coordsToIdx(x, y, settings.columns)] = newColor;
     return newColor;
   });
+
+  // Did someone just consume something?
+    players.each(function (i, player) {
+      if (player.just_consumed) {
+        pixels.canvas.style.border = "5px solid " + player.color;
+        setTimeout(() => {
+          pixels.canvas.style.border = "5px solid #000000"
+        }, 1000);
+      }
+    });
 
   for (const [position, item] of gridItems.entries()) {
     if (players.isPlayerAt(position)) {
