@@ -21,7 +21,8 @@ def matrix2gridworld(matrix):
 
     for row_num, row in enumerate(matrix):
         for col_num, cell in enumerate(row):
-            position = [col_num, row_num]
+            # NB: we use [y, x] format in GU!! (╯°□°)╯︵ ┻━┻
+            position = [row_num, col_num]
             cell = cell.strip()
             player_match = player_regex.match(cell)
             if not cell:
@@ -31,7 +32,7 @@ def matrix2gridworld(matrix):
                 result["walls"].append(position)
             elif player_match:
                 id_str, color_str = player_match.groups()
-                player_id = int(id_str.replace("p", ""))
+                player_id = id_str.replace("p", "")
                 player_data = {
                     "id": player_id,
                     "position": position,

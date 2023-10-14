@@ -178,31 +178,34 @@ class TestMatrix2SerializedGridworld(object):
 
         assert result == {
             "columns": 5,
-            "rows": 1,
             "items": [
-                {
-                    "id": 1,
-                    "item_id": "stone",
-                    "position": [1, 0],
-                },
+                {"id": 1, "item_id": "stone", "position": [0, 1]},
                 {
                     "id": 2,
                     "item_id": "gooseberry_bush",
-                    "position": [3, 0],
+                    "position": [0, 3],
                     "remaining_uses": 3,
                 },
             ],
-            "walls": [
-                [0, 0],
-            ],
-            "players": [
-                {
-                    "color": "YELLOW",
-                    "position": [4, 0],
-                    "id": 1,
-                }
-            ],
+            "players": [{"color": "YELLOW", "id": "1", "position": [0, 4]}],
+            "rows": 1,
+            "walls": [[0, 0]],
         }
+
+    def test_to_demonstrate_orientation(self):
+        csv = [
+            ["top-left", "top-right"],
+            ["bottom-left", "bottom-right"],
+        ]
+
+        result = self.subject(csv)
+
+        assert result["items"] == [
+            {"id": 1, "item_id": "top-left", "position": [0, 0]},
+            {"id": 2, "item_id": "top-right", "position": [0, 1]},
+            {"id": 3, "item_id": "bottom-left", "position": [1, 0]},
+            {"id": 4, "item_id": "bottom-right", "position": [1, 1]},
+        ]
 
     def test_multirow(self):
         csv = [
@@ -222,66 +225,31 @@ class TestMatrix2SerializedGridworld(object):
 
         assert result == {
             "columns": 5,
-            "rows": 10,
             "items": [
-                {
-                    "id": 1,
-                    "item_id": "stone",
-                    "position": [1, 0],
-                },
+                {"id": 1, "item_id": "stone", "position": [0, 1]},
                 {
                     "id": 2,
                     "item_id": "gooseberry_bush",
-                    "position": [3, 0],
+                    "position": [0, 3],
                     "remaining_uses": 3,
                 },
                 {
                     "id": 3,
                     "item_id": "gooseberry_bush",
-                    "position": [0, 6],
+                    "position": [6, 0],
                     "remaining_uses": 4,
                 },
-                {
-                    "id": 4,
-                    "item_id": "big_hard_rock",
-                    "position": [1, 7],
-                },
-            ],
-            "walls": [
-                [0, 0],
-                [1, 1],
-                [2, 2],
-                [3, 3],
-                [4, 4],
-                [4, 5],
+                {"id": 4, "item_id": "big_hard_rock", "position": [7, 1]},
             ],
             "players": [
-                {
-                    "color": "BLUE",
-                    "position": [4, 0],
-                    "id": 1,
-                },
-                {
-                    "color": "BLUE",
-                    "position": [1, 2],
-                    "id": 2,
-                },
-                {
-                    "color": "YELLOW",
-                    "position": [3, 4],
-                    "id": 3,
-                },
-                {
-                    "color": "YELLOW",
-                    "position": [1, 8],
-                    "id": 4,
-                },
-                {
-                    "color": "ORANGE",
-                    "position": [2, 9],
-                    "id": 5,
-                },
+                {"color": "BLUE", "id": "1", "position": [0, 4]},
+                {"color": "BLUE", "id": "2", "position": [2, 1]},
+                {"color": "YELLOW", "id": "3", "position": [4, 3]},
+                {"color": "YELLOW", "id": "4", "position": [8, 1]},
+                {"color": "ORANGE", "id": "5", "position": [9, 2]},
             ],
+            "rows": 10,
+            "walls": [[0, 0], [1, 1], [2, 2], [3, 3], [4, 4], [5, 4]],
         }
 
     def test_supports_empty_matrix(self):
@@ -298,30 +266,18 @@ class TestMatrix2SerializedGridworld(object):
 
         assert result == {
             "columns": 5,
-            "rows": 1,
             "items": [
-                {
-                    "id": 1,
-                    "item_id": "stone",
-                    "position": [1, 0],
-                },
+                {"id": 1, "item_id": "stone", "position": [0, 1]},
                 {
                     "id": 2,
                     "item_id": "gooseberry_bush",
-                    "position": [3, 0],
+                    "position": [0, 3],
                     "remaining_uses": 3,
                 },
             ],
-            "walls": [
-                [0, 0],
-            ],
-            "players": [
-                {
-                    "color": "YELLOW",
-                    "position": [4, 0],
-                    "id": 1,
-                }
-            ],
+            "players": [{"color": "YELLOW", "id": "1", "position": [0, 4]}],
+            "rows": 1,
+            "walls": [[0, 0]],
         }
 
     def test_explains_invalid_player_colors(self):
@@ -343,6 +299,6 @@ class TestMatrix2SerializedGridworld(object):
 
         assert result == {
             "columns": 5,
-            "items": [{"id": 1, "item_id": "stone", "position": [2, 1]}],
+            "items": [{"id": 1, "item_id": "stone", "position": [1, 2]}],
             "rows": 3,
         }
