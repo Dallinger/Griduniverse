@@ -257,21 +257,21 @@ class TestGameLoops(object):
                 {
                     "id": 1,
                     "item_id": "stone",
-                    "position": [1, 0],
+                    "position": [0, 1],
                     "remaining_uses": 1,
                 },
                 {
                     "id": 2,
                     "item_id": "gooseberry_bush",
-                    "position": [3, 0],
+                    "position": [0, 3],
                     "remaining_uses": 3,
                 },
             ],
             "players": [
                 {
                     "color": "YELLOW",
-                    "id": 1,
-                    "position": [4, 0],
+                    "id": "1",
+                    "position": [0, 4],
                 }
             ],
             "round": 0,
