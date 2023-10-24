@@ -603,6 +603,7 @@ var players = playerSet({'ego_id': undefined});
 
 pixels.canvas.style.marginLeft = window.innerWidth * 0.03 / 2 + "px";
 pixels.canvas.style.marginTop = window.innerHeight * 0.04 / 2 + "px";
+pixels.canvas.style.border = "5px solid #000000"
 document.body.style.transition = "0.3s all";
 document.body.style.background = "#ffffff";
 
@@ -985,6 +986,14 @@ function onMoveRejected(msg) {
   }
 }
 
+function onItemConsumed(msg) {
+  console.log("Item consumed by player " + msg.player_id + ": " + msg.player_item.id);
+  pixels.canvas.style.border = "5px solid " + msg.player_color;
+  setTimeout(() => {
+    pixels.canvas.style.border = "5px solid #000000"
+  }, 1500);
+}
+
 function onDonationProcessed(msg) {
     var recipient_id = msg.recipient_id,
       team_idx,
@@ -1316,7 +1325,8 @@ $(document).ready(function() {
           'new_round': displayLeaderboards,
           'stop': gameOverHandler(player_id),
           'wall_built': addWall,
-          'move_rejection': onMoveRejected
+          'move_rejection': onMoveRejected,
+          'item_consumed': onItemConsumed
         }
   };
   var socket = new GUSocket(socketSettings);
