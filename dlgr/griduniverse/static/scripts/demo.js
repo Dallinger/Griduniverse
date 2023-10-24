@@ -184,7 +184,6 @@ var Player = function (settings, dimness) {
   this.identity_visible = settings.identity_visible;
   this.dimness = dimness;
   this.replaceItem(settings.current_item || null);
-  this.just_consumed = settings.just_consumed;
   return this;
 };
 
@@ -626,16 +625,6 @@ pixels.frame(function() {
     return newColor;
   });
 
-  // Did someone just consume something?
-    players.each(function (i, player) {
-      if (player.just_consumed) {
-        pixels.canvas.style.border = "5px solid " + player.color;
-        setTimeout(() => {
-          pixels.canvas.style.border = "5px solid #000000"
-        }, 1000);
-      }
-    });
-
   for (const [position, item] of gridItems.entries()) {
     if (players.isPlayerAt(position)) {
       if (!item.interactive && item.calories) {
@@ -997,6 +986,14 @@ function onMoveRejected(msg) {
   }
 }
 
+function onItemConsumed(msg) {
+  console.log("Item consumed by player " + msg.player_id + ": " + msg.player_item.id);
+  pixels.canvas.style.border = "5px solid " + msg.player_color;
+  setTimeout(() => {
+    pixels.canvas.style.border = "5px solid #000000"
+  }, 1500);
+}
+
 function onDonationProcessed(msg) {
     var recipient_id = msg.recipient_id,
       team_idx,
@@ -1328,7 +1325,8 @@ $(document).ready(function() {
           'new_round': displayLeaderboards,
           'stop': gameOverHandler(player_id),
           'wall_built': addWall,
-          'move_rejection': onMoveRejected
+          'move_rejection': onMoveRejected,
+          'item_consumed': onItemConsumed
         }
   };
   var socket = new GUSocket(socketSettings);

@@ -921,7 +921,6 @@ class Player(object):
         self.recruiter_id = kwargs.get("recruiter_id", "")
         self.add_wall = None
         self.current_item = None
-        self.just_consumed = False
 
         # Determine the player's color. We don't have access to the specific
         # gridworld we are running in, so we can't use the `limited_` variables
@@ -960,8 +959,6 @@ class Player(object):
 
     def move(self, direction, tremble_rate=None, timestamp=None):
         """Move the player."""
-
-        self.just_consumed = False
 
         if not self.grid.movement_enabled:
             return
@@ -1060,7 +1057,6 @@ class Player(object):
             "identity_visible": self.identity_visible,
             "recruiter_id": self.recruiter_id,
             "current_item": self.current_item and self.current_item.serialize(),
-            "just_consumed": self.just_consumed,
         }
 
 
@@ -1491,7 +1487,6 @@ class Griduniverse(Experiment):
 
     def handle_item_consume(self, msg):
         player = self.grid.players[msg["player_id"]]
-        player.just_consumed = True
         player_item = player.current_item
         if player_item is None or not player_item.calories:
             error_msg = {
@@ -1516,6 +1511,14 @@ class Griduniverse(Experiment):
         if player_item.public_good:
             for player_to in self.grid.players.values():
                 player_to.score += player_item.public_good
+
+        consumed_msg = {
+            "type": "item_consumed",
+            "player_id": player.id,
+            "player_color": player.color,
+            "player_item": player_item and player_item.serialize(),
+        }
+        self.publish(consumed_msg)
 
     def handle_item_pick_up(self, msg):
         player = self.grid.players[msg["player_id"]]
