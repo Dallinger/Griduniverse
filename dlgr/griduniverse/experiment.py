@@ -1613,11 +1613,15 @@ class Griduniverse(Experiment):
 
         # The player's item type has changed
         if transition["actor_end"] != actor_key:
-            new_player_item = Item(
-                id=len(self.grid.item_locations) + len(self.grid.items_consumed),
-                item_config=self.item_config[transition["actor_end"]],
-            )
-            player.current_item = new_player_item
+            if transition["actor_end"] is not None:
+                replacement_item_config = self.item_config.get(transition["actor_end"])
+                replacement_item = Item(
+                    id=len(self.grid.item_locations) + len(self.grid.items_consumed),
+                    item_config=replacement_item_config,
+                )
+            else:
+                replacement_item = None
+            player.current_item = replacement_item
             self.grid.items_updated = True
 
         # The location's item type has changed
