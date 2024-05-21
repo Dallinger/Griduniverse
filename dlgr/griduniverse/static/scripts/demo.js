@@ -185,7 +185,7 @@
     this.name = settings.name;
     this.identity_visible = settings.identity_visible;
     this.dimness = dimness;
-    this.replaceItem(settings.current_item || null);
+    this.replaceCurrentItem(settings.current_item || null);
     return this;
   };
 
@@ -248,7 +248,7 @@
     return false;
   };
 
-  Player.prototype.replaceItem = function (item) {
+  Player.prototype.replaceCurrentItem = function (item) {
     if (item && !(item instanceof itemlib.Item)) {
       item = new itemlib.Item(
         item.id,
@@ -258,7 +258,6 @@
       );
     }
     this.currentItem = item;
-    displayWhatEgoPlayerIsCarrying(item);
   };
 
   Player.prototype.getTransition = function () {
@@ -676,10 +675,13 @@
     // Draw the players:
     players.drawToGrid(section);
 
-    // Show info about the item the current player
-    // is sharing a square with:
+    // Update ego player's view of their inventory, available
+    // transitions, and info about the item they're co-occupying
+    // a square with, if any:
     if (!_.isUndefined(ego)) {
-      updateItemInfoWindow(ego, gridItems);
+      updateItemAtMyLocationDisplay(ego, gridItems);
+      updateAvailableTransitionsDisplay(ego);
+      updateMyInventoryDisplay(ego);
     }
 
     // Add the Gaussian mask.
@@ -865,13 +867,13 @@
         msg_type = "item_consume";
         player_item.remainingUses = player_item.remainingUses - 1;
         if (player_item.remainingUses < 1) {
-          ego.replaceItem(null);
+          ego.replaceCurrentItem(null);
         }
       } else if (!player_item && item_at_pos && item_at_pos.portable) {
         // If there's a portable item here and we don't something in hand, pick it up.
         msg_type = "item_pick_up";
         gridItems.remove(position);
-        ego.replaceItem(item_at_pos);
+        ego.replaceCurrentItem(item_at_pos);
       }
       if (!msg_type) {
         return;
@@ -901,7 +903,7 @@
         position: position,
       };
       socket.send(msg);
-      ego.replaceItem(null);
+      ego.replaceCurrentItem(null);
       gridItems.add(currentItem, position);
     });
 
@@ -1159,6 +1161,7 @@
     }
     return `${aStartItemString} + ${tStartItemString} → ${aEndItemString} + ${tEndItemString}${actors_info}`;
   }
+
   /**
    * If the current player is sharing a grid position with an interactive
    * item, we show information about it on the page.
@@ -1166,32 +1169,48 @@
    * @param {Player} egoPlayer the current Player
    * @param {itemlib.GridItems} gridItems  the collection of all Items on the grid
    */
-  function updateItemInfoWindow(egoPlayer, gridItems) {
-    const inspectedItem = gridItems.atPosition(egoPlayer.position),
-      transition = egoPlayer.getTransition(),
-      $square = $("#location-contents-item"),
-      $transition = $("#transition-details");
+  function updateItemAtMyLocationDisplay(egoPlayer, gridItems) {
+    const inspectedItem = gridItems.atPosition(egoPlayer.position);
+    const $element = $("#location-contents-item");
 
     if (!inspectedItem) {
-      $square.empty();
+      $element.empty();
     } else {
-      $square.html(inspectedItem.name);
-    }
-
-    if (!transition) {
-      // If we're holding an item with calories, indicate that we might want to consume it.
-      if (egoPlayer.currentItem && egoPlayer.currentItem.calories) {
-        $transition.html(`✋${egoPlayer.currentItem.name} + 😋`);
-      } else {
-        $transition.empty();
-      }
-    } else {
-      $transition.html(renderTransition(transition));
+      $element.html(inspectedItem.name);
     }
   }
 
-  function displayWhatEgoPlayerIsCarrying(item) {
-    $("#inventory-item").text(item ? item.name : "");
+  /**
+   * Show transitions available for the item I'm currently carrying
+   *
+   * @param {Player} egoPlayer the current Player
+   */
+  function updateAvailableTransitionsDisplay(egoPlayer) {
+    const transition = egoPlayer.getTransition();
+    const $element = $("#transition-details");
+
+    if (transition) {
+      $element.html(renderTransition(transition));
+    } else {
+      // If we're holding an item with calories, indicate that we might
+      // want to consume it.
+      if (egoPlayer.currentItem && egoPlayer.currentItem.calories) {
+        $element.html(`✋${egoPlayer.currentItem.name} + 😋`);
+      } else {
+        $element.empty();
+      }
+    }
+  }
+
+  /**
+   * If the current player is carrying an Item, we show them what it is.
+   *
+   * @param {Player} egoPlayer the current Player
+   */
+  function updateMyInventoryDisplay(egoPlayer) {
+    const item = egoPlayer.currentItem;
+    const displayValue = item ? item.name : "";
+    $("#inventory-item").text(displayValue);
   }
 
   function onGameStateChange(msg) {
