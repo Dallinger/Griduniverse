@@ -21,6 +21,10 @@ repos:
       - id: check-yaml
   - repo: local
     hooks:
+      - id: prettier-format
+        name: Format JS, YAML, and CSS
+        entry: "bash -c '(yarn prettier --config .prettierrc --write . ) || exit 1'"
+        language: system
       - id: compile-js
         name: Update JS build
         entry: "bash -c '( yarn run build && git add dlgr/griduniverse/static/scripts/dist ) || exit 1'"

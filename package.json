@@ -19,6 +19,7 @@
   "devDependencies": {
     "browser-sync": "<2.19.0",
     "browser-sync-webpack-plugin": "^2.3.0",
+    "prettier": "3.2.5",
     "uglify-es": "^3.0.28",
     "webpack": "^2.4.1"
   },

@@ -1,0 +1,8 @@
+*.html
+node_modules
+htmlcov
+docs
+build
+**/util/*
+**/dist/*
+**/reconnecting-websocket.js
