@@ -8,39 +8,39 @@ jobs:
     name: Run tests
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.10'
-    - name: Cache dependencies
-      uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('dev-requirements.txt') }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r https://raw.githubusercontent.com/Dallinger/Dallinger/issues/5330-websocket-updates/dev-requirements.txt
-        pip install -r dev-requirements.txt
-    - name: Install dallinger
-      run: |
-        pip install git+https://github.com/Dallinger/Dallinger.git@issues/5330-websocket-updates#egg=dallinger[docker]
-    - name: Install experiment
-      run: |
-        pip install -e .[dev]
-    - name: Start dallinger services as docker containers
-      run: dallinger docker start-services
-    - name: Run pytest
-      run: pytest --junit-xml=test-results.xml
-    - name: Surface failing tests
-      if: always()
-      uses: pmeier/pytest-results-action@main
-      with:
-        path: test-results.xml
-        summary: true
-        display-options: fEX
-        fail-on-empty: true
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.10"
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('dev-requirements.txt') }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r https://raw.githubusercontent.com/Dallinger/Dallinger/issues/5330-websocket-updates/dev-requirements.txt
+          pip install -r dev-requirements.txt
+      - name: Install dallinger
+        run: |
+          pip install git+https://github.com/Dallinger/Dallinger.git@issues/5330-websocket-updates#egg=dallinger[docker]
+      - name: Install experiment
+        run: |
+          pip install -e .[dev]
+      - name: Start dallinger services as docker containers
+        run: dallinger docker start-services
+      - name: Run pytest
+        run: pytest --junit-xml=test-results.xml
+      - name: Surface failing tests
+        if: always()
+        uses: pmeier/pytest-results-action@main
+        with:
+          path: test-results.xml
+          summary: true
+          display-options: fEX
+          fail-on-empty: true
 
   pre-commit:
     runs-on: ubuntu-latest

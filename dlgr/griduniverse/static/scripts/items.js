@@ -5,7 +5,6 @@
  * simple Food type.
  */
 
-
 export class Item {
   constructor(id, itemId, maturity, remainingUses) {
     this.id = id;
@@ -23,8 +22,8 @@ export class Item {
   setColorAttributes() {
     this.immature_color = "#808080";
     this.mature_color = "#808080";
-    let [spriteType, ...spriteValue] = this.sprite.split(':');
-    spriteValue = spriteValue.join(':');
+    let [spriteType, ...spriteValue] = this.sprite.split(":");
+    spriteValue = spriteValue.join(":");
     if (spriteType === "color") {
       if (spriteValue.includes(",")) {
         [this.immature_color, this.mature_color] = spriteValue.split(",");
@@ -41,10 +40,9 @@ export class Item {
     return rgbOnScale(
       hexToRgbPercentages(this.immature_color),
       hexToRgbPercentages(this.mature_color),
-      this.maturity
+      this.maturity,
     );
   }
-
 }
 
 /**
@@ -106,7 +104,7 @@ function hexToRgbPercentages(hexColor) {
   // Check if the hex color has a valid length (either 3 or 6 characters)
   if (hexColor.length !== 3 && hexColor.length !== 6) {
     throw new Error(
-      "Invalid hex color format. It should be either 3 or 6 characters long."
+      "Invalid hex color format. It should be either 3 or 6 characters long.",
     );
   }
 

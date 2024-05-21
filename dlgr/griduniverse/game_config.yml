@@ -21,7 +21,6 @@ player_config:
     PURPLE: [0.85, 0.60, 0.85]
     TEAL: [0.77, 0.96, 0.90]
 
-
 item_defaults:
   # Each item definition must include a unique item_id. This actual value doesn't matter,
   # though an easily identifiable label can be helpful in developing and

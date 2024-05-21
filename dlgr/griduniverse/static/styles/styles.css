@@ -15,7 +15,8 @@
     vertical-align: top;
 }
 
-#dashboard {}
+#dashboard {
+}
 
 .GroupIndicator {
     display: inline-block;
@@ -41,7 +42,6 @@ canvas {
     margin-right: 0px !important;
     margin-top: 0px !important;
 }
-
 
 #chat {
     width: 100%;
@@ -96,7 +96,7 @@ canvas {
     border: none;
     margin: 0;
     padding-left: 5px;
-    color: #1693A5;
+    color: #1693a5;
     font-weight: bold;
 }
 
@@ -140,7 +140,7 @@ canvas {
 }
 
 .DIFI-me {
-    background-color: rgba(255, 255, 255, .8);
+    background-color: rgba(255, 255, 255, 0.8);
     border: solid 1px #000;
     border-radius: 50%;
     cursor: move;
@@ -235,7 +235,7 @@ form .likert:last-of-type {
 }
 
 form .likert:before {
-    content: '';
+    content: "";
     position: relative;
     top: 11px;
     left: 5.5%;
@@ -252,7 +252,7 @@ form .likert li {
     vertical-align: top;
 }
 
-form .likert li input[type=radio] {
+form .likert li input[type="radio"] {
     display: block;
     position: relative;
     color: #000;
@@ -264,7 +264,7 @@ form .likert li input[type=radio] {
 form .likert li label {
     width: 100%;
     font-weight: normal;
-    font-size: calc(9px + 0.50vw);
+    font-size: calc(9px + 0.5vw);
     transform: scale(0.85, 1);
     -webkit-transform: scale(0.85, 1);
     display: inline-block;
@@ -278,7 +278,7 @@ img.team {
 
 @keyframes blink {
     0% {
-        opacity: .2;
+        opacity: 0.2;
     }
 
     20% {
@@ -286,7 +286,7 @@ img.team {
     }
 
     100% {
-        opacity: .2;
+        opacity: 0.2;
     }
 }
 
@@ -309,9 +309,9 @@ img.team {
 }
 
 .grid-loading span:nth-child(2) {
-    animation-delay: .2s;
+    animation-delay: 0.2s;
 }
 
 .grid-loading span:nth-child(3) {
-    animation-delay: .4s;
+    animation-delay: 0.4s;
 }
