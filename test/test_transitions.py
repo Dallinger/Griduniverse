@@ -83,6 +83,32 @@ class TestHandleItemTransition(object):
         assert len(mocked_exp.grid.item_locations) == 1
         assert list(mocked_exp.grid.item_locations.values())[0].name == "Big Hard Rock"
 
+    def test_handle_item_transition_transforms_items(self, mocked_exp, player):
+        mocked_exp.transition_config[("stone", "big_hard_rock")] = {
+            "actor_start": "stone",
+            "actor_end": None,
+            "target_start": "big_hard_rock",
+            "target_end": "sharp_stone",
+            "last_use": False,
+            "modify_uses": [0, 0],
+            "visible": "always",
+        }
+        big_hard_rock = create_item(**mocked_exp.item_config["big_hard_rock"])
+        stone = create_item(**mocked_exp.item_config["stone"])
+        mocked_exp.grid.item_locations[(0, 0)] = big_hard_rock
+        player.current_item = stone
+
+        mocked_exp.handle_item_transition(
+            msg={"player_id": player.id, "position": (0, 0)}
+        )
+
+        # The Stone and the Big Hard Rock have been transformed into a
+        # Sharp Stone on the square where the Big Hard Rock was before
+        assert player.current_item is None
+        assert len(mocked_exp.grid.items_consumed) == 2
+        assert len(mocked_exp.grid.item_locations) == 1
+        assert list(mocked_exp.grid.item_locations.values())[0].name == "Sharp Stone"
+
     def test_handle_item_transition_reduces_items_remaining(self, mocked_exp, player):
         gooseberry_bush = create_item(**mocked_exp.item_config["gooseberry_bush"])
         assert gooseberry_bush.name == "Gooseberry Bush"
