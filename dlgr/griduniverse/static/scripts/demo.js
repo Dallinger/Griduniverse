@@ -291,114 +291,87 @@
         return new PlayerSet(settings);
       }
 
-      this._players = {};
+      this._players = new Map();
       this.ego_id = settings.ego_id;
     };
 
     PlayerSet.prototype.isPlayerAt = function (position) {
-      var id, player;
-
-      for (id in this._players) {
-        if (this._players.hasOwnProperty(id)) {
-          player = this._players[id];
-          if (positionsAreEqual(position, player.position)) {
-            return true;
-          }
-        }
-      }
-      return false;
+      return Array.from(this._players.values()).some((player) =>
+        positionsAreEqual(position, player.position),
+      );
     };
 
     PlayerSet.prototype.drawToGrid = function (grid) {
-      var player, id, minScore, maxScore, d, color, player_color;
+      let minScore, maxScore, d, color, player_color;
+
       if (settings.score_visible) {
         minScore = this.minScore();
         maxScore = this.maxScore();
       }
 
-      for (id in this._players) {
-        if (this._players.hasOwnProperty(id)) {
-          player = this._players[id];
-          /* It's unlikely that auto motion will keep identical pace to server-side auto-motion */
-          /* this should be implemented either all on server or all on client */
-          if (player.motion_auto) {
-            player.move(player.motion_direction);
+      for (const [id, player] of this._players) {
+        /* It's unlikely that auto motion will keep identical pace to server-side auto-motion */
+        /* this should be implemented either all on server or all on client */
+        if (player.motion_auto) {
+          player.move(player.motion_direction);
+        }
+        if (id === this.ego_id || settings.others_visible) {
+          player_color = settings.player_colors[name2idx(player.color)];
+          if (player.identity_visible) {
+            color = player_color;
+          } else {
+            color =
+              id === this.ego_id
+                ? Color.rgb(player_color).desaturate(0.6).rgb().array()
+                : INVISIBLE_COLOR;
           }
-          if (id === this.ego_id || settings.others_visible) {
-            player_color = settings.player_colors[name2idx(player.color)];
-            if (player.identity_visible) {
-              color = player_color;
+          if (settings.score_visible) {
+            if (maxScore - minScore > 0) {
+              d =
+                0.75 * (1 - (player.score - minScore) / (maxScore - minScore));
             } else {
-              color =
-                id === this.ego_id
-                  ? Color.rgb(player_color).desaturate(0.6).rgb().array()
-                  : INVISIBLE_COLOR;
+              d = 0.375;
             }
-            if (settings.score_visible) {
-              if (maxScore - minScore > 0) {
-                d =
-                  0.75 *
-                  (1 - (player.score - minScore) / (maxScore - minScore));
-              } else {
-                d = 0.375;
-              }
-              color = Color.rgb(player_color).desaturate(d).rgb().array();
-            } else {
-              color = player_color;
-            }
-            var texture = 0;
-            if (settings.use_identicons) {
-              texture = parseInt(id, 10);
-            }
-            grid.plot(player.position[1], player.position[0], color, texture);
-            if (id === this.ego_id) {
-              store.set("color", color2name(color));
-            }
+            color = Color.rgb(player_color).desaturate(d).rgb().array();
+          } else {
+            color = player_color;
+          }
+          var texture = 0;
+          if (settings.use_identicons) {
+            texture = parseInt(id, 10);
+          }
+          grid.plot(player.position[1], player.position[0], color, texture);
+          if (id === this.ego_id) {
+            store.set("color", color2name(color));
           }
         }
       }
     };
 
     PlayerSet.prototype.nearest = function (row, column) {
-      var distances = [],
-        distance,
-        player,
-        id;
-
-      for (id in this._players) {
-        if (this._players.hasOwnProperty(id)) {
-          player = this._players[id];
-          if (player.hasOwnProperty("position")) {
-            distance =
-              Math.abs(row - player.position[0]) +
-              Math.abs(column - player.position[1]);
-            distances.push({ player: player, distance: distance });
-          }
-        }
-      }
-
-      distances.sort(function (a, b) {
-        return a.distance - b.distance;
-      });
-
-      return distances[0].player;
+      return Array.from(this._players.values()).reduce((nearest, player) => {
+        const distance =
+          Math.abs(row - player.position[0]) +
+          Math.abs(column - player.position[1]);
+        return nearest === null || distance < nearest.distance
+          ? { player: player, distance: distance }
+          : nearest;
+      }, null).player;
     };
 
     PlayerSet.prototype.getAdjacentPlayers = function () {
       /* Return a list of players adjacent to the ego player */
       adjacentPlayers = [];
-      let egoPostiion = this._players[ego].position;
-      for (const [id, player] of this._players.entries()) {
+      let egoPostiion = this.ego().position;
+      for (const [id, player] of this._players) {
         if (id === ego) {
           continue;
         }
-        if (player.hasOwnProperty("position")) {
-          let position = player.position;
-          let distanceX = Math.abs(position[0] - egoPostiion[0]);
-          let distanceY = Math.abs(position[1] - egoPostiion[1]);
-          if (distanceX <= 1 && distanceY <= 1) {
-            adjacentPlayers.push(player);
-          }
+        let position = player.position;
+        let distanceX = Math.abs(position[0] - egoPostiion[0]);
+        let distanceY = Math.abs(position[1] - egoPostiion[1]);
+        if (distanceX <= 1 && distanceY <= 1) {
+          adjacentPlayers.push(player);
         }
       }
       return adjacentPlayers;
@@ -409,19 +382,19 @@
     };
 
     PlayerSet.prototype.get = function (id) {
-      return this._players[id];
+      return this._players.get(id);
     };
 
     PlayerSet.prototype.count = function () {
-      return Object.keys(this._players).length;
+      return this._players.size;
     };
 
     PlayerSet.prototype.update = function (allPlayersData) {
-      var freshPlayerData, existingPlayer, i;
+      let freshPlayerData, existingPlayer, i;
 
       for (i = 0; i < allPlayersData.length; i++) {
         freshPlayerData = allPlayersData[i];
-        existingPlayer = this._players[freshPlayerData.id];
+        existingPlayer = this._players.get(freshPlayerData.id);
         if (existingPlayer && existingPlayer.id === this.ego_id) {
           /* Don't override current player motion timestamp */
           freshPlayerData.motion_timestamp = existingPlayer.motion_timestamp;
@@ -438,13 +411,13 @@
             console.log("Overriding position from server!");
           }
         }
-        var last_dimness = 1;
-        if (!_.isUndefined(this._players[freshPlayerData.id])) {
-          last_dimness = this._players[freshPlayerData.id].dimness;
+        let last_dimness = 1;
+        if (!_.isUndefined(this._players.get(freshPlayerData.id))) {
+          last_dimness = this._players.get(freshPlayerData.id).dimness;
         }
-        this._players[freshPlayerData.id] = new Player(
-          freshPlayerData,
-          last_dimness,
+        this._players.set(
+          freshPlayerData.id,
+          new Player(freshPlayerData, last_dimness),
         );
       }
     };
@@ -463,45 +436,36 @@
     };
 
     PlayerSet.prototype.maxScore = function () {
-      var id,
-        maxScore = 0;
-      for (id in this._players) {
-        if (this._players[id].score > maxScore) {
-          maxScore = this._players[id].score;
-        }
-      }
-      return maxScore;
+      return Array.from(this._players.values()).reduce(
+        (max, player) => (player.score > max ? player.score : max),
+        0,
+      );
     };
 
     PlayerSet.prototype.minScore = function () {
-      var id,
-        minScore = Infinity;
-      for (id in this._players) {
-        if (this._players[id].score < minScore) {
-          minScore = this._players[id].score;
-        }
-      }
-      return minScore;
+      return Array.from(this._players.values()).reduce(
+        (min, player) => (player.score < min ? player.score : min),
+        Infinity,
+      );
     };
 
     PlayerSet.prototype.each = function (callback) {
-      var i = 0;
-      for (var id in this._players) {
-        if (this._players.hasOwnProperty(id)) {
-          callback(i, this._players[id]);
-          i++;
-        }
+      let i = 0;
+
+      for (const player of this._players.values()) {
+        callback(i, player);
+        i++;
       }
     };
 
     PlayerSet.prototype.group_scores = function () {
-      var group_scores = {};
+      const group_scores = {};
 
-      this.each(function (i, player) {
-        var color_name = player.color;
-        var cur_score = group_scores[color_name] || 0;
+      for (const player of this._players.values()) {
+        let color_name = player.color;
+        let cur_score = group_scores[color_name] || 0;
         group_scores[color_name] = cur_score + Math.round(player.score);
-      });
+      }
 
       var group_order = Object.keys(group_scores).sort(function (a, b) {
         return group_scores[a] > group_scores[b]
@@ -517,21 +481,11 @@
     };
 
     PlayerSet.prototype.player_scores = function () {
-      var player_order = [];
-
-      this.each(function (i, player) {
-        player_order.push({
-          id: player.id,
-          name: player.name,
-          score: player.score,
-        });
-      });
-
-      player_order = player_order.sort(function (a, b) {
-        return a.score > b.score ? -1 : a.score < b.score ? 1 : 0;
-      });
-
-      return player_order;
+      return Array.from(this._players, ([id, player]) => ({
+        id: id,
+        name: player.name,
+        score: player.score,
+      })).sort((a, b) => b.score - a.score);
     };
 
     return PlayerSet;
