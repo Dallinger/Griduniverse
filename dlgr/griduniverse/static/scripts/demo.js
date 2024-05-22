@@ -168,122 +168,117 @@
     return this;
   };
 
-  var Player = function (settings, dimness) {
-    if (!(this instanceof Player)) {
-      return new Player();
+  class Player {
+    constructor(settings, dimness) {
+      this.id = settings.id;
+      this.position = settings.position;
+      this.positionInSync = true;
+      this.color = settings.color;
+      this.motion_auto = settings.motion_auto;
+      this.motion_direction = settings.motion_direction;
+      this.motion_speed_limit = settings.motion_speed_limit;
+      this.motion_timestamp = settings.motion_timestamp;
+      this.score = settings.score;
+      this.payoff = settings.payoff;
+      this.name = settings.name;
+      this.identity_visible = settings.identity_visible;
+      this.dimness = dimness;
+      this.replaceCurrentItem(settings.current_item || null);
     }
-    this.id = settings.id;
-    this.position = settings.position;
-    this.positionInSync = true;
-    this.color = settings.color;
-    this.motion_auto = settings.motion_auto;
-    this.motion_direction = settings.motion_direction;
-    this.motion_speed_limit = settings.motion_speed_limit;
-    this.motion_timestamp = settings.motion_timestamp;
-    this.score = settings.score;
-    this.payoff = settings.payoff;
-    this.name = settings.name;
-    this.identity_visible = settings.identity_visible;
-    this.dimness = dimness;
-    this.replaceCurrentItem(settings.current_item || null);
-    return this;
-  };
 
-  Player.prototype.move = function (direction) {
-    function _isCrossable(position) {
-      const hasWall = !_.isUndefined(wall_map[[position[1], position[0]]]);
-      if (hasWall) {
-        return false;
+    move(direction) {
+      function _isCrossable(position) {
+        const hasWall = !_.isUndefined(wall_map[[position[1], position[0]]]);
+        if (hasWall) {
+          return false;
+        }
+        const itemHere = gridItems.atPosition(position);
+        return _.isNull(itemHere) || itemHere.crossable;
       }
-      const itemHere = gridItems.atPosition(position);
-      return _.isNull(itemHere) || itemHere.crossable;
-    }
+      const ts = performance.now() - start;
+      const waitTime = 1000 / this.motion_speed_limit;
 
-    this.motion_direction = direction;
+      this.motion_direction = direction;
 
-    var ts = performance.now() - start,
-      waitTime = 1000 / this.motion_speed_limit;
+      if (ts > this.motion_timestamp + waitTime) {
+        const newPosition = this.position.slice();
 
-    if (ts > this.motion_timestamp + waitTime) {
-      var newPosition = this.position.slice();
+        switch (direction) {
+          case "up":
+            if (this.position[0] > 0) {
+              newPosition[0] -= 1;
+            }
+            break;
 
-      switch (direction) {
-        case "up":
-          if (this.position[0] > 0) {
-            newPosition[0] -= 1;
-          }
-          break;
+          case "down":
+            if (this.position[0] < settings.rows - 1) {
+              newPosition[0] += 1;
+            }
+            break;
 
-        case "down":
-          if (this.position[0] < settings.rows - 1) {
-            newPosition[0] += 1;
-          }
-          break;
+          case "left":
+            if (this.position[1] > 0) {
+              newPosition[1] -= 1;
+            }
+            break;
 
-        case "left":
-          if (this.position[1] > 0) {
-            newPosition[1] -= 1;
-          }
-          break;
+          case "right":
+            if (this.position[1] < settings.columns - 1) {
+              newPosition[1] += 1;
+            }
+            break;
 
-        case "right":
-          if (this.position[1] < settings.columns - 1) {
-            newPosition[1] += 1;
-          }
-          break;
+          default:
+            console.log("Direction not recognized.");
+        }
 
-        default:
-          console.log("Direction not recognized.");
+        if (
+          _isCrossable(newPosition) &&
+          (!players.isPlayerAt(newPosition) || settings.player_overlap)
+        ) {
+          this.position = newPosition;
+          this.motion_timestamp = ts;
+          return true;
+        }
       }
+      return false;
+    }
 
-      if (
-        _isCrossable(newPosition) &&
-        (!players.isPlayerAt(newPosition) || settings.player_overlap)
-      ) {
-        this.position = newPosition;
-        this.motion_timestamp = ts;
-        return true;
+    replaceCurrentItem(item) {
+      if (item && !(item instanceof itemlib.Item)) {
+        const item = new itemlib.Item(
+          item.id,
+          item.item_id,
+          item.maturity,
+          item.remaining_uses,
+        );
       }
+      this.currentItem = item;
     }
-    return false;
-  };
 
-  Player.prototype.replaceCurrentItem = function (item) {
-    if (item && !(item instanceof itemlib.Item)) {
-      item = new itemlib.Item(
-        item.id,
-        item.item_id,
-        item.maturity,
-        item.remaining_uses,
-      );
-    }
-    this.currentItem = item;
-  };
+    getTransition() {
+      const playerItem = this.currentItem;
+      const position = this.position;
+      const itemAtPos = gridItems.atPosition(position);
+      let transitionId =
+        ((playerItem && playerItem.itemId) || "") +
+        "|" +
+        ((itemAtPos && itemAtPos.itemId) || "");
+      const lastTransitionId = "last_" + transitionId;
+      let transition = settings.transition_config[lastTransitionId];
 
-  Player.prototype.getTransition = function () {
-    var transition;
-    var player_item = this.currentItem;
-    var position = this.position;
-    var item_at_pos = gridItems.atPosition(position);
-    var transitionId =
-      ((player_item && player_item.itemId) || "") +
-      "|" +
-      ((item_at_pos && item_at_pos.itemId) || "");
-    var lastTransitionId = "last_" + transitionId;
-    if (item_at_pos && item_at_pos.remaining_uses == 1) {
-      transition = settings.transition_config[lastTransitionId];
-      if (transition) {
+      if (itemAtPos && itemAtPos.remaining_uses === 1 && transition) {
         transitionId = lastTransitionId;
+      } else {
+        transition = settings.transition_config[transitionId];
       }
+
+      if (!transition) {
+        return null;
+      }
+      return { id: transitionId, transition: transition };
     }
-    if (!transition) {
-      transition = settings.transition_config[transitionId];
-    }
-    if (!transition) {
-      return null;
-    }
-    return { id: transitionId, transition: transition };
-  };
+  }
 
   class PlayerSet {
     constructor(settings) {
