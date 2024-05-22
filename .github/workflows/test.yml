@@ -5,7 +5,7 @@ on:
 
 jobs:
   test:
-    name: Run tests
+    name: tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -43,7 +43,7 @@ jobs:
           fail-on-empty: true
 
   pre-commit:
-    name: Run pre-commit hooks
+    name: pre-commit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
