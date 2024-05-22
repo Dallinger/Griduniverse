@@ -17281,7 +17281,7 @@
   }
 }.call(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(41), __webpack_require__(42)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(42), __webpack_require__(43)(module)))
 
 /***/ }),
 /* 1 */,
@@ -18635,6 +18635,95 @@ module.exports = function (cstr) {
 
 /***/ }),
 /* 8 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_reconnecting_websocket__ = __webpack_require__(39);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_reconnecting_websocket___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_reconnecting_websocket__);
+/*jshint esversion: 6 */
+/**
+ * Wrapper around ReconnectingWebSocket
+ */
+
+
+
+class GUSocket {
+  constructor(settings) {
+    const tolerance =
+      settings.lagTolerance === undefined ? 0.1 : settings.lagTolerance;
+
+    this.broadcastChannel = settings.broadcast;
+    this.controlChannel = settings.control;
+    this.callbackMap = settings.callbackMap;
+    this.socket = this._makeSocket(
+      settings.endpoint,
+      this.broadcastChannel,
+      tolerance,
+    );
+
+    this.socket.onmessage = (event) => {
+      this._dispatch(event);
+    };
+  }
+
+  open() {
+    const isOpen = $.Deferred();
+    this.socket.onopen = () => {
+      isOpen.resolve();
+    };
+
+    return isOpen;
+  }
+
+  send(data) {
+    const msg = JSON.stringify(data);
+    const channel = this.controlChannel;
+    console.log(`Sending message to the ${channel} channel: ${msg}`);
+    this.socket.send(`${channel}:${msg}`);
+  }
+
+  broadcast(data) {
+    const msg = JSON.stringify(data);
+    const channel = this.broadcastChannel;
+    console.log(`Broadcasting message to the ${channel} channel: ${msg}`);
+    this.socket.send(`${channel}:${msg}`);
+  }
+
+  _makeSocket(endpoint, channel, tolerance) {
+    const ws_scheme =
+      window.location.protocol === "https:" ? "wss://" : "ws://";
+    const app_root = `${ws_scheme}${location.host}/`;
+    const socketUrl = `${app_root}${endpoint}?channel=${channel}&tolerance=${tolerance}`;
+    const socket = new __WEBPACK_IMPORTED_MODULE_0_reconnecting_websocket___default.a(socketUrl);
+    socket.debug = true;
+
+    return socket;
+  }
+
+  _dispatch(event) {
+    const marker = `${this.broadcastChannel}:`;
+    if (!event.data.startsWith(marker)) {
+      console.log(
+        `Message was not on channel ${this.broadcastChannel}. Ignoring.`,
+      );
+      return;
+    }
+    const msg = JSON.parse(event.data.substring(marker.length));
+    const callback = this.callbackMap[msg.type];
+    if (callback !== undefined) {
+      callback(msg);
+    } else {
+      console.log(`Unrecognized message type ${msg.type} from backend.`);
+    }
+  }
+}
+/* harmony export (immutable) */ __webpack_exports__["GUSocket"] = GUSocket;
+
+
+
+/***/ }),
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var parse = __webpack_require__(7);
@@ -18698,7 +18787,7 @@ function Pixels(data, textures, opts) {
     width / height,
   );
 
-  var regl = (this.regl = __webpack_require__(39)(canvas));
+  var regl = (this.regl = __webpack_require__(40)(canvas));
 
   // First texture in the texture map is an empty square
   var initial_texture = [];
@@ -18995,7 +19084,7 @@ module.exports = Pixels;
 
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -19142,7 +19231,7 @@ function rgbOnScale(startColor, endColor, percentage) {
 
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -19346,7 +19435,7 @@ function rgbOnScale(startColor, endColor, percentage) {
 })();
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19835,7 +19924,7 @@ module.exports = Color;
 
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function(exports) {
@@ -19975,7 +20064,7 @@ module.exports = Color;
 
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Emitter = __webpack_require__(36)
@@ -20031,7 +20120,7 @@ function attach(element, listener) {
 
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/*global define:false */
@@ -21096,228 +21185,6 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*global define:false */
 
 
 /***/ }),
-/* 15 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-;
-;
-;
-var isWebSocket = function (constructor) {
-    return constructor && constructor.CLOSING === 2;
-};
-var isGlobalWebSocket = function () {
-    return typeof WebSocket !== 'undefined' && isWebSocket(WebSocket);
-};
-var getDefaultOptions = function () { return ({
-    constructor: isGlobalWebSocket() ? WebSocket : null,
-    maxReconnectionDelay: 10000,
-    minReconnectionDelay: 1500,
-    reconnectionDelayGrowFactor: 1.3,
-    connectionTimeout: 4000,
-    maxRetries: Infinity,
-    debug: false,
-}); };
-var bypassProperty = function (src, dst, name) {
-    Object.defineProperty(dst, name, {
-        get: function () { return src[name]; },
-        set: function (value) { src[name] = value; },
-        enumerable: true,
-        configurable: true,
-    });
-};
-var initReconnectionDelay = function (config) {
-    return (config.minReconnectionDelay + Math.random() * config.minReconnectionDelay);
-};
-var updateReconnectionDelay = function (config, previousDelay) {
-    var newDelay = previousDelay * config.reconnectionDelayGrowFactor;
-    return (newDelay > config.maxReconnectionDelay)
-        ? config.maxReconnectionDelay
-        : newDelay;
-};
-var LEVEL_0_EVENTS = ['onopen', 'onclose', 'onmessage', 'onerror'];
-var reassignEventListeners = function (ws, oldWs, listeners) {
-    Object.keys(listeners).forEach(function (type) {
-        listeners[type].forEach(function (_a) {
-            var listener = _a[0], options = _a[1];
-            ws.addEventListener(type, listener, options);
-        });
-    });
-    if (oldWs) {
-        LEVEL_0_EVENTS.forEach(function (name) {
-            ws[name] = oldWs[name];
-        });
-    }
-};
-var ReconnectingWebsocket = function (url, protocols, options) {
-    var _this = this;
-    if (options === void 0) { options = {}; }
-    var ws;
-    var connectingTimeout;
-    var reconnectDelay = 0;
-    var retriesCount = 0;
-    var shouldRetry = true;
-    var savedOnClose = null;
-    var listeners = {};
-    // require new to construct
-    if (!(this instanceof ReconnectingWebsocket)) {
-        throw new TypeError("Failed to construct 'ReconnectingWebSocket': Please use the 'new' operator");
-    }
-    // Set config. Not using `Object.assign` because of IE11
-    var config = getDefaultOptions();
-    Object.keys(config)
-        .filter(function (key) { return options.hasOwnProperty(key); })
-        .forEach(function (key) { return config[key] = options[key]; });
-    if (!isWebSocket(config.constructor)) {
-        throw new TypeError('Invalid WebSocket constructor. Set `options.constructor`');
-    }
-    var log = config.debug ? function () {
-        var params = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            params[_i] = arguments[_i];
-        }
-        return console.log.apply(console, ['RWS:'].concat(params));
-    } : function () { };
-    /**
-     * Not using dispatchEvent, otherwise we must use a DOM Event object
-     * Deferred because we want to handle the close event before this
-     */
-    var emitError = function (code, msg) { return setTimeout(function () {
-        var err = new Error(msg);
-        err.code = code;
-        if (Array.isArray(listeners.error)) {
-            listeners.error.forEach(function (_a) {
-                var fn = _a[0];
-                return fn(err);
-            });
-        }
-        if (ws.onerror) {
-            ws.onerror(err);
-        }
-    }, 0); };
-    var handleClose = function () {
-        log('handleClose', { shouldRetry: shouldRetry });
-        retriesCount++;
-        log('retries count:', retriesCount);
-        if (retriesCount > config.maxRetries) {
-            emitError('EHOSTDOWN', 'Too many failed connection attempts');
-            return;
-        }
-        if (!reconnectDelay) {
-            reconnectDelay = initReconnectionDelay(config);
-        }
-        else {
-            reconnectDelay = updateReconnectionDelay(config, reconnectDelay);
-        }
-        log('handleClose - reconnectDelay:', reconnectDelay);
-        if (shouldRetry) {
-            setTimeout(connect, reconnectDelay);
-        }
-    };
-    var connect = function () {
-        if (!shouldRetry) {
-            return;
-        }
-        log('connect');
-        var oldWs = ws;
-        var wsUrl = (typeof url === 'function') ? url() : url;
-        ws = new config.constructor(wsUrl, protocols);
-        connectingTimeout = setTimeout(function () {
-            log('timeout');
-            ws.close();
-            emitError('ETIMEDOUT', 'Connection timeout');
-        }, config.connectionTimeout);
-        log('bypass properties');
-        for (var key in ws) {
-            // @todo move to constant
-            if (['addEventListener', 'removeEventListener', 'close', 'send'].indexOf(key) < 0) {
-                bypassProperty(ws, _this, key);
-            }
-        }
-        ws.addEventListener('open', function () {
-            clearTimeout(connectingTimeout);
-            log('open');
-            reconnectDelay = initReconnectionDelay(config);
-            log('reconnectDelay:', reconnectDelay);
-            retriesCount = 0;
-        });
-        ws.addEventListener('close', handleClose);
-        reassignEventListeners(ws, oldWs, listeners);
-        // because when closing with fastClose=true, it is saved and set to null to avoid double calls
-        ws.onclose = ws.onclose || savedOnClose;
-        savedOnClose = null;
-    };
-    log('init');
-    connect();
-    this.close = function (code, reason, _a) {
-        if (code === void 0) { code = 1000; }
-        if (reason === void 0) { reason = ''; }
-        var _b = _a === void 0 ? {} : _a, _c = _b.keepClosed, keepClosed = _c === void 0 ? false : _c, _d = _b.fastClose, fastClose = _d === void 0 ? true : _d, _e = _b.delay, delay = _e === void 0 ? 0 : _e;
-        log('close - params:', { reason: reason, keepClosed: keepClosed, fastClose: fastClose, delay: delay, retriesCount: retriesCount, maxRetries: config.maxRetries });
-        shouldRetry = !keepClosed && retriesCount <= config.maxRetries;
-        if (delay) {
-            reconnectDelay = delay;
-        }
-        ws.close(code, reason);
-        if (fastClose) {
-            var fakeCloseEvent_1 = {
-                code: code,
-                reason: reason,
-                wasClean: true,
-            };
-            // execute close listeners soon with a fake closeEvent
-            // and remove them from the WS instance so they
-            // don't get fired on the real close.
-            handleClose();
-            ws.removeEventListener('close', handleClose);
-            // run and remove level2
-            if (Array.isArray(listeners.close)) {
-                listeners.close.forEach(function (_a) {
-                    var listener = _a[0], options = _a[1];
-                    listener(fakeCloseEvent_1);
-                    ws.removeEventListener('close', listener, options);
-                });
-            }
-            // run and remove level0
-            if (ws.onclose) {
-                savedOnClose = ws.onclose;
-                ws.onclose(fakeCloseEvent_1);
-                ws.onclose = null;
-            }
-        }
-    };
-    this.send = function (data) {
-        ws.send(data);
-    };
-    this.addEventListener = function (type, listener, options) {
-        if (Array.isArray(listeners[type])) {
-            if (!listeners[type].some(function (_a) {
-                var l = _a[0];
-                return l === listener;
-            })) {
-                listeners[type].push([listener, options]);
-            }
-        }
-        else {
-            listeners[type] = [[listener, options]];
-        }
-        ws.addEventListener(type, listener, options);
-    };
-    this.removeEventListener = function (type, listener, options) {
-        if (Array.isArray(listeners[type])) {
-            listeners[type] = listeners[type].filter(function (_a) {
-                var l = _a[0];
-                return l !== listener;
-            });
-        }
-        ws.removeEventListener(type, listener, options);
-    };
-};
-module.exports = ReconnectingWebsocket;
-
-
-/***/ }),
 /* 16 */
 /***/ (function(module, exports) {
 
@@ -21331,17 +21198,17 @@ var require;/*global dallinger, store */
 /*jshint esversion: 6 */
 
 (function (dallinger, require, settings) {
-  var grid = __webpack_require__(8);
-  var position = __webpack_require__(13);
-  var Mousetrap = __webpack_require__(14);
-  var ReconnectingWebSocket = __webpack_require__(15);
+  var grid = __webpack_require__(9);
+  var position = __webpack_require__(14);
+  var Mousetrap = __webpack_require__(15);
   var $ = __webpack_require__(16);
-  var gaussian = __webpack_require__(12);
-  var Color = __webpack_require__(11);
-  var Identicon = __webpack_require__(10);
+  var gaussian = __webpack_require__(13);
+  var Color = __webpack_require__(12);
+  var Identicon = __webpack_require__(11);
   var _ = __webpack_require__(0);
   var md5 = __webpack_require__(2);
-  var itemlib = __webpack_require__(9);
+  var itemlib = __webpack_require__(10);
+  var socketlib = __webpack_require__(8);
 
   function coordsToIdx(x, y, columns) {
     return y * columns + x;
@@ -21497,140 +21364,133 @@ var require;/*global dallinger, store */
     return this;
   };
 
-  var Player = function (settings, dimness) {
-    if (!(this instanceof Player)) {
-      return new Player();
+  class Player {
+    constructor(settings, dimness) {
+      this.id = settings.id;
+      this.position = settings.position;
+      this.positionInSync = true;
+      this.color = settings.color;
+      this.motion_auto = settings.motion_auto;
+      this.motion_direction = settings.motion_direction;
+      this.motion_speed_limit = settings.motion_speed_limit;
+      this.motion_timestamp = settings.motion_timestamp;
+      this.score = settings.score;
+      this.payoff = settings.payoff;
+      this.name = settings.name;
+      this.identity_visible = settings.identity_visible;
+      this.dimness = dimness;
+      this.replaceCurrentItem(settings.current_item || null);
     }
-    this.id = settings.id;
-    this.position = settings.position;
-    this.positionInSync = true;
-    this.color = settings.color;
-    this.motion_auto = settings.motion_auto;
-    this.motion_direction = settings.motion_direction;
-    this.motion_speed_limit = settings.motion_speed_limit;
-    this.motion_timestamp = settings.motion_timestamp;
-    this.score = settings.score;
-    this.payoff = settings.payoff;
-    this.name = settings.name;
-    this.identity_visible = settings.identity_visible;
-    this.dimness = dimness;
-    this.replaceCurrentItem(settings.current_item || null);
-    return this;
-  };
 
-  Player.prototype.move = function (direction) {
-    function _isCrossable(position) {
-      const hasWall = !_.isUndefined(wall_map[[position[1], position[0]]]);
-      if (hasWall) {
-        return false;
+    move(direction) {
+      function _isCrossable(position) {
+        const hasWall = !_.isUndefined(wall_map[[position[1], position[0]]]);
+        if (hasWall) {
+          return false;
+        }
+        const itemHere = gridItems.atPosition(position);
+        return _.isNull(itemHere) || itemHere.crossable;
       }
-      const itemHere = gridItems.atPosition(position);
-      return _.isNull(itemHere) || itemHere.crossable;
+      const ts = performance.now() - start;
+      const waitTime = 1000 / this.motion_speed_limit;
+
+      this.motion_direction = direction;
+
+      if (ts > this.motion_timestamp + waitTime) {
+        const newPosition = this.position.slice();
+
+        switch (direction) {
+          case "up":
+            if (this.position[0] > 0) {
+              newPosition[0] -= 1;
+            }
+            break;
+
+          case "down":
+            if (this.position[0] < settings.rows - 1) {
+              newPosition[0] += 1;
+            }
+            break;
+
+          case "left":
+            if (this.position[1] > 0) {
+              newPosition[1] -= 1;
+            }
+            break;
+
+          case "right":
+            if (this.position[1] < settings.columns - 1) {
+              newPosition[1] += 1;
+            }
+            break;
+
+          default:
+            console.log("Direction not recognized.");
+        }
+
+        if (
+          _isCrossable(newPosition) &&
+          (!players.isPlayerAt(newPosition) || settings.player_overlap)
+        ) {
+          this.position = newPosition;
+          this.motion_timestamp = ts;
+          return true;
+        }
+      }
+      return false;
     }
 
-    this.motion_direction = direction;
-
-    var ts = performance.now() - start,
-      waitTime = 1000 / this.motion_speed_limit;
-
-    if (ts > this.motion_timestamp + waitTime) {
-      var newPosition = this.position.slice();
-
-      switch (direction) {
-        case "up":
-          if (this.position[0] > 0) {
-            newPosition[0] -= 1;
-          }
-          break;
-
-        case "down":
-          if (this.position[0] < settings.rows - 1) {
-            newPosition[0] += 1;
-          }
-          break;
-
-        case "left":
-          if (this.position[1] > 0) {
-            newPosition[1] -= 1;
-          }
-          break;
-
-        case "right":
-          if (this.position[1] < settings.columns - 1) {
-            newPosition[1] += 1;
-          }
-          break;
-
-        default:
-          console.log("Direction not recognized.");
+    replaceCurrentItem(item) {
+      if (item && !(item instanceof itemlib.Item)) {
+        item = new itemlib.Item(
+          item.id,
+          item.item_id,
+          item.maturity,
+          item.remaining_uses,
+        );
       }
 
-      if (
-        _isCrossable(newPosition) &&
-        (!players.isPlayerAt(newPosition) || settings.player_overlap)
-      ) {
-        this.position = newPosition;
-        this.motion_timestamp = ts;
-        return true;
-      }
+      this.currentItem = item;
     }
-    return false;
-  };
 
-  Player.prototype.replaceCurrentItem = function (item) {
-    if (item && !(item instanceof itemlib.Item)) {
-      item = new itemlib.Item(
-        item.id,
-        item.item_id,
-        item.maturity,
-        item.remaining_uses,
-      );
-    }
-    this.currentItem = item;
-  };
+    getTransition() {
+      const playerItem = this.currentItem;
+      const position = this.position;
+      const itemAtPos = gridItems.atPosition(position);
+      let transitionId =
+        ((playerItem && playerItem.itemId) || "") +
+        "|" +
+        ((itemAtPos && itemAtPos.itemId) || "");
+      const lastTransitionId = "last_" + transitionId;
+      let transition = settings.transition_config[lastTransitionId];
 
-  Player.prototype.getTransition = function () {
-    var transition;
-    var player_item = this.currentItem;
-    var position = this.position;
-    var item_at_pos = gridItems.atPosition(position);
-    var transitionId =
-      ((player_item && player_item.itemId) || "") +
-      "|" +
-      ((item_at_pos && item_at_pos.itemId) || "");
-    var lastTransitionId = "last_" + transitionId;
-    if (item_at_pos && item_at_pos.remaining_uses == 1) {
-      transition = settings.transition_config[lastTransitionId];
-      if (transition) {
+      if (itemAtPos && itemAtPos.remaining_uses === 1 && transition) {
         transitionId = lastTransitionId;
-      }
-    }
-    if (!transition) {
-      transition = settings.transition_config[transitionId];
-    }
-    if (!transition) {
-      return null;
-    }
-    return { id: transitionId, transition: transition };
-  };
-
-  var playerSet = (function () {
-    var PlayerSet = function (settings) {
-      if (!(this instanceof PlayerSet)) {
-        return new PlayerSet(settings);
+      } else {
+        transition = settings.transition_config[transitionId];
       }
 
+      if (!transition) {
+        return null;
+      }
+      return { id: transitionId, transition: transition };
+    }
+  }
+
+  class PlayerSet {
+    constructor(settings) {
       this._players = new Map();
       this.ego_id = settings.ego_id;
-    };
+      this.settings = settings;
+    }
 
-    PlayerSet.prototype.isPlayerAt = function (position) {
+    isPlayerAt(position) {
       return Array.from(this._players.values()).some((player) =>
         positionsAreEqual(position, player.position),
       );
-    };
+    }
 
-    PlayerSet.prototype.drawToGrid = function (grid) {
+    drawToGrid(grid) {
       let minScore, maxScore, d, color, player_color;
 
       if (settings.score_visible) {
@@ -21675,9 +21535,9 @@ var require;/*global dallinger, store */
           }
         }
       }
-    };
+    }
 
-    PlayerSet.prototype.nearest = function (row, column) {
+    nearest(row, column) {
       return Array.from(this._players.values()).reduce((nearest, player) => {
         const distance =
           Math.abs(row - player.position[0]) +
@@ -21686,12 +21546,12 @@ var require;/*global dallinger, store */
           ? { player: player, distance: distance }
           : nearest;
       }, null).player;
-    };
+    }
 
-    PlayerSet.prototype.getAdjacentPlayers = function () {
+    getAdjacentPlayers() {
       /* Return a list of players adjacent to the ego player */
-      adjacentPlayers = [];
-      let egoPostiion = this.ego().position;
+      const adjacentPlayers = [];
+      const egoPostiion = this.ego().position;
       for (const [id, player] of this._players) {
         if (id === ego) {
           continue;
@@ -21704,21 +21564,21 @@ var require;/*global dallinger, store */
         }
       }
       return adjacentPlayers;
-    };
+    }
 
-    PlayerSet.prototype.ego = function () {
+    ego() {
       return this.get(this.ego_id);
-    };
+    }
 
-    PlayerSet.prototype.get = function (id) {
+    get(id) {
       return this._players.get(id);
-    };
+    }
 
-    PlayerSet.prototype.count = function () {
+    count() {
       return this._players.size;
-    };
+    }
 
-    PlayerSet.prototype.update = function (allPlayersData) {
+    update(allPlayersData) {
       let freshPlayerData, existingPlayer, i;
 
       for (i = 0; i < allPlayersData.length; i++) {
@@ -21749,171 +21609,73 @@ var require;/*global dallinger, store */
           new Player(freshPlayerData, last_dimness),
         );
       }
-    };
+    }
 
-    PlayerSet.prototype.startScheduledAutosyncOfEgoPosition = function () {
+    startScheduledAutosyncOfEgoPosition() {
       var self = this;
       setInterval(function () {
         var ego = self.ego();
         if (ego) {
           ego.positionInSync = false;
           console.log(
-            "Scheduled marking of (" + ego.id + ") as out of sync with server.",
+            `Scheduled marking of (${ego.id}) as out of sync with server.`,
           );
         }
       }, 5000);
-    };
+    }
 
-    PlayerSet.prototype.maxScore = function () {
+    maxScore() {
       return Array.from(this._players.values()).reduce(
         (max, player) => (player.score > max ? player.score : max),
         0,
       );
-    };
+    }
 
-    PlayerSet.prototype.minScore = function () {
+    minScore() {
       return Array.from(this._players.values()).reduce(
         (min, player) => (player.score < min ? player.score : min),
         Infinity,
       );
-    };
+    }
 
-    PlayerSet.prototype.each = function (callback) {
+    each(callback) {
       let i = 0;
-
       for (const player of this._players.values()) {
         callback(i, player);
         i++;
       }
-    };
+    }
 
-    PlayerSet.prototype.group_scores = function () {
-      const group_scores = {};
+    groupScores() {
+      const scores = {};
 
       for (const player of this._players.values()) {
-        let color_name = player.color;
-        let cur_score = group_scores[color_name] || 0;
-        group_scores[color_name] = cur_score + Math.round(player.score);
+        let colorName = player.color;
+        let cur_score = scores[colorName] || 0;
+        scores[colorName] = cur_score + Math.round(player.score);
       }
 
-      var group_order = Object.keys(group_scores).sort(function (a, b) {
-        return group_scores[a] > group_scores[b]
-          ? -1
-          : group_scores[a] < group_scores[b]
-            ? 1
-            : 0;
+      const groupOrder = Object.keys(scores).sort(function (a, b) {
+        return scores[a] > scores[b] ? -1 : scores[a] < scores[b] ? 1 : 0;
       });
 
-      return group_order.map(function (color_name) {
-        return { name: color_name, score: group_scores[color_name] };
-      });
-    };
+      return groupOrder.map((colorName) => ({
+        name: colorName,
+        score: groupScores[colorName],
+      }));
+    }
 
-    PlayerSet.prototype.player_scores = function () {
+    playerScores() {
       return Array.from(this._players, ([id, player]) => ({
         id: id,
         name: player.name,
         score: player.score,
       })).sort((a, b) => b.score - a.score);
-    };
-
-    return PlayerSet;
-  })();
-
-  var GUSocket = (function () {
-    var makeSocket = function (endpoint, channel, tolerance) {
-      var ws_scheme =
-          window.location.protocol === "https:" ? "wss://" : "ws://",
-        app_root = ws_scheme + location.host + "/",
-        socket;
-
-      socket = new ReconnectingWebSocket(
-        app_root + endpoint + "?channel=" + channel + "&tolerance=" + tolerance,
-      );
-      socket.debug = true;
-
-      return socket;
-    };
-
-    var dispatch = function (self, event) {
-      var marker = self.broadcastChannel + ":";
-      if (event.data.indexOf(marker) !== 0) {
-        console.log(
-          "Message was not on channel " + self.broadcastChannel + ". Ignoring.",
-        );
-        return;
-      }
-      var msg = JSON.parse(event.data.substring(marker.length));
-
-      var callback = self.callbackMap[msg.type];
-      if (!_.isUndefined(callback)) {
-        callback(msg);
-      } else {
-        console.log("Unrecognized message type " + msg.type + " from backend.");
-      }
-    };
-
-    /*
-     * Public API
-     */
-    var Socket = function (settings) {
-      if (!(this instanceof Socket)) {
-        return new Socket(settings);
-      }
-
-      var self = this,
-        tolerance = _.isUndefined(settings.lagTolerance)
-          ? 0.1
-          : settings.lagTolerance;
-
-      this.broadcastChannel = settings.broadcast;
-      this.controlChannel = settings.control;
-      this.callbackMap = settings.callbackMap;
-
-      this.socket = makeSocket(
-        settings.endpoint,
-        this.broadcastChannel,
-        tolerance,
-      );
-
-      this.socket.onmessage = function (event) {
-        dispatch(self, event);
-      };
-    };
-
-    Socket.prototype.open = function () {
-      var isOpen = $.Deferred();
-
-      this.socket.onopen = function (event) {
-        isOpen.resolve();
-      };
-
-      return isOpen;
-    };
-
-    Socket.prototype.send = function (data) {
-      var msg = JSON.stringify(data),
-        channel = this.controlChannel;
-
-      console.log("Sending message to the " + channel + " channel: " + msg);
-      this.socket.send(channel + ":" + msg);
-    };
-
-    Socket.prototype.broadcast = function (data) {
-      var msg = JSON.stringify(data),
-        channel = this.broadcastChannel;
-
-      console.log(
-        "Broadcasting message to the " + channel + " channel: " + msg,
-      );
-      this.socket.send(channel + ":" + msg);
-    };
-
-    return Socket;
-  })();
+    }
+  }
 
   // ego will be updated on page load
-  var players = playerSet({ ego_id: undefined });
+  var players = new PlayerSet({ ego_id: undefined });
 
   pixels.canvas.style.marginLeft = (window.innerWidth * 0.03) / 2 + "px";
   pixels.canvas.style.marginTop = (window.innerHeight * 0.04) / 2 + "px";
@@ -22640,12 +22402,12 @@ var require;/*global dallinger, store */
       if (settings.leaderboard_individual) {
         pushMessage("<em>Group</em>");
       }
-      var group_scores = players.group_scores();
+      var groupScores = players.groupScores();
       var rgb_map = function (e) {
         return Math.round(e * 255);
       };
-      for (i = 0; i < group_scores.length; i++) {
-        var group = group_scores[i];
+      for (i = 0; i < groupScores.length; i++) {
+        var group = groupScores[i];
         var color = settings.player_colors[name2idx(group.name)].map(rgb_map);
         pushMessage(
           '<span class="GroupScore">' +
@@ -22660,9 +22422,9 @@ var require;/*global dallinger, store */
       if (settings.leaderboard_group) {
         pushMessage("<em>Individual</em>");
       }
-      var player_scores = players.player_scores();
-      for (i = 0; i < player_scores.length; i++) {
-        var player = player_scores[i];
+      var playerScores = players.playerScores();
+      for (i = 0; i < playerScores.length; i++) {
+        var player = playerScores[i];
         var player_name = chatName(player.id);
         pushMessage(
           '<span class="PlayerScore">' +
@@ -22705,7 +22467,7 @@ var require;/*global dallinger, store */
     };
   }
 
-  $(document).ready(function () {
+  $(function () {
     var player_id = dallinger.getUrlParameter("participant_id");
     isSpectator = _.isUndefined(player_id);
     var socketSettings = {
@@ -22724,7 +22486,7 @@ var require;/*global dallinger, store */
         move_rejection: onMoveRejected,
       },
     };
-    var socket = new GUSocket(socketSettings);
+    const socket = new socketlib.GUSocket(socketSettings);
 
     socket.open().done(function () {
       var data = {
@@ -23704,7 +23466,7 @@ module.exports = {
 
 /* MIT license */
 var colorNames = __webpack_require__(29);
-var swizzle = __webpack_require__(40);
+var swizzle = __webpack_require__(41);
 var hasOwnProperty = Object.hasOwnProperty;
 
 var reverseNames = Object.create(null);
@@ -25688,6 +25450,228 @@ module.exports = convert;
 
 /***/ }),
 /* 39 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+;
+;
+;
+var isWebSocket = function (constructor) {
+    return constructor && constructor.CLOSING === 2;
+};
+var isGlobalWebSocket = function () {
+    return typeof WebSocket !== 'undefined' && isWebSocket(WebSocket);
+};
+var getDefaultOptions = function () { return ({
+    constructor: isGlobalWebSocket() ? WebSocket : null,
+    maxReconnectionDelay: 10000,
+    minReconnectionDelay: 1500,
+    reconnectionDelayGrowFactor: 1.3,
+    connectionTimeout: 4000,
+    maxRetries: Infinity,
+    debug: false,
+}); };
+var bypassProperty = function (src, dst, name) {
+    Object.defineProperty(dst, name, {
+        get: function () { return src[name]; },
+        set: function (value) { src[name] = value; },
+        enumerable: true,
+        configurable: true,
+    });
+};
+var initReconnectionDelay = function (config) {
+    return (config.minReconnectionDelay + Math.random() * config.minReconnectionDelay);
+};
+var updateReconnectionDelay = function (config, previousDelay) {
+    var newDelay = previousDelay * config.reconnectionDelayGrowFactor;
+    return (newDelay > config.maxReconnectionDelay)
+        ? config.maxReconnectionDelay
+        : newDelay;
+};
+var LEVEL_0_EVENTS = ['onopen', 'onclose', 'onmessage', 'onerror'];
+var reassignEventListeners = function (ws, oldWs, listeners) {
+    Object.keys(listeners).forEach(function (type) {
+        listeners[type].forEach(function (_a) {
+            var listener = _a[0], options = _a[1];
+            ws.addEventListener(type, listener, options);
+        });
+    });
+    if (oldWs) {
+        LEVEL_0_EVENTS.forEach(function (name) {
+            ws[name] = oldWs[name];
+        });
+    }
+};
+var ReconnectingWebsocket = function (url, protocols, options) {
+    var _this = this;
+    if (options === void 0) { options = {}; }
+    var ws;
+    var connectingTimeout;
+    var reconnectDelay = 0;
+    var retriesCount = 0;
+    var shouldRetry = true;
+    var savedOnClose = null;
+    var listeners = {};
+    // require new to construct
+    if (!(this instanceof ReconnectingWebsocket)) {
+        throw new TypeError("Failed to construct 'ReconnectingWebSocket': Please use the 'new' operator");
+    }
+    // Set config. Not using `Object.assign` because of IE11
+    var config = getDefaultOptions();
+    Object.keys(config)
+        .filter(function (key) { return options.hasOwnProperty(key); })
+        .forEach(function (key) { return config[key] = options[key]; });
+    if (!isWebSocket(config.constructor)) {
+        throw new TypeError('Invalid WebSocket constructor. Set `options.constructor`');
+    }
+    var log = config.debug ? function () {
+        var params = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            params[_i] = arguments[_i];
+        }
+        return console.log.apply(console, ['RWS:'].concat(params));
+    } : function () { };
+    /**
+     * Not using dispatchEvent, otherwise we must use a DOM Event object
+     * Deferred because we want to handle the close event before this
+     */
+    var emitError = function (code, msg) { return setTimeout(function () {
+        var err = new Error(msg);
+        err.code = code;
+        if (Array.isArray(listeners.error)) {
+            listeners.error.forEach(function (_a) {
+                var fn = _a[0];
+                return fn(err);
+            });
+        }
+        if (ws.onerror) {
+            ws.onerror(err);
+        }
+    }, 0); };
+    var handleClose = function () {
+        log('handleClose', { shouldRetry: shouldRetry });
+        retriesCount++;
+        log('retries count:', retriesCount);
+        if (retriesCount > config.maxRetries) {
+            emitError('EHOSTDOWN', 'Too many failed connection attempts');
+            return;
+        }
+        if (!reconnectDelay) {
+            reconnectDelay = initReconnectionDelay(config);
+        }
+        else {
+            reconnectDelay = updateReconnectionDelay(config, reconnectDelay);
+        }
+        log('handleClose - reconnectDelay:', reconnectDelay);
+        if (shouldRetry) {
+            setTimeout(connect, reconnectDelay);
+        }
+    };
+    var connect = function () {
+        if (!shouldRetry) {
+            return;
+        }
+        log('connect');
+        var oldWs = ws;
+        var wsUrl = (typeof url === 'function') ? url() : url;
+        ws = new config.constructor(wsUrl, protocols);
+        connectingTimeout = setTimeout(function () {
+            log('timeout');
+            ws.close();
+            emitError('ETIMEDOUT', 'Connection timeout');
+        }, config.connectionTimeout);
+        log('bypass properties');
+        for (var key in ws) {
+            // @todo move to constant
+            if (['addEventListener', 'removeEventListener', 'close', 'send'].indexOf(key) < 0) {
+                bypassProperty(ws, _this, key);
+            }
+        }
+        ws.addEventListener('open', function () {
+            clearTimeout(connectingTimeout);
+            log('open');
+            reconnectDelay = initReconnectionDelay(config);
+            log('reconnectDelay:', reconnectDelay);
+            retriesCount = 0;
+        });
+        ws.addEventListener('close', handleClose);
+        reassignEventListeners(ws, oldWs, listeners);
+        // because when closing with fastClose=true, it is saved and set to null to avoid double calls
+        ws.onclose = ws.onclose || savedOnClose;
+        savedOnClose = null;
+    };
+    log('init');
+    connect();
+    this.close = function (code, reason, _a) {
+        if (code === void 0) { code = 1000; }
+        if (reason === void 0) { reason = ''; }
+        var _b = _a === void 0 ? {} : _a, _c = _b.keepClosed, keepClosed = _c === void 0 ? false : _c, _d = _b.fastClose, fastClose = _d === void 0 ? true : _d, _e = _b.delay, delay = _e === void 0 ? 0 : _e;
+        log('close - params:', { reason: reason, keepClosed: keepClosed, fastClose: fastClose, delay: delay, retriesCount: retriesCount, maxRetries: config.maxRetries });
+        shouldRetry = !keepClosed && retriesCount <= config.maxRetries;
+        if (delay) {
+            reconnectDelay = delay;
+        }
+        ws.close(code, reason);
+        if (fastClose) {
+            var fakeCloseEvent_1 = {
+                code: code,
+                reason: reason,
+                wasClean: true,
+            };
+            // execute close listeners soon with a fake closeEvent
+            // and remove them from the WS instance so they
+            // don't get fired on the real close.
+            handleClose();
+            ws.removeEventListener('close', handleClose);
+            // run and remove level2
+            if (Array.isArray(listeners.close)) {
+                listeners.close.forEach(function (_a) {
+                    var listener = _a[0], options = _a[1];
+                    listener(fakeCloseEvent_1);
+                    ws.removeEventListener('close', listener, options);
+                });
+            }
+            // run and remove level0
+            if (ws.onclose) {
+                savedOnClose = ws.onclose;
+                ws.onclose(fakeCloseEvent_1);
+                ws.onclose = null;
+            }
+        }
+    };
+    this.send = function (data) {
+        ws.send(data);
+    };
+    this.addEventListener = function (type, listener, options) {
+        if (Array.isArray(listeners[type])) {
+            if (!listeners[type].some(function (_a) {
+                var l = _a[0];
+                return l === listener;
+            })) {
+                listeners[type].push([listener, options]);
+            }
+        }
+        else {
+            listeners[type] = [[listener, options]];
+        }
+        ws.addEventListener(type, listener, options);
+    };
+    this.removeEventListener = function (type, listener, options) {
+        if (Array.isArray(listeners[type])) {
+            listeners[type] = listeners[type].filter(function (_a) {
+                var l = _a[0];
+                return l !== listener;
+            });
+        }
+        ws.removeEventListener(type, listener, options);
+    };
+};
+module.exports = ReconnectingWebsocket;
+
+
+/***/ }),
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function (global, factory) {
@@ -35914,7 +35898,7 @@ return wrapREGL;
 
 
 /***/ }),
-/* 40 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -35950,7 +35934,7 @@ swizzle.wrap = function (fn) {
 
 
 /***/ }),
-/* 41 */
+/* 42 */
 /***/ (function(module, exports) {
 
 var g;
@@ -35977,7 +35961,7 @@ module.exports = g;
 
 
 /***/ }),
-/* 42 */
+/* 43 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {

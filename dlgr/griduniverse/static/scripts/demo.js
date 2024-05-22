@@ -5,7 +5,6 @@
   var grid = require("./index");
   var position = require("mouse-position");
   var Mousetrap = require("mousetrap");
-  var ReconnectingWebSocket = require("reconnecting-websocket");
   var $ = require("jquery");
   var gaussian = require("gaussian");
   var Color = require("color");
@@ -13,6 +12,7 @@
   var _ = require("lodash");
   var md5 = require("./util/md5");
   var itemlib = require("./items");
+  var socketlib = require("./gusocket");
 
   function coordsToIdx(x, y, columns) {
     return y * columns + x;
@@ -168,140 +168,133 @@
     return this;
   };
 
-  var Player = function (settings, dimness) {
-    if (!(this instanceof Player)) {
-      return new Player();
+  class Player {
+    constructor(settings, dimness) {
+      this.id = settings.id;
+      this.position = settings.position;
+      this.positionInSync = true;
+      this.color = settings.color;
+      this.motion_auto = settings.motion_auto;
+      this.motion_direction = settings.motion_direction;
+      this.motion_speed_limit = settings.motion_speed_limit;
+      this.motion_timestamp = settings.motion_timestamp;
+      this.score = settings.score;
+      this.payoff = settings.payoff;
+      this.name = settings.name;
+      this.identity_visible = settings.identity_visible;
+      this.dimness = dimness;
+      this.replaceCurrentItem(settings.current_item || null);
     }
-    this.id = settings.id;
-    this.position = settings.position;
-    this.positionInSync = true;
-    this.color = settings.color;
-    this.motion_auto = settings.motion_auto;
-    this.motion_direction = settings.motion_direction;
-    this.motion_speed_limit = settings.motion_speed_limit;
-    this.motion_timestamp = settings.motion_timestamp;
-    this.score = settings.score;
-    this.payoff = settings.payoff;
-    this.name = settings.name;
-    this.identity_visible = settings.identity_visible;
-    this.dimness = dimness;
-    this.replaceCurrentItem(settings.current_item || null);
-    return this;
-  };
 
-  Player.prototype.move = function (direction) {
-    function _isCrossable(position) {
-      const hasWall = !_.isUndefined(wall_map[[position[1], position[0]]]);
-      if (hasWall) {
-        return false;
+    move(direction) {
+      function _isCrossable(position) {
+        const hasWall = !_.isUndefined(wall_map[[position[1], position[0]]]);
+        if (hasWall) {
+          return false;
+        }
+        const itemHere = gridItems.atPosition(position);
+        return _.isNull(itemHere) || itemHere.crossable;
       }
-      const itemHere = gridItems.atPosition(position);
-      return _.isNull(itemHere) || itemHere.crossable;
+      const ts = performance.now() - start;
+      const waitTime = 1000 / this.motion_speed_limit;
+
+      this.motion_direction = direction;
+
+      if (ts > this.motion_timestamp + waitTime) {
+        const newPosition = this.position.slice();
+
+        switch (direction) {
+          case "up":
+            if (this.position[0] > 0) {
+              newPosition[0] -= 1;
+            }
+            break;
+
+          case "down":
+            if (this.position[0] < settings.rows - 1) {
+              newPosition[0] += 1;
+            }
+            break;
+
+          case "left":
+            if (this.position[1] > 0) {
+              newPosition[1] -= 1;
+            }
+            break;
+
+          case "right":
+            if (this.position[1] < settings.columns - 1) {
+              newPosition[1] += 1;
+            }
+            break;
+
+          default:
+            console.log("Direction not recognized.");
+        }
+
+        if (
+          _isCrossable(newPosition) &&
+          (!players.isPlayerAt(newPosition) || settings.player_overlap)
+        ) {
+          this.position = newPosition;
+          this.motion_timestamp = ts;
+          return true;
+        }
+      }
+      return false;
     }
 
-    this.motion_direction = direction;
-
-    var ts = performance.now() - start,
-      waitTime = 1000 / this.motion_speed_limit;
-
-    if (ts > this.motion_timestamp + waitTime) {
-      var newPosition = this.position.slice();
-
-      switch (direction) {
-        case "up":
-          if (this.position[0] > 0) {
-            newPosition[0] -= 1;
-          }
-          break;
-
-        case "down":
-          if (this.position[0] < settings.rows - 1) {
-            newPosition[0] += 1;
-          }
-          break;
-
-        case "left":
-          if (this.position[1] > 0) {
-            newPosition[1] -= 1;
-          }
-          break;
-
-        case "right":
-          if (this.position[1] < settings.columns - 1) {
-            newPosition[1] += 1;
-          }
-          break;
-
-        default:
-          console.log("Direction not recognized.");
+    replaceCurrentItem(item) {
+      if (item && !(item instanceof itemlib.Item)) {
+        item = new itemlib.Item(
+          item.id,
+          item.item_id,
+          item.maturity,
+          item.remaining_uses,
+        );
       }
 
-      if (
-        _isCrossable(newPosition) &&
-        (!players.isPlayerAt(newPosition) || settings.player_overlap)
-      ) {
-        this.position = newPosition;
-        this.motion_timestamp = ts;
-        return true;
-      }
+      this.currentItem = item;
     }
-    return false;
-  };
 
-  Player.prototype.replaceCurrentItem = function (item) {
-    if (item && !(item instanceof itemlib.Item)) {
-      item = new itemlib.Item(
-        item.id,
-        item.item_id,
-        item.maturity,
-        item.remaining_uses,
-      );
-    }
-    this.currentItem = item;
-  };
+    getTransition() {
+      const playerItem = this.currentItem;
+      const position = this.position;
+      const itemAtPos = gridItems.atPosition(position);
+      let transitionId =
+        ((playerItem && playerItem.itemId) || "") +
+        "|" +
+        ((itemAtPos && itemAtPos.itemId) || "");
+      const lastTransitionId = "last_" + transitionId;
+      let transition = settings.transition_config[lastTransitionId];
 
-  Player.prototype.getTransition = function () {
-    var transition;
-    var player_item = this.currentItem;
-    var position = this.position;
-    var item_at_pos = gridItems.atPosition(position);
-    var transitionId =
-      ((player_item && player_item.itemId) || "") +
-      "|" +
-      ((item_at_pos && item_at_pos.itemId) || "");
-    var lastTransitionId = "last_" + transitionId;
-    if (item_at_pos && item_at_pos.remaining_uses == 1) {
-      transition = settings.transition_config[lastTransitionId];
-      if (transition) {
+      if (itemAtPos && itemAtPos.remaining_uses === 1 && transition) {
         transitionId = lastTransitionId;
-      }
-    }
-    if (!transition) {
-      transition = settings.transition_config[transitionId];
-    }
-    if (!transition) {
-      return null;
-    }
-    return { id: transitionId, transition: transition };
-  };
-
-  var playerSet = (function () {
-    var PlayerSet = function (settings) {
-      if (!(this instanceof PlayerSet)) {
-        return new PlayerSet(settings);
+      } else {
+        transition = settings.transition_config[transitionId];
       }
 
+      if (!transition) {
+        return null;
+      }
+      return { id: transitionId, transition: transition };
+    }
+  }
+
+  class PlayerSet {
+    constructor(settings) {
       this._players = new Map();
       this.ego_id = settings.ego_id;
-    };
+      this.settings = settings;
+    }
 
-    PlayerSet.prototype.isPlayerAt = function (position) {
+    isPlayerAt(position) {
       return Array.from(this._players.values()).some((player) =>
         positionsAreEqual(position, player.position),
       );
-    };
+    }
 
-    PlayerSet.prototype.drawToGrid = function (grid) {
+    drawToGrid(grid) {
       let minScore, maxScore, d, color, player_color;
 
       if (settings.score_visible) {
@@ -346,9 +339,9 @@
           }
         }
       }
-    };
+    }
 
-    PlayerSet.prototype.nearest = function (row, column) {
+    nearest(row, column) {
       return Array.from(this._players.values()).reduce((nearest, player) => {
         const distance =
           Math.abs(row - player.position[0]) +
@@ -357,12 +350,12 @@
           ? { player: player, distance: distance }
           : nearest;
       }, null).player;
-    };
+    }
 
-    PlayerSet.prototype.getAdjacentPlayers = function () {
+    getAdjacentPlayers() {
       /* Return a list of players adjacent to the ego player */
-      adjacentPlayers = [];
-      let egoPostiion = this.ego().position;
+      const adjacentPlayers = [];
+      const egoPostiion = this.ego().position;
       for (const [id, player] of this._players) {
         if (id === ego) {
           continue;
@@ -375,21 +368,21 @@
         }
       }
       return adjacentPlayers;
-    };
+    }
 
-    PlayerSet.prototype.ego = function () {
+    ego() {
       return this.get(this.ego_id);
-    };
+    }
 
-    PlayerSet.prototype.get = function (id) {
+    get(id) {
       return this._players.get(id);
-    };
+    }
 
-    PlayerSet.prototype.count = function () {
+    count() {
       return this._players.size;
-    };
+    }
 
-    PlayerSet.prototype.update = function (allPlayersData) {
+    update(allPlayersData) {
       let freshPlayerData, existingPlayer, i;
 
       for (i = 0; i < allPlayersData.length; i++) {
@@ -420,171 +413,73 @@
           new Player(freshPlayerData, last_dimness),
         );
       }
-    };
+    }
 
-    PlayerSet.prototype.startScheduledAutosyncOfEgoPosition = function () {
+    startScheduledAutosyncOfEgoPosition() {
       var self = this;
       setInterval(function () {
         var ego = self.ego();
         if (ego) {
           ego.positionInSync = false;
           console.log(
-            "Scheduled marking of (" + ego.id + ") as out of sync with server.",
+            `Scheduled marking of (${ego.id}) as out of sync with server.`,
           );
         }
       }, 5000);
-    };
+    }
 
-    PlayerSet.prototype.maxScore = function () {
+    maxScore() {
       return Array.from(this._players.values()).reduce(
         (max, player) => (player.score > max ? player.score : max),
         0,
       );
-    };
+    }
 
-    PlayerSet.prototype.minScore = function () {
+    minScore() {
       return Array.from(this._players.values()).reduce(
         (min, player) => (player.score < min ? player.score : min),
         Infinity,
       );
-    };
+    }
 
-    PlayerSet.prototype.each = function (callback) {
+    each(callback) {
       let i = 0;
-
       for (const player of this._players.values()) {
         callback(i, player);
         i++;
       }
-    };
+    }
 
-    PlayerSet.prototype.group_scores = function () {
-      const group_scores = {};
+    groupScores() {
+      const scores = {};
 
       for (const player of this._players.values()) {
-        let color_name = player.color;
-        let cur_score = group_scores[color_name] || 0;
-        group_scores[color_name] = cur_score + Math.round(player.score);
+        let colorName = player.color;
+        let cur_score = scores[colorName] || 0;
+        scores[colorName] = cur_score + Math.round(player.score);
       }
 
-      var group_order = Object.keys(group_scores).sort(function (a, b) {
-        return group_scores[a] > group_scores[b]
-          ? -1
-          : group_scores[a] < group_scores[b]
-            ? 1
-            : 0;
+      const groupOrder = Object.keys(scores).sort(function (a, b) {
+        return scores[a] > scores[b] ? -1 : scores[a] < scores[b] ? 1 : 0;
       });
 
-      return group_order.map(function (color_name) {
-        return { name: color_name, score: group_scores[color_name] };
-      });
-    };
+      return groupOrder.map((colorName) => ({
+        name: colorName,
+        score: groupScores[colorName],
+      }));
+    }
 
-    PlayerSet.prototype.player_scores = function () {
+    playerScores() {
       return Array.from(this._players, ([id, player]) => ({
         id: id,
         name: player.name,
         score: player.score,
       })).sort((a, b) => b.score - a.score);
-    };
-
-    return PlayerSet;
-  })();
-
-  var GUSocket = (function () {
-    var makeSocket = function (endpoint, channel, tolerance) {
-      var ws_scheme =
-          window.location.protocol === "https:" ? "wss://" : "ws://",
-        app_root = ws_scheme + location.host + "/",
-        socket;
-
-      socket = new ReconnectingWebSocket(
-        app_root + endpoint + "?channel=" + channel + "&tolerance=" + tolerance,
-      );
-      socket.debug = true;
-
-      return socket;
-    };
-
-    var dispatch = function (self, event) {
-      var marker = self.broadcastChannel + ":";
-      if (event.data.indexOf(marker) !== 0) {
-        console.log(
-          "Message was not on channel " + self.broadcastChannel + ". Ignoring.",
-        );
-        return;
-      }
-      var msg = JSON.parse(event.data.substring(marker.length));
-
-      var callback = self.callbackMap[msg.type];
-      if (!_.isUndefined(callback)) {
-        callback(msg);
-      } else {
-        console.log("Unrecognized message type " + msg.type + " from backend.");
-      }
-    };
-
-    /*
-     * Public API
-     */
-    var Socket = function (settings) {
-      if (!(this instanceof Socket)) {
-        return new Socket(settings);
-      }
-
-      var self = this,
-        tolerance = _.isUndefined(settings.lagTolerance)
-          ? 0.1
-          : settings.lagTolerance;
-
-      this.broadcastChannel = settings.broadcast;
-      this.controlChannel = settings.control;
-      this.callbackMap = settings.callbackMap;
-
-      this.socket = makeSocket(
-        settings.endpoint,
-        this.broadcastChannel,
-        tolerance,
-      );
-
-      this.socket.onmessage = function (event) {
-        dispatch(self, event);
-      };
-    };
-
-    Socket.prototype.open = function () {
-      var isOpen = $.Deferred();
-
-      this.socket.onopen = function (event) {
-        isOpen.resolve();
-      };
-
-      return isOpen;
-    };
-
-    Socket.prototype.send = function (data) {
-      var msg = JSON.stringify(data),
-        channel = this.controlChannel;
-
-      console.log("Sending message to the " + channel + " channel: " + msg);
-      this.socket.send(channel + ":" + msg);
-    };
-
-    Socket.prototype.broadcast = function (data) {
-      var msg = JSON.stringify(data),
-        channel = this.broadcastChannel;
-
-      console.log(
-        "Broadcasting message to the " + channel + " channel: " + msg,
-      );
-      this.socket.send(channel + ":" + msg);
-    };
-
-    return Socket;
-  })();
+    }
+  }
 
   // ego will be updated on page load
-  var players = playerSet({ ego_id: undefined });
+  var players = new PlayerSet({ ego_id: undefined });
 
   pixels.canvas.style.marginLeft = (window.innerWidth * 0.03) / 2 + "px";
   pixels.canvas.style.marginTop = (window.innerHeight * 0.04) / 2 + "px";
@@ -1311,12 +1206,12 @@
       if (settings.leaderboard_individual) {
         pushMessage("<em>Group</em>");
       }
-      var group_scores = players.group_scores();
+      var groupScores = players.groupScores();
       var rgb_map = function (e) {
         return Math.round(e * 255);
       };
-      for (i = 0; i < group_scores.length; i++) {
-        var group = group_scores[i];
+      for (i = 0; i < groupScores.length; i++) {
+        var group = groupScores[i];
         var color = settings.player_colors[name2idx(group.name)].map(rgb_map);
         pushMessage(
           '<span class="GroupScore">' +
@@ -1331,9 +1226,9 @@
       if (settings.leaderboard_group) {
         pushMessage("<em>Individual</em>");
       }
-      var player_scores = players.player_scores();
-      for (i = 0; i < player_scores.length; i++) {
-        var player = player_scores[i];
+      var playerScores = players.playerScores();
+      for (i = 0; i < playerScores.length; i++) {
+        var player = playerScores[i];
         var player_name = chatName(player.id);
         pushMessage(
           '<span class="PlayerScore">' +
@@ -1376,7 +1271,7 @@
     };
   }
 
-  $(document).ready(function () {
+  $(function () {
     var player_id = dallinger.getUrlParameter("participant_id");
     isSpectator = _.isUndefined(player_id);
     var socketSettings = {
@@ -1395,7 +1290,7 @@
         move_rejection: onMoveRejected,
       },
     };
-    var socket = new GUSocket(socketSettings);
+    const socket = new socketlib.GUSocket(socketSettings);
 
     socket.open().done(function () {
       var data = {

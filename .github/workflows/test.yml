@@ -1,11 +1,11 @@
-name: Run tests
+name: Run tests and pre-commit hooks
 
 on:
   push:
 
 jobs:
   test:
-    name: Run tests
+    name: tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -43,6 +43,7 @@ jobs:
           fail-on-empty: true
 
   pre-commit:
+    name: pre-commit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
