@@ -7,10 +7,6 @@ import ReconnectingWebSocket from "reconnecting-websocket";
 
 export class GUSocket {
   constructor(settings) {
-    if (!(this instanceof GUSocket)) {
-      return new GUSocket(settings);
-    }
-
     const tolerance =
       settings.lagTolerance === undefined ? 0.1 : settings.lagTolerance;
 

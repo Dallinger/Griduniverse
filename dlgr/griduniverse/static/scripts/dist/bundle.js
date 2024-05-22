@@ -18650,10 +18650,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 class GUSocket {
   constructor(settings) {
-    if (!(this instanceof GUSocket)) {
-      return new GUSocket(settings);
-    }
-
     const tolerance =
       settings.lagTolerance === undefined ? 0.1 : settings.lagTolerance;
 
