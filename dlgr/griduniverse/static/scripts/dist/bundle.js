@@ -21614,23 +21614,20 @@ var require;/*global dallinger, store */
     return { id: transitionId, transition: transition };
   };
 
-  var playerSet = (function () {
-    var PlayerSet = function (settings) {
-      if (!(this instanceof PlayerSet)) {
-        return new PlayerSet(settings);
-      }
-
+  class PlayerSet {
+    constructor(settings) {
       this._players = new Map();
       this.ego_id = settings.ego_id;
-    };
+      this.settings = settings;
+    }
 
-    PlayerSet.prototype.isPlayerAt = function (position) {
+    isPlayerAt(position) {
       return Array.from(this._players.values()).some((player) =>
         positionsAreEqual(position, player.position),
       );
-    };
+    }
 
-    PlayerSet.prototype.drawToGrid = function (grid) {
+    drawToGrid(grid) {
       let minScore, maxScore, d, color, player_color;
 
       if (settings.score_visible) {
@@ -21675,9 +21672,9 @@ var require;/*global dallinger, store */
           }
         }
       }
-    };
+    }
 
-    PlayerSet.prototype.nearest = function (row, column) {
+    nearest(row, column) {
       return Array.from(this._players.values()).reduce((nearest, player) => {
         const distance =
           Math.abs(row - player.position[0]) +
@@ -21686,12 +21683,12 @@ var require;/*global dallinger, store */
           ? { player: player, distance: distance }
           : nearest;
       }, null).player;
-    };
+    }
 
-    PlayerSet.prototype.getAdjacentPlayers = function () {
+    getAdjacentPlayers() {
       /* Return a list of players adjacent to the ego player */
-      adjacentPlayers = [];
-      let egoPostiion = this.ego().position;
+      const adjacentPlayers = [];
+      const egoPostiion = this.ego().position;
       for (const [id, player] of this._players) {
         if (id === ego) {
           continue;
@@ -21704,21 +21701,21 @@ var require;/*global dallinger, store */
         }
       }
       return adjacentPlayers;
-    };
+    }
 
-    PlayerSet.prototype.ego = function () {
+    ego() {
       return this.get(this.ego_id);
-    };
+    }
 
-    PlayerSet.prototype.get = function (id) {
+    get(id) {
       return this._players.get(id);
-    };
+    }
 
-    PlayerSet.prototype.count = function () {
+    count() {
       return this._players.size;
-    };
+    }
 
-    PlayerSet.prototype.update = function (allPlayersData) {
+    update(allPlayersData) {
       let freshPlayerData, existingPlayer, i;
 
       for (i = 0; i < allPlayersData.length; i++) {
@@ -21749,76 +21746,70 @@ var require;/*global dallinger, store */
           new Player(freshPlayerData, last_dimness),
         );
       }
-    };
+    }
 
-    PlayerSet.prototype.startScheduledAutosyncOfEgoPosition = function () {
+    startScheduledAutosyncOfEgoPosition() {
       var self = this;
       setInterval(function () {
         var ego = self.ego();
         if (ego) {
           ego.positionInSync = false;
           console.log(
-            "Scheduled marking of (" + ego.id + ") as out of sync with server.",
+            `Scheduled marking of (${ego.id}) as out of sync with server.`,
           );
         }
       }, 5000);
-    };
+    }
 
-    PlayerSet.prototype.maxScore = function () {
+    maxScore() {
       return Array.from(this._players.values()).reduce(
         (max, player) => (player.score > max ? player.score : max),
         0,
       );
-    };
+    }
 
-    PlayerSet.prototype.minScore = function () {
+    minScore() {
       return Array.from(this._players.values()).reduce(
         (min, player) => (player.score < min ? player.score : min),
         Infinity,
       );
-    };
+    }
 
-    PlayerSet.prototype.each = function (callback) {
+    each(callback) {
       let i = 0;
-
       for (const player of this._players.values()) {
         callback(i, player);
         i++;
       }
-    };
+    }
 
-    PlayerSet.prototype.group_scores = function () {
-      const group_scores = {};
+    groupScores() {
+      const scores = {};
 
       for (const player of this._players.values()) {
-        let color_name = player.color;
-        let cur_score = group_scores[color_name] || 0;
-        group_scores[color_name] = cur_score + Math.round(player.score);
+        let colorName = player.color;
+        let cur_score = scores[colorName] || 0;
+        scores[colorName] = cur_score + Math.round(player.score);
       }
 
-      var group_order = Object.keys(group_scores).sort(function (a, b) {
-        return group_scores[a] > group_scores[b]
-          ? -1
-          : group_scores[a] < group_scores[b]
-            ? 1
-            : 0;
+      const groupOrder = Object.keys(scores).sort(function (a, b) {
+        return scores[a] > scores[b] ? -1 : scores[a] < scores[b] ? 1 : 0;
       });
 
-      return group_order.map(function (color_name) {
-        return { name: color_name, score: group_scores[color_name] };
-      });
-    };
+      return groupOrder.map((colorName) => ({
+        name: colorName,
+        score: groupScores[colorName],
+      }));
+    }
 
-    PlayerSet.prototype.player_scores = function () {
+    playerScores() {
       return Array.from(this._players, ([id, player]) => ({
         id: id,
         name: player.name,
         score: player.score,
       })).sort((a, b) => b.score - a.score);
-    };
-
-    return PlayerSet;
-  })();
+    }
+  }
 
   var GUSocket = (function () {
     var makeSocket = function (endpoint, channel, tolerance) {
@@ -21913,7 +21904,7 @@ var require;/*global dallinger, store */
   })();
 
   // ego will be updated on page load
-  var players = playerSet({ ego_id: undefined });
+  var players = new PlayerSet({ ego_id: undefined });
 
   pixels.canvas.style.marginLeft = (window.innerWidth * 0.03) / 2 + "px";
   pixels.canvas.style.marginTop = (window.innerHeight * 0.04) / 2 + "px";
@@ -22640,12 +22631,12 @@ var require;/*global dallinger, store */
       if (settings.leaderboard_individual) {
         pushMessage("<em>Group</em>");
       }
-      var group_scores = players.group_scores();
+      var groupScores = players.groupScores();
       var rgb_map = function (e) {
         return Math.round(e * 255);
       };
-      for (i = 0; i < group_scores.length; i++) {
-        var group = group_scores[i];
+      for (i = 0; i < groupScores.length; i++) {
+        var group = groupScores[i];
         var color = settings.player_colors[name2idx(group.name)].map(rgb_map);
         pushMessage(
           '<span class="GroupScore">' +
@@ -22660,9 +22651,9 @@ var require;/*global dallinger, store */
       if (settings.leaderboard_group) {
         pushMessage("<em>Individual</em>");
       }
-      var player_scores = players.player_scores();
-      for (i = 0; i < player_scores.length; i++) {
-        var player = player_scores[i];
+      var playerScores = players.playerScores();
+      for (i = 0; i < playerScores.length; i++) {
+        var player = playerScores[i];
         var player_name = chatName(player.id);
         pushMessage(
           '<span class="PlayerScore">' +
