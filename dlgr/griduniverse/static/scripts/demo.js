@@ -5,7 +5,6 @@
   var grid = require("./index");
   var position = require("mouse-position");
   var Mousetrap = require("mousetrap");
-  var ReconnectingWebSocket = require("reconnecting-websocket");
   var $ = require("jquery");
   var gaussian = require("gaussian");
   var Color = require("color");
@@ -13,6 +12,7 @@
   var _ = require("lodash");
   var md5 = require("./util/md5");
   var itemlib = require("./items");
+  var socketlib = require("./gusocket");
 
   function coordsToIdx(x, y, columns) {
     return y * columns + x;
@@ -246,13 +246,14 @@
 
     replaceCurrentItem(item) {
       if (item && !(item instanceof itemlib.Item)) {
-        const item = new itemlib.Item(
+        item = new itemlib.Item(
           item.id,
           item.item_id,
           item.maturity,
           item.remaining_uses,
         );
       }
+
       this.currentItem = item;
     }
 
@@ -476,98 +477,6 @@
       })).sort((a, b) => b.score - a.score);
     }
   }
-
-  var GUSocket = (function () {
-    var makeSocket = function (endpoint, channel, tolerance) {
-      var ws_scheme =
-          window.location.protocol === "https:" ? "wss://" : "ws://",
-        app_root = ws_scheme + location.host + "/",
-        socket;
-
-      socket = new ReconnectingWebSocket(
-        app_root + endpoint + "?channel=" + channel + "&tolerance=" + tolerance,
-      );
-      socket.debug = true;
-
-      return socket;
-    };
-
-    var dispatch = function (self, event) {
-      var marker = self.broadcastChannel + ":";
-      if (event.data.indexOf(marker) !== 0) {
-        console.log(
-          "Message was not on channel " + self.broadcastChannel + ". Ignoring.",
-        );
-        return;
-      }
-      var msg = JSON.parse(event.data.substring(marker.length));
-
-      var callback = self.callbackMap[msg.type];
-      if (!_.isUndefined(callback)) {
-        callback(msg);
-      } else {
-        console.log("Unrecognized message type " + msg.type + " from backend.");
-      }
-    };
-
-    /*
-     * Public API
-     */
-    var Socket = function (settings) {
-      if (!(this instanceof Socket)) {
-        return new Socket(settings);
-      }
-
-      var self = this,
-        tolerance = _.isUndefined(settings.lagTolerance)
-          ? 0.1
-          : settings.lagTolerance;
-
-      this.broadcastChannel = settings.broadcast;
-      this.controlChannel = settings.control;
-      this.callbackMap = settings.callbackMap;
-
-      this.socket = makeSocket(
-        settings.endpoint,
-        this.broadcastChannel,
-        tolerance,
-      );
-
-      this.socket.onmessage = function (event) {
-        dispatch(self, event);
-      };
-    };
-
-    Socket.prototype.open = function () {
-      var isOpen = $.Deferred();
-
-      this.socket.onopen = function (event) {
-        isOpen.resolve();
-      };
-
-      return isOpen;
-    };
-
-    Socket.prototype.send = function (data) {
-      var msg = JSON.stringify(data),
-        channel = this.controlChannel;
-
-      console.log("Sending message to the " + channel + " channel: " + msg);
-      this.socket.send(channel + ":" + msg);
-    };
-
-    Socket.prototype.broadcast = function (data) {
-      var msg = JSON.stringify(data),
-        channel = this.broadcastChannel;
-
-      console.log(
-        "Broadcasting message to the " + channel + " channel: " + msg,
-      );
-      this.socket.send(channel + ":" + msg);
-    };
-
-    return Socket;
-  })();
 
   // ego will be updated on page load
   var players = new PlayerSet({ ego_id: undefined });
@@ -1362,7 +1271,7 @@
     };
   }
 
-  $(document).ready(function () {
+  $(function () {
     var player_id = dallinger.getUrlParameter("participant_id");
     isSpectator = _.isUndefined(player_id);
     var socketSettings = {
@@ -1381,7 +1290,7 @@
         move_rejection: onMoveRejected,
       },
     };
-    var socket = new GUSocket(socketSettings);
+    const socket = new socketlib.GUSocket(socketSettings);
 
     socket.open().done(function () {
       var data = {
