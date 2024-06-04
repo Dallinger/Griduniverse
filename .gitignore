@@ -68,3 +68,6 @@ lib
 local
 selenium
 share
+
+# Python venv
+venv/
