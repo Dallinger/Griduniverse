@@ -1,7 +1,7 @@
 ---
 # Doc: https://github.com/Dallinger/Griduniverse/blob/one-hour-one-life/dlgr/griduniverse/game_config.yml
 player_config:
-  probability_distribution: "random"
+  probability_distribution: "center_bias"
   available_colors:
     BLUE: [0.50, 0.86, 1.00]
     YELLOW: [1.00, 0.86, 0.50]
@@ -24,7 +24,7 @@ item_defaults:
   maturation_threshold: 0.0
   plantable: false
   planting_cost: 1
-  probability_distribution: "random"
+  probability_distribution: "center_bias"
   public_good_multiplier: 0.0
   respawn: false
   limit_quantity: false
@@ -42,24 +42,55 @@ transition_defaults:
   modify_uses: [0, 0]
 
 items:
-  - sprite: "emoji:🩷"
-    item_id: pink_heart
-    name: Pink Heart
-    calories: 5
-    item_count: 5
-
   - sprite: "emoji:💙"
-    item_id: blue_heart
     name: Blue Heart
+    item_id: blue_heart
     calories: 5
-    item_count: 5
+    item_count: 4
+
+  - sprite: "emoji:🩷"
+    name: Pink Heart
+    item_id: pink_heart
+    calories: 5
+    item_count: 4
 
   - sprite: "emoji:💛"
     name: Yellow Heart
     item_id: yellow_heart
+    calories: 5
+    item_count: 4
+
+  - sprite: "emoji:💚"
+    name: Green Heart
+    item_id: green_heart
+    calories: 5
+    item_count: 4
+
+  - sprite: "emoji:🌼"
+    name: Yellow Flower
+    item_id: yellow_flower
+    calories: 10
+  - sprite: "emoji:🌸"
+    name: Pink Flower
+    item_id: pink_flower
     calories: 10
 
+  - sprite: "emoji:⭐️"
+    name: Yellow Star
+    item_id: yellow_star
+    calories: 20
+
+
 transitions:
-  - actor_start: pink_heart
-    target_start: blue_heart
-    target_end: yellow_heart
+
+  - actor_start: blue_heart
+    target_start: pink_heart
+    target_end: pink_flower
+
+  - actor_start: green_heart
+    target_start: yellow_heart
+    target_end: yellow_flower
+
+  - actor_start: pink_flower
+    target_start: yellow_flower
+    target_end: yellow_star
