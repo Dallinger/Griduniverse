@@ -1,6 +1,6 @@
 """The Griduniverse."""
-
 import collections
+import csv
 import datetime
 import itertools
 import json
@@ -40,76 +40,77 @@ GAME_CONFIG_FILE = "game_config.yml"
 Bot = Bot
 
 GU_PARAMS = {
-    "network": unicode,
-    "max_participants": int,
-    "bot_policy": unicode,
-    "num_rounds": int,
-    "time_per_round": float,
-    "instruct": bool,
-    "columns": int,
-    "rows": int,
-    "window_columns": int,
-    "window_rows": int,
-    "block_size": int,
-    "padding": int,
-    "chat_visibility_threshold": float,
-    "spatial_chat": bool,
-    "visibility": int,
-    "visibility_ramp_time": int,
+    "alternate_consumption_donation": bool,
     "background_animation": bool,
-    "player_overlap": bool,
+    "block_size": int,
+    "bot_policy": unicode,
+    "build_walls": bool,
+    "chat_visibility_threshold": float,
+    "columns": int,
+    "contagion": int,
+    "contagion_hierarchy": bool,
+    "costly_colors": bool,
+    "difi_group_image": unicode,
+    "difi_group_label": unicode,
+    "difi_question": bool,
+    "dollars_per_point": float,
+    "donation_amount": int,
+    "donation_group": bool,
+    "donation_individual": bool,
+    "donation_ingroup": bool,
+    "donation_multiplier": float,
+    "donation_public": bool,
+    "frequency_dependence": float,
+    "frequency_dependent_payoff_rate": float,
+    "fun_survey": bool,
+    "identity_signaling": bool,
+    "identity_starts_visible": bool,
+    "initial_score": int,
+    "instruct": bool,
+    "intergroup_competition": float,
+    "intragroup_competition": float,
+    "leach_survey": bool,
     "leaderboard_group": bool,
     "leaderboard_individual": bool,
     "leaderboard_time": int,
-    "motion_speed_limit": float,
+    "map_csv": unicode,
+    "max_participants": int,
     "motion_auto": bool,
     "motion_cost": float,
+    "motion_speed_limit": float,
     "motion_tremble_rate": float,
+    "mutable_colors": bool,
+    "network": unicode,
+    "num_colors": int,
+    "num_recruits": int,
+    "num_rounds": int,
+    "others_visible": bool,
+    "padding": int,
+    "player_overlap": bool,
+    "pre_difi_group_image": unicode,
+    "pre_difi_group_label": unicode,
+    "pre_difi_question": bool,
+    "pseudonyms": bool,
+    "pseudonyms_gender": unicode,
+    "pseudonyms_locale": unicode,
+    "relative_deprivation": float,
+    "rows": int,
+    "score_visible": bool,
     "show_chatroom": bool,
     "show_grid": bool,
-    "others_visible": bool,
-    "num_colors": int,
-    "mutable_colors": bool,
-    "costly_colors": bool,
-    "pseudonyms": bool,
-    "pseudonyms_locale": unicode,
-    "pseudonyms_gender": unicode,
-    "contagion": int,
-    "contagion_hierarchy": bool,
-    "walls_density": float,
-    "walls_contiguity": float,
-    "walls_visible": bool,
-    "initial_score": int,
-    "dollars_per_point": float,
-    "tax": float,
-    "relative_deprivation": float,
-    "frequency_dependence": float,
-    "frequency_dependent_payoff_rate": float,
-    "donation_amount": int,
-    "donation_individual": bool,
-    "donation_group": bool,
-    "donation_ingroup": bool,
-    "donation_public": bool,
-    "difi_question": bool,
-    "difi_group_label": unicode,
-    "difi_group_image": unicode,
-    "fun_survey": bool,
-    "pre_difi_question": bool,
-    "pre_difi_group_label": unicode,
-    "pre_difi_group_image": unicode,
-    "leach_survey": bool,
-    "intergroup_competition": float,
-    "intragroup_competition": float,
-    "identity_signaling": bool,
-    "identity_starts_visible": bool,
-    "score_visible": bool,
-    "alternate_consumption_donation": bool,
-    "use_identicons": bool,
-    "build_walls": bool,
-    "wall_building_cost": int,
-    "donation_multiplier": float,
-    "num_recruits": int,
+    "spatial_chat": bool,
     "state_interval": float,
+    "tax": float,
+    "time_per_round": float,
+    "use_identicons": bool,
+    "visibility": int,
+    "visibility_ramp_time": int,
+    "wall_building_cost": int,
+    "walls_contiguity": float,
+    "walls_density": float,
+    "walls_visible": bool,
+    "window_columns": int,
+    "window_rows": int,
 }
 
 DEFAULT_ITEM_CONFIG = {
@@ -201,6 +202,7 @@ class Gridworld(object):
         self.visibility_ramp_time = kwargs.get("visibility_ramp_time", 4)
         self.background_animation = kwargs.get("background_animation", True)
         self.player_overlap = kwargs.get("player_overlap", False)
+        self.map_csv = kwargs.get("map_csv", None)
 
         # Motion
         self.motion_speed_limit = kwargs.get("motion_speed_limit", 8)
@@ -506,6 +508,23 @@ class Gridworld(object):
         for player in players:
             player.payoff *= inter_proportions[player.color_idx]
             player.payoff *= self.dollars_per_point
+
+    def load_map(self):
+        with open(self.map_csv) as csv_file:
+            grid_state = self.csv_to_grid_state(csv_file)
+        self.deserialize(grid_state)
+
+    def csv_to_grid_state(self, csv_file):
+        grid_state = {}
+        reader = csv.reader(csv_file)
+
+        for i, row in enumerate(reader):
+            for j, col in enumerate(row):
+                # location = (i, j)
+                # Process each col value
+                continue
+
+        return grid_state
 
     def build_labyrinth(self):
         if self.walls_density and not self.wall_locations:
@@ -1343,23 +1362,28 @@ class Griduniverse(Experiment):
 
     def handle_connect(self, msg):
         player_id = msg["player_id"]
+
         if self.config.get("replay", False):
             # Force all participants to be specatators
             msg["player_id"] = "spectator"
+
             if not self.grid.start_timestamp:
                 self.grid.start_timestamp = time.time()
+
         if player_id == "spectator":
             logger.info("A spectator has connected.")
             return
 
         logger.info("Client {} has connected.".format(player_id))
-        client_count = len(self.grid.players)
+        client_count = len(self.node_by_player_id)
         logger.info("Grid num players: {}".format(self.grid.num_players))
+
         if client_count < self.grid.num_players:
             participant = self.session.query(dallinger.models.Participant).get(
                 player_id
             )
             network = self.get_network_for_participant(participant)
+
             if network:
                 logger.info("Found an open network. Adding participant node...")
                 node = self.create_node(participant, network)
@@ -1367,16 +1391,18 @@ class Griduniverse(Experiment):
                 self.session.add(node)
                 self.session.commit()
                 logger.info("Spawning player on the grid...")
+
                 # We use the current node id modulo the number of colours
                 # to pick the user's colour. This ensures that players are
                 # allocated to colours uniformly.
-                self.grid.spawn_player(
-                    id=player_id,
-                    color_name=self.grid.limited_player_color_names[
-                        node.id % self.grid.num_colors
-                    ],
-                    recruiter_id=participant.recruiter_id,
-                )
+                if player_id not in self.grid.players:
+                    self.grid.spawn_player(
+                        id=player_id,
+                        color_name=self.grid.limited_player_color_names[
+                            node.id % self.grid.num_colors
+                        ],
+                        recruiter_id=participant.recruiter_id,
+                    )
             else:
                 logger.info("No free network found for player {}".format(player_id))
 
@@ -1721,9 +1747,14 @@ class Griduniverse(Experiment):
     def game_loop(self):
         """Update the world state."""
         gevent.sleep(0.1)
-        if not self.config.get("replay", False):
+
+        if self.config.get("map_csv", None):
+            self.grid.load_map()
+
+        elif not self.config.get("replay", False):
             self.grid.build_labyrinth()
             logger.info("Spawning items")
+
             for item_type in self.item_config.values():
                 for i in range(item_type["item_count"]):
                     if (i % 250) == 0:
