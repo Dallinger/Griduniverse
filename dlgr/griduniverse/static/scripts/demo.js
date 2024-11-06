@@ -903,10 +903,12 @@
   }
 
   function onItemConsumed(msg) {
-    console.log("Item consumed by player " + msg.player_id + ": " + msg.player_item.id);
+    console.log(
+      "Item consumed by player " + msg.player_id + ": " + msg.player_item.id,
+    );
     pixels.canvas.style.border = "5px solid " + msg.player_color;
     setTimeout(() => {
-      pixels.canvas.style.border = "5px solid #000000"
+      pixels.canvas.style.border = "5px solid #000000";
     }, 1500);
   }
 
@@ -1297,7 +1299,7 @@
         stop: gameOverHandler(player_id),
         wall_built: addWall,
         move_rejection: onMoveRejected,
-        item_consumed: onItemConsumed
+        item_consumed: onItemConsumed,
       },
     };
     const socket = new socketlib.GUSocket(socketSettings);
