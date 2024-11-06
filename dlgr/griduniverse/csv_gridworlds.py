@@ -10,6 +10,25 @@ color_names = Gridworld.player_color_names
 def matrix2gridworld(matrix):
     """Transform a 2D matrix representing an initial grid state
     into the serialized format used by Gridworld.
+
+    Example:
+
+    +---------------+---------+--------------------+
+    | w             | stone   | gooseberry_bush|3  |
+    | p1c1          | w       | w                  |
+    |               |         | p3c2               |
+    |               | p4c2    |                    |
+    | big_hard_rock | w       | p2c1               |
+    +---------------+---------+--------------------+
+
+    Explanation:
+
+    - "w": a wall
+    - "stone": item defined by item_id "stone" in game_config.yml
+    - "gooseberry_bush|3": similar to the above, with the added detail
+        that the item has 3 remaining uses
+    - "p2c1": player ID 2, who is on team (color) 1
+    - Empty cells: empty space in the grid
     """
     result = defaultdict(list)
 
