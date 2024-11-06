@@ -2,9 +2,9 @@
 Tests for `dlgr.griduniverse` module.
 """
 import collections
+import csv
 import json
 import time
-import uuid
 
 import mock
 import pytest
@@ -48,7 +48,7 @@ class TestItem(object):
         item = self.subject(item_config)
 
         assert isinstance(item.creation_timestamp, float)
-        assert isinstance(item.id, uuid.UUID)
+        assert isinstance(item.id, int)
         assert item.position == (0, 0)
 
     def test_instance_specific_values_can_be_specified(self, item_config):
@@ -220,6 +220,65 @@ class TestGameLoops(object):
             [i["item_count"] for i in exp.item_config.values()]
         )
 
+    def test_builds_grid_from_csv_if_specified(self, tmpdir, loop_exp_3x):
+        exp = loop_exp_3x
+        grid_config = [["w", "stone", "", "gooseberry_bush|3", "p1c2"]]
+        # Grid size must match incoming data, so update the gridworlds's existing
+        # settings:
+        exp.grid.rows = len(grid_config)
+        exp.grid.columns = len(grid_config[0])
+
+        csv_file = tmpdir.join("test_grid.csv")
+
+        with csv_file.open(mode="w") as file:
+            writer = csv.writer(file)
+            writer.writerows(grid_config)
+
+        # active_config.extend({"map_csv": csv_file.strpath}, strict=True)
+        exp.config.extend({"map_csv": csv_file.strpath}, strict=True)
+
+        exp.game_loop()
+
+        state = exp.grid.serialize()
+
+        def relevant_keys(dictionary):
+            relevant = {"id", "item_id", "position", "remaining_uses", "color"}
+            return {k: v for k, v in dictionary.items() if k in relevant}
+
+        # Ignore keys added by experiment execution we don't care about and/or
+        # which are non-deterministic (like player names):
+        state["items"] = [relevant_keys(item) for item in state["items"]]
+        state["players"] = [relevant_keys(player) for player in state["players"]]
+
+        assert state == {
+            "columns": 5,
+            "donation_active": False,
+            "items": [
+                {
+                    "id": 1,
+                    "item_id": "stone",
+                    "position": [0, 1],
+                    "remaining_uses": 1,
+                },
+                {
+                    "id": 2,
+                    "item_id": "gooseberry_bush",
+                    "position": [0, 3],
+                    "remaining_uses": 3,
+                },
+            ],
+            "players": [
+                {
+                    "color": "YELLOW",
+                    "id": "1",
+                    "position": [0, 4],
+                }
+            ],
+            "round": 0,
+            "rows": 1,
+            "walls": [[0, 0]],
+        }
+
     def test_loop_serialized_and_saves(self, loop_exp_3x):
         # Grid serialized and added to DB session once per loop
         exp = loop_exp_3x
@@ -284,6 +343,16 @@ class TestPlayerConnects(object):
         participant = a.participant()
         exp.handle_connect({"player_id": participant.id})
         assert participant.id in exp.grid.players
+
+    def test_handle_connect_uses_existing_player_on_grid(self, exp, a):
+        participant = a.participant()
+        exp.grid.players[participant.id] = Player(
+            id=participant.id, color=[0.50, 0.86, 1.00], location=[10, 10]
+        )
+        exp.handle_connect({"player_id": participant.id})
+        assert participant.id in exp.node_by_player_id
+        assert len(exp.grid.players) == 1
+        assert len(exp.node_by_player_id) == 1
 
     def test_handle_connect_is_noop_for_spectators(self, exp):
         exp.handle_connect({"player_id": "spectator"})

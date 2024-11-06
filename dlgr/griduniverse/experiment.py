@@ -1,6 +1,7 @@
 """The Griduniverse."""
 
 import collections
+import csv
 import datetime
 import itertools
 import json
@@ -94,6 +95,7 @@ GU_PARAMS = {
     "difi_group_label": unicode,
     "difi_group_image": unicode,
     "fun_survey": bool,
+    "map_csv": unicode,
     "pre_difi_question": bool,
     "pre_difi_group_label": unicode,
     "pre_difi_group_image": unicode,
@@ -507,6 +509,18 @@ class Gridworld(object):
             player.payoff *= inter_proportions[player.color_idx]
             player.payoff *= self.dollars_per_point
 
+    def load_map(self, csv_file_path):
+        with open(csv_file_path) as csv_file:
+            grid_state = self.csv_to_grid_state(csv_file)
+        self.deserialize(grid_state)
+
+    def csv_to_grid_state(self, csv_file):
+        from .csv_gridworlds import matrix2gridworld  # avoid circular import
+
+        reader = csv.reader(csv_file)
+        grid_state = matrix2gridworld(list(reader))
+        return grid_state
+
     def build_labyrinth(self):
         if self.walls_density and not self.wall_locations:
             start = time.time()
@@ -561,7 +575,7 @@ class Gridworld(object):
                     self.columns,
                 )
             )
-        self.round = state["round"]
+        self.round = state.get("round", 0)
         # @@@ can't set donation_active because it's a property
         # self.donation_active = state['donation_active']
 
@@ -857,7 +871,7 @@ class Item:
     """
 
     item_config: dict
-    id: int = field(default_factory=lambda: uuid.uuid4())
+    id: int = field(default_factory=lambda: uuid.uuid4().int)
     creation_timestamp: float = field(default_factory=time.time)
     position: tuple = (0, 0)
     remaining_uses: int = field(default=None)
@@ -1353,7 +1367,7 @@ class Griduniverse(Experiment):
             return
 
         logger.info("Client {} has connected.".format(player_id))
-        client_count = len(self.grid.players)
+        client_count = len(self.node_by_player_id)
         logger.info("Grid num players: {}".format(self.grid.num_players))
         if client_count < self.grid.num_players:
             participant = self.session.query(dallinger.models.Participant).get(
@@ -1370,13 +1384,14 @@ class Griduniverse(Experiment):
                 # We use the current node id modulo the number of colours
                 # to pick the user's colour. This ensures that players are
                 # allocated to colours uniformly.
-                self.grid.spawn_player(
-                    id=player_id,
-                    color_name=self.grid.limited_player_color_names[
-                        node.id % self.grid.num_colors
-                    ],
-                    recruiter_id=participant.recruiter_id,
-                )
+                if player_id not in self.grid.players:
+                    self.grid.spawn_player(
+                        id=player_id,
+                        color_name=self.grid.limited_player_color_names[
+                            node.id % self.grid.num_colors
+                        ],
+                        recruiter_id=participant.recruiter_id,
+                    )
             else:
                 logger.info("No free network found for player {}".format(player_id))
 
@@ -1721,7 +1736,10 @@ class Griduniverse(Experiment):
     def game_loop(self):
         """Update the world state."""
         gevent.sleep(0.1)
-        if not self.config.get("replay", False):
+        map_csv_path = self.config.get("map_csv", None)
+        if map_csv_path is not None:
+            self.grid.load_map(map_csv_path)
+        elif not self.config.get("replay", False):
             self.grid.build_labyrinth()
             logger.info("Spawning items")
             for item_type in self.item_config.values():
