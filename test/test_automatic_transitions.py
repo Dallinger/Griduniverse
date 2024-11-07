@@ -22,9 +22,10 @@ class TestAutoTransition(object):
         game.grid.trigger_transitions(time=lambda: time.time() + 5)
         assert game.grid.item_locations[(2, 2)].item_id == "sunflower_bud"
 
-    def test_null_target(self, game):
+    def test_item_with_no_auto_transition_target_gets_deleted_from_grid(self, game):
         from dlgr.griduniverse.experiment import Item
 
+        # Item with no auto_transition_target defined:
         item = Item(
             {
                 "id": 1,
@@ -35,8 +36,8 @@ class TestAutoTransition(object):
         )
         game.grid.item_locations[(2, 2)] = item
 
-        game.item_config["sunflower_sprout"]["auto_transition_target"] = None
         game.grid.trigger_transitions(time=lambda: time.time() + 5)
+
         assert (2, 2) not in game.grid.item_locations
 
 
