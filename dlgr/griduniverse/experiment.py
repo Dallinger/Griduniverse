@@ -1649,6 +1649,7 @@ MSG_RE = re.compile(r"^(?P<channel>[-\w]+):(?P<body>.*)$")
 class Griduniverse(Experiment):
     """Define the structure of the experiment."""
 
+    channel = "griduniverse_ctrl"
     state_count = 0
     replay_path = "/grid"
 
@@ -1839,6 +1840,10 @@ class Griduniverse(Experiment):
             message = json.loads(body)
             return channel, message
 
+    def publish(self, msg):
+        """Publish a message to all griduniverse clients"""
+        self.redis_conn.publish(self.channel, json.dumps(msg))
+
     def handle_connect(self, msg):
         player_id = msg["player_id"]
         if self.config.get("replay", False):
@@ -1860,6 +1865,17 @@ class Griduniverse(Experiment):
             game.node_by_player_id[player_id] = node.id
             self.session.add(node)
             self.session.commit()
+            # Send a broadcast message
+            self.publish(
+                "griduniverse",
+                {
+                    "type": "player_added",
+                    "player_id": player_id,
+                    "game": network.id,
+                    "broadcast_channel": game.broadcast_channel,
+                    "control_channel": game.control_channel,
+                },
+            )
             logger.info("Spawning player on the grid...")
             # We use the current node id modulo the number of colours
             # to pick the user's colour. This ensures that players are

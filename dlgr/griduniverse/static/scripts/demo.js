@@ -887,6 +887,15 @@
     );
   }
 
+  function onPlayerAdded(msg) {
+    var newPlayerId = msg.player_id,
+      ego = players.ego();
+
+    if (ego && newPlayerId === ego.id) {
+      socket.addGameChannels(msg.broadcast_channel, msg.control_channel);
+    }
+  }
+
   function onMoveRejected(msg) {
     var offendingPlayerId = msg.player_id,
       ego = players.ego();
@@ -1288,6 +1297,7 @@
         stop: gameOverHandler(player_id),
         wall_built: addWall,
         move_rejection: onMoveRejected,
+        player_added: onPlayerAdded,
       },
     };
     const socket = new socketlib.GUSocket(socketSettings);
@@ -1297,7 +1307,7 @@
         type: "connect",
         player_id: isSpectator ? "spectator" : player_id,
       };
-      socket.send(data);
+      socket.sendGlobal(data);
     });
 
     players.ego_id = player_id;

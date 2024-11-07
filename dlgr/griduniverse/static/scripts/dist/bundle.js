@@ -18652,17 +18652,30 @@ class GUSocket {
   constructor(settings) {
     const tolerance =
       settings.lagTolerance === undefined ? 0.1 : settings.lagTolerance;
-
-    this.broadcastChannel = settings.broadcast;
-    this.controlChannel = settings.control;
+    this.globalBroadcastChannel = settings.broadcast;
+    this.globalControlChannel = settings.control;
     this.callbackMap = settings.callbackMap;
     this.socket = this._makeSocket(
+      settings.endpoint,
+      this.globalBroadcastChannel,
+      tolerance,
+    );
+
+    this.socket.onmessage = (event) => {
+      this._globalDispatch(event);
+    };
+  }
+
+  addGameChannels(broadcastChannel, controlChannel) {
+    this.broadcastChannel = broadcastChannel;
+    this.controlChannel = controlChannel;
+    this.gameSocket = this._makeSocket(
       settings.endpoint,
       this.broadcastChannel,
       tolerance,
     );
 
-    this.socket.onmessage = (event) => {
+    this.gameSocket.onmessage = (event) => {
       this._dispatch(event);
     };
   }
@@ -18674,6 +18687,13 @@ class GUSocket {
     };
 
     return isOpen;
+  }
+
+  sendGlobal(data) {
+    const msg = JSON.stringify(data);
+    const channel = this.globalControlChannel;
+    console.log(`Sending message to the ${channel} channel: ${msg}`);
+    this.socket.send(`${channel}:${msg}`);
   }
 
   send(data) {
@@ -18701,6 +18721,27 @@ class GUSocket {
     return socket;
   }
 
+  _baseDispatch(event) {
+    const msg = JSON.parse(event.data.substring(marker.length));
+    const callback = this.callbackMap[msg.type];
+    if (callback !== undefined) {
+      callback(msg);
+    } else {
+      console.log(`Unrecognized message type ${msg.type} from backend.`);
+    }
+  }
+
+  _globalDispatch(event) {
+    const marker = `${this.globalBroadcastChannel}:`;
+    if (!event.data.startsWith(marker)) {
+      console.log(
+        `Message was not on channel ${this.globalBroadcastChannel}. Ignoring.`,
+      );
+      return;
+    }
+    _baseDispatch(event);
+  }
+
   _dispatch(event) {
     const marker = `${this.broadcastChannel}:`;
     if (!event.data.startsWith(marker)) {
@@ -18709,13 +18750,7 @@ class GUSocket {
       );
       return;
     }
-    const msg = JSON.parse(event.data.substring(marker.length));
-    const callback = this.callbackMap[msg.type];
-    if (callback !== undefined) {
-      callback(msg);
-    } else {
-      console.log(`Unrecognized message type ${msg.type} from backend.`);
-    }
+    _baseDispatch(event);
   }
 }
 /* harmony export (immutable) */ __webpack_exports__["GUSocket"] = GUSocket;
@@ -22083,6 +22118,15 @@ var require;/*global dallinger, store */
     );
   }
 
+  function onPlayerAdded(msg) {
+    var newPlayerId = msg.player_id,
+      ego = players.ego();
+
+    if (ego && newPlayerId === ego.id) {
+      socket.addGameChannels(msg.broadcast_channel, msg.control_channel);
+    }
+  }
+
   function onMoveRejected(msg) {
     var offendingPlayerId = msg.player_id,
       ego = players.ego();
@@ -22484,6 +22528,7 @@ var require;/*global dallinger, store */
         stop: gameOverHandler(player_id),
         wall_built: addWall,
         move_rejection: onMoveRejected,
+        player_added: onPlayerAdded,
       },
     };
     const socket = new socketlib.GUSocket(socketSettings);
@@ -22493,7 +22538,7 @@ var require;/*global dallinger, store */
         type: "connect",
         player_id: isSpectator ? "spectator" : player_id,
       };
-      socket.send(data);
+      socket.sendGlobal(data);
     });
 
     players.ego_id = player_id;
