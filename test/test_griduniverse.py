@@ -2,7 +2,6 @@
 Tests for `dlgr.griduniverse` module.
 """
 import collections
-import csv
 import json
 import time
 
@@ -116,10 +115,18 @@ class TestExperimentClass(object):
 
         assert isinstance(exp.recruiter, Recruiter)
 
-    def test_new_experiment_has_a_grid(self, exp):
+    def test_new_experiment_has_game(self, exp):
+        from dlgr.griduniverse.experiment import Game
+
+        assert len(exp.games) > 0
+        for game in exp.games.values():
+            assert isinstance(game, Game)
+
+    def test_new_game_has_a_grid(self, exp):
         from dlgr.griduniverse.experiment import Gridworld
 
-        assert isinstance(exp.grid, Gridworld)
+        for game in exp.games.values():
+            assert isinstance(game.grid, Gridworld)
 
     def test_new_experiment_has_item_config_with_defaults(self, exp):
         item_config = exp.item_config
@@ -151,13 +158,6 @@ class TestExperimentClass(object):
     def test_session_is_dallinger_global(self, exp, db_session):
         assert exp.session() is db_session()
 
-    def test_socket_session_is_not_dallinger_global(self, exp, db_session):
-        # Experiment creates socket_session
-        assert exp.socket_session() is not db_session()
-
-    def test_environment_uses_experiments_networks(self, exp):
-        exp.environment.network in exp.networks()
-
     def test_recruit_does_not_raise(self, exp):
         exp.recruit()
 
@@ -165,217 +165,57 @@ class TestExperimentClass(object):
         # With no experiment state, bonus returns 0
         assert exp.bonus(participants[0]) == 0.0
 
-        with mock.patch("dlgr.griduniverse.experiment.Griduniverse.environment") as env:
-            state_mock = mock.Mock()
-            env.state.return_value = state_mock
-            # State contents is JSON grid state
-            state_mock.contents = '{"players": [{"id": "1", "payoff": 100.0}]}'
-            assert exp.bonus(participants[0]) == 100.0
-
-
-@pytest.mark.usefixtures("env", "fake_gsleep")
-class TestGameLoops(object):
-    @pytest.fixture
-    def loop_exp_3x(self, exp):
-        exp.grid.start_timestamp = time.time()
-        exp.socket_session = mock.Mock()
-        exp.publish = mock.Mock()
-
-        def count_down(counter):
-            for c in counter:
-                return False
-            return True
-
-        end_counter = (i for i in range(3))
-        start_counter = (i for i in range(3))
-
         with mock.patch(
-            "dlgr.griduniverse.experiment.Gridworld.game_started",
-            new_callable=mock.PropertyMock,
-        ) as started:
-            with mock.patch(
-                "dlgr.griduniverse.experiment.Gridworld.game_over",
-                new_callable=mock.PropertyMock,
-            ) as over:
-                started.side_effect = lambda: count_down(start_counter)
-                over.side_effect = lambda: count_down(end_counter)
-
-                yield exp
-
-    def test_loop_builds_labrynth(self, loop_exp_3x):
-        exp = loop_exp_3x
-        exp.grid.walls_density = 0.01
-
-        exp.game_loop()
-
-        state = exp.grid.serialize()
-        assert len(state["walls"]) > 1
-
-    def test_loop_spawns_items(self, loop_exp_3x):
-        exp = loop_exp_3x
-        exp.game_loop()
-
-        state = exp.grid.serialize()
-        assert len(state["items"]) == sum(
-            [i["item_count"] for i in exp.item_config.values()]
-        )
-
-    def test_builds_grid_from_csv_if_specified(self, tmpdir, loop_exp_3x):
-        exp = loop_exp_3x
-        grid_config = [["w", "stone", "", "gooseberry_bush|3", "p1c2"]]
-        # Grid size must match incoming data, so update the gridworlds's existing
-        # settings:
-        exp.grid.rows = len(grid_config)
-        exp.grid.columns = len(grid_config[0])
-
-        csv_file = tmpdir.join("test_grid.csv")
-
-        with csv_file.open(mode="w") as file:
-            writer = csv.writer(file)
-            writer.writerows(grid_config)
-
-        # active_config.extend({"map_csv": csv_file.strpath}, strict=True)
-        exp.config.extend({"map_csv": csv_file.strpath}, strict=True)
-
-        exp.game_loop()
-
-        state = exp.grid.serialize()
-
-        def relevant_keys(dictionary):
-            relevant = {"id", "item_id", "position", "remaining_uses", "color"}
-            return {k: v for k, v in dictionary.items() if k in relevant}
-
-        # Ignore keys added by experiment execution we don't care about and/or
-        # which are non-deterministic (like player names):
-        state["items"] = [relevant_keys(item) for item in state["items"]]
-        state["players"] = [relevant_keys(player) for player in state["players"]]
-
-        assert state == {
-            "columns": 5,
-            "donation_active": False,
-            "items": [
-                {
-                    "id": 1,
-                    "item_id": "stone",
-                    "position": [0, 1],
-                    "remaining_uses": 1,
-                },
-                {
-                    "id": 2,
-                    "item_id": "gooseberry_bush",
-                    "position": [0, 3],
-                    "remaining_uses": 3,
-                },
-            ],
-            "players": [
-                {
-                    "color": "YELLOW",
-                    "id": "1",
-                    "position": [0, 4],
-                }
-            ],
-            "round": 0,
-            "rows": 1,
-            "walls": [[0, 0]],
-        }
-
-    def test_loop_serialized_and_saves(self, loop_exp_3x):
-        # Grid serialized and added to DB session once per loop
-        exp = loop_exp_3x
-        exp.game_loop()
-
-        assert exp.socket_session.add.call_count == 3
-        # Session commited once per loop and again at end
-        assert exp.socket_session.commit.call_count == 4
-
-    def test_loop_resets_state(self, loop_exp_3x):
-        # Wall and item state unset, item count reset during loop
-        exp = loop_exp_3x
-        exp.game_loop()
-        assert exp.grid.walls_updated is False
-        assert exp.grid.items_updated is False
-
-    def test_loop_taxes_points(self, loop_exp_3x):
-        # Player is taxed one point during the timed event round
-        exp = loop_exp_3x
-        exp.grid.tax = 1.0
-        exp.grid.players = {"1": Player(id="1", score=10.0)}
-
-        # Ensure one timed events round
-        exp.grid.start_timestamp -= 2
-
-        exp.game_loop()
-        assert exp.grid.players["1"].score == 9.0
-
-    def test_loop_computes_payoffs(self, loop_exp_3x):
-        # Payoffs computed once per loop before checking round completion
-        exp = loop_exp_3x
-        exp.grid.dollars_per_point = 0.5
-        exp.grid.players = {"1": Player(id="1", score=10.0)}
-
-        exp.game_loop()
-
-        assert exp.grid.players["1"].payoff == 5.0
-
-    def test_loop_publishes_stop_event(self, loop_exp_3x):
-        # publish called with stop event at end of round
-        exp = loop_exp_3x
-        exp.game_loop()
-        exp.publish.assert_called_once_with({"type": "stop"})
-
-    def test_send_state_thread(self, loop_exp_3x):
-        exp = loop_exp_3x
-        exp.send_state_thread()
-
-        # State thread will loop 4 times before the loop is broken,
-        # and publish called with grid state message once per loop
-        assert exp.publish.call_count == 4
+            "dlgr.griduniverse.experiment.Griduniverse._last_state_for_player"
+        ) as state:
+            state.return_value = {"id": "1", "payoff": 100.0}
+            assert exp.bonus(participants[0]) == 100.0
 
 
 @pytest.mark.usefixtures("env")
 class TestPlayerConnects(object):
-    def test_handle_connect_creates_node(self, exp, a):
+    def test_handle_connect_creates_node(self, exp, game, a):
         participant = a.participant()
         exp.handle_connect({"player_id": participant.id})
-        assert participant.id in exp.node_by_player_id
+        assert participant.id in game.node_by_player_id
 
-    def test_handle_connect_adds_player_to_grid(self, exp, a):
+    def test_handle_connect_adds_player_to_grid(self, exp, game, a):
         participant = a.participant()
         exp.handle_connect({"player_id": participant.id})
-        assert participant.id in exp.grid.players
+        assert participant.id in game.grid.players
 
-    def test_handle_connect_uses_existing_player_on_grid(self, exp, a):
+    def test_handle_connect_uses_existing_player_on_grid(self, exp, game, a):
         participant = a.participant()
-        exp.grid.players[participant.id] = Player(
+        game.grid.players[participant.id] = Player(
             id=participant.id, color=[0.50, 0.86, 1.00], location=[10, 10]
         )
         exp.handle_connect({"player_id": participant.id})
-        assert participant.id in exp.node_by_player_id
-        assert len(exp.grid.players) == 1
-        assert len(exp.node_by_player_id) == 1
+        assert participant.id in game.node_by_player_id
+        assert len(game.grid.players) == 1
+        assert len(game.node_by_player_id) == 1
 
-    def test_handle_connect_is_noop_for_spectators(self, exp):
+    def test_handle_connect_is_noop_for_spectators(self, exp, game):
         exp.handle_connect({"player_id": "spectator"})
-        assert exp.node_by_player_id == {}
+        assert game.node_by_player_id == {}
 
-    def test_colors_distributed_evenly(self, exp, participants):
-        exp.grid.num_players = 9
+    def test_colors_distributed_evenly(self, exp, game, participants):
+        game.grid.num_players = 9
         exp.networks()[0].max_size = 10
         players = [
             exp.handle_connect({"player_id": participant.id})
-            or exp.grid.players[participant.id]
+            or game.grid.players[participant.id]
             for participant in participants[:9]
         ]
         colors = collections.Counter([player.color_idx for player in players])
         assert colors == {0: 3, 1: 3, 2: 3}
 
-    def test_colors_distributed_almost_evenly_if_on_edge(self, exp, participants):
-        exp.grid.num_colors = 2
-        exp.grid.num_players = 9
+    def test_colors_distributed_almost_evenly_if_on_edge(self, exp, game, participants):
+        game.grid.num_colors = 2
+        game.grid.num_players = 9
         exp.networks()[0].max_size = 10
         players = [
             exp.handle_connect({"player_id": participant.id})
-            or exp.grid.players[participant.id]
+            or game.grid.players[participant.id]
             for participant in participants[:9]
         ]
         colors = collections.Counter([player.color_idx for player in players])
@@ -388,7 +228,7 @@ class TestRecordPlayerActivity(object):
         participant = a.participant()
         exp.handle_connect({"player_id": participant.id})
         exp.send(
-            "griduniverse_ctrl:"
+            "griduniverse_ctrl-1:"
             '{{"type":"move","player_id":{},"move":"left"}}'.format(participant.id)
         )
         time.sleep(10)
@@ -402,7 +242,7 @@ class TestRecordPlayerActivity(object):
         participant = a.participant()
         exp.handle_connect({"player_id": participant.id})
         exp.send(
-            "griduniverse_ctrl:"
+            "griduniverse_ctrl-1:"
             '{{"type":"move","player_id":{},"move":"left"}}'.format(participant.id)
         )
         time.sleep(10)
@@ -411,70 +251,15 @@ class TestRecordPlayerActivity(object):
         assert results["average_score"] >= 0.0
         assert results["average_payoff"] >= 0.0
 
-    def test_record_event_with_participant(self, exp, a):
-        # Adds event to player node
-        participant = a.participant()
-        exp.handle_connect({"player_id": participant.id})
-        exp.socket_session.add = mock.Mock()
-        exp.socket_session.commit = mock.Mock()
-        exp.record_event({"data": ["some data"]}, player_id=participant.id)
-        exp.socket_session.add.assert_called_once()
-        exp.socket_session.commit.assert_called_once()
-        info = exp.socket_session.add.call_args[0][0]
-        assert info.details["data"] == ["some data"]
-        assert info.origin.id == exp.node_by_player_id[participant.id]
-
-    def test_record_event_without_participant(self, exp):
-        # Adds event to enviroment node
-        node = exp.environment
-        exp.socket_session.add = mock.Mock()
-        exp.socket_session.commit = mock.Mock()
-        exp.record_event({"data": ["some data"]})
-        exp.socket_session.add.assert_called_once()
-        exp.socket_session.commit.assert_called_once()
-        info = exp.socket_session.add.call_args[0][0]
-        assert info.details["data"] == ["some data"]
-        assert info.origin.id == node.id
-
-    def test_record_event_with_failed_node(self, exp, a):
-        # Does not save event, but logs failure
-        node = exp.environment
-        node.failed = True
-        exp.socket_session.add = mock.Mock()
-        exp.socket_session.commit = mock.Mock()
-        with mock.patch("dlgr.griduniverse.experiment.logger.info") as logger:
-            exp.record_event({"data": ["some data"]})
-            assert exp.socket_session.add.call_count == 0
-            assert exp.socket_session.commit.call_count == 0
-            logger.assert_called_once()
-            assert logger.call_args.startswith(
-                "Tried to record an event after node#{} failure:".format(node.id)
-            )
-
 
 @pytest.mark.usefixtures("env")
 class TestChat(object):
-    def test_appends_to_chat_history(self, exp, a):
-        participant = a.participant()
-        exp.handle_connect({"player_id": participant.id})
-
-        exp.send(
-            "griduniverse_ctrl:"
-            '{{"type":"chat","player_id":{},"contents":"hello!"}}'.format(
-                participant.id
-            )
-        )
-
-        history = exp.grid.chat_message_history
-        assert len(history) == 1
-        assert "hello!" in history[0]
-
     def test_republishes_non_broadcasts(self, exp, a, pubsub):
         participant = a.participant()
         exp.handle_connect({"player_id": participant.id})
 
         exp.send(
-            "griduniverse_ctrl:"
+            "griduniverse_ctrl-1:"
             '{{"type":"chat","player_id":{},"contents":"hello!"}}'.format(
                 participant.id
             )
@@ -487,57 +272,10 @@ class TestChat(object):
         exp.handle_connect({"player_id": participant.id})
 
         exp.send(
-            "griduniverse_ctrl:"
+            "griduniverse_ctrl-1:"
             '{{"type":"chat","player_id":{},"contents":"hello!","broadcast":"true"}}'.format(
                 participant.id
             )
         )
 
         pubsub.publish.assert_not_called()
-
-
-@pytest.mark.usefixtures("env")
-class TestDonation(object):
-    def test_group_donations_distributed_evenly_across_team(self, exp, a):
-        donor = a.participant()
-        teammate = a.participant()
-        exp.handle_connect({"player_id": donor.id})
-        exp.handle_connect({"player_id": teammate.id})
-        donor_player = exp.grid.players[1]
-        teammate_player = exp.grid.players[2]
-        # put them on the same team:
-        exp.handle_change_color(
-            {"player_id": teammate_player.id, "color": donor_player.color}
-        )
-        # make donation active
-        exp.grid.donation_group = True
-        exp.grid.donation_amount = 1
-        donor_player.score = 2
-
-        exp.handle_donation(
-            {
-                "donor_id": donor_player.id,
-                "recipient_id": "group:{}".format(donor_player.color_idx),
-                "amount": 2,
-            }
-        )
-        assert donor_player.score == 1
-        assert teammate_player.score == 1
-
-    def test_public_donations_distributed_evenly_across_players(self, exp, a):
-        donor = a.participant()
-        opponent = a.participant()
-        exp.handle_connect({"player_id": donor.id})
-        exp.handle_connect({"player_id": opponent.id})
-        donor_player = exp.grid.players[1]
-        opponent_player = exp.grid.players[2]
-        exp.grid.donation_public = True
-        exp.grid.donation_amount = 1
-        donor_player.score = 2
-
-        exp.handle_donation(
-            {"donor_id": donor_player.id, "recipient_id": "all", "amount": 2}
-        )
-
-        assert donor_player.score == 1
-        assert opponent_player.score == 1

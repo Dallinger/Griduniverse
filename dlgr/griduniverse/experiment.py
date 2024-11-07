@@ -9,6 +9,7 @@ import logging
 import math
 import os
 import random
+import re
 import string
 import time
 import uuid
@@ -1128,87 +1129,37 @@ def serve_grid():
     return flask.render_template("grid.html", app_id=config.get("id"))
 
 
-class Griduniverse(Experiment):
-    """Define the structure of the experiment."""
+class Game(object):
+    def __init__(
+        self, network_id, item_config, transition_config, player_config, game_config
+    ):
+        self.network_id = network_id
+        self.item_config = item_config
+        self.transition_config = transition_config
+        self.config = game_config
+        self.grid = Gridworld(
+            log_event=self.record_event,
+            item_config=item_config,
+            transition_config=transition_config,
+            player_config=player_config,
+            **game_config,
+        )
 
-    channel = "griduniverse_ctrl"
-    state_count = 0
-    replay_path = "/grid"
-
-    def __init__(self, session=None):
-        """Initialize the experiment."""
-        self.config = get_config()
-        super(Griduniverse, self).__init__(session)
-        self.experiment_repeats = 1
+        # Setup the environment for this game
+        self.node_by_player_id = {}
         self.redis_conn = db.redis_conn
-        if session:
-            self.setup()
-            self.grid = Gridworld(
-                log_event=self.record_event,
-                item_config=self.item_config,
-                transition_config=self.transition_config,
-                player_config=self.player_config,
-                **self.config.as_dict(),
-            )
-            self.session.commit()
+        network = self.socket_session.query(dallinger.models.Network).get(network_id)
+        env = dallinger.nodes.Environment(network=network)
+        self.socket_session.add(env)
+        self.socket_session.commit()
 
-    def configure(self):
-        super(Griduniverse, self).configure()
-        self.num_participants = self.config.get("max_participants", 3)
-        self.quorum = self.num_participants
-        self.initial_recruitment_size = self.config.get(
-            "num_recruits", self.num_participants
-        )
-        self.network_factory = self.config.get("network", "FullyConnected")
+        # Setup the websocket channel names
+        self.broadcast_channel = "griduniverse-{}".format(network_id)
+        self.control_channel = "griduniverse_ctrl-{}".format(network_id)
 
-        game_config_file = os.path.join(os.path.dirname(__file__), GAME_CONFIG_FILE)
-        with open(game_config_file, "r") as game_config_stream:
-            self.game_config = yaml.safe_load(game_config_stream)
-        self.item_config = {o["item_id"]: o for o in self.game_config.get("items", ())}
-
-        # If any item is missing a key, add it with default value.
-        item_defaults = self.game_config.get("item_defaults", {})
-        for item in self.item_config.values():
-            for prop in item_defaults:
-                if prop not in item:
-                    item[prop] = item_defaults[prop]
-
-        self.transition_config = {}
-        transition_defaults = self.game_config.get("transition_defaults", {})
-        for t in self.game_config.get("transitions", ()):
-            transition = transition_defaults.copy()
-            transition.update(t)
-            if transition["last_use"]:
-                self.transition_config[
-                    ("last", t["actor_start"], t["target_start"])
-                ] = transition
-            else:
-                self.transition_config[
-                    (t["actor_start"], t["target_start"])
-                ] = transition
-
-        self.player_config = self.game_config.get("player_config")
-        # This is accessed by the grid.html template to load the configuration on the client side:
-        # TODO: could this instead be passed as an arg to the template in
-        # the /grid route?
-        self.item_config_json = json.dumps(self.item_config)
-        self.transition_config_json = json.dumps(
-            {
-                "|".join(str(e or "") for e in k): v
-                for k, v in self.transition_config.items()
-            }
-        )
-
-    @classmethod
-    def extra_parameters(cls):
-        config = get_config()
-        for key in GU_PARAMS:
-            config.register(key, GU_PARAMS[key])
-
-    @property
-    def environment(self):
-        environment = self.socket_session.query(dallinger.nodes.Environment).one()
-        return environment
+    def on_launch(self):
+        gevent.spawn(self.send_state_thread)
+        gevent.spawn(self.game_loop)
 
     @cached_property
     def socket_session(self):
@@ -1221,112 +1172,15 @@ class Griduniverse(Experiment):
         return session
 
     @property
-    def background_tasks(self):
-        if self.config.get("replay", False):
-            return []
-        return [
-            self.send_state_thread,
-            self.game_loop,
-        ]
-
-    def create_network(self):
-        """Create a new network by reading the configuration file."""
-        class_ = getattr(dallinger.networks, self.network_factory)
-        return class_(max_size=self.num_participants + 1)
-
-    def create_node(self, participant, network):
-        try:
-            return dallinger.models.Node(network=network, participant=participant)
-        finally:
-            if not self.networks(full=False):
-                # If there are no spaces left in our networks we can close
-                # recruitment, to alleviate problems of over-recruitment
-                self.recruiter().close_recruitment()
-
-    def setup(self):
-        """Setup the networks."""
-        self.node_by_player_id = {}
-        if not self.networks():
-            super(Griduniverse, self).setup()
-            for net in self.networks():
-                env = dallinger.nodes.Environment(network=net)
-                self.session.add(env)
-        self.session.commit()
-
-    def serialize(self, value):
-        return json.dumps(value)
-
-    def recruit(self):
-        self.recruiter().close_recruitment()
-
-    def bonus(self, participant):
-        """The bonus to be awarded to the given participant.
-
-        Return the value of the bonus to be paid to `participant`.
-        """
-        data = self._last_state_for_player(participant.id)
-        if not data:
-            return 0.0
-
-        return float("{0:.2f}".format(data["payoff"]))
-
-    def bonus_reason(self):
-        """The reason offered to the participant for giving the bonus."""
-        return (
-            "Thank you for participating! You earned a bonus based on your "
-            "performance in Griduniverse!"
+    def environment(self):
+        # For a game that continues into multiple generations of players we may
+        # need a new environment
+        environment = (
+            self.socket_session.query(dallinger.nodes.Environment)
+            .filter_by(network_id=self.network_id)
+            .one()
         )
-
-    def dispatch(self, msg):
-        """Route incoming messages to the appropriate method based on message type"""
-        mapping = {
-            "connect": self.handle_connect,
-            "disconnect": self.handle_disconnect,
-        }
-        if not self.config.get("replay", False):
-            # Ignore these events in replay mode
-            mapping.update(
-                {
-                    "chat": self.handle_chat_message,
-                    "change_color": self.handle_change_color,
-                    "move": self.handle_move,
-                    "donation_submitted": self.handle_donation,
-                    "plant_food": self.handle_plant_food,
-                    "toggle_visible": self.handle_toggle_visible,
-                    "build_wall": self.handle_build_wall,
-                    "item_pick_up": self.handle_item_pick_up,
-                    "item_consume": self.handle_item_consume,
-                    "item_transition": self.handle_item_transition,
-                    "item_drop": self.handle_item_drop,
-                }
-            )
-
-        if msg["type"] in mapping:
-            mapping[msg["type"]](msg)
-
-    def send(self, raw_message):
-        """Socket interface; point of entry for incoming messages.
-
-        param raw_message is a string with a channel prefix, for example:
-
-            'griduniverse_ctrl:{"type":"move","player_id":0,"move":"left"}'
-        """
-        message = self.parse_message(raw_message)
-        if message is not None:
-            message["server_time"] = time.time()
-            self.dispatch((message))
-            if "player_id" in message:
-                self.record_event(message, message["player_id"])
-
-    def parse_message(self, raw_message):
-        """Strip the channel prefix off the raw message, then return
-        the parsed JSON.
-        """
-        if raw_message.startswith(self.channel + ":"):
-            body = raw_message.replace(self.channel + ":", "")
-            message = json.loads(body)
-
-            return message
+        return environment
 
     def record_event(self, details, player_id=None):
         """Record an event in the Info table."""
@@ -1353,50 +1207,7 @@ class Griduniverse(Experiment):
 
     def publish(self, msg):
         """Publish a message to all griduniverse clients"""
-        self.redis_conn.publish("griduniverse", json.dumps(msg))
-
-    def handle_connect(self, msg):
-        player_id = msg["player_id"]
-        if self.config.get("replay", False):
-            # Force all participants to be specatators
-            msg["player_id"] = "spectator"
-            if not self.grid.start_timestamp:
-                self.grid.start_timestamp = time.time()
-        if player_id == "spectator":
-            logger.info("A spectator has connected.")
-            return
-
-        logger.info("Client {} has connected.".format(player_id))
-        client_count = len(self.node_by_player_id)
-        logger.info("Grid num players: {}".format(self.grid.num_players))
-        if client_count < self.grid.num_players:
-            participant = self.session.query(dallinger.models.Participant).get(
-                player_id
-            )
-            network = self.get_network_for_participant(participant)
-            if network:
-                logger.info("Found an open network. Adding participant node...")
-                node = self.create_node(participant, network)
-                self.node_by_player_id[player_id] = node.id
-                self.session.add(node)
-                self.session.commit()
-                logger.info("Spawning player on the grid...")
-                # We use the current node id modulo the number of colours
-                # to pick the user's colour. This ensures that players are
-                # allocated to colours uniformly.
-                if player_id not in self.grid.players:
-                    self.grid.spawn_player(
-                        id=player_id,
-                        color_name=self.grid.limited_player_color_names[
-                            node.id % self.grid.num_colors
-                        ],
-                        recruiter_id=participant.recruiter_id,
-                    )
-            else:
-                logger.info("No free network found for player {}".format(player_id))
-
-    def handle_disconnect(self, msg):
-        logger.info("Client {} has disconnected.".format(msg["player_id"]))
+        self.redis_conn.publish(self.broadcast_channel, json.dumps(msg))
 
     def handle_chat_message(self, msg):
         """Publish the given message to all clients."""
@@ -1835,6 +1646,241 @@ class Griduniverse(Experiment):
         self.socket_session.commit()
         return
 
+
+MSG_RE = re.compile(r"^(?P<channel>[-\w]+):(?P<body>.*)$")
+
+
+class Griduniverse(Experiment):
+    """Define the structure of the experiment."""
+
+    channel = "griduniverse_ctrl"
+    state_count = 0
+    replay_path = "/grid"
+
+    def __init__(self, session=None):
+        """Initialize the experiment."""
+        self.config = get_config()
+        super(Griduniverse, self).__init__(session)
+        if session:
+            self.setup()
+            # This is a mapping from game websocket control channel name to game
+            self.games = {}
+            for network in self.networks():
+                game = Game(
+                    network_id=network.id,
+                    item_config=self.item_config,
+                    transition_config=self.transition_config,
+                    player_config=self.player_config,
+                    game_config=self.config.as_dict(),
+                )
+                self.games[game.control_channel] = game
+
+    def configure(self):
+        super(Griduniverse, self).configure()
+        self.experiment_repeats = self.config.get("experiment_repeats", 1)
+        self.num_participants = self.config.get("max_participants", 3)
+        self.quorum = self.num_participants
+        self.initial_recruitment_size = self.config.get(
+            "num_recruits", self.num_participants
+        )
+        self.network_factory = self.config.get("network", "FullyConnected")
+
+        game_config_file = os.path.join(os.path.dirname(__file__), GAME_CONFIG_FILE)
+        with open(game_config_file, "r") as game_config_stream:
+            self.game_config = yaml.safe_load(game_config_stream)
+        self.item_config = {o["item_id"]: o for o in self.game_config.get("items", ())}
+
+        # If any item is missing a key, add it with default value.
+        item_defaults = self.game_config.get("item_defaults", {})
+        for item in self.item_config.values():
+            for prop in item_defaults:
+                if prop not in item:
+                    item[prop] = item_defaults[prop]
+
+        self.transition_config = {}
+        transition_defaults = self.game_config.get("transition_defaults", {})
+        for t in self.game_config.get("transitions", ()):
+            transition = transition_defaults.copy()
+            transition.update(t)
+            if transition["last_use"]:
+                self.transition_config[
+                    ("last", t["actor_start"], t["target_start"])
+                ] = transition
+            else:
+                self.transition_config[
+                    (t["actor_start"], t["target_start"])
+                ] = transition
+
+        self.player_config = self.game_config.get("player_config")
+        # This is accessed by the grid.html template to load the configuration on the client side:
+        # TODO: could this instead be passed as an arg to the template in
+        # the /grid route?
+        self.item_config_json = json.dumps(self.item_config)
+        self.transition_config_json = json.dumps(
+            {
+                "|".join(str(e or "") for e in k): v
+                for k, v in self.transition_config.items()
+            }
+        )
+
+    @classmethod
+    def extra_parameters(cls):
+        config = get_config()
+        for key in GU_PARAMS:
+            config.register(key, GU_PARAMS[key])
+
+    def background_tasks(self):
+        if self.config.get("replay", False):
+            return
+        return [self.start_games]
+
+    def start_games(self):
+        # This is really inefficient, since the loops for all games will run
+        # within a single web worker. Can we make use of `multiprocessing` here
+        # (e.g. create each game instance in its own process and initiate
+        # launch using a `Pipe`)? Should we suggest just running these games as
+        # separate experiments in different docker containers on the same server
+        # when performance is an issue? The main problem with that approach is
+        # that the games will not share a single MTurk HIT.
+        for game in self.games:
+            game.on_launch()
+
+    def create_network(self):
+        """Create a new network by reading the configuration file."""
+        class_ = getattr(dallinger.networks, self.network_factory)
+        return class_(max_size=self.num_participants + 1)
+
+    def create_node(self, participant, network):
+        try:
+            return dallinger.models.Node(network=network, participant=participant)
+        finally:
+            if not self.networks(full=False):
+                # If there are no spaces left in our networks we can close
+                # recruitment, to alleviate problems of over-recruitment
+                self.recruiter().close_recruitment()
+
+    def serialize(self, value):
+        return json.dumps(value)
+
+    def recruit(self):
+        self.recruiter().close_recruitment()
+
+    def bonus(self, participant):
+        """The bonus to be awarded to the given participant.
+
+        Return the value of the bonus to be paid to `participant`.
+        """
+        data = self._last_state_for_player(participant)
+        if not data:
+            return 0.0
+
+        return float("{0:.2f}".format(data["payoff"]))
+
+    def bonus_reason(self):
+        """The reason offered to the participant for giving the bonus."""
+        return (
+            "Thank you for participating! You earned a bonus based on your "
+            "performance in Griduniverse!"
+        )
+
+    def dispatch(self, channel, msg):
+        """Route incoming messages to the appropriate method based on message type"""
+        # These are universal and provided by the Experiment class, all other
+        # handlers belong to a specific game instance
+        mapping = {
+            "connect": self.handle_connect,
+            "disconnect": self.handle_disconnect,
+        }
+        if channel not in self.games:
+            return
+
+        game = self.games[channel]
+        if not self.config.get("replay", False):
+            # Ignore these events in replay mode
+            mapping.update(
+                {
+                    "chat": game.handle_chat_message,
+                    "change_color": game.handle_change_color,
+                    "move": game.handle_move,
+                    "donation_submitted": game.handle_donation,
+                    "plant_food": game.handle_plant_food,
+                    "toggle_visible": game.handle_toggle_visible,
+                    "build_wall": game.handle_build_wall,
+                    "item_pick_up": game.handle_item_pick_up,
+                    "item_consume": game.handle_item_consume,
+                    "item_transition": game.handle_item_transition,
+                    "item_drop": game.handle_item_drop,
+                }
+            )
+
+        if msg["type"] in mapping:
+            mapping[msg["type"]](msg)
+
+    def send(self, raw_message):
+        """Socket interface; point of entry for incoming messages.
+
+        param raw_message is a string with a channel prefix, for example:
+
+            'griduniverse_ctrl:{"type":"move","player_id":0,"move":"left"}'
+        """
+        channel, message = self.parse_message(raw_message)
+        if message is not None:
+            message["server_time"] = time.time()
+            self.dispatch(channel, message)
+            if "player_id" in message:
+                game = self.games[channel]
+                game.record_event(message, message["player_id"])
+
+    def parse_message(self, raw_message):
+        """Strip the channel prefix off the raw message, then return
+        the parsed JSON.
+        """
+        match = MSG_RE.match(raw_message)
+        if match:
+            channel = match.group("channel")
+            body = match.group("body")
+            message = json.loads(body)
+            return channel, message
+
+    def handle_connect(self, msg):
+        player_id = msg["player_id"]
+        if self.config.get("replay", False):
+            # Force all participants to be specatators
+            msg["player_id"] = "spectator"
+            if not self.grid.start_timestamp:
+                self.grid.start_timestamp = time.time()
+        if player_id == "spectator":
+            logger.info("A spectator has connected.")
+            return
+
+        logger.info("Client {} has connected.".format(player_id))
+        participant = self.session.query(dallinger.models.Participant).get(player_id)
+        network = self.get_network_for_participant(participant)
+        if network:
+            game = self.games["griduniverse_ctrl-{}".format(network.id)]
+            logger.info("Found an open network. Adding participant node...")
+            node = self.create_node(participant, network)
+            game.node_by_player_id[player_id] = node.id
+            self.session.add(node)
+            self.session.commit()
+            logger.info("Spawning player on the grid...")
+            # We use the current node id modulo the number of colours
+            # to pick the user's colour. This ensures that players are
+            # allocated to colours uniformly.
+            if player_id not in game.grid.players:
+                game.grid.spawn_player(
+                    id=player_id,
+                    color_name=game.grid.limited_player_color_names[
+                        node.id % game.grid.num_colors
+                    ],
+                    recruiter_id=participant.recruiter_id,
+                )
+        else:
+            logger.info("No free network found for player {}".format(player_id))
+
+    def handle_disconnect(self, msg):
+        logger.info("Client {} has disconnected.".format(msg["player_id"]))
+
     def player_feedback(self, data):
         engagement = int(json.loads(data.questions.list[-1][-1])["engagement"])
         difficulty = int(json.loads(data.questions.list[-1][-1])["difficulty"])
@@ -1844,21 +1890,40 @@ class Griduniverse(Experiment):
         except IndexError:
             return engagement, difficulty
 
+    def record_replay_event(self, details, player_id=None):
+        if self.game:
+            return self.game.replay_event(details, player_id)
+
     def replay_start(self):
-        self.grid = Gridworld(log_event=self.record_event, **self.config.as_dict())
+        self.grid = Gridworld(**self.config.as_dict())
 
     def replay_started(self):
         return self.grid.game_started
 
     def events_for_replay(self, session=None, target=None):
-        info_cls = dallinger.models.Info
+        info_cls = dallinger.models.nInfo
         from .models import Event
+
+        # We only replay the game run on the first network
+        network = session.query(dallinger.models.Network).first()
+        self.game = Game(
+            network_id=network.id,
+            item_config=self.item_config,
+            transition_config=self.transition_config,
+            player_config=self.player_config,
+            **self.config.as_dict(),
+        )
+        # replace the game grid with the one we created in `replay_start`
+        self.grid.log_event = self.game.replay_event
+        self.game.grid = self.grid
 
         # Get the base query from the parent class, but remove order_by fields as we override them
         # in the subqueries
-        events = Experiment.events_for_replay(
-            self, session=session, target=target
-        ).order_by(False)
+        events = (
+            Experiment.events_for_replay(self, session=session, target=target)
+            .filter_by(network_id=network.id)
+            .order_by(False)
+        )
         if target is None:
             # If we don't have a specific target time we can't optimise some states away
             return events
@@ -1924,11 +1989,11 @@ class Griduniverse(Experiment):
                 + event.creation_time.microsecond / 1e6
             )
         if event.type == "event":
-            self.publish(event.details)
+            self.game.publish(event.details)
             if event.details.get("type") == "new_round":
-                self.grid.check_round_completion()
+                self.game.grid.check_round_completion()
             elif event.details.get("type") == "chat":
-                self.handle_chat_message(event.details)
+                self.game.handle_chat_message(event.details)
 
         if event.type == "state":
             self.state_count += 1
@@ -1943,7 +2008,7 @@ class Griduniverse(Experiment):
                 "remaining_time": self.grid.remaining_round_time,
                 "round": state["round"],
             }
-            self.grid.deserialize(state)
+            self.game.grid.deserialize(state)
             self.publish(msg)
 
     @property
@@ -2106,11 +2171,32 @@ class Griduniverse(Experiment):
         scores = [player["score"] for player in players]
         return float(sum(scores)) / len(scores)
 
-    def _last_state_for_player(self, player_id):
-        most_recent_grid_state = self.environment.state()
+    def _environment_for_player(self, player):
+        # Lookup the node for this player
+        player_node = (
+            self.session.query(dallinger.models.Node)
+            .filter_by(participant_id=player.id)
+            .one_or_none()
+        )
+        # Lookup environment for network to which the player node belongs. If we
+        # have multiple environments per network for a multi-generational game,
+        # we will need to adjust this lookup
+        if player_node is None:
+            return
+        return (
+            self.session.query(dallinger.nodes.Environment)
+            .filter_by(network_id=player_node.network_id)
+            .one_or_none()
+        )
+
+    def _last_state_for_player(self, player):
+        environment = self._environment_for_player(player)
+        most_recent_grid_state = (
+            environment.state() if environment is not None else None
+        )
         if most_recent_grid_state is not None:
             players = json.loads(most_recent_grid_state.contents)["players"]
-            id_matches = [p for p in players if int(p["id"]) == player_id]
+            id_matches = [p for p in players if int(p["id"]) == player.id]
             if id_matches:
                 return id_matches[0]
 

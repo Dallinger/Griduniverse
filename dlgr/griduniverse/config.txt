@@ -13,6 +13,7 @@ window_columns = 20
 use_identicons = true
 show_chatroom = true
 recruiter = hotair
+experiment_repeats = 1
 
 [HIT Configuration]
 title = Griduniverse
