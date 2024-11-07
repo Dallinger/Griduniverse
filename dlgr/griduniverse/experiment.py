@@ -24,6 +24,7 @@ from dallinger import db
 from dallinger.compat import unicode
 from dallinger.config import get_config
 from dallinger.experiment import Experiment
+from dallinger.experiment_server import sockets
 from faker import Factory
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -1653,7 +1654,6 @@ MSG_RE = re.compile(r"^(?P<channel>[-\w]+):(?P<body>.*)$")
 class Griduniverse(Experiment):
     """Define the structure of the experiment."""
 
-    channel = "griduniverse_ctrl"
     state_count = 0
     replay_path = "/grid"
 
@@ -1743,7 +1743,9 @@ class Griduniverse(Experiment):
         # when performance is an issue? The main problem with that approach is
         # that the games will not share a single MTurk HIT.
         for game in self.games:
+            sockets.chat_backend.subscribe(self, game.control_channel)
             game.on_launch()
+        sockets.chat_backend.subscribe(self, sockets.CONTROL_CHANNEL)
 
     def create_network(self):
         """Create a new network by reading the configuration file."""
