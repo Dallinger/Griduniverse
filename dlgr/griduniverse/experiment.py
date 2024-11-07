@@ -170,11 +170,6 @@ class Gridworld(object):
     walls_updated = True
     items_updated = True
 
-    def __new__(cls, **kwargs):
-        if not hasattr(cls, "instance"):
-            cls.instance = super(Gridworld, cls).__new__(cls)
-        return cls.instance
-
     def __init__(self, **kwargs):
         # If Singleton is already initialized, do nothing
         if hasattr(self, "num_players"):
