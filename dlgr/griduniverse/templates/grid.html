@@ -6,52 +6,53 @@
     settings = {};
     settings.item_config = {{ experiment.item_config_json | safe}};
     settings.transition_config = {{ experiment.transition_config_json | safe}};
-    settings.block_size = {{ experiment.grid.block_size }};
-    settings.padding = {{ experiment.grid.padding }};
-    settings.dollars_per_point = {{ experiment.grid.dollars_per_point }};
-    settings.rows = {{ experiment.grid.rows }};
-    settings.columns = {{ experiment.grid.columns }};
-    settings.window_columns = {{ experiment.grid.window_columns }};
-    settings.window_rows = {{ experiment.grid.window_rows }};
-    settings.mutable_colors = {% if experiment.grid.mutable_colors %}true{% else %}false{% endif %};
-    settings.player_overlap = {% if experiment.grid.player_overlap %}true{% else %}false{% endif %};
-    settings.background_animation = {% if experiment.grid.background_animation %}true{% else %}false{% endif %};
-    settings.time_per_round = {{ experiment.grid.time_per_round }};
-    settings.num_rounds = {{ experiment.grid.num_rounds }};
-    settings.player_colors = {{ experiment.serialize(experiment.grid.limited_player_colors) }};
-    settings.player_color_names = {{ experiment.serialize(experiment.grid.limited_player_color_names)|safe }};
-    settings.tax = {{ experiment.grid.tax }};
-    settings.walls = "{{ experiment.grid.wall_type }}";
-    settings.show_grid = {% if experiment.grid.show_grid %}true{% else %}false{% endif %};
-    settings.visibility = {{ experiment.grid.visibility }};
-    settings.chat_visibility_threshold = {{ experiment.grid.chat_visibility_threshold }};
-    settings.spatial_chat = {% if experiment.grid.spatial_chat %}true{% else %}false{% endif %};
-    settings.visibility_ramp_time = {{ experiment.grid.visibility_ramp_time }};
-    settings.others_visible = {% if experiment.grid.others_visible %}true{% else %}false{% endif %};
-    settings.identity_signaling = {% if experiment.grid.identity_signaling %}true{% else %}false{% endif %};
-    settings.identity_starts_visible = {% if experiment.grid.identity_starts_visible %}true{% else %}false{% endif %};
-    settings.motion_speed_limit = {{ experiment.grid.motion_speed_limit }};
+    settings.block_size = {{ experiment.config.block_size or 10 }};
+    settings.padding = {{ experiment.config.padding or 1 }};
+    settings.dollars_per_point = {{ experiment.config.dollars_per_point or 0.02}};
+    settings.rows = {{ experiment.config.rows }};
+    settings.columns = {{ experiment.config.columns }};
+    settings.window_columns = {{ experiment.config.window_columns or min(settings.columns, 25)}};
+    settings.window_rows = {{ experiment.config.window_rows or min(settings.rows, 25)}};
+    settings.mutable_colors = {% if experiment.config.mutable_colors %}true{% else %}false{% endif %};
+    settings.player_overlap = {% if experiment.config.player_overlap %}true{% else %}false{% endif %};
+    settings.background_animation = {% if experiment.config.background_animation != False %}true{% else %}false{% endif %};
+    settings.time_per_round = {{ experiment.config.time_per_round }};
+    settings.num_rounds = {{ experiment.config.num_rounds }};
+    settings.player_colors = {{ experiment.serialize(experiment.limited_player_colors) }};
+    settings.player_color_names = {{ experiment.serialize(experiment.limited_player_color_names)|safe }};
+    settings.tax = {{ experiment.config.tax or 0.00 }};
+    settings.walls = "{{ experiment.config.wall_type }}";
+    settings.show_grid = {% if experiment.config.show_grid != False %}true{% else %}false{% endif %};
+    settings.visibility = {{ experiment.config.visibility or 40 }};
+    settings.chat_visibility_threshold = {{ experiment.config.chat_visibility_threshold or 0.4}};
+    settings.spatial_chat = {% if experiment.config.spatial_chat %}true{% else %}false{% endif %};
+    settings.visibility_ramp_time = {{ experiment.config.visibility_ramp_time or 4}};
+    settings.others_visible = {% if (experiment.config.others_visible != False) %}true{% else %}false{% endif %};
+    settings.identity_signaling = {% if experiment.config.identity_signaling %}true{% else %}false{% endif %};
+    settings.identity_starts_visible = {% if experiment.config.identity_starts_visible %}true{% else %}false{% endif %};
+    settings.motion_speed_limit = {{ experiment.config.motion_speed_limit or 8}};
     // Visibility will be configured per-item type
-    settings.show_chatroom = {% if experiment.grid.show_chatroom %}true{% else %}false{% endif %};
-    settings.pseudonyms = {% if experiment.grid.pseudonyms %}true{% else %}false{% endif %};
-    settings.walls_visible = {% if experiment.grid.walls_visible %}true{% else %}false{% endif %};
-    settings.build_walls = {% if experiment.grid.build_walls %}true{% else %}false{% endif %};
-    settings.wall_building_cost = {{ experiment.grid.wall_building_cost }};
-    settings.donation_amount = {{ experiment.grid.donation_amount }};
-    settings.donation_individual = {% if experiment.grid.donation_individual %}true{% else %}false{% endif %};
-    settings.donation_group = {% if experiment.grid.donation_group %}true{% else %}false{% endif %};
-    settings.donation_ingroup = {% if experiment.grid.donation_ingroup %}true{% else %}false{% endif %};
-    settings.donation_public = {% if experiment.grid.donation_public %}true{% else %}false{% endif %};
-    settings.donation_active = {% if experiment.grid.donation_active %}true{% else %}false{% endif %};
+    settings.show_chatroom = {% if experiment.config.show_chatroom %}true{% else %}false{% endif %};
+    settings.pseudonyms = {% if experiment.config.pseudonyms != False %}true{% else %}false{% endif %};
+    settings.walls_visible = {% if experiment.config.walls_visible != False %}true{% else %}false{% endif %};
+    settings.build_walls = {% if experiment.config.build_walls %}true{% else %}false{% endif %};
+    settings.wall_building_cost = {{ experiment.config.wall_building_cost or 0 }};
+    settings.donation_amount = {{ experiment.config.donation_amount or 0 }};
+    settings.donation_individual = {% if experiment.config.donation_individual %}true{% else %}false{% endif %};
+    settings.donation_group = {% if experiment.config.donation_group %}true{% else %}false{% endif %};
+    settings.donation_ingroup = {% if experiment.config.donation_ingroup %}true{% else %}false{% endif %};
+    settings.donation_public = {% if experiment.config.donation_public %}true{% else %}false{% endif %};
+    settings.donation_enabled = (settings.donation_group || settings.donation_ingroup || settings.donation_individual || settings.donation_public) && settings.donation_amount;
     settings.donation_type = null;
-    settings.score_visible = {% if experiment.grid.score_visible %}true{% else %}false{% endif %};
-    settings.alternate_consumption_donation = {% if experiment.grid.alternate_consumption_donation %}true{% else %}false{% endif %};
-    settings.use_identicons = {% if experiment.grid.use_identicons %}true{% else %}false{% endif %};
-    settings.leaderboard_group = {% if experiment.grid.leaderboard_group %}true{% else %}false{% endif %};
-    settings.leaderboard_individual = {% if experiment.grid.leaderboard_individual %}true{% else %}false{% endif %};
-    settings.leaderboard_time = {{ experiment.grid.leaderboard_time }} || 10;
-    settings.motion_tremble_rate = {{ experiment.grid.motion_tremble_rate }} || 0.0;
+    settings.score_visible = {% if experiment.config.score_visible %}true{% else %}false{% endif %};
+    settings.alternate_consumption_donation = {% if experiment.config.alternate_consumption_donation %}true{% else %}false{% endif %};
+    settings.use_identicons = {% if experiment.config.use_identicons %}true{% else %}false{% endif %};
+    settings.leaderboard_group = {% if experiment.config.leaderboard_group %}true{% else %}false{% endif %};
+    settings.leaderboard_individual = {% if experiment.config.leaderboard_individual %}true{% else %}false{% endif %};
+    settings.leaderboard_time = {{ experiment.config.leaderboard_time or 0 }} || 10;
+    settings.motion_tremble_rate = {{ experiment.config.motion_tremble_rate or 0 }} || 0.0;
     settings.sprites_url = "{{ url_for('static', filename='images') }}";
+    settings.donation_active = settings.donation_enabled && !settings.alternate_consumption_donation; // Default to off if based on round number
 </script>
 {% endblock %}
 
@@ -64,7 +65,7 @@
     <p>
         <span id="score">0</span> points ($<span id="dollars">0.00</span>),
         <span id="time">?</span> seconds remaining
-        {% if experiment.grid.num_rounds > 1 %}in round <span id="round">?</span>{% endif %}
+        {% if experiment.config.num_rounds > 1 %}in round <span id="round">?</span>{% endif %}
     </p>
 </div>
 <p class="grid-loading">Loading Game World <span>.</span><span>.</span><span>.</span></p>
@@ -82,19 +83,19 @@
 <div id="item-transitions">
     Available Transitions: <span id="transition-details"></span>
 </div>
-{% if experiment.grid.donation_amount %}
+{% if experiment.config.donation_amount %}
 <div id="donate" class="for-players">
-    <label>Give {{ experiment.grid.donation_amount }} point{{experiment.grid.donation_amount > 1 and 's' or ''}} to:</label>
-    {% if experiment.grid.donation_individual %}
+    <label>Give {{ experiment.config.donation_amount }} point{{experiment.config.donation_amount > 1 and 's' or ''}} to:</label>
+    {% if experiment.config.donation_individual %}
         <button id="individual-donate" class="button-outline">Player</button>
     {% endif %}
-    {% if experiment.grid.donation_ingroup %}
+    {% if experiment.config.donation_ingroup %}
         <button id="ingroup-donate" class="button-outline">My Group</button>
     {% endif %}
-    {% if experiment.grid.donation_group and not experiment.grid.donation_ingroup %}
+    {% if experiment.config.donation_group and not experiment.config.donation_ingroup %}
         <button id="group-donate" class="button-outline">Group</button>
     {% endif %}
-    {% if experiment.grid.donation_public %}
+    {% if experiment.config.donation_public %}
         <button id="public-donate" class="button-outline">Everyone</button>
     {% endif %}
 </div>
@@ -103,7 +104,7 @@
 <div id="chat">
     <div id="chatlog">
         <ul id="messages">
-            {% if experiment.grid.alternate_consumption_donation %}
+            {% if experiment.config.alternate_consumption_donation %}
                 <li>
                     <span class="name">Moderator: </span> Starting a consumption round. Players have to consume as much as possible.
                 </li>
@@ -113,7 +114,7 @@
     <form action="" class="for-players">
         <input id="message" autocomplete="off" class="for-players" placeholder="Message the group." />
         <button id="submit-message" class="button button-clear for-players">Send to
-            {% if experiment.grid.spatial_chat %}
+            {% if experiment.config.spatial_chat %}
                 visible players
             {% else %}
                 everyone
@@ -128,11 +129,11 @@
     <p>You can pick up portable items with the spacebar and drop the item you are carrying using the d key.</p>
     <p>Some items have actions that can be performed on them using the spacebar.
         The action will depend on what item you are currently carrying.</p>
-    {% if experiment.grid.mutable_colors %}
+    {% if experiment.config.mutable_colors %}
         <p>Press 'b' or 'y' to switch to blue or yellow.</p>
     {% endif %}
-    {% if experiment.grid.identity_signaling %}
-        <p>Your group is initially {% if experiment.grid.identity_starts_visible %}visible{% else %}invisible{% endif %} to other players. Press 'v' to toggle your group visibility.</p>
+    {% if experiment.config.identity_signaling %}
+        <p>Your group is initially {% if experiment.config.identity_starts_visible %}visible{% else %}invisible{% endif %} to other players. Press 'v' to toggle your group visibility.</p>
     {% endif %}
 </div>
 

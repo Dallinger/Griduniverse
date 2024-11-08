@@ -13,11 +13,11 @@
         <div class="column">
             <br />
             The diagram below is designed to represent your relationship with
-            <strong>{{ experiment.grid.pre_difi_group_label }}</strong>.
+            <strong>{{ experiment.config.pre_difi_group_label or "Group"}}</strong>.
             Please indicate your relationship by clicking and dragging the smaller
             "Me" circle to the position that best captures your relationship with
-            <strong>{{ experiment.grid.pre_difi_group_label }}</strong>.
-            <input class="DIFI-input" id="DIFI" name="DIFI" data-group-label="{{ experiment.grid.pre_difi_group_label }}" data-group-image="{{ experiment.grid.pre_difi_group_image }}" />
+            <strong>{{ experiment.config.pre_difi_group_label or "Group"}}</strong>.
+            <input class="DIFI-input" id="DIFI" name="DIFI" data-group-label="{{ experiment.config.pre_difi_group_label or "Group" }}" data-group-image="{{ experiment.config.pre_difi_group_image or "/static/images/group.jpg" }}" />
         </div>
     </div>
 <hr>

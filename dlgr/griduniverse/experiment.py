@@ -47,6 +47,7 @@ GU_PARAMS = {
     "max_participants": int,
     "bot_policy": unicode,
     "num_rounds": int,
+    "num_games": int,
     "time_per_round": float,
     "instruct": bool,
     "columns": int,
@@ -163,8 +164,6 @@ class Gridworld(object):
         [0.77, 0.96, 0.90],
     ]
 
-    GREEN = [0.51, 0.69, 0.61]
-    WHITE = [1.00, 1.00, 1.00]
     wall_locations = None
     item_locations = None
     walls_updated = True
@@ -184,21 +183,9 @@ class Gridworld(object):
         self.num_rounds = kwargs.get("num_rounds", 1)
         self.time_per_round = kwargs.get("time_per_round", 300)
 
-        # Instructions
-        self.instruct = kwargs.get("instruct", True)
-
         # Grid
         self.columns = kwargs.get("columns", 25)
         self.rows = kwargs.get("rows", 25)
-        self.window_columns = kwargs.get("window_columns", min(self.columns, 25))
-        self.window_rows = kwargs.get("window_rows", min(self.rows, 25))
-        self.block_size = kwargs.get("block_size", 10)
-        self.padding = kwargs.get("padding", 1)
-        self.chat_visibility_threshold = kwargs.get("chat_visibility_threshold", 0.4)
-        self.spatial_chat = kwargs.get("spatial_chat", False)
-        self.visibility = kwargs.get("visibility", 40)
-        self.visibility_ramp_time = kwargs.get("visibility_ramp_time", 4)
-        self.background_animation = kwargs.get("background_animation", True)
         self.player_overlap = kwargs.get("player_overlap", False)
 
         # Motion
@@ -207,29 +194,19 @@ class Gridworld(object):
         self.motion_cost = kwargs.get("motion_cost", 0)
         self.motion_tremble_rate = kwargs.get("motion_tremble_rate", 0)
 
-        # Components
-        self.show_chatroom = kwargs.get("show_chatroom", False)
-        self.show_grid = kwargs.get("show_grid", True)
-
         # Identity
-        self.others_visible = kwargs.get("others_visible", True)
         self.num_colors = kwargs.get("num_colors", 3)
-        self.mutable_colors = kwargs.get("mutable_colors", False)
         self.costly_colors = kwargs.get("costly_colors", False)
-        self.pseudonyms = kwargs.get("pseudonyms", True)
         self.pseudonyms_locale = kwargs.get("pseudonyms_locale", "en_US")
         self.pseudonyms_gender = kwargs.get("pseudonyms_gender", None)
         self.contagion = kwargs.get("contagion", 0)
         self.contagion_hierarchy = kwargs.get("contagion_hierarchy", False)
         self.identity_signaling = kwargs.get("identity_signaling", False)
         self.identity_starts_visible = kwargs.get("identity_starts_visible", False)
-        self.use_identicons = kwargs.get("use_identicons", False)
 
         # Walls
-        self.walls_visible = kwargs.get("walls_visible", True)
         self.walls_density = kwargs.get("walls_density", 0.0)
         self.walls_contiguity = kwargs.get("walls_contiguity", 1.0)
-        self.build_walls = kwargs.get("build_walls", False)
         self.wall_building_cost = kwargs.get("wall_building_cost", 0)
         self.wall_locations = {}
 
@@ -255,7 +232,6 @@ class Gridworld(object):
         self.donation_public = kwargs.get("donation_public", False)
         self.intergroup_competition = kwargs.get("intergroup_competition", 1)
         self.intragroup_competition = kwargs.get("intragroup_competition", 1)
-        self.score_visible = kwargs.get("score_visible", False)
         self.alternate_consumption_donation = kwargs.get(
             "alternate_consumption_donation", False
         )
@@ -269,13 +245,6 @@ class Gridworld(object):
         self.difi_group_image = kwargs.get(
             "difi_group_image", "/static/images/group.jpg"
         )
-        self.fun_survey = kwargs.get("fun_survey", False)
-        self.pre_difi_question = kwargs.get("pre_difi_question", False)
-        self.pre_difi_group_label = kwargs.get("pre_difi_group_label", "Group")
-        self.pre_difi_group_image = kwargs.get(
-            "pre_difi_group_image", "/static/images/group.jpg"
-        )
-        self.leach_survey = kwargs.get("leach_survey", False)
 
         # Set some variables.
         self.players = {}
@@ -355,14 +324,6 @@ class Gridworld(object):
         if self.player_overlap:
             return not self.has_wall(position)
         return not self.has_player(position) and not self.has_wall(position)
-
-    @property
-    def limited_player_colors(self):
-        return self.player_colors[: self.num_colors]
-
-    @property
-    def limited_player_color_names(self):
-        return self.player_color_names[: self.num_colors]
 
     @property
     def elapsed_round_time(self):
@@ -607,14 +568,6 @@ class Gridworld(object):
                 }
                 obj = Item(item_props, **item_params)
                 self.item_locations[tuple(obj.position)] = obj
-
-    def instructions(self):
-        instructions_file_path = os.path.join(
-            os.path.dirname(__file__), "templates/instructions/instruct-ready.html"
-        )
-        with open(instructions_file_path) as instructions_file:
-            instructions_html = instructions_file.read()
-            return instructions_html
 
     def consume(self):
         """Players consume the non-interactive items"""
@@ -1144,10 +1097,6 @@ class Game(object):
         # Setup the environment for this game
         self.node_by_player_id = {}
         self.redis_conn = db.redis_conn
-        network = self.socket_session.query(dallinger.models.Network).get(network_id)
-        env = dallinger.nodes.Environment(network=network)
-        self.socket_session.add(env)
-        self.socket_session.commit()
 
         # Setup the websocket channel names
         self.broadcast_channel = "griduniverse-{}".format(network_id)
@@ -1174,8 +1123,16 @@ class Game(object):
         environment = (
             self.socket_session.query(dallinger.nodes.Environment)
             .filter_by(network_id=self.network_id)
-            .one()
+            .one_or_none()
         )
+        if environment is None:
+            network = self.socket_session.query(dallinger.models.Network).get(
+                self.network_id
+            )
+            environment = dallinger.nodes.Environment(network=network)
+            self.socket_session.add(environment)
+            self.socket_session.commit()
+
         return environment
 
     def record_event(self, details, player_id=None):
@@ -1661,6 +1618,7 @@ class Griduniverse(Experiment):
             self.setup()
             # This is a mapping from game websocket control channel name to game
             self.games = {}
+            self.redis_conn = db.redis_conn
             for network in self.networks():
                 game = Game(
                     network_id=network.id,
@@ -1673,13 +1631,15 @@ class Griduniverse(Experiment):
 
     def configure(self):
         super(Griduniverse, self).configure()
-        self.experiment_repeats = self.config.get("experiment_repeats", 1)
+        self.experiment_repeats = self.config.get("num_games", 1)
         self.num_participants = self.config.get("max_participants", 3)
+        self.instruct = self.config.get("instruct", True)
         self.quorum = self.num_participants
         self.initial_recruitment_size = self.config.get(
             "num_recruits", self.num_participants
         )
         self.network_factory = self.config.get("network", "FullyConnected")
+        self.num_colors = self.config.get("num_colors", 3)
 
         game_config_file = os.path.join(os.path.dirname(__file__), GAME_CONFIG_FILE)
         with open(game_config_file, "r") as game_config_stream:
@@ -1719,16 +1679,33 @@ class Griduniverse(Experiment):
             }
         )
 
+    @property
+    def limited_player_colors(self):
+        return Gridworld.player_colors[: self.num_colors]
+
+    @property
+    def limited_player_color_names(self):
+        return Gridworld.player_color_names[: self.num_colors]
+
     @classmethod
     def extra_parameters(cls):
         config = get_config()
         for key in GU_PARAMS:
             config.register(key, GU_PARAMS[key])
 
+    @property
     def background_tasks(self):
         if self.config.get("replay", False):
             return
         return [self.start_games]
+
+    def instructions(self):
+        instructions_file_path = os.path.join(
+            os.path.dirname(__file__), "templates/instructions/instruct-ready.html"
+        )
+        with open(instructions_file_path) as instructions_file:
+            instructions_html = instructions_file.read()
+            return instructions_html
 
     def start_games(self):
         # This is really inefficient, since the loops for all games will run
@@ -1738,7 +1715,7 @@ class Griduniverse(Experiment):
         # separate experiments in different docker containers on the same server
         # when performance is an issue? The main problem with that approach is
         # that the games will not share a single MTurk HIT.
-        for game in self.games:
+        for game in self.games.values():
             sockets.chat_backend.subscribe(self, game.control_channel)
             game.on_launch()
         sockets.chat_backend.subscribe(self, sockets.CONTROL_CHANNEL)
@@ -1759,6 +1736,18 @@ class Griduniverse(Experiment):
 
     def serialize(self, value):
         return json.dumps(value)
+
+    def get_game_for_player_id(self, player_id):
+        # Lookup the node for this player
+        player_node = (
+            self.session.query(dallinger.models.Node)
+            .filter_by(participant_id=player_id)
+            .one_or_none()
+        )
+        if player_node is None:
+            return
+        channel = "griduniverse_ctrl-{}".format(player_node.network_id)
+        return self.games.get(channel)
 
     def recruit(self):
         self.recruiter().close_recruitment()
@@ -1789,27 +1778,25 @@ class Griduniverse(Experiment):
             "connect": self.handle_connect,
             "disconnect": self.handle_disconnect,
         }
-        if channel not in self.games:
-            return
-
-        game = self.games[channel]
-        if not self.config.get("replay", False):
-            # Ignore these events in replay mode
-            mapping.update(
-                {
-                    "chat": game.handle_chat_message,
-                    "change_color": game.handle_change_color,
-                    "move": game.handle_move,
-                    "donation_submitted": game.handle_donation,
-                    "plant_food": game.handle_plant_food,
-                    "toggle_visible": game.handle_toggle_visible,
-                    "build_wall": game.handle_build_wall,
-                    "item_pick_up": game.handle_item_pick_up,
-                    "item_consume": game.handle_item_consume,
-                    "item_transition": game.handle_item_transition,
-                    "item_drop": game.handle_item_drop,
-                }
-            )
+        if channel in self.games:
+            game = self.games[channel]
+            if not self.config.get("replay", False):
+                # Ignore these events in replay mode
+                mapping.update(
+                    {
+                        "chat": game.handle_chat_message,
+                        "change_color": game.handle_change_color,
+                        "move": game.handle_move,
+                        "donation_submitted": game.handle_donation,
+                        "plant_food": game.handle_plant_food,
+                        "toggle_visible": game.handle_toggle_visible,
+                        "build_wall": game.handle_build_wall,
+                        "item_pick_up": game.handle_item_pick_up,
+                        "item_consume": game.handle_item_consume,
+                        "item_transition": game.handle_item_transition,
+                        "item_drop": game.handle_item_drop,
+                    }
+                )
 
         if msg["type"] in mapping:
             mapping[msg["type"]](msg)
@@ -1826,8 +1813,12 @@ class Griduniverse(Experiment):
             message["server_time"] = time.time()
             self.dispatch(channel, message)
             if "player_id" in message:
-                game = self.games[channel]
-                game.record_event(message, message["player_id"])
+                if channel in self.games:
+                    game = self.games[channel]
+                elif channel == self.channel:
+                    game = self.get_game_for_player_id(message["player_id"])
+                if game:
+                    game.record_event(message, message["player_id"])
 
     def parse_message(self, raw_message):
         """Strip the channel prefix off the raw message, then return
@@ -1842,7 +1833,7 @@ class Griduniverse(Experiment):
 
     def publish(self, msg):
         """Publish a message to all griduniverse clients"""
-        self.redis_conn.publish(self.channel, json.dumps(msg))
+        self.redis_conn.publish("griduniverse", json.dumps(msg))
 
     def handle_connect(self, msg):
         player_id = msg["player_id"]
@@ -1866,8 +1857,20 @@ class Griduniverse(Experiment):
             self.session.add(node)
             self.session.commit()
             # Send a broadcast message
+            logger.info("Spawning player on the grid...")
+            # We use the current node id modulo the number of colours
+            # to pick the user's colour. This ensures that players are
+            # allocated to colours uniformly.
+            if player_id not in game.grid.players:
+                game.grid.spawn_player(
+                    id=player_id,
+                    color_name=self.limited_player_color_names[
+                        node.id % self.num_colors
+                    ],
+                    recruiter_id=participant.recruiter_id,
+                )
+            # Notify all clients that a new player has been added to a specific game
             self.publish(
-                "griduniverse",
                 {
                     "type": "player_added",
                     "player_id": player_id,
@@ -1876,18 +1879,6 @@ class Griduniverse(Experiment):
                     "control_channel": game.control_channel,
                 },
             )
-            logger.info("Spawning player on the grid...")
-            # We use the current node id modulo the number of colours
-            # to pick the user's colour. This ensures that players are
-            # allocated to colours uniformly.
-            if player_id not in game.grid.players:
-                game.grid.spawn_player(
-                    id=player_id,
-                    color_name=game.grid.limited_player_color_names[
-                        node.id % game.grid.num_colors
-                    ],
-                    recruiter_id=participant.recruiter_id,
-                )
         else:
             logger.info("No free network found for player {}".format(player_id))
 

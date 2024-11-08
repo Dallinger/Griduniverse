@@ -7,19 +7,20 @@ import ReconnectingWebSocket from "reconnecting-websocket";
 
 export class GUSocket {
   constructor(settings) {
-    const tolerance =
+    this.endpoint = settings.endpoint;
+    this.tolerance =
       settings.lagTolerance === undefined ? 0.1 : settings.lagTolerance;
-    this.globalBroadcastChannel = settings.broadcast;
-    this.globalControlChannel = settings.control;
+    this.experimentBroadcastChannel = settings.broadcast;
+    this.experimentControlChannel = settings.control;
     this.callbackMap = settings.callbackMap;
-    this.socket = this._makeSocket(
-      settings.endpoint,
-      this.globalBroadcastChannel,
-      tolerance,
+    this.experimentSocket = this._makeSocket(
+      this.endpoint,
+      this.experimentBroadcastChannel,
+      this.tolerance,
     );
 
-    this.socket.onmessage = (event) => {
-      this._globalDispatch(event);
+    this.experimentSocket.onmessage = (event) => {
+      this._experimentDispatch(event);
     };
   }
 
@@ -27,44 +28,54 @@ export class GUSocket {
     this.broadcastChannel = broadcastChannel;
     this.controlChannel = controlChannel;
     this.gameSocket = this._makeSocket(
-      settings.endpoint,
+      this.endpoint,
       this.broadcastChannel,
-      tolerance,
+      this.tolerance,
     );
 
     this.gameSocket.onmessage = (event) => {
       this._dispatch(event);
     };
+    this.openGame();
   }
 
-  open() {
+  openExperiment() {
     const isOpen = $.Deferred();
-    this.socket.onopen = () => {
+    this.experimentSocket.onopen = () => {
       isOpen.resolve();
     };
 
     return isOpen;
   }
 
-  sendGlobal(data) {
+  openGame() {
+    const isOpen = $.Deferred();
+    this.gameSocket.onopen = () => {
+      isOpen.resolve();
+    };
+
+    return isOpen;
+  }
+
+  sendToExperiment(data) {
     const msg = JSON.stringify(data);
-    const channel = this.globalControlChannel;
+    const channel = this.experimentControlChannel;
     console.log(`Sending message to the ${channel} channel: ${msg}`);
-    this.socket.send(`${channel}:${msg}`);
+    this.experimentSocket.send(`${channel}:${msg}`);
   }
 
   send(data) {
     const msg = JSON.stringify(data);
     const channel = this.controlChannel;
     console.log(`Sending message to the ${channel} channel: ${msg}`);
-    this.socket.send(`${channel}:${msg}`);
+    this.gameSocket.send(`${channel}:${msg}`);
   }
 
   broadcast(data) {
     const msg = JSON.stringify(data);
     const channel = this.broadcastChannel;
     console.log(`Broadcasting message to the ${channel} channel: ${msg}`);
-    this.socket.send(`${channel}:${msg}`);
+    this.gameSocket.send(`${channel}:${msg}`);
   }
 
   _makeSocket(endpoint, channel, tolerance) {
@@ -78,25 +89,25 @@ export class GUSocket {
     return socket;
   }
 
-  _baseDispatch(event) {
+  _baseDispatch(event, marker) {
     const msg = JSON.parse(event.data.substring(marker.length));
     const callback = this.callbackMap[msg.type];
     if (callback !== undefined) {
-      callback(msg);
+      callback(msg, this);
     } else {
       console.log(`Unrecognized message type ${msg.type} from backend.`);
     }
   }
 
-  _globalDispatch(event) {
-    const marker = `${this.globalBroadcastChannel}:`;
+  _experimentDispatch(event) {
+    const marker = `${this.experimentBroadcastChannel}:`;
     if (!event.data.startsWith(marker)) {
       console.log(
-        `Message was not on channel ${this.globalBroadcastChannel}. Ignoring.`,
+        `Message was not on channel ${this.experimentBroadcastChannel}. Ignoring.`,
       );
       return;
     }
-    _baseDispatch(event);
+    this._baseDispatch(event, marker);
   }
 
   _dispatch(event) {
@@ -107,6 +118,6 @@ export class GUSocket {
       );
       return;
     }
-    _baseDispatch(event);
+    this._baseDispatch(event, marker);
   }
 }
