@@ -1551,6 +1551,14 @@ class Griduniverse(Experiment):
             for player_to in self.grid.players.values():
                 player_to.score += player_item.public_good
 
+        consumed_msg = {
+            "type": "item_consumed",
+            "player_id": player.id,
+            "player_color": player.color,
+            "player_item": player_item and player_item.serialize(),
+        }
+        self.publish(consumed_msg)
+
     def handle_item_pick_up(self, msg):
         player = self.grid.players[msg["player_id"]]
         player_item = player.current_item
