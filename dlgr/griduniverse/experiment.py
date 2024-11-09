@@ -48,6 +48,7 @@ GU_PARAMS = {
     "bot_policy": unicode,
     "num_rounds": int,
     "num_games": int,
+    "quorum": int,
     "time_per_round": float,
     "instruct": bool,
     "columns": int,
@@ -1634,9 +1635,10 @@ class Griduniverse(Experiment):
         self.experiment_repeats = self.config.get("num_games", 1)
         self.num_participants = self.config.get("max_participants", 3)
         self.instruct = self.config.get("instruct", True)
-        self.quorum = self.num_participants
+        self.total_participants = self.num_participants * self.experiment_repeats
+        self.quorum = self.config.get("quorum", self.total_participants)
         self.initial_recruitment_size = self.config.get(
-            "num_recruits", self.num_participants
+            "num_recruits", self.total_participants
         )
         self.network_factory = self.config.get("network", "FullyConnected")
         self.num_colors = self.config.get("num_colors", 3)
@@ -1698,6 +1700,14 @@ class Griduniverse(Experiment):
         if self.config.get("replay", False):
             return
         return [self.start_games]
+
+    def is_overrecruited(self, waiting_count):
+        """The experiment is overrecruited if the number of waiting players
+        exceeds the total number of participants allowed across all games.
+        """
+        if not self.quorum:
+            return False
+        return waiting_count > self.total_participants
 
     def instructions(self):
         instructions_file_path = os.path.join(

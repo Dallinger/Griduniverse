@@ -151,14 +151,6 @@ class TestRoundState(object):
             assert gridworld.game_over is True
 
 
-@pytest.mark.usefixtures("env")
-class TestInstructions(object):
-    def test_instructions(self, gridworld):
-        # Just test something basic
-        html = gridworld.instructions()
-        assert "🫐 Gooseberry (3 points)" in html
-
-
 class TestMatrix2SerializedGridworld(object):
     """Tests for converting a list of lists extracted from matrix
     representation of initial grid state into the format used in

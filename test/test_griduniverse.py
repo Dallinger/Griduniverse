@@ -207,10 +207,11 @@ class TestPlayerConnects(object):
             for participant in participants[:9]
         ]
         colors = collections.Counter([player.color_idx for player in players])
-        assert colors == {0: 3, 1: 3, 2: 3}
+        # All colors are assigned to 3 players
+        assert set(colors.values()) == {3}
 
     def test_colors_distributed_almost_evenly_if_on_edge(self, exp, game, participants):
-        game.grid.num_colors = 2
+        exp.num_colors = 2
         game.grid.num_players = 9
         exp.networks()[0].max_size = 10
         players = [
@@ -219,7 +220,8 @@ class TestPlayerConnects(object):
             for participant in participants[:9]
         ]
         colors = collections.Counter([player.color_idx for player in players])
-        assert colors == {0: 5, 1: 4}
+        # One color is assigned to 4 players and the other is assigned to 5
+        assert set(colors.values()) == {4, 5}
 
 
 @pytest.mark.usefixtures("env")
@@ -279,3 +281,11 @@ class TestChat(object):
         )
 
         pubsub.publish.assert_not_called()
+
+
+@pytest.mark.usefixtures("env")
+class TestInstructions(object):
+    def test_instructions(self, exp):
+        # Just test something basic
+        html = exp.instructions()
+        assert "🫐 Gooseberry (3 points)" in html
