@@ -887,6 +887,19 @@
     );
   }
 
+  function onPlayerAdded(msg, socket) {
+    var newPlayerId = msg.player_id,
+      ego = players.ego();
+    if (ego) {
+      var playerId = ego.id;
+    } else {
+      playerId = dallinger.getUrlParameter("participant_id");
+    }
+    if (newPlayerId == playerId) {
+      socket.addGameChannels(msg.broadcast_channel, msg.control_channel);
+    }
+  }
+
   function onMoveRejected(msg) {
     var offendingPlayerId = msg.player_id,
       ego = players.ego();
@@ -1271,6 +1284,10 @@
     };
   }
 
+  function onNewRound(msg) {
+    return displayLeaderboards(msg);
+  }
+
   $(function () {
     var player_id = dallinger.getUrlParameter("participant_id");
     isSpectator = _.isUndefined(player_id);
@@ -1284,20 +1301,21 @@
         donation_processed: onDonationProcessed,
         color_changed: onColorChanged,
         state: onGameStateChange,
-        new_round: displayLeaderboards,
+        new_round: onNewRound,
         stop: gameOverHandler(player_id),
         wall_built: addWall,
         move_rejection: onMoveRejected,
+        player_added: onPlayerAdded,
       },
     };
     const socket = new socketlib.GUSocket(socketSettings);
 
-    socket.open().done(function () {
+    socket.openExperiment().done(function () {
       var data = {
         type: "connect",
         player_id: isSpectator ? "spectator" : player_id,
       };
-      socket.send(data);
+      socket.sendToExperiment(data);
     });
 
     players.ego_id = player_id;

@@ -11,6 +11,18 @@ Here, we create a Griduniverse for the study of human social behavior — a para
 
 ## Elements of the Griduniverse
 
+## Grid Universe
+
+The Grid Universe is a Dallinger Experiment. The Universe consists of multiple
+Games, each of which has an initial Grid World in which players interact.
+
+### Game
+
+A Game runs in a single Dallinger Network, that consists of a Grid World and a
+number of participants. Multiple Games can be run concurrently, and a game can
+continue for multiple rounds with the same players and/or evolve into a new Grid
+with a new set of players.
+
 ### Grid
 
 A Gridworld contains a grid (GRID_HEIGHT, GRID_WIDTH). For example, Fig. 2 shows two players on a 20 × 20 grid.
@@ -82,6 +94,21 @@ Number of players. Default is 3.
 ### num_rounds
 
 Number of rounds. Default is 1.
+
+### num_games
+
+Number of concurrent games to run. Default is 1.
+
+### quorum
+
+The number of total participants needed in the waiting room before any games can
+start. Default is `max_participants`
+
+### game_quorum
+
+The number of participants needed in each game before the game can start. A game
+can start before it has filled, any additional players will be added to the
+already running game. Default is `max_participants`
 
 ### time_per_round
 

@@ -298,7 +298,9 @@ img.team {
     font-size: 1.5rem;
     position: absolute;
     top: 170px;
-    left: 70px;
+    width: 421px;
+    padding: 0 20px;
+    text-align: center;
 }
 
 .grid-loading span {

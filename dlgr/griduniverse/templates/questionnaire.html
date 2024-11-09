@@ -61,7 +61,7 @@
             </select>
         </div>
     </div>
-    {% if experiment.grid.fun_survey %}
+    {% if experiment.config.fun_survey %}
     <div class="row question">
         <div class="column column-75">
             <p>On a scale of 1-7 (where 7 is the most fun), please rate how <b>FUN</b> you found the task:</p>
@@ -80,20 +80,20 @@
         </div>
     </div>
     {% endif %}
-    {% if experiment.grid.difi_question %}
+    {% if experiment.config.difi_question %}
     <div class="row question">
         <div class="column">
             <br />
             The diagram below is designed to represent your relationship with
-            <strong>{{ experiment.grid.difi_group_label }}</strong>.
+            <strong>{{ experiment.config.difi_group_label or "Group" }}</strong>.
             Please indicate your relationship by clicking and dragging the smaller
             "Me" circle to the position that best captures your relationship with
-            <strong>{{ experiment.grid.difi_group_label }}</strong>.
-            <input class="DIFI-input" id="DIFI" name="DIFI" data-group-label="{{ experiment.grid.difi_group_label }}" data-group-image="{{ experiment.grid.difi_group_image }}" />
+            <strong>{{ experiment.config.difi_group_label or "Group" }}</strong>.
+            <input class="DIFI-input" id="DIFI" name="DIFI" data-group-label="{{ experiment.config.difi_group_label or "Group" }}" data-group-image="{{ experiment.config.difi_group_image or "/static/images/group.jpg" }}" />
         </div>
     </div>
     {% endif %}
-    {% if experiment.grid.leach_survey %}
+    {% if experiment.config.leach_survey %}
       {% include 'leach.html' %}
     {% endif %}
 </form>
