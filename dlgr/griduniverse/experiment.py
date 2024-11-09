@@ -49,6 +49,7 @@ GU_PARAMS = {
     "num_rounds": int,
     "num_games": int,
     "quorum": int,
+    "game_quorum": int,
     "time_per_round": float,
     "instruct": bool,
     "columns": int,
@@ -172,13 +173,12 @@ class Gridworld(object):
 
     def __init__(self, **kwargs):
         # If Singleton is already initialized, do nothing
-        if hasattr(self, "num_players"):
-            return
-
         self.log_event = kwargs.get("log_event", lambda x: None)
 
         # Players
         self.num_players = kwargs.get("max_participants", 3)
+        # Minimum quorum for game defaults to max nubmer of players per game
+        self.quorum = kwargs.get("game_quorum", self.num_players)
 
         # Rounds
         self.num_rounds = kwargs.get("num_rounds", 1)
@@ -497,7 +497,7 @@ class Gridworld(object):
 
     def _start_if_ready(self):
         # Don't start unless we have a least one player
-        if self.players and not self.game_started:
+        if len(self.players) >= self.quorum and not self.game_started:
             self.start_timestamp = time.time()
 
     @property
@@ -1465,6 +1465,10 @@ class Game(object):
             count += 1
 
             player_count = len(self.grid.players)
+            # Don't start sending state until all players are on the board
+            if not self.grid.game_started:
+                continue
+
             if not last_player_count or player_count != last_player_count:
                 update_walls = True
                 update_items = True
@@ -1636,7 +1640,8 @@ class Griduniverse(Experiment):
         self.num_participants = self.config.get("max_participants", 3)
         self.instruct = self.config.get("instruct", True)
         self.total_participants = self.num_participants * self.experiment_repeats
-        self.quorum = self.config.get("quorum", self.total_participants)
+        # Quorum defaults to the max number of players for a single game
+        self.quorum = self.config.get("quorum", self.num_participants)
         self.initial_recruitment_size = self.config.get(
             "num_recruits", self.total_participants
         )
@@ -1734,6 +1739,11 @@ class Griduniverse(Experiment):
         """Create a new network by reading the configuration file."""
         class_ = getattr(dallinger.networks, self.network_factory)
         return class_(max_size=self.num_participants + 1)
+
+    def choose_network(self, networks, participant):
+        """Start filling the first game/network first"""
+        networks.sort(key=lambda n: n.id)
+        return networks[0]
 
     def create_node(self, participant, network):
         try:

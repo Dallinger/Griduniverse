@@ -111,9 +111,20 @@ class TestRoundState(object):
         assert gridworld.remaining_round_time == 0
         assert gridworld.game_over is False
 
-    def test_check_round_starts_with_players(self, gridworld):
-        # Adding players starts the game
+    def test_check_round_doesnt_start_with_too_few_players(self, gridworld):
+        # Adding enough players starts the game
         gridworld.players = {1: mock.Mock()}
+        gridworld._start_if_ready()
+        gridworld.check_round_completion()
+        assert gridworld.round == 0
+        assert gridworld.start_timestamp is None
+        assert gridworld.remaining_round_time == 0
+        assert gridworld.game_over is False
+
+    def test_check_round_starts_with_player_quorum(self, gridworld):
+        # Adding enough players starts the game
+        gridworld.quorum = 2
+        gridworld.players = {1: mock.Mock(), 2: mock.Mock()}
         gridworld._start_if_ready()
         gridworld.check_round_completion()
         assert gridworld.start_timestamp is not None
@@ -121,6 +132,7 @@ class TestRoundState(object):
         assert gridworld.round == 0
 
     def test_check_round_change(self, gridworld):
+        gridworld.quorum = 1
         gridworld.players = {1: mock.Mock()}
         gridworld.num_rounds = 2
         gridworld._start_if_ready()
@@ -139,6 +151,7 @@ class TestRoundState(object):
             assert gridworld.players[1].motion_timestamp == 0
 
     def test_game_end(self, gridworld):
+        gridworld.quorum = 1
         gridworld.players = {1: mock.Mock()}
         gridworld.num_rounds = 1
         gridworld._start_if_ready()

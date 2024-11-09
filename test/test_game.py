@@ -163,6 +163,12 @@ class TestGameLoops(object):
 
     def test_send_state_thread(self, loop_game_3x):
         game = loop_game_3x
+        # The game state thread only starts when it has enough players
+        game.grid.players = {
+            "1": Player(id="1", score=0.0),
+            "2": Player(id="1", score=0.0),
+            "3": Player(id="3", score=0.0),
+        }
         game.send_state_thread()
 
         # State thread will loop 4 times before the loop is broken,

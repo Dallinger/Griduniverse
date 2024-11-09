@@ -22526,6 +22526,10 @@ var require;/*global dallinger, store */
     };
   }
 
+  function onNewRound(msg) {
+    return displayLeaderboards(msg);
+  }
+
   $(function () {
     var player_id = dallinger.getUrlParameter("participant_id");
     isSpectator = _.isUndefined(player_id);
@@ -22539,7 +22543,7 @@ var require;/*global dallinger, store */
         donation_processed: onDonationProcessed,
         color_changed: onColorChanged,
         state: onGameStateChange,
-        new_round: displayLeaderboards,
+        new_round: onNewRound,
         stop: gameOverHandler(player_id),
         wall_built: addWall,
         move_rejection: onMoveRejected,
