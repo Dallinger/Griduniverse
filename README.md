@@ -95,6 +95,21 @@ Number of players. Default is 3.
 
 Number of rounds. Default is 1.
 
+### num_games
+
+Number of concurrent games to run. Default is 1.
+
+### quorum
+
+The number of total participants needed in the waiting room before any games can
+start. Default is `max_participants`
+
+### game_quorum
+
+The number of participants needed in each game before the game can start. A game
+can start before it has filled, any additional players will be added to the
+already running game. Default is `max_participants`
+
 ### time_per_round
 
 Time per round, in seconds. Defaults to 300.

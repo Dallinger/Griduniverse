@@ -177,8 +177,9 @@ class Gridworld(object):
 
         # Players
         self.num_players = kwargs.get("max_participants", 3)
-        # Minimum quorum for game defaults to max nubmer of players per game
-        self.quorum = kwargs.get("game_quorum", self.num_players)
+        # Minimum quorum for game defaults to max nubmer of players per game,
+        # and cannot exceed that number
+        self.quorum = min(kwargs.get("game_quorum", self.num_players), self.num_players)
 
         # Rounds
         self.num_rounds = kwargs.get("num_rounds", 1)
@@ -1640,8 +1641,11 @@ class Griduniverse(Experiment):
         self.num_participants = self.config.get("max_participants", 3)
         self.instruct = self.config.get("instruct", True)
         self.total_participants = self.num_participants * self.experiment_repeats
-        # Quorum defaults to the max number of players for a single game
-        self.quorum = self.config.get("quorum", self.num_participants)
+        # Quorum defaults to the max number of players for a single game, and
+        # cannot exceed the total number of allowed participants
+        self.quorum = min(
+            self.config.get("quorum", self.num_participants), self.total_participants
+        )
         self.initial_recruitment_size = self.config.get(
             "num_recruits", self.total_participants
         )
