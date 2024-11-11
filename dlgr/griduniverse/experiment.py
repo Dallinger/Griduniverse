@@ -172,7 +172,6 @@ class Gridworld(object):
     items_updated = True
 
     def __init__(self, **kwargs):
-        # If Singleton is already initialized, do nothing
         self.log_event = kwargs.get("log_event", lambda x: None)
 
         # Players
@@ -1062,7 +1061,11 @@ extra_routes = flask.Blueprint(
 
 @extra_routes.route("/consent")
 def consent():
-    """Return the consent form. Here for backwards-compatibility with 2.x."""
+    """We have a custom consent form.
+
+    TODO: having a custom route may be obsolete at this point, and it may
+    be enough to have just the custom template in the right place.
+    """
     config = get_config()
     return flask.render_template(
         "consent.html",
@@ -1622,8 +1625,7 @@ class Griduniverse(Experiment):
         super(Griduniverse, self).__init__(session)
         if session:
             self.setup()
-            # This is a mapping from game websocket control channel name to game
-            self.games = {}
+            self.games_by_control_channel_id = {}
             self.redis_conn = db.redis_conn
             for network in self.networks():
                 game = Game(
@@ -1633,7 +1635,7 @@ class Griduniverse(Experiment):
                     player_config=self.player_config,
                     game_config=self.config.as_dict(),
                 )
-                self.games[game.control_channel] = game
+                self.games_by_control_channel_id[game.control_channel] = game
 
     def configure(self):
         super(Griduniverse, self).configure()
@@ -1734,7 +1736,7 @@ class Griduniverse(Experiment):
         # separate experiments in different docker containers on the same server
         # when performance is an issue? The main problem with that approach is
         # that the games will not share a single MTurk HIT.
-        for game in self.games.values():
+        for game in self.games_by_control_channel_id.values():
             sockets.chat_backend.subscribe(self, game.control_channel)
             game.on_launch()
         sockets.chat_backend.subscribe(self, sockets.CONTROL_CHANNEL)
@@ -1771,7 +1773,7 @@ class Griduniverse(Experiment):
         if player_node is None:
             return
         channel = "griduniverse_ctrl-{}".format(player_node.network_id)
-        return self.games.get(channel)
+        return self.games_by_control_channel_id.get(channel)
 
     def recruit(self):
         self.recruiter().close_recruitment()
@@ -1802,8 +1804,8 @@ class Griduniverse(Experiment):
             "connect": self.handle_connect,
             "disconnect": self.handle_disconnect,
         }
-        if channel in self.games:
-            game = self.games[channel]
+        if channel in self.games_by_control_channel_id:
+            game = self.games_by_control_channel_id[channel]
             if not self.config.get("replay", False):
                 # Ignore these events in replay mode
                 mapping.update(
@@ -1837,8 +1839,8 @@ class Griduniverse(Experiment):
             message["server_time"] = time.time()
             self.dispatch(channel, message)
             if "player_id" in message:
-                if channel in self.games:
-                    game = self.games[channel]
+                if channel in self.games_by_control_channel_id:
+                    game = self.games_by_control_channel_id[channel]
                 elif channel == self.channel:
                     game = self.get_game_for_player_id(message["player_id"])
                 if game:
@@ -1874,7 +1876,9 @@ class Griduniverse(Experiment):
         participant = self.session.query(dallinger.models.Participant).get(player_id)
         network = self.get_network_for_participant(participant)
         if network:
-            game = self.games["griduniverse_ctrl-{}".format(network.id)]
+            game = self.games_by_control_channel_id[
+                "griduniverse_ctrl-{}".format(network.id)
+            ]
             logger.info("Found an open network. Adding participant node...")
             node = self.create_node(participant, network)
             game.node_by_player_id[player_id] = node.id
