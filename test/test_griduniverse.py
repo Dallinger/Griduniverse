@@ -118,14 +118,14 @@ class TestExperimentClass(object):
     def test_new_experiment_has_game(self, exp):
         from dlgr.griduniverse.experiment import Game
 
-        assert len(exp.games) > 0
-        for game in exp.games.values():
+        assert len(exp.games_by_control_channel_id) > 0
+        for game in exp.games_by_control_channel_id.values():
             assert isinstance(game, Game)
 
     def test_new_game_has_a_grid(self, exp):
         from dlgr.griduniverse.experiment import Gridworld
 
-        for game in exp.games.values():
+        for game in exp.games_by_control_channel_id.values():
             assert isinstance(game.grid, Gridworld)
 
     def test_new_experiment_has_item_config_with_defaults(self, exp):

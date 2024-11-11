@@ -213,19 +213,19 @@ def exp(db_session, active_config, fresh_gridworld):
     gu.app_id = "test app"
     gu.exp_config = active_config
 
-    for game in gu.games.values():
+    for game in gu.games_by_control_channel_id.values():
         game.grid.players.clear()
 
     yield gu
 
-    for game in gu.games.values():
+    for game in gu.games_by_control_channel_id.values():
         game.socket_session.rollback()
         game.socket_session.close()
 
 
 @pytest.fixture
 def game(exp):
-    for game in exp.games.values():
+    for game in exp.games_by_control_channel_id.values():
         yield game
 
 
