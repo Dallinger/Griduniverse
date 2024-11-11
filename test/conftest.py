@@ -183,20 +183,7 @@ def pubsub(game):
 
 
 @pytest.fixture
-def fresh_gridworld():
-    from dlgr.griduniverse.experiment import Gridworld
-
-    if hasattr(Gridworld, "instance"):
-        delattr(Gridworld, "instance")
-
-    yield
-
-    if hasattr(Gridworld, "instance"):
-        delattr(Gridworld, "instance")
-
-
-@pytest.fixture
-def gridworld(fresh_gridworld, active_config, item_config):
+def gridworld(active_config, item_config):
     from dlgr.griduniverse.experiment import Gridworld
 
     gw = Gridworld(
@@ -206,7 +193,7 @@ def gridworld(fresh_gridworld, active_config, item_config):
 
 
 @pytest.fixture
-def exp(db_session, active_config, fresh_gridworld):
+def exp(db_session, active_config):
     from dallinger.experiments import Griduniverse
 
     gu = Griduniverse(db_session)
