@@ -397,6 +397,28 @@ class Gridworld(object):
         color_id = int(color_id)
         return [p for p in self.players.values() if p.color_idx == color_id]
 
+    def change_player_color(self, player_id, new_color_name):
+        player = self.players[player_id]
+        color_idx = self.player_color_names.index(new_color_name)
+        old_color_name = self.player_color_names[player.color_idx]
+
+        if player.color_idx == color_idx:
+            return  # Requested color change is no change at all.
+
+        if self.costly_colors:
+            if player.score < self.color_costs[color_idx]:
+                return
+            else:
+                player.score -= self.color_costs[color_idx]
+
+        player.color = new_color_name
+        player.color_idx = color_idx
+        player.color_name = new_color_name
+        return {
+            "old_color_name": old_color_name,
+            "new_color_name": new_color_name,
+        }
+
     def check_round_completion(self):
         if not self.game_started:
             return
@@ -1185,7 +1207,7 @@ class Game(object):
         if not msg.get("broadcast", False):
             self.publish(message)
 
-    def handle_change_color(self, msg):
+    def handle_change_colorOLD(self, msg):
         player = self.grid.players[msg["player_id"]]
         color_name = msg["color"]
         color_idx = Gridworld.player_color_names.index(color_name)
@@ -1210,6 +1232,23 @@ class Game(object):
             "player_id": msg["player_id"],
             "old_color": old_color,
             "new_color": player.color_name,
+        }
+        # Put the message back on the channel
+        self.publish(message)
+        self.record_event(message, message["player_id"])
+
+    def handle_change_color(self, msg):
+        result = self.grid.change_player_color(
+            player_id=msg["player_id"], new_color_name=msg["color"]
+        )
+        if not result:
+            return
+
+        message = {
+            "type": "color_changed",
+            "player_id": msg["player_id"],
+            "old_color": result["old_color_name"],
+            "new_color": result["new_color_name"],
         }
         # Put the message back on the channel
         self.publish(message)
@@ -1508,6 +1547,7 @@ class Game(object):
 
     def game_loop(self):
         """Update the world state."""
+        # Do some initial stuff that only happens once
         gevent.sleep(0.1)
         map_csv_path = self.config.get("map_csv", None)
         if map_csv_path is not None:
@@ -1521,6 +1561,7 @@ class Game(object):
                         gevent.sleep(0.00001)
                     self.grid.spawn_item(item_id=item_type["item_id"])
 
+        # Wait for grid to decide it's ready based on available players
         while not self.grid.game_started:
             gevent.sleep(0.01)
 
