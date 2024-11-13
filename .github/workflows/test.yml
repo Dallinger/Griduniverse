@@ -21,11 +21,11 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r https://raw.githubusercontent.com/Dallinger/Dallinger/issues/5330-websocket-updates/dev-requirements.txt
+          pip install -r https://raw.githubusercontent.com/Dallinger/Dallinger/master/dev-requirements.txt
           pip install -r dev-requirements.txt
       - name: Install dallinger
         run: |
-          pip install git+https://github.com/Dallinger/Dallinger.git@issues/5330-websocket-updates#egg=dallinger[docker]
+          pip install git+https://github.com/Dallinger/Dallinger.git@master#egg=dallinger[docker]
       - name: Install experiment
         run: |
           pip install -e .[dev]
