@@ -24,7 +24,6 @@ from dallinger import db
 from dallinger.compat import unicode
 from dallinger.config import get_config
 from dallinger.experiment import Experiment
-from dallinger.experiment_server import sockets
 from faker import Factory
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -1729,6 +1728,8 @@ class Griduniverse(Experiment):
             return instructions_html
 
     def start_games(self):
+        from dallinger.experiment_server import sockets
+
         # This is really inefficient, since the loops for all games will run
         # within a single web worker. Can we make use of `multiprocessing` here
         # (e.g. create each game instance in its own process and initiate
