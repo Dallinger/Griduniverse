@@ -170,33 +170,20 @@ def db_session():
 
 
 @pytest.fixture
-def pubsub(exp):
+def pubsub(game):
     import dallinger.db
 
     with mock.patch(
         "dlgr.griduniverse.experiment.db.redis_conn", autospec=dallinger.db.redis_conn
     ) as mock_redis:
-        orig_conn = exp.redis_conn
-        exp.redis_conn = mock_redis
+        orig_conn = game.redis_conn
+        game.redis_conn = mock_redis
         yield mock_redis
-        exp.redis_conn = orig_conn
+        game.redis_conn = orig_conn
 
 
 @pytest.fixture
-def fresh_gridworld():
-    from dlgr.griduniverse.experiment import Gridworld
-
-    if hasattr(Gridworld, "instance"):
-        delattr(Gridworld, "instance")
-
-    yield
-
-    if hasattr(Gridworld, "instance"):
-        delattr(Gridworld, "instance")
-
-
-@pytest.fixture
-def gridworld(fresh_gridworld, active_config, item_config):
+def gridworld(active_config, item_config):
     from dlgr.griduniverse.experiment import Gridworld
 
     gw = Gridworld(
@@ -206,17 +193,27 @@ def gridworld(fresh_gridworld, active_config, item_config):
 
 
 @pytest.fixture
-def exp(db_session, active_config, fresh_gridworld):
+def exp(db_session, active_config):
     from dallinger.experiments import Griduniverse
 
     gu = Griduniverse(db_session)
     gu.app_id = "test app"
     gu.exp_config = active_config
-    gu.grid.players.clear()
+
+    for game in gu.games_by_control_channel_id.values():
+        game.grid.players.clear()
 
     yield gu
-    gu.socket_session.rollback()
-    gu.socket_session.close()
+
+    for game in gu.games_by_control_channel_id.values():
+        game.socket_session.rollback()
+        game.socket_session.close()
+
+
+@pytest.fixture
+def game(exp):
+    for game in exp.games_by_control_channel_id.values():
+        yield game
 
 
 @pytest.fixture
