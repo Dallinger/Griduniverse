@@ -4,25 +4,31 @@
 #
 #    dallinger generate-constraints
 #
-# Compiled from a requirement.txt file with md5sum: 17238cf158a7db2d1abade14af6da593
+# Compiled from a requirement.txt file with md5sum: 5e0652c2214c55fc4d2ab242b0b5e058
 #
-faker==19.2.0
+faker==30.8.2
     # via
-    #   -c /home/silvio/Jazkarta/Dallinger/dev-requirements.txt
-    #   -r /tmp/tmpv0n8930i/requirements.txt
-numpy==1.24.4
+    #   -c /Users/alecmitchell/.local/share/virtualenvs/ucb_wallace-kv9D399F/lib/python3.10/site-packages/dev-requirements.txt
+    #   -r /var/folders/60/gry957xd62l876g8j5yrfg7h0000gn/T/tmpap3kf0ld/requirements.txt
+numpy==2.0.2
     # via
-    #   -c /home/silvio/Jazkarta/Dallinger/dev-requirements.txt
-    #   -r /tmp/tmpv0n8930i/requirements.txt
-python-dateutil==2.8.2
+    #   -c /Users/alecmitchell/.local/share/virtualenvs/ucb_wallace-kv9D399F/lib/python3.10/site-packages/dev-requirements.txt
+    #   -r /var/folders/60/gry957xd62l876g8j5yrfg7h0000gn/T/tmpap3kf0ld/requirements.txt
+psycogreen==1.0.2
+    # via -r requirements.txt
+python-dateutil==2.9.0.post0
     # via
-    #   -c /home/silvio/Jazkarta/Dallinger/dev-requirements.txt
+    #   -c /Users/alecmitchell/.local/share/virtualenvs/ucb_wallace-kv9D399F/lib/python3.10/site-packages/dev-requirements.txt
     #   faker
-pyyaml==6.0.1
+pyyaml==6.0.2
     # via
-    #   -c /home/silvio/Jazkarta/Dallinger/dev-requirements.txt
-    #   -r /tmp/tmpv0n8930i/requirements.txt
+    #   -c /Users/alecmitchell/.local/share/virtualenvs/ucb_wallace-kv9D399F/lib/python3.10/site-packages/dev-requirements.txt
+    #   -r /var/folders/60/gry957xd62l876g8j5yrfg7h0000gn/T/tmpap3kf0ld/requirements.txt
 six==1.16.0
     # via
-    #   -c /home/silvio/Jazkarta/Dallinger/dev-requirements.txt
+    #   -c /Users/alecmitchell/.local/share/virtualenvs/ucb_wallace-kv9D399F/lib/python3.10/site-packages/dev-requirements.txt
     #   python-dateutil
+typing-extensions==4.12.2
+    # via
+    #   -c /Users/alecmitchell/.local/share/virtualenvs/ucb_wallace-kv9D399F/lib/python3.10/site-packages/dev-requirements.txt
+    #   faker

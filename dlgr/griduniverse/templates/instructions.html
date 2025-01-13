@@ -2,7 +2,7 @@
 
 {% block head %}
 {{ super() }}
-{% if experiment.grid.pre_difi_question %}
+{% if experiment.config.pre_difi_question %}
 <script type="text/javascript">
     var next_location = '/difi';
 </script>
@@ -19,9 +19,9 @@
 
 {% block container %}
 <h1>Instructions</h1>
-{% if experiment.grid.instruct %}
+{% if experiment.instruct %}
     <p>Welcome to the Griduniverse. Here are the instructions:</p>
-    {{ experiment.grid.instructions()|safe }}
+    {{ experiment.instructions()|safe }}
 {% else %}
     <p>Welcome to the Griduniverse. It's up to you to figure out the rules of the game.</p>
 {% endif %}

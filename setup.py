@@ -46,6 +46,7 @@ setup_args = dict(
         "dallinger",
         "numpy",
         "faker",
+        "psycogreen",
         "PyYAML",
         "cached-property",
     ],
